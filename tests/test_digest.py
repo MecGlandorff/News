@@ -94,6 +94,39 @@ def test_write_top10_writes_public_briefing_markdown(tmp_path, monkeypatch):
     assert "Briefing text." in out.read_text(encoding="utf-8")
 
 
+def test_briefing_retries_missing_summary(monkeypatch):
+    calls = []
+
+    def fake_get_briefings(stories):
+        calls.append([story["canonical_label"] for story in stories])
+        if len(calls) == 1:
+            return {"Story A": "Briefing A.", "Story B": ""}
+        return {"Story B": "Briefing B after retry."}
+
+    monkeypatch.setattr(top10, "_get_briefings", fake_get_briefings)
+
+    markdown = build_briefing_markdown([
+        _briefing_article(1, "Geopolitics & War", "Story A", 5),
+        _briefing_article(2, "Economy", "Story B", 4),
+    ], n=3)
+
+    assert calls == [["Story A", "Story B"], ["Story B"]]
+    assert "Briefing A." in markdown
+    assert "Briefing B after retry." in markdown
+
+
+def test_briefing_uses_fallback_when_summary_stays_missing(monkeypatch):
+    monkeypatch.setattr(top10, "_get_briefings", lambda stories: {})
+
+    markdown = build_briefing_markdown([
+        _briefing_article(1, "Economy", "Missing Story", 4, source="Example News"),
+    ])
+
+    assert "Missing Story is included based on 1 source" in markdown
+    assert "The lead item is from Example News" in markdown
+    assert "\n\n\nSources:" not in markdown
+
+
 def _briefing_article(article_id, theme, label, importance=3, source=None):
     return {
         "id": article_id,
@@ -159,5 +192,5 @@ def test_briefing_deduplicates_story_across_themes(monkeypatch):
         _briefing_article(3, "USA Politics", "Iran War", 4, source="Source C"),
     ], n=3)
 
-    assert markdown.count("## 1. 🆕 Iran War") == 1
+    assert markdown.count("## 1. NEW EVENT Iran War") == 1
     assert "Geopolitics & War / USA Politics / Economy" in markdown
