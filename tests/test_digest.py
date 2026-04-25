@@ -192,5 +192,5 @@ def test_briefing_deduplicates_story_across_themes(monkeypatch):
         _briefing_article(3, "USA Politics", "Iran War", 4, source="Source C"),
     ], n=3)
 
-    assert markdown.count("## 1. NEW EVENT Iran War") == 1
+    assert markdown.count("## 1. NEW STORY Iran War") == 1
     assert "Geopolitics & War / USA Politics / Economy" in markdown
