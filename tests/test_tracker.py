@@ -1,0 +1,107 @@
+import sqlite3
+
+import src.tracker as tracker
+
+
+def _article(article_id, title, story_label="Test Story"):
+    return {
+        "id": article_id,
+        "source": "Test Source",
+        "language": "en",
+        "title": title,
+        "description": "Description",
+        "url": f"https://example.com/{article_id}",
+        "published_at": "Sat, 18 Apr 2026 12:00:00 GMT",
+        "text": "",
+        "theme": "Tech",
+        "story_label": story_label,
+        "importance": 3,
+    }
+
+
+def test_track_is_idempotent_for_same_day(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    data_dir = tmp_path / "daily"
+    monkeypatch.setattr(tracker, "DB_PATH", db_path)
+    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
+
+    articles = [_article(1, "First title"), _article(2, "Second title")]
+
+    first = tracker.track(articles, today="2026-04-18")
+    second = tracker.track(articles, today="2026-04-18")
+
+    assert len(first) == 2
+    assert len(second) == 2
+
+    conn = sqlite3.connect(db_path)
+    story_count = conn.execute("SELECT COUNT(*) FROM stories").fetchone()[0]
+    daily_count = conn.execute("SELECT COUNT(*) FROM story_daily").fetchone()[0]
+    observation_count = conn.execute("SELECT COUNT(*) FROM story_observations").fetchone()[0]
+    link_count = conn.execute("SELECT COUNT(*) FROM article_story_links").fetchone()[0]
+    article_count = conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0]
+    conn.close()
+
+    assert story_count == 1
+    assert daily_count == 1
+    assert observation_count == 1
+    assert link_count == 2
+    assert article_count == 2
+
+
+def test_track_replaces_same_day_article_story_assignment(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    data_dir = tmp_path / "daily"
+    monkeypatch.setattr(tracker, "DB_PATH", db_path)
+    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
+
+    tracker.track([_article(1, "First title", story_label="Old Story")], today="2026-04-18")
+    tracker.track([_article(1, "First title", story_label="New Story")], today="2026-04-18")
+
+    conn = sqlite3.connect(db_path)
+    labels = conn.execute("""
+        SELECT s.canonical_label
+        FROM articles a
+        JOIN stories s ON s.story_id = a.story_id
+        WHERE a.date = ?
+    """, ("2026-04-18",)).fetchall()
+    story_count = conn.execute("SELECT COUNT(*) FROM stories").fetchone()[0]
+    daily_count = conn.execute("SELECT COUNT(*) FROM story_daily").fetchone()[0]
+    observation_count = conn.execute("SELECT COUNT(*) FROM story_observations").fetchone()[0]
+    link_count = conn.execute("SELECT COUNT(*) FROM article_story_links").fetchone()[0]
+    article_count = conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0]
+    conn.close()
+
+    assert labels == [("New Story",)]
+    assert story_count == 1
+    assert daily_count == 1
+    assert observation_count == 1
+    assert link_count == 1
+    assert article_count == 1
+
+
+def test_trend_uses_latest_prior_day(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    monkeypatch.setattr(tracker, "DB_PATH", db_path)
+    conn = tracker._get_db()
+    cur = conn.execute(
+        "INSERT INTO stories (canonical_label, theme, first_seen, last_seen) VALUES (?, ?, ?, ?)",
+        ("Test Story", "Tech", "2026-04-15", "2026-04-18"),
+    )
+    story_id = cur.lastrowid
+    conn.execute(
+        """
+        INSERT INTO story_daily (story_id, date, source_count, importance_avg, labels_seen)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (story_id, "2026-04-16", 1, 3.0, "[]"),
+    )
+    conn.execute(
+        """
+        INSERT INTO story_daily (story_id, date, source_count, importance_avg, labels_seen)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (story_id, "2026-04-17", 4, 3.0, "[]"),
+    )
+
+    assert tracker._trend(story_id, 1, conn, "2026-04-18") == "down"
+    conn.close()

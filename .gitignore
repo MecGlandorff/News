@@ -1,0 +1,56 @@
+.claude
+/output
+/data/
+mlruns/
+mlflow.db
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local automation scripts
+com.*.plist
+run_scraper.sh
+launch_scraper_terminal.sh
+
+
+
+## Standard stuff ##
+# Node modules
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE/editor folders
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.swp
+
+# Dependency directories
+vendor/
+
+# Coverage reports
+coverage/
+
+# Cache
+.cache/
