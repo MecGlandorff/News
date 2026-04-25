@@ -25,7 +25,7 @@ LOW_INTEREST_KEYWORDS = {
 }
 
 TREND_SCORE = {"up": 2, "new": 1, "steady": 0, "down": -1}
-TREND_ICON  = {"new": "🆕", "up": "📈", "steady": "➡️", "down": "📉"}
+TREND_ICON  = {"new": "NEW EVENT", "up": "INCREASINGLY RELEVANT", "steady": "SAME TREND", "down": "BECOMING LESS RELEVANT"}
 
 BRIEFING_PROMPT = """You are writing a daily news briefing for an informed reader who wants real depth.
 
@@ -201,10 +201,35 @@ def _get_briefings(stories):
     if not isinstance(briefings, list):
         raise ValueError('Model response must contain a "briefings" list')
     return {
-        b["canonical_label"]: b.get("briefing", "")
+        b["canonical_label"]: str(b.get("briefing", "")).strip()
         for b in briefings
         if isinstance(b, dict) and "canonical_label" in b
     }
+
+
+def _missing_briefing_stories(stories, briefings):
+    return [
+        story for story in stories
+        if not briefings.get(story["canonical_label"], "").strip()
+    ]
+
+
+def _fallback_briefing(story):
+    articles = sorted(
+        story["articles"],
+        key=lambda article: _parse_reported_at(article.get("published_at")) or datetime.min.replace(tzinfo=timezone.utc),
+        reverse=True,
+    )
+    first = articles[0]
+    latest = _latest_reported_at(articles)
+    title = first.get("title") or story["canonical_label"]
+    source = first.get("source", "A source")
+    source_count = story["source_count"]
+    source_word = "sources" if source_count > 1 else "source"
+    return (
+        f"{story['canonical_label']} is included based on {source_count} {source_word}, "
+        f"with the latest report at {latest}. The lead item is from {source}: {title}."
+    )
 
 
 def build_briefing_markdown(tracked, n=3, global_n=10):
@@ -261,6 +286,11 @@ def build_briefing_markdown(tracked, n=3, global_n=10):
             seen.add(s["canonical_label"])
             to_brief.append(s)
     briefings = _get_briefings(to_brief)
+    missing = _missing_briefing_stories(to_brief, briefings)
+    if missing:
+        briefings.update(_get_briefings(missing))
+    for story in _missing_briefing_stories(to_brief, briefings):
+        briefings[story["canonical_label"]] = _fallback_briefing(story)
 
     ts = datetime.now().strftime("%Y-%m-%d %H:%M")
     lines = [
