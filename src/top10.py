@@ -25,7 +25,7 @@ LOW_INTEREST_KEYWORDS = {
 }
 
 TREND_SCORE = {"up": 2, "new": 1, "steady": 0, "down": -1}
-TREND_ICON  = {"new": "NEW EVENT", "up": "INCREASINGLY RELEVANT", "steady": "SAME TREND", "down": "BECOMING LESS RELEVANT"}
+TREND_ICON  = {"new": "NEW STORY", "up": "COVERAGE INCREASING", "steady": "COVERAGE STEADY", "down": "COVERAGE DECREASING"}
 
 BRIEFING_PROMPT = """You are writing a daily news briefing for an informed reader who wants real depth.
 
