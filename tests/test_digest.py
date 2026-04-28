@@ -1,3 +1,5 @@
+import json
+
 from src.digest import build_themed_markdown
 import src.top10 as top10
 from src.top10 import build_briefing_markdown, write_top10
@@ -113,6 +115,75 @@ def test_briefing_retries_missing_summary(monkeypatch):
     assert calls == [["Story A", "Story B"], ["Story B"]]
     assert "Briefing A." in markdown
     assert "Briefing B after retry." in markdown
+
+
+def test_briefing_remembers_generated_story_summary(monkeypatch):
+    memories = []
+    monkeypatch.setattr(
+        top10,
+        "_get_briefings",
+        lambda stories: {"Example Story": "Generated briefing."},
+    )
+    monkeypatch.setattr(top10, "save_observation_memory", lambda updates: memories.extend(updates))
+
+    article = _briefing_article(1, "Economy", "Example Story", 4)
+    article["observation_id"] = 42
+
+    markdown = build_briefing_markdown([article])
+
+    assert "Generated briefing." in markdown
+    assert memories == [{
+        "observation_id": 42,
+        "summary": "Generated briefing.",
+        "delta_summary": "Today's reporting: Example Story title",
+    }]
+
+
+def test_get_briefings_sends_previous_context(monkeypatch):
+    captured = {}
+
+    class Message:
+        content = '{"briefings":[{"canonical_label":"Example Story","briefing":"Briefing text."}]}'
+
+    class Choice:
+        message = Message()
+
+    class Response:
+        choices = [Choice()]
+
+    class Completions:
+        def create(self, **kwargs):
+            captured["items"] = json.loads(kwargs["messages"][1]["content"])
+            return Response()
+
+    class Chat:
+        def __init__(self):
+            self.completions = Completions()
+
+    class Client:
+        def __init__(self):
+            self.chat = Chat()
+
+    monkeypatch.setattr(top10, "get_openai_client", lambda: Client())
+
+    result = top10._get_briefings([{
+        "canonical_label": "Example Story",
+        "previous_context": {
+            "summary": "Earlier summary.",
+            "recent_articles": [{"title": "Older title"}],
+        },
+        "articles": [{
+            "source": "Example News",
+            "title": "Current title",
+            "description": "Current description",
+            "published_at": "Sat, 18 Apr 2026 12:30:00 GMT",
+            "url": "https://example.com/current",
+        }],
+    }])
+
+    assert result == {"Example Story": "Briefing text."}
+    assert captured["items"][0]["previous_context"]["summary"] == "Earlier summary."
+    assert captured["items"][0]["previous_context"]["recent_articles"][0]["title"] == "Older title"
 
 
 def test_briefing_uses_fallback_when_summary_stays_missing(monkeypatch):
