@@ -29,6 +29,12 @@ Return a JSON object with key "matches": array of {today_label, canonical_label}
 canonical_label is either the exact string from yesterday's list or "NEW"."""
 
 
+def _ensure_column(conn, table, column, definition):
+    columns = {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
+    if column not in columns:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+
+
 def _get_db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
@@ -69,6 +75,7 @@ def _get_db():
             date           DATE,
             source         TEXT,
             title          TEXT,
+            description    TEXT,
             url            TEXT,
             published_at   TEXT,
             importance     INTEGER
@@ -81,6 +88,7 @@ def _get_db():
             PRIMARY KEY (article_id, story_id, observation_id)
         );
     """)
+    _ensure_column(conn, "articles", "description", "TEXT")
     conn.commit()
     return conn
 
@@ -96,6 +104,81 @@ def _get_recent_stories(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
         ORDER BY last_daily DESC
     """, (start, today)).fetchall()
     return {r["canonical_label"]: r["story_id"] for r in rows}
+
+
+def _get_previous_story_context(conn, story_id, today, article_limit=3):
+    """Return compact historical context for a continuing story."""
+    context = {}
+    observation = conn.execute("""
+        SELECT date, summary, delta_summary
+        FROM story_observations
+        WHERE story_id = ?
+          AND date < ?
+          AND (
+              NULLIF(TRIM(COALESCE(summary, '')), '') IS NOT NULL
+              OR NULLIF(TRIM(COALESCE(delta_summary, '')), '') IS NOT NULL
+          )
+        ORDER BY date DESC
+        LIMIT 1
+    """, (story_id, today)).fetchone()
+    if observation:
+        summary = (observation["summary"] or "").strip()
+        delta_summary = (observation["delta_summary"] or "").strip()
+        if summary or delta_summary:
+            context["last_observed"] = observation["date"]
+            if summary:
+                context["summary"] = summary
+            if delta_summary:
+                context["delta_summary"] = delta_summary
+
+    rows = conn.execute("""
+        SELECT date, source, title, description, url, published_at
+        FROM articles
+        WHERE story_id = ?
+          AND date < ?
+        ORDER BY date DESC, published_at DESC
+        LIMIT ?
+    """, (story_id, today, article_limit)).fetchall()
+    if rows:
+        context["recent_articles"] = [
+            {
+                "date": r["date"],
+                "source": r["source"],
+                "title": r["title"],
+                "description": r["description"] or "",
+                "url": r["url"],
+                "reported_at": r["published_at"] or "",
+            }
+            for r in rows
+        ]
+    return context
+
+
+def save_observation_memory(memories):
+    """Persist compact story memory generated during briefing creation."""
+    updates = [
+        memory for memory in memories
+        if memory.get("observation_id")
+        and ((memory.get("summary") or "").strip() or (memory.get("delta_summary") or "").strip())
+    ]
+    if not updates:
+        return
+
+    conn = _get_db()
+    try:
+        with conn:
+            for memory in updates:
+                conn.execute("""
+                    UPDATE story_observations
+                    SET summary = ?, delta_summary = ?
+                    WHERE observation_id = ?
+                """, (
+                    (memory.get("summary") or "").strip(),
+                    (memory.get("delta_summary") or "").strip(),
+                    memory["observation_id"],
+                ))
+    finally:
+        conn.close()
 
 
 def _find_story_by_label(conn, canonical_label, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
@@ -274,9 +357,6 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS):
         json.dumps(classified, ensure_ascii=False, indent=2), encoding="utf-8"
     )
 
-    conn = _get_db()
-    _reset_tracking_date(conn, today)
-
     # Group today's articles by story_label, then consolidate within-day duplicates
     from collections import defaultdict
     raw_groups = defaultdict(list)
@@ -284,85 +364,118 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS):
         raw_groups[a["story_label"]].append(a)
     story_groups = _consolidate_today(raw_groups)
 
-    # Match today's labels to recent canonical labels.
-    recent_stories = _get_recent_stories(conn, today, lookback_days)
+    conn = _get_db()
+    try:
+        recent_stories = _get_recent_stories(conn, today, lookback_days)
+    finally:
+        conn.close()
+
+    # Match today's labels to recent canonical labels outside the write transaction.
     label_map = _match_labels(set(story_groups.keys()), recent_stories)
 
-    # Upsert stories and story_daily
-    tracked = []
-    for story_label, articles in story_groups.items():
-        canonical = label_map.get(story_label, "NEW")
+    conn = _get_db()
+    try:
+        with conn:
+            _reset_tracking_date(conn, today)
 
-        if canonical == "NEW" or canonical not in recent_stories:
-            # New story
-            story_id = _find_story_by_label(conn, story_label, today, lookback_days)
-            if story_id:
+            # Upsert stories and story_daily
+            tracked = []
+            for story_label, articles in story_groups.items():
+                canonical = label_map.get(story_label, "NEW")
+
+                if canonical == "NEW" or canonical not in recent_stories:
+                    # New story
+                    story_id = _find_story_by_label(conn, story_label, today, lookback_days)
+                    if story_id:
+                        conn.execute(
+                            "UPDATE stories SET last_seen = ? WHERE story_id = ?",
+                            (today, story_id)
+                        )
+                    else:
+                        cur = conn.execute(
+                            "INSERT INTO stories (canonical_label, theme, first_seen, last_seen) VALUES (?, ?, ?, ?)",
+                            (story_label, articles[0]["theme"], today, today)
+                        )
+                        story_id = cur.lastrowid
+                else:
+                    story_id = recent_stories[canonical]
+                    canonical = canonical  # keep canonical label
+                    conn.execute(
+                        "UPDATE stories SET last_seen = ? WHERE story_id = ?",
+                        (today, story_id)
+                    )
+
+                previous_context = _get_previous_story_context(conn, story_id, today)
+                source_count   = len(set(a["source"] for a in articles))
+                importance_avg = sum(a["importance"] for a in articles) / len(articles)
+                trend          = _trend(story_id, source_count, conn, today)
+
                 conn.execute(
-                    "UPDATE stories SET last_seen = ? WHERE story_id = ?",
-                    (today, story_id)
+                    """
+                    INSERT OR REPLACE INTO story_daily (story_id, date, source_count, importance_avg, labels_seen)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (story_id, today, source_count, importance_avg, json.dumps([story_label]))
                 )
-            else:
-                cur = conn.execute(
-                    "INSERT INTO stories (canonical_label, theme, first_seen, last_seen) VALUES (?, ?, ?, ?)",
-                    (story_label, articles[0]["theme"], today, today)
+
+                conn.execute("""
+                    INSERT INTO story_observations (
+                        story_id, date, label_seen, source_count, article_count, importance_avg
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(story_id, date) DO UPDATE SET
+                        label_seen = excluded.label_seen,
+                        source_count = excluded.source_count,
+                        article_count = excluded.article_count,
+                        importance_avg = excluded.importance_avg,
+                        created_at = CURRENT_TIMESTAMP
+                """, (story_id, today, story_label, source_count, len(articles), importance_avg))
+                observation_id = conn.execute(
+                    "SELECT observation_id FROM story_observations WHERE story_id = ? AND date = ?",
+                    (story_id, today)
+                ).fetchone()["observation_id"]
+
+                conn.execute(
+                    "DELETE FROM articles WHERE story_id = ? AND date = ?",
+                    (story_id, today)
                 )
-                story_id = cur.lastrowid
-        else:
-            story_id = recent_stories[canonical]
-            canonical = canonical  # keep canonical label
-            conn.execute(
-                "UPDATE stories SET last_seen = ? WHERE story_id = ?",
-                (today, story_id)
-            )
+                conn.execute(
+                    "DELETE FROM article_story_links WHERE story_id = ? AND observation_id = ?",
+                    (story_id, observation_id)
+                )
+                for a in articles:
+                    conn.execute("""
+                        INSERT INTO articles (
+                            id, story_id, date, source, title, description, url, published_at, importance
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        a["id"],
+                        story_id,
+                        today,
+                        a["source"],
+                        a["title"],
+                        a.get("description", ""),
+                        a["url"],
+                        a["published_at"],
+                        a["importance"],
+                    ))
+                    conn.execute("""
+                        INSERT OR REPLACE INTO article_story_links (article_id, story_id, observation_id, relevance)
+                        VALUES (?, ?, ?, ?)
+                    """, (str(a["id"]), story_id, observation_id, 1.0))
+                    tracked.append({
+                        **a,
+                        "story_id": story_id,
+                        "observation_id": observation_id,
+                        "canonical_label": canonical if canonical != "NEW" else story_label,
+                        "trend": trend,
+                        "previous_context": previous_context,
+                    })
 
-        source_count   = len(set(a["source"] for a in articles))
-        importance_avg = sum(a["importance"] for a in articles) / len(articles)
-        trend          = _trend(story_id, source_count, conn, today)
-
-        conn.execute("""
-            INSERT OR REPLACE INTO story_daily (story_id, date, source_count, importance_avg, labels_seen)
-            VALUES (?, ?, ?, ?, ?)
-        """, (story_id, today, source_count, importance_avg, json.dumps([story_label])))
-
-        conn.execute("""
-            INSERT INTO story_observations (
-                story_id, date, label_seen, source_count, article_count, importance_avg
-            )
-            VALUES (?, ?, ?, ?, ?, ?)
-            ON CONFLICT(story_id, date) DO UPDATE SET
-                label_seen = excluded.label_seen,
-                source_count = excluded.source_count,
-                article_count = excluded.article_count,
-                importance_avg = excluded.importance_avg,
-                created_at = CURRENT_TIMESTAMP
-        """, (story_id, today, story_label, source_count, len(articles), importance_avg))
-        observation_id = conn.execute(
-            "SELECT observation_id FROM story_observations WHERE story_id = ? AND date = ?",
-            (story_id, today)
-        ).fetchone()["observation_id"]
-
-        conn.execute(
-            "DELETE FROM articles WHERE story_id = ? AND date = ?",
-            (story_id, today)
-        )
-        conn.execute(
-            "DELETE FROM article_story_links WHERE story_id = ? AND observation_id = ?",
-            (story_id, observation_id)
-        )
-        for a in articles:
-            conn.execute("""
-                INSERT INTO articles (id, story_id, date, source, title, url, published_at, importance)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (a["id"], story_id, today, a["source"], a["title"], a["url"], a["published_at"], a["importance"]))
-            conn.execute("""
-                INSERT OR REPLACE INTO article_story_links (article_id, story_id, observation_id, relevance)
-                VALUES (?, ?, ?, ?)
-            """, (str(a["id"]), story_id, observation_id, 1.0))
-            tracked.append({**a, "story_id": story_id, "canonical_label": canonical if canonical != "NEW" else story_label, "trend": trend})
-
-    _sync_story_dates(conn)
-    conn.commit()
-    conn.close()
+            _sync_story_dates(conn)
+    finally:
+        conn.close()
 
     print(f"Tracked {len(story_groups)} stories ({sum(1 for v in label_map.values() if v == 'NEW')} new)")
     return tracked

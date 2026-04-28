@@ -1,6 +1,7 @@
 .claude
 /output
 /data/
+test_output/
 mlruns/
 mlflow.db
 __pycache__/
@@ -12,6 +13,7 @@ com.*.plist
 run_scraper.sh
 launch_scraper_terminal.sh
 
+agents.md
 
 
 ## Standard stuff ##
@@ -54,3 +56,6 @@ coverage/
 
 # Cache
 .cache/
+
+# Personal local notes
+improvements_user.md

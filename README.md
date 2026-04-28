@@ -8,6 +8,7 @@ RSS news scraper that classifies articles, tracks ongoing stories, and generates
 - Classifies each article by theme, story label, and importance using the OpenAI API.
 - Tracks ongoing stories in a local SQLite database.
 - Writes public briefing Markdown files to `briefings/`.
+- Writes public newspaper PDF files to `newspapers/`.
 - Writes local digest Markdown files to `output/`.
 - Caches article classifications to reduce repeated OpenAI calls on reruns.
 
@@ -59,6 +60,8 @@ Useful options:
 ```bash
 python -m src.run --max-per-source 5
 python -m src.run --skip-briefing
+python -m src.run --skip-pdf
+python -m src.run --db-off
 python -m src.run --today 2026-04-18
 ```
 
@@ -70,6 +73,22 @@ Full article-page fetching is off by default. To fetch article body text in addi
 python -m src.run --fetch-article-text
 ```
 
+Preview the newspaper PDF design without scraping or API calls:
+
+```bash
+python scripts/preview_newspaper.py
+```
+
+The preview PDF is written to `test_output/preview/newspaper_preview.pdf`.
+
+For a cheap real newspaper test that does not touch the normal story database:
+
+```bash
+python -m src.run --db-off --max-per-source 1 --top-developments 5 --skip-digest --skip-briefing
+```
+
+`--db-off` uses a temporary database and classification cache for that run, leaving `data/stories.db` untouched.
+
 ## Local Data
 
 Generated runtime data is intentionally ignored by git:
@@ -79,6 +98,7 @@ Generated runtime data is intentionally ignored by git:
 - `logs/`: local logs if you run scheduled jobs.
 
 Public briefing files in `briefings/` are intended to be committed and published with the GitHub repository.
+Public newspaper PDF files in `newspapers/` are intended to be committed and clicked from the GitHub repository.
 
 ## Limitations
 

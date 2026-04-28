@@ -79,6 +79,34 @@ def test_track_replaces_same_day_article_story_assignment(tmp_path, monkeypatch)
     assert article_count == 1
 
 
+def test_track_attaches_previous_story_context(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    data_dir = tmp_path / "daily"
+    monkeypatch.setattr(tracker, "DB_PATH", db_path)
+    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
+    monkeypatch.setattr(
+        tracker,
+        "_match_labels",
+        lambda labels, recent: {label: label if label in recent else "NEW" for label in labels},
+    )
+
+    first = tracker.track([_article(1, "First title")], today="2026-04-18")
+    tracker.save_observation_memory([{
+        "observation_id": first[0]["observation_id"],
+        "summary": "Earlier summary.",
+        "delta_summary": "Earlier change.",
+    }])
+
+    second = tracker.track([_article(2, "Second title")], today="2026-04-19")
+
+    context = second[0]["previous_context"]
+    assert context["last_observed"] == "2026-04-18"
+    assert context["summary"] == "Earlier summary."
+    assert context["delta_summary"] == "Earlier change."
+    assert context["recent_articles"][0]["title"] == "First title"
+    assert context["recent_articles"][0]["description"] == "Description"
+
+
 def test_trend_uses_latest_prior_day(tmp_path, monkeypatch):
     db_path = tmp_path / "stories.db"
     monkeypatch.setattr(tracker, "DB_PATH", db_path)

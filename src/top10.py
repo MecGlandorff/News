@@ -5,6 +5,7 @@ from email.utils import parsedate_to_datetime
 from pathlib import Path
 from src.config import BRIEFING_MODEL
 from src.llm import get_openai_client, parse_json_object
+from src.tracker import save_observation_memory
 
 BRIEFINGS_DIR = Path("briefings")
 THEME_ORDER = ["Geopolitics & War", "USA Politics", "Dutch Politics", "Economy", "Tech", "Climate", "Science", "Sports", "Other"]
@@ -36,10 +37,11 @@ For each story, write 2-3 solid paragraphs in English (150-250 words) that:
 - Synthesize across all sources provided, surfacing different angles where they exist
 - Are factual, neutral, and written for an intelligent adult — no fluff, no filler
 - Use the supplied reported_at timestamps to keep chronology clear where timing matters
+- If previous_context is supplied, use it only for background and continuity. Today's articles are the authority for what is new today; do not present previous context as fresh reporting
 - Do not invent source URLs; URLs are supplied separately in the output
 
 Return a JSON object with key "briefings": array of {canonical_label, briefing}.
-Base your writing only on the titles and descriptions provided."""
+Base current developments on today's article titles and descriptions. Use previous_context, when supplied, only for background."""
 
 
 def _score(story):
@@ -90,7 +92,14 @@ def _source_lines(articles):
 
 def _aggregate(tracked):
     """Group tracked articles by canonical story, compute scores and theme metadata."""
-    stories = defaultdict(lambda: {"articles": [], "sources": set(), "importance_sum": 0, "theme_counts": defaultdict(int)})
+    stories = defaultdict(lambda: {
+        "articles": [],
+        "sources": set(),
+        "importance_sum": 0,
+        "theme_counts": defaultdict(int),
+        "previous_context": None,
+        "observation_ids": set(),
+    })
 
     for a in tracked:
         label = a.get("canonical_label", a["story_label"])
@@ -99,6 +108,10 @@ def _aggregate(tracked):
         stories[label]["sources"].add(a["source"])
         stories[label]["importance_sum"] += a["importance"]
         stories[label]["theme_counts"][theme] += 1
+        if a.get("previous_context") and not stories[label]["previous_context"]:
+            stories[label]["previous_context"] = a["previous_context"]
+        if a.get("observation_id"):
+            stories[label]["observation_ids"].add(a["observation_id"])
 
     result = []
     for label, data in stories.items():
@@ -118,6 +131,8 @@ def _aggregate(tracked):
             "trend":           articles[0].get("trend", "steady"),
             "source_count":    len(data["sources"]),
             "importance_avg":  data["importance_sum"] / len(articles),
+            "previous_context": data["previous_context"] or {},
+            "observation_ids": sorted(data["observation_ids"]),
             "articles":        articles,
         })
     return result
@@ -170,8 +185,9 @@ def _get_briefings(stories):
 
     client = get_openai_client()
 
-    items = [
-        {
+    items = []
+    for s in stories:
+        item = {
             "canonical_label": s["canonical_label"],
             "articles": [
                 {
@@ -184,8 +200,9 @@ def _get_briefings(stories):
                 for a in s["articles"]
             ],
         }
-        for s in stories
-    ]
+        if s.get("previous_context"):
+            item["previous_context"] = s["previous_context"]
+        items.append(item)
 
     response = client.chat.completions.create(
         model=BRIEFING_MODEL,
@@ -205,6 +222,35 @@ def _get_briefings(stories):
         for b in briefings
         if isinstance(b, dict) and "canonical_label" in b
     }
+
+
+def _today_delta_summary(story, limit=3):
+    articles = sorted(
+        story["articles"],
+        key=lambda article: _parse_reported_at(article.get("published_at")) or datetime.min.replace(tzinfo=timezone.utc),
+        reverse=True,
+    )
+    titles = [a.get("title", "").strip() for a in articles if a.get("title")]
+    if not titles:
+        return ""
+    shown = titles[:limit]
+    suffix = "" if len(titles) <= limit else f" (+{len(titles) - limit} more)"
+    return "Today's reporting: " + "; ".join(shown) + suffix
+
+
+def _remember_story_briefings(stories, briefings):
+    memories = []
+    for story in stories:
+        briefing = briefings.get(story["canonical_label"], "").strip()
+        if not briefing:
+            continue
+        for observation_id in story.get("observation_ids", []):
+            memories.append({
+                "observation_id": observation_id,
+                "summary": briefing,
+                "delta_summary": _today_delta_summary(story),
+            })
+    save_observation_memory(memories)
 
 
 def _missing_briefing_stories(stories, briefings):
@@ -232,15 +278,15 @@ def _fallback_briefing(story):
     )
 
 
-def build_briefing_markdown(tracked, n=3, global_n=10):
+def build_briefing_package(tracked, n=3, global_n=10):
     if not tracked:
-        ts = datetime.now().strftime("%Y-%m-%d %H:%M")
-        return "\n".join([
-            "# Top Developments",
-            f"_{ts}_",
-            "",
-            "No tracked stories found.",
-        ])
+        return {
+            "generated_at": datetime.now(),
+            "stories": [],
+            "sections": [],
+            "display_stories": [],
+            "briefings": {},
+        }
 
     stories = sorted(_aggregate(tracked), key=_score, reverse=True)
 
@@ -291,8 +337,32 @@ def build_briefing_markdown(tracked, n=3, global_n=10):
         briefings.update(_get_briefings(missing))
     for story in _missing_briefing_stories(to_brief, briefings):
         briefings[story["canonical_label"]] = _fallback_briefing(story)
+    _remember_story_briefings(to_brief, briefings)
 
-    ts = datetime.now().strftime("%Y-%m-%d %H:%M")
+    return {
+        "generated_at": datetime.now(),
+        "stories": stories,
+        "sections": sections,
+        "display_stories": to_brief,
+        "briefings": briefings,
+    }
+
+
+def build_briefing_markdown(tracked, n=3, global_n=10, package=None):
+    package = package or build_briefing_package(tracked, n=n, global_n=global_n)
+
+    if not package["stories"]:
+        ts = package["generated_at"].strftime("%Y-%m-%d %H:%M")
+        return "\n".join([
+            "# Top Developments",
+            f"_{ts}_",
+            "",
+            "No tracked stories found.",
+        ])
+
+    sections = package["sections"]
+    briefings = package["briefings"]
+    ts = package["generated_at"].strftime("%Y-%m-%d %H:%M")
     lines = [
         "# Top Developments",
         f"_{ts}_",
@@ -323,9 +393,9 @@ def build_briefing_markdown(tracked, n=3, global_n=10):
     return "\n".join(lines)
 
 
-def write_top10(tracked, n=3):
+def write_top10(tracked, n=3, package=None):
     BRIEFINGS_DIR.mkdir(exist_ok=True)
-    md  = build_briefing_markdown(tracked, n)
+    md  = build_briefing_markdown(tracked, n, package=package)
     out = BRIEFINGS_DIR / f"briefing_{datetime.now().strftime('%Y%m%d_%H%M')}.md"
     out.write_text(md, encoding="utf-8")
     print(f"Written: {out}")
