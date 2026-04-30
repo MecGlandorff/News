@@ -1,4 +1,3 @@
-.claude
 /output
 /data/
 test_output/
@@ -12,9 +11,6 @@ __pycache__/
 com.*.plist
 run_scraper.sh
 launch_scraper_terminal.sh
-
-agents.md
-
 
 ## Standard stuff ##
 # Node modules
@@ -56,6 +52,3 @@ coverage/
 
 # Cache
 .cache/
-
-# Personal local notes
-improvements_user.md
