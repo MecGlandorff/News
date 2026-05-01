@@ -1,6 +1,55 @@
-# News Scraper
+# Daily News Intelligence Briefing
 
-RSS news scraper that classifies articles, tracks ongoing stories, and generates daily Markdown digests and briefings.
+AI-assisted news pipeline that ingests RSS feeds, groups related coverage into ongoing stories, remembers story context across days, and publishes daily Markdown briefings plus newspaper-style PDFs.
+
+This is not just a summarizer. The pipeline tracks whether stories are new, developing, steady, or cooling, then uses that continuity to produce more useful daily briefings.
+
+## Latest Outputs
+
+- [Latest Markdown briefing](briefings/briefing_20260430_2330.md)
+- [Latest newspaper PDF](newspapers/newspaper_20260430_2330.pdf)
+- [Briefing archive](briefings/)
+- [Newspaper archive](newspapers/)
+
+## Why It Is Interesting
+
+- **Story continuity:** related articles are consolidated into canonical ongoing stories and matched against recent history.
+- **Coverage movement:** stories are tagged as new, increasing, steady, or decreasing based on source pickup over time.
+- **Briefing memory:** generated story summaries are saved back to the local story database, so future briefings can use prior context.
+- **Source-aware synthesis:** each briefing includes source links, reported timestamps, importance, theme, and source count.
+- **Dual publishing:** the same briefing package renders to Markdown and a custom newspaper-style PDF.
+- **Local-first operation:** runtime state lives in SQLite and ignored local folders; public outputs can be committed separately.
+
+## Pipeline
+
+```text
+RSS feeds
+  -> article normalization and caching
+  -> theme, story, and importance classification
+  -> same-day story consolidation
+  -> cross-day story matching
+  -> briefing package with trend and previous context
+  -> Markdown briefing + newspaper PDF
+```
+
+## Story Intelligence
+
+The tracker keeps a compact local memory of each story:
+
+- canonical story label
+- first seen and last seen dates
+- daily source count and average importance
+- trend signal based on previous coverage
+- article links and observations for each tracked date
+- generated summary and delta memory for future context
+
+Briefings surface that memory as an explicit delta line:
+
+```md
+**What changed today:** Police classified the Golders Green stabbing as terrorism, shifting the story from a local attack to a national security and antisemitism concern.
+```
+
+That makes each briefing read less like a daily snapshot and more like an intelligence update.
 
 ## What It Does
 

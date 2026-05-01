@@ -81,6 +81,19 @@ def test_story_body_does_not_leak_raw_article_titles():
     assert "Mali's junta is facing" in body
 
 
+def test_story_body_includes_delta_summary():
+    item = _story("Mali attacks", "up")
+
+    body = newspaper._story_body(
+        item,
+        "Mali's junta is facing a severe challenge.",
+        "New refugee accounts widened the picture of civilian harm.",
+    )
+
+    assert body.startswith("What changed today: New refugee accounts")
+    assert "Mali's junta is facing a severe challenge." in body
+
+
 def test_story_body_fallback_avoids_raw_article_text():
     item = _story("Mali attacks", "new")
     item["articles"][0]["title"] = "Voormalig vijanden slaan de handen ineen in Mali"
@@ -108,6 +121,9 @@ def test_write_newspaper_pdf_outputs_local_pdf(tmp_path, monkeypatch):
         "briefings": {
             "Mali attacks": "Mali saw coordinated attacks that exposed pressure on the state."
         },
+        "deltas": {
+            "Mali attacks": "First detected today."
+        },
     }
 
     out = newspaper.write_newspaper_pdf([], package=package)
@@ -117,4 +133,5 @@ def test_write_newspaper_pdf_outputs_local_pdf(tmp_path, monkeypatch):
     assert data.startswith(b"%PDF-1.4")
     assert b"THE DAILY BRIEFING" in data
     assert b"NEW TODAY" in data
+    assert b"What changed today" in data
     assert b"Mali attacks" in data
