@@ -40,7 +40,12 @@ For each story, write 2-3 solid paragraphs in English (150-250 words) that:
 - If previous_context is supplied, use it only for background and continuity. Today's articles are the authority for what is new today; do not present previous context as fresh reporting
 - Do not invent source URLs; URLs are supplied separately in the output
 
-Return a JSON object with key "briefings": array of {canonical_label, briefing}.
+For each story, also write one delta_summary sentence that answers: what is materially new in today's reporting compared with previous_context?
+- If previous_context is supplied, compare today's articles against it and mention only the new turn, escalation, clarification, or lack of major change
+- If previous_context is not supplied, write exactly: First detected today.
+- Do not summarize the whole story in delta_summary
+
+Return a JSON object with key "briefings": array of {canonical_label, delta_summary, briefing}.
 Base current developments on today's article titles and descriptions. Use previous_context, when supplied, only for background."""
 
 
@@ -217,46 +222,83 @@ def _get_briefings(stories):
     briefings = payload.get("briefings")
     if not isinstance(briefings, list):
         raise ValueError('Model response must contain a "briefings" list')
-    return {
-        b["canonical_label"]: str(b.get("briefing", "")).strip()
+    return _normalize_briefing_payloads({
+        b["canonical_label"]: {
+            "briefing": str(b.get("briefing", "")).strip(),
+            "delta_summary": str(b.get("delta_summary") or b.get("delta") or "").strip(),
+        }
         for b in briefings
         if isinstance(b, dict) and "canonical_label" in b
-    }
+    })
 
 
-def _today_delta_summary(story, limit=3):
-    articles = sorted(
-        story["articles"],
-        key=lambda article: _parse_reported_at(article.get("published_at")) or datetime.min.replace(tzinfo=timezone.utc),
-        reverse=True,
-    )
-    titles = [a.get("title", "").strip() for a in articles if a.get("title")]
-    if not titles:
-        return ""
-    shown = titles[:limit]
-    suffix = "" if len(titles) <= limit else f" (+{len(titles) - limit} more)"
-    return "Today's reporting: " + "; ".join(shown) + suffix
+def _normalize_briefing_payloads(payloads):
+    """Accept new structured payloads and legacy label->text test doubles."""
+    normalized = {}
+    for label, payload in (payloads or {}).items():
+        if isinstance(payload, dict):
+            briefing = str(payload.get("briefing", "")).strip()
+            delta_summary = str(payload.get("delta_summary") or payload.get("delta") or "").strip()
+        else:
+            briefing = str(payload or "").strip()
+            delta_summary = ""
+        normalized[label] = {
+            "briefing": briefing,
+            "delta_summary": delta_summary,
+        }
+    return normalized
 
 
-def _remember_story_briefings(stories, briefings):
+def _merge_briefing_payloads(existing, updates):
+    for label, update in _normalize_briefing_payloads(updates).items():
+        current = existing.setdefault(label, {"briefing": "", "delta_summary": ""})
+        for key in ("briefing", "delta_summary"):
+            if update.get(key):
+                current[key] = update[key]
+    return existing
+
+
+def _payload_briefing(payloads, label):
+    payload = payloads.get(label, {})
+    if isinstance(payload, dict):
+        return str(payload.get("briefing", "")).strip()
+    return str(payload or "").strip()
+
+
+def _fallback_delta_summary(story):
+    previous_context = story.get("previous_context") or {}
+    if not previous_context:
+        return "First detected today."
+
+    trend = story.get("trend", "steady")
+    if trend == "up":
+        return "Coverage increased today, but the available reporting did not isolate a distinct new turn."
+    if trend == "down":
+        return "Coverage cooled today, with reporting shifting toward follow-up coverage rather than a new turn."
+    return "Today's reporting continued the story without a distinct new turn."
+
+
+def _remember_story_briefings(stories, briefings, deltas):
     memories = []
     for story in stories:
-        briefing = briefings.get(story["canonical_label"], "").strip()
+        label = story["canonical_label"]
+        briefing = str(briefings.get(label, "")).strip()
         if not briefing:
             continue
+        delta_summary = str(deltas.get(label, "")).strip() or _fallback_delta_summary(story)
         for observation_id in story.get("observation_ids", []):
             memories.append({
                 "observation_id": observation_id,
                 "summary": briefing,
-                "delta_summary": _today_delta_summary(story),
+                "delta_summary": delta_summary,
             })
     save_observation_memory(memories)
 
 
-def _missing_briefing_stories(stories, briefings):
+def _missing_briefing_stories(stories, briefing_payloads):
     return [
         story for story in stories
-        if not briefings.get(story["canonical_label"], "").strip()
+        if not _payload_briefing(briefing_payloads, story["canonical_label"])
     ]
 
 
@@ -286,6 +328,7 @@ def build_briefing_package(tracked, n=3, global_n=10):
             "sections": [],
             "display_stories": [],
             "briefings": {},
+            "deltas": {},
         }
 
     stories = sorted(_aggregate(tracked), key=_score, reverse=True)
@@ -331,13 +374,27 @@ def build_briefing_package(tracked, n=3, global_n=10):
         if s["canonical_label"] not in seen:
             seen.add(s["canonical_label"])
             to_brief.append(s)
-    briefings = _get_briefings(to_brief)
-    missing = _missing_briefing_stories(to_brief, briefings)
+    briefing_payloads = _normalize_briefing_payloads(_get_briefings(to_brief))
+    missing = _missing_briefing_stories(to_brief, briefing_payloads)
     if missing:
-        briefings.update(_get_briefings(missing))
-    for story in _missing_briefing_stories(to_brief, briefings):
-        briefings[story["canonical_label"]] = _fallback_briefing(story)
-    _remember_story_briefings(to_brief, briefings)
+        _merge_briefing_payloads(briefing_payloads, _get_briefings(missing))
+    for story in to_brief:
+        label = story["canonical_label"]
+        payload = briefing_payloads.setdefault(label, {"briefing": "", "delta_summary": ""})
+        if not payload.get("briefing"):
+            payload["briefing"] = _fallback_briefing(story)
+        if not payload.get("delta_summary"):
+            payload["delta_summary"] = _fallback_delta_summary(story)
+
+    briefings = {
+        story["canonical_label"]: briefing_payloads[story["canonical_label"]]["briefing"]
+        for story in to_brief
+    }
+    deltas = {
+        story["canonical_label"]: briefing_payloads[story["canonical_label"]]["delta_summary"]
+        for story in to_brief
+    }
+    _remember_story_briefings(to_brief, briefings, deltas)
 
     return {
         "generated_at": datetime.now(),
@@ -345,6 +402,7 @@ def build_briefing_package(tracked, n=3, global_n=10):
         "sections": sections,
         "display_stories": to_brief,
         "briefings": briefings,
+        "deltas": deltas,
     }
 
 
@@ -362,6 +420,7 @@ def build_briefing_markdown(tracked, n=3, global_n=10, package=None):
 
     sections = package["sections"]
     briefings = package["briefings"]
+    deltas = package.get("deltas", {})
     ts = package["generated_at"].strftime("%Y-%m-%d %H:%M")
     lines = [
         "# Top Developments",
@@ -380,9 +439,12 @@ def build_briefing_markdown(tracked, n=3, global_n=10, package=None):
             importance = round(s["importance_avg"], 1)
             sources    = s["source_count"]
             reported   = _latest_reported_at(s["articles"])
+            delta      = str(deltas.get(label, "")).strip() or _fallback_delta_summary(s)
             lines += [
                 f"## {i}. {icon} {label}",
                 f"_{_theme_summary(s)} — importance {importance} — {sources} {'sources' if sources > 1 else 'source'} — latest reported {reported}_",
+                "",
+                f"**What changed today:** {delta}",
                 "",
                 briefings.get(label, ""),
                 "",

@@ -62,6 +62,7 @@ def test_briefing_includes_latest_reported_time_and_source_urls(monkeypatch):
     }])
 
     assert "latest reported 2026-04-18 12:30 UTC" in markdown
+    assert "**What changed today:** First detected today." in markdown
     assert "Sources:" in markdown
     assert "[Example development](https://example.com/story)" in markdown
 
@@ -93,7 +94,9 @@ def test_write_top10_writes_public_briefing_markdown(tmp_path, monkeypatch):
     assert out.parent == tmp_path / "briefings"
     assert out.name.startswith("briefing_")
     assert out.suffix == ".md"
-    assert "Briefing text." in out.read_text(encoding="utf-8")
+    text = out.read_text(encoding="utf-8")
+    assert "Briefing text." in text
+    assert "**What changed today:** First detected today." in text
 
 
 def test_briefing_retries_missing_summary(monkeypatch):
@@ -122,7 +125,12 @@ def test_briefing_remembers_generated_story_summary(monkeypatch):
     monkeypatch.setattr(
         top10,
         "_get_briefings",
-        lambda stories: {"Example Story": "Generated briefing."},
+        lambda stories: {
+            "Example Story": {
+                "briefing": "Generated briefing.",
+                "delta_summary": "New reporting clarified the policy impact.",
+            }
+        },
     )
     monkeypatch.setattr(top10, "save_observation_memory", lambda updates: memories.extend(updates))
 
@@ -132,10 +140,11 @@ def test_briefing_remembers_generated_story_summary(monkeypatch):
     markdown = build_briefing_markdown([article])
 
     assert "Generated briefing." in markdown
+    assert "**What changed today:** New reporting clarified the policy impact." in markdown
     assert memories == [{
         "observation_id": 42,
         "summary": "Generated briefing.",
-        "delta_summary": "Today's reporting: Example Story title",
+        "delta_summary": "New reporting clarified the policy impact.",
     }]
 
 
@@ -143,7 +152,11 @@ def test_get_briefings_sends_previous_context(monkeypatch):
     captured = {}
 
     class Message:
-        content = '{"briefings":[{"canonical_label":"Example Story","briefing":"Briefing text."}]}'
+        content = (
+            '{"briefings":[{"canonical_label":"Example Story",'
+            '"delta_summary":"Today added a concrete deadline.",'
+            '"briefing":"Briefing text."}]}'
+        )
 
     class Choice:
         message = Message()
@@ -181,7 +194,12 @@ def test_get_briefings_sends_previous_context(monkeypatch):
         }],
     }])
 
-    assert result == {"Example Story": "Briefing text."}
+    assert result == {
+        "Example Story": {
+            "briefing": "Briefing text.",
+            "delta_summary": "Today added a concrete deadline.",
+        }
+    }
     assert captured["items"][0]["previous_context"]["summary"] == "Earlier summary."
     assert captured["items"][0]["previous_context"]["recent_articles"][0]["title"] == "Older title"
 
@@ -194,6 +212,7 @@ def test_briefing_uses_fallback_when_summary_stays_missing(monkeypatch):
     ])
 
     assert "Missing Story is included based on 1 source" in markdown
+    assert "**What changed today:** First detected today." in markdown
     assert "The lead item is from Example News" in markdown
     assert "\n\n\nSources:" not in markdown
 

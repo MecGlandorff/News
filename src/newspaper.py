@@ -84,7 +84,11 @@ def build_newspaper_pdf(package):
     for section in sections:
         layout.add_section(section["title"], section["description"])
         for story in section["stories"]:
-            layout.add_story(story, briefings.get(story["canonical_label"], ""))
+            layout.add_story(
+                story,
+                briefings.get(story["canonical_label"], ""),
+                package.get("deltas", {}).get(story["canonical_label"], ""),
+            )
     layout.finish()
     return doc
 
@@ -143,9 +147,9 @@ class _NewspaperLayout:
             self.y -= 8
         self.y -= 5
 
-    def add_story(self, story, briefing):
+    def add_story(self, story, briefing, delta_summary=""):
         location = infer_story_location(story)
-        body = _story_body(story, briefing)
+        body = _story_body(story, briefing, delta_summary)
         source_line = _source_summary(story)
         meta = _meta_line(story, location)
         title_lines = _wrap_text(story["canonical_label"], 13, self.column_width - MAP_WIDTH - 14, "serif-bold")
@@ -232,8 +236,11 @@ def _story_label(story):
     return "CONTINUING STORY"
 
 
-def _story_body(story, briefing):
+def _story_body(story, briefing, delta_summary=""):
     parts = []
+    delta_summary = str(delta_summary or "").strip()
+    if delta_summary:
+        parts.append(f"What changed today: {delta_summary}")
     if story.get("trend") != "new":
         previous = _previous_context_line(story)
         if previous:
