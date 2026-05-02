@@ -4,6 +4,8 @@ import time
 import hashlib
 import requests
 from bs4 import BeautifulSoup
+from datetime import date
+from email.utils import parsedate_to_datetime
 from requests.adapters import HTTPAdapter
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from urllib3.util.retry import Retry
@@ -100,6 +102,26 @@ def _article_id(url):
     return hashlib.sha256(_normalize_url(url).encode("utf-8")).hexdigest()[:16]
 
 
+def _parse_published_at(value):
+    try:
+        parsed = parsedate_to_datetime(value)
+    except Exception:
+        return None
+    if parsed is None:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.date()
+    return parsed.astimezone().date()
+
+
+def _published_on_target_date(value, target_date):
+    if target_date is None:
+        return True
+    expected = date.fromisoformat(str(target_date))
+    published = _parse_published_at(value)
+    return published == expected
+
+
 def _extract_text(url, session=None):
     session = session or _session()
     resp = session.get(url, timeout=10)
@@ -113,13 +135,14 @@ def _extract_text(url, session=None):
     return re.sub(r"\n{3,}", "\n\n", body.get_text(separator="\n")).strip()
 
 
-def scrape_all(sources=None, max_per_source=None, fetch_article_text=FETCH_ARTICLE_TEXT):
+def scrape_all(sources=None, max_per_source=None, fetch_article_text=FETCH_ARTICLE_TEXT, target_date=None):
     sources = sources or SOURCES
     if max_per_source is None:
         max_per_source = MAX_ARTICLES_PER_SOURCE
 
     articles = []
     seen_urls = set()
+    skipped_outside_date = 0
     session = _session()
 
     for source_name, lang, rss_url in sources:
@@ -132,7 +155,15 @@ def scrape_all(sources=None, max_per_source=None, fetch_article_text=FETCH_ARTIC
             print(f"  ERR feed: {e}", flush=True)
             continue
 
-        items = feed_items if max_per_source is None else feed_items[:max_per_source]
+        items = []
+        for item in feed_items:
+            if not _published_on_target_date(item.get("published_at"), target_date):
+                skipped_outside_date += 1
+                continue
+            items.append(item)
+            if max_per_source is not None and len(items) >= max_per_source:
+                break
+
         for item in items:
             normalized_url = _normalize_url(item["url"])
             if normalized_url in seen_urls:
@@ -158,5 +189,7 @@ def scrape_all(sources=None, max_per_source=None, fetch_article_text=FETCH_ARTIC
             print(f"  [{article_id}] {item['title'][:70]}", flush=True)
             time.sleep(DELAY)
 
+    if target_date is not None:
+        print(f"Skipped {skipped_outside_date} feed items outside {target_date} or without a usable timestamp", flush=True)
     print(f"\nTotal: {len(articles)} articles", flush=True)
     return articles

@@ -15,6 +15,7 @@ def _args(**overrides):
         "db_off": False,
         "top_developments": 5,
         "fetch_article_text": False,
+        "show_evidence": False,
         "log_level": "INFO",
     }
     values.update(overrides)
@@ -64,9 +65,12 @@ def test_normal_run_uses_configured_database_paths(tmp_path, monkeypatch):
     monkeypatch.setattr(tracker, "DATA_DIR", real_daily)
     monkeypatch.setattr(run, "parse_args", lambda: _args(db_off=False))
     monkeypatch.setattr(run, "require_openai_api_key", lambda: None)
-    monkeypatch.setattr(run, "scrape_all", lambda **kwargs: [{"id": "article-1"}])
 
     seen = {}
+
+    def fake_scrape(**kwargs):
+        seen["scrape_kwargs"] = kwargs
+        return [{"id": "article-1"}]
 
     def fake_classify(articles):
         seen["article_cache_db"] = article_cache.DB_PATH
@@ -76,6 +80,7 @@ def test_normal_run_uses_configured_database_paths(tmp_path, monkeypatch):
         seen["tracker_db"] = tracker.DB_PATH
         return []
 
+    monkeypatch.setattr(run, "scrape_all", fake_scrape)
     monkeypatch.setattr(run, "classify_articles", fake_classify)
     monkeypatch.setattr(run, "track", fake_track)
 
@@ -83,3 +88,4 @@ def test_normal_run_uses_configured_database_paths(tmp_path, monkeypatch):
 
     assert seen["article_cache_db"] == real_db
     assert seen["tracker_db"] == real_db
+    assert seen["scrape_kwargs"]["target_date"] == "2026-04-28"

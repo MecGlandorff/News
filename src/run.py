@@ -1,10 +1,13 @@
 import argparse
 from contextlib import contextmanager, nullcontext
+from datetime import date
 import logging
 import tempfile
 from pathlib import Path
 
 import src.article_cache as article_cache
+import src.claims as claims
+from src.claims import extract_and_save_claims
 from src.classifier import classify_articles
 from src.digest import write_digest
 from src.llm import require_openai_api_key
@@ -18,7 +21,7 @@ from src.tracker import track
 def parse_args():
     parser = argparse.ArgumentParser(description="Run the news scraper pipeline.")
     parser.add_argument("--max-per-source", type=int, default=None)
-    parser.add_argument("--today", default=None, help="Override tracking date as YYYY-MM-DD")
+    parser.add_argument("--today", "--date", dest="today", default=None, help="Override tracking date as YYYY-MM-DD")
     parser.add_argument("--skip-digest", action="store_true")
     parser.add_argument("--skip-briefing", action="store_true")
     parser.add_argument("--skip-pdf", action="store_true")
@@ -36,6 +39,7 @@ def parse_args():
         help="Number of lead stories in the briefing, clamped to 3-8",
     )
     parser.add_argument("--fetch-article-text", action="store_true", help="Fetch full article pages in addition to RSS metadata")
+    parser.add_argument("--show-evidence", action="store_true", help="Extract claims and append evidence spans to briefing")
     parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
     return parser.parse_args()
 
@@ -46,6 +50,7 @@ def temporary_database_paths():
     original_article_cache_db = article_cache.DB_PATH
     original_tracker_db = tracker.DB_PATH
     original_tracker_data_dir = tracker.DATA_DIR
+    original_claims_db = claims.DB_PATH
 
     with tempfile.TemporaryDirectory(prefix="news-db-off-") as tmp:
         tmp_path = Path(tmp)
@@ -53,6 +58,7 @@ def temporary_database_paths():
         article_cache.DB_PATH = temp_db
         tracker.DB_PATH = temp_db
         tracker.DATA_DIR = tmp_path / "daily"
+        claims.DB_PATH = temp_db
         print(f"DB off: using temporary database at {temp_db}")
         try:
             yield
@@ -60,6 +66,7 @@ def temporary_database_paths():
             article_cache.DB_PATH = original_article_cache_db
             tracker.DB_PATH = original_tracker_db
             tracker.DATA_DIR = original_tracker_data_dir
+            claims.DB_PATH = original_claims_db
 
 
 def main():
@@ -74,18 +81,26 @@ def main():
 
     db_context = temporary_database_paths() if args.db_off else nullcontext()
     with db_context:
-        articles = scrape_all(max_per_source=args.max_per_source, fetch_article_text=args.fetch_article_text)
+        run_date = args.today or str(date.today())
+        articles = scrape_all(
+            max_per_source=args.max_per_source,
+            fetch_article_text=args.fetch_article_text,
+            target_date=run_date,
+        )
         classified = classify_articles(articles)
-        tracked = track(classified, today=args.today)
+        tracked = track(classified, today=run_date)
+
+        if args.show_evidence:
+            extract_and_save_claims(tracked)
 
         outputs = []
         if not args.skip_digest:
             outputs.append(write_digest(tracked))
         briefing_package = None
         if not args.skip_briefing or not args.skip_pdf:
-            briefing_package = build_briefing_package(tracked, n=args.top_developments)
+            briefing_package = build_briefing_package(tracked, n=args.top_developments, include_evidence=args.show_evidence)
         if not args.skip_briefing:
-            outputs.append(write_top10(tracked, n=args.top_developments, package=briefing_package))
+            outputs.append(write_top10(tracked, n=args.top_developments, package=briefing_package, show_evidence=args.show_evidence))
         if not args.skip_pdf:
             outputs.append(write_newspaper_pdf(tracked, n=args.top_developments, package=briefing_package))
 

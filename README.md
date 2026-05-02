@@ -1,36 +1,54 @@
-# Daily News Intelligence Briefing
+# News
 
-AI-assisted news pipeline that ingests RSS feeds, groups related coverage into ongoing stories, remembers story context across days, and publishes daily Markdown briefings plus newspaper-style PDFs.
+A local-first AI news intelligence prototype that turns noisy RSS feeds into source-grounded, evolving story memory.
 
-This is not just a summarizer. The pipeline tracks whether stories are new, developing, steady, or cooling, then uses that continuity to produce more useful daily briefings.
+Most AI news tools summarize articles.
+This project tracks stories.
+
+It ingests RSS coverage, classifies articles, links them into continuing story arcs, extracts source-grounded claims, remembers what changed across runs, and publishes daily Markdown briefings plus newspaper-style PDFs.
 
 ## Latest Outputs
 
-- [Latest Markdown briefing](briefings/briefing_20260430_2330.md)
-- [Latest newspaper PDF](newspapers/newspaper_20260430_2330.pdf)
+- [Latest Markdown briefing](briefings/briefing_20260502_2244.md)
+- [Latest newspaper PDF](newspapers/newspaper_20260502_2244.pdf)
+- [Sample intelligence brief](sample_outputs/intelligence_brief.md)
 - [Briefing archive](briefings/)
 - [Newspaper archive](newspapers/)
 
 ## Why It Is Interesting
 
-- **Story continuity:** related articles are consolidated into canonical ongoing stories and matched against recent history.
-- **Coverage movement:** stories are tagged as new, increasing, steady, or decreasing based on source pickup over time.
-- **Briefing memory:** generated story summaries are saved back to the local story database, so future briefings can use prior context.
-- **Source-aware synthesis:** each briefing includes source links, reported timestamps, importance, theme, and source count.
-- **Dual publishing:** the same briefing package renders to Markdown and a custom newspaper-style PDF.
-- **Local-first operation:** runtime state lives in SQLite and ignored local folders; public outputs can be committed separately.
+- **Story memory:** articles are grouped into canonical stories and matched against recent history.
+- **Daily deltas:** each story surfaces what changed today, not just what happened.
+- **Claim extraction:** articles can be converted into atomic claims with evidence spans via `--show-evidence`.
+- **Source-aware synthesis:** briefings include source links, reported timestamps, source counts, importance, and trend signals.
+- **Local-first operation:** SQLite, local files, Markdown, and PDFs; no hosted service or heavy infrastructure.
+- **Cost discipline:** high-volume calls use `gpt-5.4-mini`; stronger models are reserved for story reasoning and final prose.
 
 ## Pipeline
 
 ```text
-RSS feeds
-  -> article normalization and caching
-  -> theme, story, and importance classification
-  -> same-day story consolidation
-  -> cross-day story matching
-  -> briefing package with trend and previous context
-  -> Markdown briefing + newspaper PDF
+Source
+  -> Article
+  -> Claim
+  -> Story Arc
+  -> Story Delta
+  -> Briefing
 ```
+
+Current implementation:
+
+```text
+RSS feeds
+  -> scrape, normalize URLs, deduplicate
+  -> classify theme, story_label, importance
+  -> consolidate same-day story labels
+  -> match stories against recent memory
+  -> optionally extract claims and evidence spans
+  -> generate story deltas and briefing prose
+  -> write Markdown briefing and newspaper PDF
+```
+
+See [docs/architecture.md](docs/architecture.md) for the database model and pipeline details.
 
 ## Story Intelligence
 
@@ -39,27 +57,31 @@ The tracker keeps a compact local memory of each story:
 - canonical story label
 - first seen and last seen dates
 - daily source count and average importance
-- trend signal based on previous coverage
+- trend signal: new, increasing, steady, or decreasing
 - article links and observations for each tracked date
 - generated summary and delta memory for future context
 
-Briefings surface that memory as an explicit delta line:
+Briefings surface that memory as an explicit delta:
 
 ```md
 **What changed today:** Police classified the Golders Green stabbing as terrorism, shifting the story from a local attack to a national security and antisemitism concern.
 ```
 
-That makes each briefing read less like a daily snapshot and more like an intelligence update.
+That makes the output read less like a daily article summary and more like an intelligence update.
 
-## What It Does
+## Source Grounding
 
-- Fetches articles from configured RSS feeds.
-- Classifies each article by theme, story label, and importance using the OpenAI API.
-- Tracks ongoing stories in a local SQLite database.
-- Writes public briefing Markdown files to `briefings/`.
-- Writes public newspaper PDF files to `newspapers/`.
-- Writes local digest Markdown files to `output/`.
-- Caches article classifications to reduce repeated OpenAI calls on reruns.
+The claim layer is the bridge from article text to auditable briefing output.
+
+With `--show-evidence`, the pipeline extracts structured claims:
+
+- `claim_text`
+- `claim_type`
+- `entities`
+- `evidence_span`
+- `confidence`
+
+The near-term strategy is intentionally cost-conscious: broad claim extraction uses RSS title/description by default and is cached by input content hash. A future pass should use full article text selectively for high-value evidence work when `--fetch-article-text` is enabled. Full-text claim extraction for every article is deferred until cost and latency observability exists.
 
 ## Setup
 
@@ -92,9 +114,9 @@ Or set the key for your current shell session:
 export OPENAI_API_KEY="your-api-key"
 ```
 
-`OPENAI_API_KEY` is required for classification, story matching, and briefing generation. Running the pipeline makes OpenAI API calls and may incur API costs.
+`OPENAI_API_KEY` is required for classification, story tracking, claim extraction when enabled, and briefing generation. Running the pipeline makes OpenAI API calls and may incur API costs.
 
-Model choices and story lookback are configured in `src/config.py`.
+Model choices and story lookback are configured in [src/config.py](src/config.py).
 
 ## Usage
 
@@ -110,16 +132,30 @@ Useful options:
 python -m src.run --max-per-source 5
 python -m src.run --skip-briefing
 python -m src.run --skip-pdf
+python -m src.run --skip-digest
 python -m src.run --db-off
-python -m src.run --today 2026-04-18
+python -m src.run --today 2026-05-02
+python -m src.run --top-developments 5
 ```
 
-By default, the scraper reads every item exposed by each configured RSS feed. Use `--max-per-source` to cap items per feed.
+Append extracted claim evidence spans to the Markdown briefing:
 
-Full article-page fetching is off by default. To fetch article body text in addition to RSS metadata:
+```bash
+python -m src.run --show-evidence
+```
+
+Fetch full article-page text in addition to RSS metadata:
 
 ```bash
 python -m src.run --fetch-article-text
+```
+
+Current note: the scraper can fetch full article text, but claim extraction still uses title/description until selective full-text evidence extraction is wired in.
+
+Use both once selective full-text evidence extraction lands and you want higher-quality evidence for the current run:
+
+```bash
+python -m src.run --show-evidence --fetch-article-text
 ```
 
 Preview the newspaper PDF design without scraping or API calls:
@@ -127,8 +163,6 @@ Preview the newspaper PDF design without scraping or API calls:
 ```bash
 python scripts/preview_newspaper.py
 ```
-
-The preview PDF is written to `test_output/preview/newspaper_preview.pdf`.
 
 For a cheap real newspaper test that does not touch the normal story database:
 
@@ -146,12 +180,23 @@ Generated runtime data is intentionally ignored by git:
 - `output/`: local generated Markdown digests and older scratch outputs.
 - `logs/`: local logs if you run scheduled jobs.
 
-Public briefing files in `briefings/` are intended to be committed and published with the GitHub repository.
-Public newspaper PDF files in `newspapers/` are intended to be committed and clicked from the GitHub repository.
+Public briefing files in `briefings/` are intended to be committed and published with the repository.
+Public newspaper PDF files in `newspapers/` are intended to be committed and clicked from the repository.
 
-## Limitations
+## Documentation
+
+- [Architecture](docs/architecture.md)
+- [Model behavior](docs/model-behavior.md)
+- [Evaluation plan](docs/evaluation.md)
+- [Failure modes](docs/failure-modes.md)
+- [Architecture decision records](docs/adr/)
+
+## Current Limitations
 
 - RSS feed availability and formatting vary by source.
-- LLM classifications and story labels can be imperfect.
-- Cached story labels are reused for unchanged articles, then consolidated by the tracker.
+- Story matching can over-merge distinct but similar stories.
+- Claim extraction is cached by input content hash and caches zero-claim results, but it still uses RSS title/description rather than fetched full article text.
+- Claim extraction does not yet consume fetched full article text.
+- Source reliability metadata and source agreement detection are planned for Phase 3.
+- Cost and latency tracking are planned but not implemented yet.
 - The project stores data locally and does not include a hosted UI.

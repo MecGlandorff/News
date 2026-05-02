@@ -52,3 +52,7 @@ coverage/
 
 # Cache
 .cache/
+
+# Building tool docs
+.claude
+AGENTS.md

@@ -84,6 +84,69 @@ def test_scrape_all_still_honors_max_per_source(monkeypatch):
     assert len(articles) == 5
 
 
+def test_scrape_all_filters_to_target_date(monkeypatch):
+    def fake_parse_rss(url, session=None):
+        return [
+            {
+                "title": "Today",
+                "url": "https://example.com/today",
+                "description": "Description",
+                "published_at": "Sat, 18 Apr 2026 10:00:00 GMT",
+            },
+            {
+                "title": "Yesterday",
+                "url": "https://example.com/yesterday",
+                "description": "Description",
+                "published_at": "Fri, 17 Apr 2026 10:00:00 GMT",
+            },
+            {
+                "title": "Undated",
+                "url": "https://example.com/undated",
+                "description": "Description",
+                "published_at": "",
+            },
+        ]
+
+    monkeypatch.setattr(scraper, "_parse_rss", fake_parse_rss)
+    monkeypatch.setattr(scraper.time, "sleep", lambda delay: None)
+
+    articles = scraper.scrape_all(
+        sources=[("Example", "en", "https://example.com/rss")],
+        target_date="2026-04-18",
+    )
+
+    assert [article["title"] for article in articles] == ["Today"]
+
+
+def test_scrape_all_applies_max_per_source_after_date_filter(monkeypatch):
+    def fake_parse_rss(url, session=None):
+        return [
+            {
+                "title": "Stale",
+                "url": "https://example.com/stale",
+                "description": "Description",
+                "published_at": "Fri, 17 Apr 2026 10:00:00 GMT",
+            },
+            {
+                "title": "Today",
+                "url": "https://example.com/today",
+                "description": "Description",
+                "published_at": "Sat, 18 Apr 2026 10:00:00 GMT",
+            },
+        ]
+
+    monkeypatch.setattr(scraper, "_parse_rss", fake_parse_rss)
+    monkeypatch.setattr(scraper.time, "sleep", lambda delay: None)
+
+    articles = scraper.scrape_all(
+        sources=[("Example", "en", "https://example.com/rss")],
+        max_per_source=1,
+        target_date="2026-04-18",
+    )
+
+    assert [article["title"] for article in articles] == ["Today"]
+
+
 def test_article_id_is_stable_for_tracking_query_params():
     plain = scraper._article_id("https://Example.com/story?b=2&utm_source=newsletter")
     tracked = scraper._article_id("https://example.com/story/?fbclid=abc&b=2")
