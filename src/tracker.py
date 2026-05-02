@@ -16,17 +16,17 @@ For each group, pick the best canonical label (clear, concise, in English).
 Return a JSON object with key "groups": array of {canonical_label, labels} where labels is the list of today's labels that belong to this group.
 Labels that stand alone still appear as a group of one."""
 
-MATCH_PROMPT = """You are matching today's news story labels to yesterday's canonical story labels.
+MATCH_PROMPT = """You are matching today's news story labels to recent canonical story labels.
 
 For each label in today's list, return either:
-- The matching canonical label from yesterday (if it's the same ongoing story)
+- The matching canonical label from recent history (if it's the same ongoing story)
 - "NEW" (if it's a genuinely new story)
 
 Be generous with matching — slight wording differences for the same story should match.
 Different stories (even similar topics) should not match.
 
 Return a JSON object with key "matches": array of {today_label, canonical_label}.
-canonical_label is either the exact string from yesterday's list or "NEW"."""
+canonical_label is either the exact string from the recent-history list or "NEW"."""
 
 
 def _ensure_column(conn, table, column, definition):
@@ -101,9 +101,12 @@ def _get_recent_stories(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
         JOIN story_daily sd ON s.story_id = sd.story_id
         WHERE sd.date >= ? AND sd.date < ?
         GROUP BY s.story_id, s.canonical_label
-        ORDER BY last_daily DESC
+        ORDER BY last_daily DESC, s.story_id DESC
     """, (start, today)).fetchall()
-    return {r["canonical_label"]: r["story_id"] for r in rows}
+    recent = {}
+    for row in rows:
+        recent.setdefault(row["canonical_label"], row["story_id"])
+    return recent
 
 
 def _get_previous_story_context(conn, story_id, today, article_limit=3):

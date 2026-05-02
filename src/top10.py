@@ -39,6 +39,7 @@ For each story, write 2-3 solid paragraphs in English (150-250 words) that:
 - Use the supplied reported_at timestamps to keep chronology clear where timing matters
 - If previous_context is supplied, use it only for background and continuity. Today's articles are the authority for what is new today; do not present previous context as fresh reporting
 - Do not invent source URLs; URLs are supplied separately in the output
+- If structured claims are supplied, use them as the primary factual grounding for the briefing and delta_summary. Do not assert factual details that are unsupported by either supplied claims or today's article metadata
 
 For each story, also write one delta_summary sentence that answers: what is materially new in today's reporting compared with previous_context?
 - If previous_context is supplied, compare today's articles against it and mention only the new turn, escalation, clarification, or lack of major change
@@ -95,6 +96,28 @@ def _source_lines(articles):
     return lines
 
 
+def _evidence_lines(story_id):
+    """Return formatted evidence lines for a story, or [] if none."""
+    if story_id is None:
+        return []
+    from src.claims import get_claims_for_story
+    claims = get_claims_for_story(story_id)
+    if not claims:
+        return []
+    lines = ["", "### Evidence"]
+    for c in claims[:8]:
+        span = c["evidence_span"] or c["claim_text"]
+        pct  = int((c["confidence"] or 0.5) * 100)
+        source = c.get("source") or "Unknown source"
+        url = c.get("url")
+        if url:
+            source_ref = f"[{source}]({url})"
+        else:
+            source_ref = source
+        lines.append(f'- `{c["claim_type"]}` — {source_ref} — "{span}" _({pct}%)_')
+    return lines
+
+
 def _aggregate(tracked):
     """Group tracked articles by canonical story, compute scores and theme metadata."""
     stories = defaultdict(lambda: {
@@ -138,6 +161,7 @@ def _aggregate(tracked):
             "importance_avg":  data["importance_sum"] / len(articles),
             "previous_context": data["previous_context"] or {},
             "observation_ids": sorted(data["observation_ids"]),
+            "story_id":        articles[0].get("story_id"),
             "articles":        articles,
         })
     return result
@@ -183,7 +207,25 @@ def _section_candidates(stories, predicate, used_labels, limit):
     return sorted(candidates, key=_score, reverse=True)[:limit]
 
 
-def _get_briefings(stories):
+def _claims_for_prompt(story):
+    from src.claims import get_claims_for_story
+    article_by_id = {str(article.get("id")): article for article in story.get("articles", [])}
+    claims = []
+    for claim in get_claims_for_story(story.get("story_id"))[:12]:
+        article = article_by_id.get(str(claim.get("article_id")), {})
+        claims.append({
+            "claim_text": claim.get("claim_text", ""),
+            "claim_type": claim.get("claim_type", ""),
+            "evidence_span": claim.get("evidence_span", ""),
+            "confidence": claim.get("confidence"),
+            "source": claim.get("source") or article.get("source", ""),
+            "article_title": claim.get("article_title") or article.get("title", ""),
+            "url": claim.get("url") or article.get("url", ""),
+        })
+    return claims
+
+
+def _get_briefings(stories, include_evidence=False):
     """One GPT call for all stories across all sections."""
     if not stories:
         return {}
@@ -207,6 +249,8 @@ def _get_briefings(stories):
         }
         if s.get("previous_context"):
             item["previous_context"] = s["previous_context"]
+        if include_evidence:
+            item["claims"] = _claims_for_prompt(s)
         items.append(item)
 
     response = client.chat.completions.create(
@@ -320,7 +364,7 @@ def _fallback_briefing(story):
     )
 
 
-def build_briefing_package(tracked, n=3, global_n=10):
+def build_briefing_package(tracked, n=3, global_n=10, include_evidence=False):
     if not tracked:
         return {
             "generated_at": datetime.now(),
@@ -374,10 +418,16 @@ def build_briefing_package(tracked, n=3, global_n=10):
         if s["canonical_label"] not in seen:
             seen.add(s["canonical_label"])
             to_brief.append(s)
-    briefing_payloads = _normalize_briefing_payloads(_get_briefings(to_brief))
+    if include_evidence:
+        briefing_payloads = _normalize_briefing_payloads(_get_briefings(to_brief, include_evidence=True))
+    else:
+        briefing_payloads = _normalize_briefing_payloads(_get_briefings(to_brief))
     missing = _missing_briefing_stories(to_brief, briefing_payloads)
     if missing:
-        _merge_briefing_payloads(briefing_payloads, _get_briefings(missing))
+        if include_evidence:
+            _merge_briefing_payloads(briefing_payloads, _get_briefings(missing, include_evidence=True))
+        else:
+            _merge_briefing_payloads(briefing_payloads, _get_briefings(missing))
     for story in to_brief:
         label = story["canonical_label"]
         payload = briefing_payloads.setdefault(label, {"briefing": "", "delta_summary": ""})
@@ -406,8 +456,8 @@ def build_briefing_package(tracked, n=3, global_n=10):
     }
 
 
-def build_briefing_markdown(tracked, n=3, global_n=10, package=None):
-    package = package or build_briefing_package(tracked, n=n, global_n=global_n)
+def build_briefing_markdown(tracked, n=3, global_n=10, package=None, show_evidence=False):
+    package = package or build_briefing_package(tracked, n=n, global_n=global_n, include_evidence=show_evidence)
 
     if not package["stories"]:
         ts = package["generated_at"].strftime("%Y-%m-%d %H:%M")
@@ -440,7 +490,7 @@ def build_briefing_markdown(tracked, n=3, global_n=10, package=None):
             sources    = s["source_count"]
             reported   = _latest_reported_at(s["articles"])
             delta      = str(deltas.get(label, "")).strip() or _fallback_delta_summary(s)
-            lines += [
+            story_lines = [
                 f"## {i}. {icon} {label}",
                 f"_{_theme_summary(s)} — importance {importance} — {sources} {'sources' if sources > 1 else 'source'} — latest reported {reported}_",
                 "",
@@ -449,15 +499,18 @@ def build_briefing_markdown(tracked, n=3, global_n=10, package=None):
                 briefings.get(label, ""),
                 "",
                 *_source_lines(s["articles"]),
-                "",
             ]
+            if show_evidence:
+                story_lines += _evidence_lines(s.get("story_id"))
+            story_lines.append("")
+            lines += story_lines
 
     return "\n".join(lines)
 
 
-def write_top10(tracked, n=3, package=None):
+def write_top10(tracked, n=3, package=None, show_evidence=False):
     BRIEFINGS_DIR.mkdir(exist_ok=True)
-    md  = build_briefing_markdown(tracked, n, package=package)
+    md  = build_briefing_markdown(tracked, n, package=package, show_evidence=show_evidence)
     out = BRIEFINGS_DIR / f"briefing_{datetime.now().strftime('%Y%m%d_%H%M')}.md"
     out.write_text(md, encoding="utf-8")
     print(f"Written: {out}")

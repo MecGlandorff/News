@@ -133,3 +133,37 @@ def test_trend_uses_latest_prior_day(tmp_path, monkeypatch):
 
     assert tracker._trend(story_id, 1, conn, "2026-04-18") == "down"
     conn.close()
+
+
+def test_recent_story_lookup_uses_newest_duplicate_label(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    monkeypatch.setattr(tracker, "DB_PATH", db_path)
+    conn = tracker._get_db()
+
+    old = conn.execute(
+        "INSERT INTO stories (canonical_label, theme, first_seen, last_seen) VALUES (?, ?, ?, ?)",
+        ("Duplicate Label", "Tech", "2026-04-18", "2026-04-18"),
+    ).lastrowid
+    new = conn.execute(
+        "INSERT INTO stories (canonical_label, theme, first_seen, last_seen) VALUES (?, ?, ?, ?)",
+        ("Duplicate Label", "Tech", "2026-04-20", "2026-04-20"),
+    ).lastrowid
+    conn.execute(
+        """
+        INSERT INTO story_daily (story_id, date, source_count, importance_avg, labels_seen)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (old, "2026-04-18", 1, 3.0, "[]"),
+    )
+    conn.execute(
+        """
+        INSERT INTO story_daily (story_id, date, source_count, importance_avg, labels_seen)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (new, "2026-04-20", 1, 3.0, "[]"),
+    )
+
+    recent = tracker._get_recent_stories(conn, "2026-04-21")
+    conn.close()
+
+    assert recent["Duplicate Label"] == new

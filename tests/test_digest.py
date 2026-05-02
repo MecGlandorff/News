@@ -1,7 +1,9 @@
 import json
 
+import src.claims as claims_module
 from src.digest import build_themed_markdown
 import src.top10 as top10
+from src.claims import extract_and_save_claims
 from src.top10 import build_briefing_markdown, write_top10
 
 
@@ -202,6 +204,80 @@ def test_get_briefings_sends_previous_context(monkeypatch):
     }
     assert captured["items"][0]["previous_context"]["summary"] == "Earlier summary."
     assert captured["items"][0]["previous_context"]["recent_articles"][0]["title"] == "Older title"
+
+
+def test_get_briefings_sends_claims_when_evidence_enabled(tmp_path, monkeypatch):
+    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
+
+    article = _briefing_article(1, "Economy", "Example Story", 4)
+    article["story_id"] = 42
+
+    class ClaimMessage:
+        content = json.dumps({
+            "claims": [{
+                "claim_text": "Example Story has a concrete supported claim.",
+                "claim_type": "fact",
+                "entities": ["Example Story"],
+                "evidence_span": "Concrete supported claim.",
+                "confidence": 0.9,
+            }]
+        })
+
+    class ClaimChoice:
+        message = ClaimMessage()
+
+    class ClaimResponse:
+        choices = [ClaimChoice()]
+
+    class ClaimCompletions:
+        def create(self, **kwargs):
+            return ClaimResponse()
+
+    class ClaimChat:
+        completions = ClaimCompletions()
+
+    class ClaimClient:
+        chat = ClaimChat()
+
+    monkeypatch.setattr(claims_module, "get_openai_client", lambda: ClaimClient())
+    extract_and_save_claims([article])
+
+    captured = {}
+
+    class BriefingMessage:
+        content = (
+            '{"briefings":[{"canonical_label":"Example Story",'
+            '"delta_summary":"First detected today.",'
+            '"briefing":"Briefing text."}]}'
+        )
+
+    class BriefingChoice:
+        message = BriefingMessage()
+
+    class BriefingResponse:
+        choices = [BriefingChoice()]
+
+    class BriefingCompletions:
+        def create(self, **kwargs):
+            captured["items"] = json.loads(kwargs["messages"][1]["content"])
+            return BriefingResponse()
+
+    class BriefingChat:
+        completions = BriefingCompletions()
+
+    class BriefingClient:
+        chat = BriefingChat()
+
+    monkeypatch.setattr(top10, "get_openai_client", lambda: BriefingClient())
+
+    top10._get_briefings([{
+        "canonical_label": "Example Story",
+        "story_id": 42,
+        "articles": [article],
+    }], include_evidence=True)
+
+    assert captured["items"][0]["claims"][0]["claim_text"] == "Example Story has a concrete supported claim."
+    assert captured["items"][0]["claims"][0]["evidence_span"] == "Concrete supported claim."
 
 
 def test_briefing_uses_fallback_when_summary_stays_missing(monkeypatch):

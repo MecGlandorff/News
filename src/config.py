@@ -1,5 +1,6 @@
 CLASSIFIER_MODEL = "gpt-5.4-mini"
-TRACKER_MODEL = "gpt-5.5"
-BRIEFING_MODEL = "gpt-5.5"
+CLAIMS_MODEL     = "gpt-5.4-mini"
+TRACKER_MODEL    = "gpt-5.5"
+BRIEFING_MODEL   = "gpt-5.5"
 
 DEFAULT_LOOKBACK_DAYS = 14
