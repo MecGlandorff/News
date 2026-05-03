@@ -1,4 +1,5 @@
 import json
+import re
 import sqlite3
 from datetime import date, timedelta
 from pathlib import Path
@@ -22,11 +23,29 @@ For each label in today's list, return either:
 - The matching canonical label from recent history (if it's the same ongoing story)
 - "NEW" (if it's a genuinely new story)
 
-Be generous with matching — slight wording differences for the same story should match.
-Different stories (even similar topics) should not match.
+Be conservative: slight wording differences for the same real-world story should match, but broad topic similarity is not enough.
+Different stories, incidents, crashes, attacks, lawsuits, or accidents must not match merely because they share a category word.
 
 Return a JSON object with key "matches": array of {today_label, canonical_label}.
 canonical_label is either the exact string from the recent-history list or "NEW"."""
+
+LABEL_STOPWORDS = {
+    "a", "an", "and", "as", "at", "by", "for", "from", "in", "into",
+    "of", "on", "or", "over", "the", "to", "with",
+}
+GENERIC_EVENT_TOKENS = {
+    "accident", "arrest", "attack", "blast", "case", "charges", "charged",
+    "collapse", "collision", "crash", "crowd", "danger", "dangerous",
+    "death", "fire", "homicide", "incident", "injured", "injuries",
+    "injury", "killing", "lawsuit", "manslaughter", "murder", "poisoning",
+    "protest", "rescue", "riot", "safety", "shooting", "shooter",
+    "stabbing", "strike", "trial", "unrest", "violence", "wounded",
+}
+LABEL_TOKEN_ALIASES = {
+    "molen": "windmill",
+    "molenwiek": "windmill",
+    "wieken": "windmill",
+}
 
 
 def _ensure_column(conn, table, column, definition):
@@ -252,6 +271,62 @@ def _sync_story_dates(conn):
     """)
 
 
+def _label_tokens(label):
+    tokens = re.findall(r"[a-z0-9]+", str(label or "").casefold())
+    return {
+        LABEL_TOKEN_ALIASES.get(token, token)
+        for token in tokens
+        if len(token) > 1
+    }
+
+
+def _distinctive_label_tokens(label):
+    return _label_tokens(label) - LABEL_STOPWORDS - GENERIC_EVENT_TOKENS
+
+
+def _is_generic_event_label(label):
+    return bool(_label_tokens(label) & GENERIC_EVENT_TOKENS)
+
+
+def _labels_can_refer_to_same_story(left, right):
+    """Reject obvious false merges for generic incident/category labels.
+
+    LLM label matching is useful for paraphrases, but broad labels such as
+    "accident" or "shooting" are unsafe without a shared distinctive token.
+    A false negative creates a duplicate story; a false positive corrupts
+    story memory across days.
+    """
+    if str(left or "").strip().casefold() == str(right or "").strip().casefold():
+        return True
+    if not (_is_generic_event_label(left) and _is_generic_event_label(right)):
+        return True
+    return bool(_distinctive_label_tokens(left) & _distinctive_label_tokens(right))
+
+
+def _compatible_label_clusters(labels):
+    clusters = []
+    for label in labels:
+        placed = False
+        for cluster in clusters:
+            if all(_labels_can_refer_to_same_story(label, existing) for existing in cluster):
+                cluster.append(label)
+                placed = True
+                break
+        if not placed:
+            clusters.append([label])
+    return clusters
+
+
+def _canonical_for_cluster(canonical, cluster, split_group):
+    if not split_group:
+        return canonical
+    if canonical in cluster:
+        return canonical
+    if all(_labels_can_refer_to_same_story(canonical, label) for label in cluster):
+        return canonical
+    return cluster[0]
+
+
 def _consolidate_today(story_groups):
     """Merge story_labels that refer to the same event within today's batch."""
     labels = list(story_groups.keys())
@@ -282,10 +357,17 @@ def _consolidate_today(story_groups):
         labels = g.get("labels", [])
         if not canonical or not isinstance(labels, list):
             continue
-        for label in labels:
-            if label in story_groups:
+        valid_labels = [
+            label for label in labels
+            if isinstance(label, str) and label in story_groups
+        ]
+        clusters = _compatible_label_clusters(valid_labels)
+        split_group = len(clusters) > 1
+        for cluster in clusters:
+            cluster_canonical = _canonical_for_cluster(canonical, cluster, split_group)
+            for label in cluster:
                 grouped_labels.add(label)
-                consolidated[canonical].extend(story_groups[label])
+                consolidated[cluster_canonical].extend(story_groups[label])
 
     for label, articles in story_groups.items():
         if label not in grouped_labels:
@@ -320,8 +402,12 @@ def _match_labels(today_labels, yesterday_stories):
     for m in matches:
         if not isinstance(m, dict) or m.get("today_label") not in today_labels:
             continue
+        today_label = m["today_label"]
         canonical = m.get("canonical_label")
-        matched[m["today_label"]] = canonical if canonical in valid_yesterday else "NEW"
+        if canonical in valid_yesterday and _labels_can_refer_to_same_story(today_label, canonical):
+            matched[today_label] = canonical
+        else:
+            matched[today_label] = "NEW"
     for label in today_labels:
         matched.setdefault(label, "NEW")
     return matched

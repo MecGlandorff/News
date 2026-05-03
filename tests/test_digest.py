@@ -211,6 +211,7 @@ def test_get_briefings_sends_claims_when_evidence_enabled(tmp_path, monkeypatch)
 
     article = _briefing_article(1, "Economy", "Example Story", 4)
     article["story_id"] = 42
+    article["description"] = "Concrete supported claim."
 
     class ClaimMessage:
         content = json.dumps({
@@ -278,6 +279,23 @@ def test_get_briefings_sends_claims_when_evidence_enabled(tmp_path, monkeypatch)
 
     assert captured["items"][0]["claims"][0]["claim_text"] == "Example Story has a concrete supported claim."
     assert captured["items"][0]["claims"][0]["evidence_span"] == "Concrete supported claim."
+
+
+def test_evidence_lines_do_not_fallback_to_claim_text(monkeypatch):
+    monkeypatch.setattr(
+        claims_module,
+        "get_claims_for_story",
+        lambda story_id: [{
+            "claim_text": "Unsupported model wording.",
+            "claim_type": "fact",
+            "evidence_span": "",
+            "confidence": 0.9,
+            "source": "Example News",
+            "url": "https://example.com/story",
+        }],
+    )
+
+    assert top10._evidence_lines(42) == []
 
 
 def test_briefing_uses_fallback_when_summary_stays_missing(monkeypatch):

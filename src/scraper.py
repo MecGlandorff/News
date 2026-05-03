@@ -3,6 +3,7 @@ import re
 import time
 import hashlib
 import requests
+from collections import defaultdict
 from bs4 import BeautifulSoup
 from datetime import date
 from email.utils import parsedate_to_datetime
@@ -114,12 +115,23 @@ def _parse_published_at(value):
     return parsed.astimezone().date()
 
 
+def _published_date_filter_reason(value, target_date):
+    raw_value = str(value or "").strip()
+    if not raw_value:
+        return "missing_timestamp"
+    published = _parse_published_at(raw_value)
+    if published is None:
+        return "unparseable_timestamp"
+    expected = date.fromisoformat(str(target_date))
+    if published != expected:
+        return "outside_date"
+    return None
+
+
 def _published_on_target_date(value, target_date):
     if target_date is None:
         return True
-    expected = date.fromisoformat(str(target_date))
-    published = _parse_published_at(value)
-    return published == expected
+    return _published_date_filter_reason(value, target_date) is None
 
 
 def _extract_text(url, session=None):
@@ -143,6 +155,12 @@ def scrape_all(sources=None, max_per_source=None, fetch_article_text=FETCH_ARTIC
     articles = []
     seen_urls = set()
     skipped_outside_date = 0
+    skipped_missing_timestamp = 0
+    skipped_unparseable_timestamp = 0
+    timestamp_skips_by_source = defaultdict(lambda: {
+        "missing_timestamp": 0,
+        "unparseable_timestamp": 0,
+    })
     session = _session()
 
     for source_name, lang, rss_url in sources:
@@ -157,8 +175,20 @@ def scrape_all(sources=None, max_per_source=None, fetch_article_text=FETCH_ARTIC
 
         items = []
         for item in feed_items:
-            if not _published_on_target_date(item.get("published_at"), target_date):
-                skipped_outside_date += 1
+            filter_reason = (
+                _published_date_filter_reason(item.get("published_at"), target_date)
+                if target_date is not None
+                else None
+            )
+            if filter_reason:
+                if filter_reason == "outside_date":
+                    skipped_outside_date += 1
+                elif filter_reason == "missing_timestamp":
+                    skipped_missing_timestamp += 1
+                    timestamp_skips_by_source[source_name]["missing_timestamp"] += 1
+                elif filter_reason == "unparseable_timestamp":
+                    skipped_unparseable_timestamp += 1
+                    timestamp_skips_by_source[source_name]["unparseable_timestamp"] += 1
                 continue
             items.append(item)
             if max_per_source is not None and len(items) >= max_per_source:
@@ -190,6 +220,23 @@ def scrape_all(sources=None, max_per_source=None, fetch_article_text=FETCH_ARTIC
             time.sleep(DELAY)
 
     if target_date is not None:
-        print(f"Skipped {skipped_outside_date} feed items outside {target_date} or without a usable timestamp", flush=True)
+        print(f"Skipped {skipped_outside_date} feed items outside {target_date}", flush=True)
+        timestamp_skips = skipped_missing_timestamp + skipped_unparseable_timestamp
+        print(
+            "Skipped "
+            f"{timestamp_skips} feed items without a usable timestamp "
+            f"({skipped_missing_timestamp} missing, {skipped_unparseable_timestamp} unparseable)",
+            flush=True,
+        )
+        if timestamp_skips_by_source:
+            parts = []
+            for source, counts in sorted(timestamp_skips_by_source.items()):
+                total = counts["missing_timestamp"] + counts["unparseable_timestamp"]
+                parts.append(
+                    f"{source}: {total} "
+                    f"({counts['missing_timestamp']} missing, "
+                    f"{counts['unparseable_timestamp']} unparseable)"
+                )
+            print("Timestamp skips by source: " + "; ".join(parts), flush=True)
     print(f"\nTotal: {len(articles)} articles", flush=True)
     return articles

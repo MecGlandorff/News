@@ -9,7 +9,7 @@ from src.llm import get_openai_client, parse_json_object
 
 DB_PATH = Path("data/stories.db")
 
-CLAIMS_PROMPT_VERSION = "2026-05-02-v1"
+CLAIMS_PROMPT_VERSION = "2026-05-03-v1"
 CLAIM_TYPES = {"fact", "number", "quote", "prediction", "allegation", "background"}
 
 CLAIMS_PROMPT = """You are extracting atomic claims from a news article.
@@ -92,6 +92,17 @@ def _article_content_hash(content):
     return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
 
+def _normalize_for_span_match(text):
+    return re.sub(r"\s+", " ", text or "").strip().casefold()
+
+
+def _evidence_in_content(evidence_span, content):
+    normalized_span = _normalize_for_span_match(evidence_span)
+    if not normalized_span:
+        return False
+    return normalized_span in _normalize_for_span_match(content)
+
+
 def _has_cached_claims(article_id, story_id, content_hash, conn):
     row = conn.execute(
         """
@@ -149,38 +160,65 @@ def _call_llm(content):
     )
     payload = parse_json_object(response)
     claims = payload.get("claims")
-    return claims if isinstance(claims, list) else []
+    if not isinstance(claims, list):
+        raise ValueError('Model response must contain a "claims" list')
+    return claims
 
 
-def _coerce_claim_type(value):
-    claim_type = str(value or "fact").strip()
-    return claim_type if claim_type in CLAIM_TYPES else "fact"
+def _clean_string(value):
+    return value.strip() if isinstance(value, str) else ""
 
 
-def _coerce_confidence(value):
-    try:
-        confidence = float(value)
-    except (TypeError, ValueError):
-        confidence = 0.5
-    return min(max(confidence, 0.0), 1.0)
+def _validated_confidence(value):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    confidence = float(value)
+    if confidence < 0.0 or confidence > 1.0:
+        return None
+    return confidence
 
 
-def _replace_claims(article_id, story_id, content_hash, claims_data, conn):
+def _validated_claim(claim, content):
+    if not isinstance(claim, dict):
+        return None
+
+    claim_text = _clean_string(claim.get("claim_text"))
+    claim_type = _clean_string(claim.get("claim_type"))
+    evidence_span = _clean_string(claim.get("evidence_span"))
+    entities = claim.get("entities")
+    confidence = _validated_confidence(claim.get("confidence"))
+
+    if not claim_text or claim_type not in CLAIM_TYPES:
+        return None
+    if not isinstance(entities, list):
+        return None
+    if not all(isinstance(entity, str) and entity.strip() for entity in entities):
+        return None
+    if not evidence_span or not _evidence_in_content(evidence_span, content):
+        return None
+    if confidence is None:
+        return None
+
+    return {
+        "claim_text": claim_text,
+        "claim_type": claim_type,
+        "entities": [entity.strip() for entity in entities],
+        "evidence_span": evidence_span,
+        "confidence": confidence,
+    }
+
+
+def _replace_claims(article_id, story_id, content_hash, claims_data, content, conn):
     conn.execute(
         "DELETE FROM claims WHERE article_id = ? AND prompt_version = ?",
         (article_id, CLAIMS_PROMPT_VERSION),
     )
-    saved = 0
+    saved = dropped = 0
     for claim in claims_data:
-        if not isinstance(claim, dict):
+        validated = _validated_claim(claim, content)
+        if not validated:
+            dropped += 1
             continue
-        claim_text = str(claim.get("claim_text") or "").strip()
-        evidence_span = str(claim.get("evidence_span") or "").strip()
-        if not claim_text and not evidence_span:
-            continue
-        entities = claim.get("entities") or []
-        if not isinstance(entities, list):
-            entities = []
         conn.execute(
             """
             INSERT INTO claims
@@ -191,11 +229,11 @@ def _replace_claims(article_id, story_id, content_hash, claims_data, conn):
             (
                 article_id,
                 story_id,
-                claim_text or evidence_span,
-                _coerce_claim_type(claim.get("claim_type")),
-                json.dumps(entities, ensure_ascii=False),
-                evidence_span,
-                _coerce_confidence(claim.get("confidence")),
+                validated["claim_text"],
+                validated["claim_type"],
+                json.dumps(validated["entities"], ensure_ascii=False),
+                validated["evidence_span"],
+                validated["confidence"],
                 CLAIMS_PROMPT_VERSION,
             ),
         )
@@ -213,7 +251,7 @@ def _replace_claims(article_id, story_id, content_hash, claims_data, conn):
         """,
         (article_id, CLAIMS_PROMPT_VERSION, story_id, content_hash, saved),
     )
-    return saved
+    return saved, dropped
 
 
 def extract_and_save_claims(tracked):
@@ -228,7 +266,7 @@ def extract_and_save_claims(tracked):
         return
 
     conn = _get_db()
-    extracted = skipped = failed = 0
+    extracted = skipped = failed = invalid = 0
     try:
         for article in tracked:
             article_id = str(article["id"])
@@ -253,13 +291,22 @@ def extract_and_save_claims(tracked):
                 continue
 
             with conn:
-                _replace_claims(article_id, story_id, content_hash, claims_data, conn)
+                _, dropped = _replace_claims(
+                    article_id,
+                    story_id,
+                    content_hash,
+                    claims_data,
+                    content,
+                    conn,
+                )
+                invalid += dropped
             extracted += 1
     finally:
         conn.close()
 
     print(
         f"Claims: {extracted} extracted, {skipped} cached"
+        + (f", {invalid} invalid" if invalid else "")
         + (f", {failed} failed" if failed else ""),
         flush=True,
     )
@@ -283,10 +330,11 @@ def get_claims_for_story(story_id):
                   ON a.id = c.article_id
                  AND a.story_id = c.story_id
                 WHERE c.story_id = ?
+                  AND c.prompt_version = ?
                 GROUP BY c.claim_id
                 ORDER BY c.confidence DESC
                 """,
-                (story_id,),
+                (story_id, CLAIMS_PROMPT_VERSION),
             ).fetchall()
         else:
             rows = conn.execute(
@@ -296,9 +344,10 @@ def get_claims_for_story(story_id):
                        NULL AS source, NULL AS article_title, NULL AS url
                 FROM claims
                 WHERE story_id = ?
+                  AND prompt_version = ?
                 ORDER BY confidence DESC
                 """,
-                (story_id,),
+                (story_id, CLAIMS_PROMPT_VERSION),
             ).fetchall()
         return [
             {

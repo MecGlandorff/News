@@ -178,7 +178,7 @@ See `docs/adr/` for full decision records.
 | Story memory | Observation pattern | Daily snapshots allow temporal diffing without event sourcing complexity |
 | LLM output | Structured JSON | Enables validation, caching, and downstream processing |
 | Claim extraction timing | After tracker | `tracked` articles already carry `story_id`; no NULL → UPDATE needed |
-| Claim caching | article_id + prompt_version + content_hash | Caches zero-claim results, invalidates changed article content, and updates cached claim `story_id` when tracking changes |
+| Claim validation and caching | article_id + prompt_version + content_hash | Stores only schema-valid claims whose evidence span appears in the extraction input; caches zero-claim results, invalidates changed article content, and updates cached claim `story_id` when tracking changes |
 | Full-text claims | Selective, not default | Current extraction uses RSS title/description broadly; future full-text use should be limited to cases where evidence quality justifies token cost |
 | Story matching | GPT-based label matching | Handles label variation and paraphrasing better than fuzzy string matching |
 

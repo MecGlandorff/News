@@ -66,9 +66,9 @@ This document lists known failure modes in the pipeline, their detection methods
 
 **Detection:** Manual review of canonical labels. Eval: story clustering pairwise F1 against a golden set.
 
-**Mitigation:** `CONSOLIDATE_PROMPT` is explicit about only merging "clearly the same event." `MATCH_PROMPT` says "Different stories (even similar topics) should not match."
+**Mitigation:** `CONSOLIDATE_PROMPT` is explicit about only merging "clearly the same event." `MATCH_PROMPT` says broad topic similarity is not enough. The tracker also applies a deterministic guard for generic incident/category labels: labels such as accidents, crashes, shootings, and lawsuits may not merge unless they share a distinctive token beyond the generic category.
 
-**Current status:** Partially mitigated by prompt design. No automated eval.
+**Current status:** Partially mitigated by prompt design and deterministic false-merge guards. No automated eval.
 
 **Future improvement:** Add a story clustering eval dataset. Track false-merge rate over time.
 

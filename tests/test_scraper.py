@@ -118,6 +118,61 @@ def test_scrape_all_filters_to_target_date(monkeypatch):
     assert [article["title"] for article in articles] == ["Today"]
 
 
+def test_scrape_all_reports_timestamp_skip_reasons(monkeypatch, capsys):
+    def fake_parse_rss(url, session=None):
+        if url.endswith("/a"):
+            return [
+                {
+                    "title": "Today",
+                    "url": "https://example.com/today",
+                    "description": "Description",
+                    "published_at": "Sat, 18 Apr 2026 10:00:00 GMT",
+                },
+                {
+                    "title": "Yesterday",
+                    "url": "https://example.com/yesterday",
+                    "description": "Description",
+                    "published_at": "Fri, 17 Apr 2026 10:00:00 GMT",
+                },
+                {
+                    "title": "Missing",
+                    "url": "https://example.com/missing",
+                    "description": "Description",
+                    "published_at": "",
+                },
+                {
+                    "title": "Bad",
+                    "url": "https://example.com/bad",
+                    "description": "Description",
+                    "published_at": "not a date",
+                },
+            ]
+        return [{
+            "title": "Also missing",
+            "url": "https://example.org/missing",
+            "description": "Description",
+            "published_at": "",
+        }]
+
+    monkeypatch.setattr(scraper, "_parse_rss", fake_parse_rss)
+    monkeypatch.setattr(scraper.time, "sleep", lambda delay: None)
+
+    articles = scraper.scrape_all(
+        sources=[
+            ("Example A", "en", "https://example.com/a"),
+            ("Example B", "en", "https://example.com/b"),
+        ],
+        target_date="2026-04-18",
+    )
+
+    output = capsys.readouterr().out
+    assert [article["title"] for article in articles] == ["Today"]
+    assert "Skipped 1 feed items outside 2026-04-18" in output
+    assert "Skipped 3 feed items without a usable timestamp (2 missing, 1 unparseable)" in output
+    assert "Example A: 2 (1 missing, 1 unparseable)" in output
+    assert "Example B: 1 (1 missing, 0 unparseable)" in output
+
+
 def test_scrape_all_applies_max_per_source_after_date_filter(monkeypatch):
     def fake_parse_rss(url, session=None):
         return [
