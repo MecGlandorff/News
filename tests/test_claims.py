@@ -1,4 +1,5 @@
 import json
+import sqlite3
 import pytest
 
 import src.claims as claims_module
@@ -106,6 +107,114 @@ def test_extract_caches_zero_claim_results(tmp_path, monkeypatch):
 
     assert client.chat.completions.calls == 1
     assert get_claims_for_story(42) == []
+
+
+def test_extract_rejects_invalid_or_ungrounded_claims(tmp_path, monkeypatch):
+    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
+
+    response = {
+        "claims": [
+            {
+                "claim_text": "Officials confirmed the offer.",
+                "claim_type": "fact",
+                "entities": [],
+                "evidence_span": "Officials confirmed the offer.",
+                "confidence": 0.8,
+            },
+            {
+                "claim_text": "Iran proposed a deal.",
+                "claim_type": "rumor",
+                "entities": ["Iran"],
+                "evidence_span": "Iran proposed capping enrichment at 3.67%.",
+                "confidence": 0.7,
+            },
+            {
+                "claim_text": "Iran proposed a deal.",
+                "claim_type": "fact",
+                "entities": ["Iran"],
+                "evidence_span": "",
+                "confidence": 0.7,
+            },
+            {
+                "claim_text": "Iran signed a final agreement.",
+                "claim_type": "fact",
+                "entities": ["Iran"],
+                "evidence_span": "Iran signed a final agreement.",
+                "confidence": 0.7,
+            },
+            {
+                "claim_text": "Iran proposed a deal.",
+                "claim_type": "fact",
+                "entities": ["Iran"],
+                "evidence_span": "Iran proposed capping enrichment at 3.67%.",
+                "confidence": "high",
+            },
+            {
+                "claim_text": "Iran proposed a deal.",
+                "claim_type": "fact",
+                "entities": "Iran",
+                "evidence_span": "Iran proposed capping enrichment at 3.67%.",
+                "confidence": 0.7,
+            },
+        ]
+    }
+    client = _fake_client(response)
+    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
+
+    extract_and_save_claims([ARTICLE])
+
+    saved = get_claims_for_story(42)
+    assert len(saved) == 1
+    assert saved[0]["claim_text"] == "Officials confirmed the offer."
+    assert saved[0]["evidence_span"] == "Officials confirmed the offer."
+
+
+def test_extract_does_not_cache_schema_failures(tmp_path, monkeypatch):
+    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
+
+    client = _fake_client({"claims": {"claim_text": "not a list"}})
+    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
+
+    extract_and_save_claims([ARTICLE])
+    extract_and_save_claims([ARTICLE])
+
+    assert client.chat.completions.calls == 2
+    assert get_claims_for_story(42) == []
+
+
+def test_get_claims_for_story_ignores_old_prompt_versions(tmp_path, monkeypatch):
+    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
+
+    client = _fake_client(CLAIM_RESPONSE)
+    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
+    extract_and_save_claims([ARTICLE])
+
+    conn = sqlite3.connect(tmp_path / "stories.db")
+    conn.execute(
+        """
+        INSERT INTO claims (
+            article_id, story_id, claim_text, claim_type, entities,
+            evidence_span, confidence, prompt_version
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            ARTICLE["id"],
+            ARTICLE["story_id"],
+            "Old cached claim.",
+            "fact",
+            "[]",
+            "Old cached evidence.",
+            0.99,
+            "old-version",
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+    saved = get_claims_for_story(42)
+    assert len(saved) == 2
+    assert "Old cached claim." not in [claim["claim_text"] for claim in saved]
 
 
 def test_cached_claims_follow_story_reassignment(tmp_path, monkeypatch):

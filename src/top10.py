@@ -101,12 +101,15 @@ def _evidence_lines(story_id):
     if story_id is None:
         return []
     from src.claims import get_claims_for_story
-    claims = get_claims_for_story(story_id)
+    claims = [
+        claim for claim in get_claims_for_story(story_id)
+        if claim.get("evidence_span")
+    ]
     if not claims:
         return []
     lines = ["", "### Evidence"]
     for c in claims[:8]:
-        span = c["evidence_span"] or c["claim_text"]
+        span = c["evidence_span"]
         pct  = int((c["confidence"] or 0.5) * 100)
         source = c.get("source") or "Unknown source"
         url = c.get("url")

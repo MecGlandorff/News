@@ -60,6 +60,8 @@ Claim extraction should only extract article-supported statements:
 
 It should not decide source agreement, contradiction, or final confidence. Those are downstream interpretation steps.
 
+The claim layer validates each returned claim before storage. A claim must have a valid type, string entities, numeric confidence in `[0.0, 1.0]`, and a non-empty evidence span that appears in the article input sent to the extractor.
+
 ### Story tracking
 
 Tracking decides whether labels refer to the same ongoing story. It should preserve temporal continuity and avoid merging stories merely because they share broad topics.
@@ -85,6 +87,7 @@ Current cache behavior:
 - cache by claim input content hash and prompt version
 - cache zero-claim results
 - update cached claim `story_id` when tracking changes
+- ignore older prompt-version claims when rendering current evidence
 - render evidence with source and article context
 
 Deferred behavior:

@@ -1,3 +1,4 @@
+import json
 import sqlite3
 
 import src.tracker as tracker
@@ -17,6 +18,29 @@ def _article(article_id, title, story_label="Test Story"):
         "story_label": story_label,
         "importance": 3,
     }
+
+
+def _fake_tracker_client(payload):
+    class Message:
+        content = json.dumps(payload)
+
+    class Choice:
+        message = Message()
+
+    class Response:
+        choices = [Choice()]
+
+    class Completions:
+        def create(self, **kwargs):
+            return Response()
+
+    class Chat:
+        completions = Completions()
+
+    class Client:
+        chat = Chat()
+
+    return Client()
 
 
 def test_track_is_idempotent_for_same_day(tmp_path, monkeypatch):
@@ -105,6 +129,80 @@ def test_track_attaches_previous_story_context(tmp_path, monkeypatch):
     assert context["delta_summary"] == "Earlier change."
     assert context["recent_articles"][0]["title"] == "First title"
     assert context["recent_articles"][0]["description"] == "Description"
+
+
+def test_consolidate_today_rejects_unrelated_generic_accidents(monkeypatch):
+    monkeypatch.setattr(
+        tracker,
+        "get_openai_client",
+        lambda: _fake_tracker_client({
+            "groups": [{
+                "canonical_label": "Fair Ride Accident",
+                "labels": ["Molen Accident", "E-Motorcycle Manslaughter"],
+            }],
+        }),
+    )
+
+    groups = {
+        "Molen Accident": [_article(1, "Child injured by windmill sail", "Molen Accident")],
+        "E-Motorcycle Manslaughter": [_article(2, "E-motorcycle crash kills man", "E-Motorcycle Manslaughter")],
+    }
+
+    consolidated = tracker._consolidate_today(groups)
+
+    assert set(consolidated) == {"Molen Accident", "E-Motorcycle Manslaughter"}
+    assert len(consolidated["Molen Accident"]) == 1
+    assert len(consolidated["E-Motorcycle Manslaughter"]) == 1
+
+
+def test_consolidate_today_allows_shared_distinctive_incident(monkeypatch):
+    monkeypatch.setattr(
+        tracker,
+        "get_openai_client",
+        lambda: _fake_tracker_client({
+            "groups": [{
+                "canonical_label": "Train Collision",
+                "labels": ["Train Crash", "Train Collision"],
+            }],
+        }),
+    )
+
+    groups = {
+        "Train Crash": [_article(1, "Two trains crash", "Train Crash")],
+        "Train Collision": [_article(2, "Train collision injures passengers", "Train Collision")],
+    }
+
+    consolidated = tracker._consolidate_today(groups)
+
+    assert list(consolidated) == ["Train Collision"]
+    assert len(consolidated["Train Collision"]) == 2
+
+
+def test_match_labels_rejects_unrelated_generic_accident(monkeypatch):
+    monkeypatch.setattr(
+        tracker,
+        "get_openai_client",
+        lambda: _fake_tracker_client({
+            "matches": [
+                {
+                    "today_label": "Molen Accident",
+                    "canonical_label": "Fair Ride Accident",
+                },
+                {
+                    "today_label": "Train Crash",
+                    "canonical_label": "Train Collision",
+                },
+            ],
+        }),
+    )
+
+    matches = tracker._match_labels(
+        {"Molen Accident", "Train Crash"},
+        {"Fair Ride Accident": 1, "Train Collision": 2},
+    )
+
+    assert matches["Molen Accident"] == "NEW"
+    assert matches["Train Crash"] == "Train Collision"
 
 
 def test_trend_uses_latest_prior_day(tmp_path, monkeypatch):

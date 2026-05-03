@@ -81,6 +81,8 @@ With `--show-evidence`, the pipeline extracts structured claims:
 - `evidence_span`
 - `confidence`
 
+Claims are stored only when the structured fields validate and the evidence span appears in the article input used for extraction. Evidence rendering does not fall back to model-restated claim text.
+
 The near-term strategy is intentionally cost-conscious: broad claim extraction uses RSS title/description by default and is cached by input content hash. A future pass should use full article text selectively for high-value evidence work when `--fetch-article-text` is enabled. Full-text claim extraction for every article is deferred until cost and latency observability exists.
 
 ## Setup
