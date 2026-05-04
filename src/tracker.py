@@ -1,51 +1,22 @@
 import json
-import re
 import sqlite3
 from datetime import date, timedelta
 from pathlib import Path
 from src.config import DEFAULT_LOOKBACK_DAYS, TRACKER_MODEL
-from src.llm import get_openai_client, parse_json_object
+from src.llm import get_openai_client
+from src import story_matching
 
 DB_PATH  = Path("data/stories.db")
 DATA_DIR = Path("data/daily")
 
-CONSOLIDATE_PROMPT = """You are grouping today's news story labels that refer to the same ongoing story.
-
-Given a list of story labels from today, identify groups that are clearly about the same event.
-For each group, pick the best canonical label (clear, concise, in English).
-
-Return a JSON object with key "groups": array of {canonical_label, labels} where labels is the list of today's labels that belong to this group.
-Labels that stand alone still appear as a group of one."""
-
-MATCH_PROMPT = """You are matching today's news story labels to recent canonical story labels.
-
-For each label in today's list, return either:
-- The matching canonical label from recent history (if it's the same ongoing story)
-- "NEW" (if it's a genuinely new story)
-
-Be conservative: slight wording differences for the same real-world story should match, but broad topic similarity is not enough.
-Different stories, incidents, crashes, attacks, lawsuits, or accidents must not match merely because they share a category word.
-
-Return a JSON object with key "matches": array of {today_label, canonical_label}.
-canonical_label is either the exact string from the recent-history list or "NEW"."""
-
-LABEL_STOPWORDS = {
-    "a", "an", "and", "as", "at", "by", "for", "from", "in", "into",
-    "of", "on", "or", "over", "the", "to", "with",
-}
-GENERIC_EVENT_TOKENS = {
-    "accident", "arrest", "attack", "blast", "case", "charges", "charged",
-    "collapse", "collision", "crash", "crowd", "danger", "dangerous",
-    "death", "fire", "homicide", "incident", "injured", "injuries",
-    "injury", "killing", "lawsuit", "manslaughter", "murder", "poisoning",
-    "protest", "rescue", "riot", "safety", "shooting", "shooter",
-    "stabbing", "strike", "trial", "unrest", "violence", "wounded",
-}
-LABEL_TOKEN_ALIASES = {
-    "molen": "windmill",
-    "molenwiek": "windmill",
-    "wieken": "windmill",
-}
+CONSOLIDATE_PROMPT = story_matching.CONSOLIDATE_PROMPT
+MATCH_PROMPT = story_matching.MATCH_PROMPT
+LABEL_STOPWORDS = story_matching.LABEL_STOPWORDS
+GENERIC_EVENT_TOKENS = story_matching.GENERIC_EVENT_TOKENS
+CANDIDATES_PER_LABEL = story_matching.CANDIDATES_PER_LABEL
+SUMMARY_CHAR_LIMIT = story_matching.SUMMARY_CHAR_LIMIT
+DELTA_CHAR_LIMIT = story_matching.DELTA_CHAR_LIMIT
+TITLE_CHAR_LIMIT = story_matching.TITLE_CHAR_LIMIT
 
 
 def _ensure_column(conn, table, column, definition):
@@ -125,6 +96,42 @@ def _get_recent_stories(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
     recent = {}
     for row in rows:
         recent.setdefault(row["canonical_label"], row["story_id"])
+    return recent
+
+
+def _get_recent_story_options(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
+    """Return recent stories with compact memory for cross-day matching."""
+    start = str(date.fromisoformat(str(today)) - timedelta(days=lookback_days))
+    rows = conn.execute("""
+        SELECT s.story_id, s.canonical_label, MAX(sd.date) AS last_daily
+        FROM stories s
+        JOIN story_daily sd ON s.story_id = sd.story_id
+        WHERE sd.date >= ? AND sd.date < ?
+        GROUP BY s.story_id, s.canonical_label
+        ORDER BY last_daily DESC, s.story_id DESC
+    """, (start, today)).fetchall()
+
+    recent = {}
+    for row in rows:
+        label = row["canonical_label"]
+        if label in recent:
+            continue
+        context = _get_previous_story_context(conn, row["story_id"], today)
+        recent[label] = {
+            "story_id": row["story_id"],
+            "canonical_label": label,
+            "last_seen": row["last_daily"],
+            "summary": context.get("summary", ""),
+            "delta_summary": context.get("delta_summary", ""),
+            "recent_articles": [
+                {
+                    "date": article.get("date", ""),
+                    "source": article.get("source", ""),
+                    "title": article.get("title", ""),
+                }
+                for article in context.get("recent_articles", [])[:3]
+            ],
+        }
     return recent
 
 
@@ -272,145 +279,86 @@ def _sync_story_dates(conn):
 
 
 def _label_tokens(label):
-    tokens = re.findall(r"[a-z0-9]+", str(label or "").casefold())
-    return {
-        LABEL_TOKEN_ALIASES.get(token, token)
-        for token in tokens
-        if len(token) > 1
-    }
+    return story_matching.label_tokens(label)
+
+
+def _truncate_text(value, limit):
+    return story_matching.truncate_text(value, limit)
+
+
+def _days_since(value, today):
+    return story_matching.days_since(value, today, DEFAULT_LOOKBACK_DAYS)
 
 
 def _distinctive_label_tokens(label):
-    return _label_tokens(label) - LABEL_STOPWORDS - GENERIC_EVENT_TOKENS
+    return story_matching.distinctive_label_tokens(label)
 
 
 def _is_generic_event_label(label):
-    return bool(_label_tokens(label) & GENERIC_EVENT_TOKENS)
+    return story_matching.is_generic_event_label(label)
 
 
 def _labels_can_refer_to_same_story(left, right):
-    """Reject obvious false merges for generic incident/category labels.
-
-    LLM label matching is useful for paraphrases, but broad labels such as
-    "accident" or "shooting" are unsafe without a shared distinctive token.
-    A false negative creates a duplicate story; a false positive corrupts
-    story memory across days.
-    """
-    if str(left or "").strip().casefold() == str(right or "").strip().casefold():
-        return True
-    if not (_is_generic_event_label(left) and _is_generic_event_label(right)):
-        return True
-    return bool(_distinctive_label_tokens(left) & _distinctive_label_tokens(right))
+    return story_matching.labels_can_refer_to_same_story(left, right)
 
 
 def _compatible_label_clusters(labels):
-    clusters = []
-    for label in labels:
-        placed = False
-        for cluster in clusters:
-            if all(_labels_can_refer_to_same_story(label, existing) for existing in cluster):
-                cluster.append(label)
-                placed = True
-                break
-        if not placed:
-            clusters.append([label])
-    return clusters
+    return story_matching.compatible_label_clusters(labels)
 
 
 def _canonical_for_cluster(canonical, cluster, split_group):
-    if not split_group:
-        return canonical
-    if canonical in cluster:
-        return canonical
-    if all(_labels_can_refer_to_same_story(canonical, label) for label in cluster):
-        return canonical
-    return cluster[0]
+    return story_matching.canonical_for_cluster(canonical, cluster, split_group)
 
 
 def _consolidate_today(story_groups):
-    """Merge story_labels that refer to the same event within today's batch."""
-    labels = list(story_groups.keys())
-    if len(labels) <= 1:
-        return story_groups
-
-    client = get_openai_client()
-    response = client.chat.completions.create(
+    return story_matching.consolidate_today(
+        story_groups,
+        get_client=get_openai_client,
         model=TRACKER_MODEL,
-        messages=[
-            {"role": "system", "content": CONSOLIDATE_PROMPT},
-            {"role": "user", "content": json.dumps(labels, ensure_ascii=False)},
-        ],
-        response_format={"type": "json_object"},
     )
-    payload = parse_json_object(response)
-    groups = payload.get("groups")
-    if not isinstance(groups, list):
-        raise ValueError('Model response must contain a "groups" list')
-
-    from collections import defaultdict
-    consolidated = defaultdict(list)
-    grouped_labels = set()
-    for g in groups:
-        if not isinstance(g, dict):
-            continue
-        canonical = str(g.get("canonical_label") or "").strip()
-        labels = g.get("labels", [])
-        if not canonical or not isinstance(labels, list):
-            continue
-        valid_labels = [
-            label for label in labels
-            if isinstance(label, str) and label in story_groups
-        ]
-        clusters = _compatible_label_clusters(valid_labels)
-        split_group = len(clusters) > 1
-        for cluster in clusters:
-            cluster_canonical = _canonical_for_cluster(canonical, cluster, split_group)
-            for label in cluster:
-                grouped_labels.add(label)
-                consolidated[cluster_canonical].extend(story_groups[label])
-
-    for label, articles in story_groups.items():
-        if label not in grouped_labels:
-            consolidated[label].extend(articles)
-
-    print(f"  Consolidated {len(story_groups)} labels → {len(consolidated)} stories", flush=True)
-    return consolidated
 
 
-def _match_labels(today_labels, yesterday_stories):
-    if not yesterday_stories:
-        return {label: "NEW" for label in today_labels}
+def _recent_story_value_label(label, value):
+    return story_matching.recent_story_value_label(label, value)
 
-    client = get_openai_client()
-    response = client.chat.completions.create(
+
+def _recent_story_text(label, value):
+    return story_matching.recent_story_text(label, value)
+
+
+def _candidate_score(today_label, candidate_label, candidate, today=None):
+    return story_matching.candidate_score(
+        today_label,
+        candidate_label,
+        candidate,
+        today=today,
+        default_days=DEFAULT_LOOKBACK_DAYS,
+    )
+
+
+def _compact_story_option(label, value):
+    return story_matching.compact_story_option(label, value)
+
+
+def _candidate_cases_for_prompt(today_labels, recent_stories, today=None, limit=CANDIDATES_PER_LABEL):
+    return story_matching.candidate_cases_for_prompt(
+        today_labels,
+        recent_stories,
+        today=today,
+        limit=limit,
+        default_days=DEFAULT_LOOKBACK_DAYS,
+    )
+
+
+def _match_labels(today_labels, recent_stories, today=None):
+    return story_matching.match_labels(
+        today_labels,
+        recent_stories,
+        get_client=get_openai_client,
         model=TRACKER_MODEL,
-        messages=[
-            {"role": "system", "content": MATCH_PROMPT},
-            {"role": "user", "content": json.dumps({
-                "today":     list(today_labels),
-                "yesterday": list(yesterday_stories.keys()),
-            }, ensure_ascii=False)},
-        ],
-        response_format={"type": "json_object"},
+        today=today,
+        default_days=DEFAULT_LOOKBACK_DAYS,
     )
-    payload = parse_json_object(response)
-    matches = payload.get("matches")
-    if not isinstance(matches, list):
-        raise ValueError('Model response must contain a "matches" list')
-    matched = {}
-    valid_yesterday = set(yesterday_stories)
-    for m in matches:
-        if not isinstance(m, dict) or m.get("today_label") not in today_labels:
-            continue
-        today_label = m["today_label"]
-        canonical = m.get("canonical_label")
-        if canonical in valid_yesterday and _labels_can_refer_to_same_story(today_label, canonical):
-            matched[today_label] = canonical
-        else:
-            matched[today_label] = "NEW"
-    for label in today_labels:
-        matched.setdefault(label, "NEW")
-    return matched
 
 
 def _trend(story_id, today_count, conn, today):
@@ -455,12 +403,16 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS):
 
     conn = _get_db()
     try:
-        recent_stories = _get_recent_stories(conn, today, lookback_days)
+        recent_story_options = _get_recent_story_options(conn, today, lookback_days)
+        recent_stories = {
+            label: option["story_id"]
+            for label, option in recent_story_options.items()
+        }
     finally:
         conn.close()
 
     # Match today's labels to recent canonical labels outside the write transaction.
-    label_map = _match_labels(set(story_groups.keys()), recent_stories)
+    label_map = _match_labels(set(story_groups.keys()), recent_story_options, today=today)
 
     conn = _get_db()
     try:

@@ -9,31 +9,11 @@ The current sample, [intelligence_brief.md](intelligence_brief.md), demonstrates
 - source counts
 - reported timestamps
 - "what changed today" deltas
+- status, confidence, source agreement, and dispute flags
+- open questions / what-to-watch items
+- evidence spans with source/article attribution
 - source links
 
-It does not yet fully demonstrate the target Phase 3/4 output:
+The sample intentionally marks cost and latency as not yet emitted. When Phase 3 observability lands, update the pipeline metadata with measured `runs`, `llm_calls`, cache, cost, and latency fields.
 
-- source agreement
-- evidence spans with source/article attribution
-- confidence levels
-- contradiction handling
-- cost and latency metadata
-
-One excellent sample output is more valuable than many generated artifacts. When the claim-hardening and observability work lands, update the sample to include:
-
-```markdown
-### Source agreement
-...
-
-### Open questions
-...
-
-### Evidence
-- Source — Article title — `claim_type` — "evidence span" _(confidence)_
-
-### Pipeline metadata
-- Articles fetched:
-- Claims extracted:
-- Estimated cost:
-- Total latency:
-```
+One excellent sample output is more valuable than many generated artifacts.
