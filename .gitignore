@@ -53,6 +53,14 @@ coverage/
 # Cache
 .cache/
 
-# Building tool docs
-.claude
+# Internal notes and stuff
+docs/coding-standard.md
+docs/communication.md
+
+# Local AI assistant artifacts
+.claude/
+.codex/
 AGENTS.md
+CLAUDE.md
+CLAUDE.local.md
+codex.md

@@ -200,10 +200,75 @@ def test_get_briefings_sends_previous_context(monkeypatch):
         "Example Story": {
             "briefing": "Briefing text.",
             "delta_summary": "Today added a concrete deadline.",
+            "status": "developing",
+            "confidence": "low",
+            "source_agreement": "single-source",
+            "dispute_flag": "none",
+            "open_questions": [],
         }
     }
     assert captured["items"][0]["previous_context"]["summary"] == "Earlier summary."
     assert captured["items"][0]["previous_context"]["recent_articles"][0]["title"] == "Older title"
+
+
+def test_briefing_renders_structured_story_card_fields(monkeypatch):
+    monkeypatch.setattr(
+        top10,
+        "_get_briefings",
+        lambda stories: {
+            "Example Story": {
+                "briefing": "The decision changes the political stakes.",
+                "delta_summary": "New reporting clarified the policy impact.",
+                "status": "developing",
+                "confidence": "medium",
+                "source_agreement": "mixed",
+                "dispute_flag": "possible conflict",
+                "open_questions": ["Whether the cabinet changes the proposal."],
+            }
+        },
+    )
+
+    markdown = build_briefing_markdown([
+        _briefing_article(1, "Economy", "Example Story", 4),
+    ])
+
+    assert "**Status:** Developing" in markdown
+    assert "**Confidence:** Medium" in markdown
+    assert "**Source agreement:** Mixed" in markdown
+    assert "**Dispute:** Possible Conflict" in markdown
+    assert "### Why it matters" in markdown
+    assert "### What to watch" in markdown
+    assert "- Whether the cabinet changes the proposal." in markdown
+
+
+def test_briefing_bounds_invalid_structured_story_card_fields(monkeypatch):
+    monkeypatch.setattr(
+        top10,
+        "_get_briefings",
+        lambda stories: {
+            "Example Story": {
+                "briefing": "Briefing text.",
+                "delta_summary": "First detected today.",
+                "status": "certainly explosive",
+                "confidence": "absolute",
+                "source_agreement": "everyone agrees",
+                "dispute_flag": "messy",
+            }
+        },
+    )
+
+    markdown = build_briefing_markdown([
+        _briefing_article(1, "Economy", "Example Story", 4),
+    ])
+
+    assert "certainly explosive" not in markdown
+    assert "absolute" not in markdown
+    assert "everyone agrees" not in markdown
+    assert "messy" not in markdown
+    assert "**Status:** New" in markdown
+    assert "**Confidence:** Low" in markdown
+    assert "**Source agreement:** Single Source" in markdown
+    assert "**Dispute:** None" in markdown
 
 
 def test_get_briefings_sends_claims_when_evidence_enabled(tmp_path, monkeypatch):

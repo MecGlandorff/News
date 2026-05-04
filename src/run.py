@@ -69,42 +69,80 @@ def temporary_database_paths():
             claims.DB_PATH = original_claims_db
 
 
-def main():
-    args = parse_args()
+def configure_logging(log_level):
     logging.basicConfig(
-        level=getattr(logging, args.log_level),
+        level=getattr(logging, log_level),
         format="%(levelname)s:%(name)s:%(message)s",
     )
     logging.getLogger("urllib3.connectionpool").setLevel(logging.ERROR)
 
+
+def scrape_articles(args, run_date):
+    return scrape_all(
+        max_per_source=args.max_per_source,
+        fetch_article_text=args.fetch_article_text,
+        target_date=run_date,
+    )
+
+
+def classify_scraped_articles(articles):
+    return classify_articles(articles)
+
+
+def track_stories(classified, run_date):
+    return track(classified, today=run_date)
+
+
+def maybe_extract_claims(args, tracked):
+    if args.show_evidence:
+        extract_and_save_claims(tracked)
+
+
+def write_pipeline_outputs(args, tracked):
+    outputs = []
+    if not args.skip_digest:
+        outputs.append(write_digest(tracked))
+
+    briefing_package = None
+    if not args.skip_briefing or not args.skip_pdf:
+        briefing_package = build_briefing_package(
+            tracked,
+            n=args.top_developments,
+            include_evidence=args.show_evidence,
+        )
+    if not args.skip_briefing:
+        outputs.append(write_top10(
+            tracked,
+            n=args.top_developments,
+            package=briefing_package,
+            show_evidence=args.show_evidence,
+        ))
+    if not args.skip_pdf:
+        outputs.append(write_newspaper_pdf(
+            tracked,
+            n=args.top_developments,
+            package=briefing_package,
+        ))
+    return outputs
+
+
+def run_pipeline(args):
+    run_date = args.today or str(date.today())
+    articles = scrape_articles(args, run_date)
+    classified = classify_scraped_articles(articles)
+    tracked = track_stories(classified, run_date)
+    maybe_extract_claims(args, tracked)
+    return write_pipeline_outputs(args, tracked)
+
+
+def main():
+    args = parse_args()
+    configure_logging(args.log_level)
     require_openai_api_key()
 
     db_context = temporary_database_paths() if args.db_off else nullcontext()
     with db_context:
-        run_date = args.today or str(date.today())
-        articles = scrape_all(
-            max_per_source=args.max_per_source,
-            fetch_article_text=args.fetch_article_text,
-            target_date=run_date,
-        )
-        classified = classify_articles(articles)
-        tracked = track(classified, today=run_date)
-
-        if args.show_evidence:
-            extract_and_save_claims(tracked)
-
-        outputs = []
-        if not args.skip_digest:
-            outputs.append(write_digest(tracked))
-        briefing_package = None
-        if not args.skip_briefing or not args.skip_pdf:
-            briefing_package = build_briefing_package(tracked, n=args.top_developments, include_evidence=args.show_evidence)
-        if not args.skip_briefing:
-            outputs.append(write_top10(tracked, n=args.top_developments, package=briefing_package, show_evidence=args.show_evidence))
-        if not args.skip_pdf:
-            outputs.append(write_newspaper_pdf(tracked, n=args.top_developments, package=briefing_package))
-
-    return outputs
+        return run_pipeline(args)
 
 
 if __name__ == "__main__":
