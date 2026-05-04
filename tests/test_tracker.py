@@ -111,7 +111,7 @@ def test_track_attaches_previous_story_context(tmp_path, monkeypatch):
     monkeypatch.setattr(
         tracker,
         "_match_labels",
-        lambda labels, recent: {label: label if label in recent else "NEW" for label in labels},
+        lambda labels, recent, today=None: {label: label if label in recent else "NEW" for label in labels},
     )
 
     first = tracker.track([_article(1, "First title")], today="2026-04-18")
@@ -203,6 +203,190 @@ def test_match_labels_rejects_unrelated_generic_accident(monkeypatch):
 
     assert matches["Molen Accident"] == "NEW"
     assert matches["Train Crash"] == "Train Collision"
+
+
+def test_match_labels_rejects_known_shooting_false_merge(monkeypatch):
+    matches = tracker._match_labels(
+        {"White House Shooting"},
+        {
+            "OpenAI Shooter Lawsuit": {
+                "story_id": 1,
+                "canonical_label": "OpenAI Shooter Lawsuit",
+                "last_seen": "2026-05-01",
+                "summary": "Families sued OpenAI over alleged ChatGPT use before a school shooting.",
+                "recent_articles": [{
+                    "date": "2026-05-01",
+                    "source": "Example News",
+                    "title": "OpenAI faces negligence lawsuit after school shooting",
+                }],
+            }
+        },
+    )
+
+    assert matches["White House Shooting"] == "NEW"
+
+
+def test_match_labels_allows_ongoing_story_rewording(monkeypatch):
+    monkeypatch.setattr(
+        tracker,
+        "get_openai_client",
+        lambda: _fake_tracker_client({
+            "matches": [{
+                "today_label": "Iran Peace Proposal",
+                "canonical_label": "Iran Nuclear Talks",
+            }],
+        }),
+    )
+
+    matches = tracker._match_labels(
+        {"Iran Peace Proposal"},
+        {
+            "Iran Nuclear Talks": {
+                "story_id": 2,
+                "canonical_label": "Iran Nuclear Talks",
+                "last_seen": "2026-05-01",
+                "summary": "US-Iran nuclear negotiations continued through mediators.",
+                "recent_articles": [{
+                    "date": "2026-05-01",
+                    "source": "Example News",
+                    "title": "Iran sends new peace proposal through mediators",
+                }],
+            }
+        },
+    )
+
+    assert matches["Iran Peace Proposal"] == "Iran Nuclear Talks"
+
+
+def test_match_labels_sends_per_label_candidate_memory(monkeypatch):
+    captured = {}
+
+    class Message:
+        content = json.dumps({
+            "matches": [{
+                "today_label": "Iran Peace Proposal",
+                "canonical_label": "Iran Nuclear Talks",
+            }]
+        })
+
+    class Choice:
+        message = Message()
+
+    class Response:
+        choices = [Choice()]
+
+    class Completions:
+        def create(self, **kwargs):
+            captured["payload"] = json.loads(kwargs["messages"][1]["content"])
+            return Response()
+
+    class Chat:
+        completions = Completions()
+
+    class Client:
+        chat = Chat()
+
+    monkeypatch.setattr(tracker, "get_openai_client", lambda: Client())
+
+    tracker._match_labels(
+        {"Iran Peace Proposal"},
+        {
+            "Iran Nuclear Talks": {
+                "story_id": 2,
+                "canonical_label": "Iran Nuclear Talks",
+                "last_seen": "2026-05-01",
+                "delta_summary": "Iran sent a proposal but the US response remained unclear.",
+                "summary": "Negotiations continued under military pressure.",
+                "recent_articles": [{
+                    "date": "2026-05-01",
+                    "source": "Example News",
+                    "title": "Iran sends new peace proposal",
+                }],
+            }
+        },
+    )
+
+    match_case = captured["payload"]["match_cases"][0]
+    assert match_case["today_label"] == "Iran Peace Proposal"
+    recent = match_case["candidates"][0]
+    assert recent["canonical_label"] == "Iran Nuclear Talks"
+    assert recent["last_delta"] == "Iran sent a proposal but the US response remained unclear."
+    assert recent["summary"] == "Negotiations continued under military pressure."
+    assert recent["recent_titles"] == ["Iran sends new peace proposal"]
+
+
+def test_match_labels_rejects_model_match_outside_label_candidates(monkeypatch):
+    monkeypatch.setattr(
+        tracker,
+        "get_openai_client",
+        lambda: _fake_tracker_client({
+            "matches": [{
+                "today_label": "Iran Peace Proposal",
+                "canonical_label": "Unrelated Story",
+            }],
+        }),
+    )
+
+    matches = tracker._match_labels(
+        {"Iran Peace Proposal"},
+        {
+            "Iran Nuclear Talks": {
+                "story_id": 2,
+                "canonical_label": "Iran Nuclear Talks",
+                "last_seen": "2026-05-01",
+                "summary": "US-Iran nuclear negotiations continued through mediators.",
+                "recent_articles": [{
+                    "date": "2026-05-01",
+                    "source": "Example News",
+                    "title": "Iran sends new peace proposal through mediators",
+                }],
+            },
+            "Unrelated Story": {
+                "story_id": 3,
+                "canonical_label": "Unrelated Story",
+                "last_seen": "2026-05-01",
+                "summary": "A separate story about unrelated domestic politics.",
+                "recent_articles": [],
+            },
+        },
+    )
+
+    assert matches["Iran Peace Proposal"] == "NEW"
+
+
+def test_candidate_cases_are_capped_and_truncated():
+    long_summary = " ".join(["summary"] * 120)
+    long_delta = " ".join(["delta"] * 80)
+    long_title = " ".join(["title"] * 80)
+    recent = {}
+    for index in range(20):
+        label = f"Iran Nuclear Talks {index}"
+        recent[label] = {
+            "story_id": index,
+            "canonical_label": label,
+            "last_seen": "2026-05-03",
+            "summary": long_summary,
+            "delta_summary": long_delta,
+            "recent_articles": [
+                {"title": long_title},
+                {"title": "Second relevant title"},
+                {"title": "Third title should be omitted"},
+            ],
+        }
+
+    cases = tracker._candidate_cases_for_prompt(
+        {"Iran Nuclear Talks"},
+        recent,
+        today="2026-05-04",
+        limit=3,
+    )
+
+    candidates = cases[0]["candidates"]
+    assert len(candidates) == 3
+    assert all(len(candidate["summary"]) <= tracker.SUMMARY_CHAR_LIMIT + 3 for candidate in candidates)
+    assert all(len(candidate["last_delta"]) <= tracker.DELTA_CHAR_LIMIT + 3 for candidate in candidates)
+    assert all(len(candidate["recent_titles"]) == 2 for candidate in candidates)
+    assert all(len(candidate["recent_titles"][0]) <= tracker.TITLE_CHAR_LIMIT + 3 for candidate in candidates)
 
 
 def test_trend_uses_latest_prior_day(tmp_path, monkeypatch):

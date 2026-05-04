@@ -20,6 +20,7 @@ It ingests RSS coverage, classifies articles, links them into continuing story a
 - **Story memory:** articles are grouped into canonical stories and matched against recent history.
 - **Daily deltas:** each story surfaces what changed today, not just what happened.
 - **Claim extraction:** articles can be converted into atomic claims with evidence spans via `--show-evidence`.
+- **Story-card briefings:** output surfaces status, confidence, source agreement, dispute flags, and open questions.
 - **Source-aware synthesis:** briefings include source links, reported timestamps, source counts, importance, and trend signals.
 - **Local-first operation:** SQLite, local files, Markdown, and PDFs; no hosted service or heavy infrastructure.
 - **Cost discipline:** high-volume calls use `gpt-5.4-mini`; stronger models are reserved for story reasoning and final prose.
@@ -200,5 +201,6 @@ Public newspaper PDF files in `newspapers/` are intended to be committed and cli
 - Claim extraction is cached by input content hash and caches zero-claim results, but it still uses RSS title/description rather than fetched full article text.
 - Claim extraction does not yet consume fetched full article text.
 - Source reliability metadata and source agreement detection are planned for Phase 3.
+- Current source agreement and dispute labels are briefing-level signals, not yet backed by a dedicated contradiction table.
 - Cost and latency tracking are planned but not implemented yet.
 - The project stores data locally and does not include a hosted UI.

@@ -14,7 +14,7 @@ The guiding rule is: LLMs produce structured intermediate artifacts where possib
 | Claim extraction | `gpt-5.4-mini` | JSON | Cached by `article_id + prompt_version + content_hash` | Extract atomic claims and evidence spans |
 | Same-day consolidation | `gpt-5.5` | JSON | Not cached | Merge same-day labels that refer to the same event |
 | Cross-day matching | `gpt-5.5` | JSON | Not cached | Match today's labels to recent canonical stories |
-| Briefing generation | `gpt-5.5` | JSON object containing prose fields | Not cached | Produce story briefing text and `delta_summary` |
+| Briefing generation | `gpt-5.5` | JSON story-card fields plus prose | Not cached | Produce status, confidence, source agreement, dispute flag, `delta_summary`, briefing text, and open questions |
 
 High-volume calls use `gpt-5.4-mini`. Cross-story reasoning and final prose use `gpt-5.5`.
 
@@ -30,7 +30,7 @@ Expected behavior:
 - claim extraction returns a `claims` list
 - same-day consolidation returns a `groups` list
 - cross-day matching returns a `matches` list
-- briefing generation returns a `briefings` list
+- briefing generation returns a `briefings` list with bounded story-card fields
 
 Free-form model text should not become internal state unless it is the final briefing prose or a stored story memory summary.
 
@@ -69,6 +69,16 @@ Tracking decides whether labels refer to the same ongoing story. It should prese
 ### Briefing generation
 
 Briefing generation is the final prose layer. It may synthesize across sources, but should use today's articles as the authority for current developments and previous context only for continuity.
+
+It returns story-card metadata as bounded labels:
+
+- `status`: `new`, `developing`, `escalating`, `cooling`, `disputed`, or `unresolved`
+- `confidence`: `high`, `medium`, or `low`
+- `source_agreement`: `broad`, `partial`, `mixed`, `single-source`, or `disputed`
+- `dispute_flag`: `none`, `possible conflict`, or `confirmed conflict`
+- `open_questions`: short watch items grounded in the supplied articles and claims
+
+These labels are briefing-level signals. They make uncertainty visible in the artifact, but they are not yet a replacement for the planned dedicated source-agreement and contradiction subsystems.
 
 ---
 

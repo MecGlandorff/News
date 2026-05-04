@@ -1,220 +1,288 @@
 # Architecture
 
-## Overview
+This project turns RSS articles into local story memory and publishes daily intelligence briefings.
 
-The system converts RSS feeds into a local story-memory database and publishes daily intelligence briefings.
+The important design choice is simple:
 
-The core idea is **story continuity**: rather than summarizing today's articles in isolation, the pipeline matches each article against an ongoing story record and uses accumulated memory to generate briefings that show what changed, not just what happened.
+```text
+Track stories, not articles.
+```
 
----
+Articles are the input. Story arcs are the memory layer. Briefings are the final artifact.
 
-## Pipeline
+## What The System Does Today
+
+The current pipeline fetches RSS items, classifies them, links them to continuing stories, extracts source-grounded claims when requested, and writes Markdown plus PDF outputs.
+
+The main path is:
+
+```text
+Source
+  -> Article
+  -> Claim
+  -> Story Arc
+  -> Story Delta
+  -> Briefing
+```
+
+In code, the run looks like this:
 
 ```text
 Configured RSS feeds
-  ↓
-src/scraper.py          — fetch, normalize URLs, deduplicate
-  ↓
-src/classifier.py       — theme, story_label, importance (gpt-5.4-mini)
-  ↓                       cached by content_hash + model + prompt_version
-src/article_cache.py    — classification cache
-  ↓
-src/tracker.py          — consolidate same-day labels (gpt-5.5)
-                          match today's labels to recent canonical labels (gpt-5.5)
-                          upsert stories, story_daily, story_observations, articles
-  ↓
-src/claims.py           — extract atomic claims per tracked article (gpt-5.4-mini)
-  ↓                       linked to story_id; enabled via --show-evidence
-  ↓
-src/top10.py            — aggregate by story, score, select sections
-                          generate briefing text + delta_summary (gpt-5.5)
-                          surface evidence spans if --show-evidence
-  ↓
-src/digest.py           — lightweight local digest (no LLM)
-  ↓
-src/newspaper.py        — render newspaper-style PDF
-  ↓
-briefings/              — published Markdown (committed to repo)
-newspapers/             — published PDFs (committed to repo)
-output/                 — local digests (git-ignored)
+  -> src/scraper.py       fetch feeds, normalize URLs, filter dates, deduplicate URLs
+  -> src/classifier.py    classify theme, story label, and importance
+  -> src/tracker.py       consolidate labels, match recent stories, write story memory
+  -> src/claims.py        optionally extract claims and evidence spans
+  -> src/top10.py         select stories and generate briefing cards
+  -> src/digest.py        write a lightweight local digest
+  -> src/newspaper.py     render a newspaper-style PDF
 ```
 
-Conceptually, claims sit between articles and story arcs. In the current implementation, `src/claims.py` runs after `src/tracker.py` so each extracted claim can be written with the assigned `story_id`.
+`src/tracker.py` and `src/top10.py` are orchestration modules. The more specific logic lives in smaller modules: `src/story_matching.py` handles same-day and cross-day label matching, `src/briefing_selection.py` handles story scoring and section selection, and `src/briefing_generation.py` handles briefing model input, structured output normalization, and fallbacks.
 
----
+The local database is SQLite at `data/stories.db`. Runtime snapshots live under `data/daily/`. Public artifacts are written to `briefings/` and `newspapers/`.
 
-## Data model
+## How Story Memory Works
 
-### stories
+Story memory is built in two layers.
 
-The master record for each unique ongoing story.
+First, `src/tracker.py` groups today's classified articles by story label. It asks the tracking model to consolidate same-day label variants, then asks whether today's labels continue recent canonical stories. The tracker is conservative about generic incident labels such as crashes, shootings, lawsuits, and attacks because false merges corrupt memory more severely than false splits.
+
+Second, the tracker writes a daily observation for each story. This observation records the label seen today, source count, article count, average importance, and later the generated summary and `delta_summary`. The next run can use that saved memory to answer: what changed since the last observation?
+
+The key tables are:
+
+- `stories`: one row per ongoing story arc.
+- `story_daily`: daily aggregate counts for each story.
+- `story_observations`: the memory layer used for summaries and deltas.
+- `articles`: fetched articles linked to stories for the run date.
+- `article_story_links`: junction rows from article to story observation.
+
+## How Source Grounding Works
+
+Claim extraction is optional and enabled with `--show-evidence`.
+
+When enabled, `src/claims.py` extracts structured claims from each tracked article. Each claim includes:
+
+- `claim_text`
+- `claim_type`
+- `entities`
+- `evidence_span`
+- `confidence`
+
+The claim layer validates model output before storage. A claim is saved only when its type is allowed, confidence is numeric and bounded, entities are strings, and the evidence span appears in the input sent to the model.
+
+Current claim input is RSS title plus description. The scraper can fetch full article text with `--fetch-article-text`, but claim extraction does not yet consume that body text. This is intentional for now: broad full-text claim extraction should wait until cost and latency observability exists.
+
+## How Briefings Are Built
+
+`src/top10.py` aggregates tracked articles by canonical story and selects briefing-worthy stories. It prioritizes importance, source count, and movement signal while filtering out low-value sports, entertainment, and weak low-interest stories.
+
+For selected stories, the briefing model returns structured story-card fields:
+
+- `status`
+- `confidence`
+- `source_agreement`
+- `dispute_flag`
+- `delta_summary`
+- `briefing`
+- `open_questions`
+
+The final Markdown renders those fields with source links, reported timestamps, and optional evidence spans. The generated summary and delta are written back to `story_observations`, so future runs can compare against previous context.
+
+The PDF output uses the same briefing package. `src/newspaper.py` is a renderer, not a separate intelligence pipeline.
+
+## What Is Weak Or Missing Today
+
+The core story-memory flow exists, but several trust and observability layers are still incomplete.
+
+- Sources are still stored mostly as bare names such as `Reuters` or `NOS`; there is no `sources` table with source type, reliability, or bias notes.
+- Source agreement is currently a briefing-level model label, not a claim-comparison result backed by a dedicated data model.
+- There is no `runs` or `llm_calls` table, so the system cannot yet report cost, token use, latency, retries, or schema failures by stage.
+- `novelty_score` exists on `story_observations`, but it is not populated.
+- Contradiction detection is not implemented.
+- Full article text can be fetched, but claim extraction still uses RSS title and description.
+
+These gaps matter because the project aims to produce auditable intelligence artifacts, not just summaries.
+
+## What Should Happen Next
+
+The next architecture work should be Phase 3: source modeling and observability.
+
+The source model should add a `sources` table seeded from the configured RSS feeds in `src/scraper.py`. Articles should be able to link back to source metadata such as source type, reliability, and notes.
+
+Observability should add `runs` and `llm_calls` tables plus a `--pipeline-report` flag. A run should be able to report article count, duplicate count, claim count, story count, failed fetches, model calls, schema failures, estimated cost, and latency.
+
+Only after that should the project expand expensive evidence behavior, such as selective full-text claim extraction for lead stories or contradiction detection across claim sets.
+
+## Why This Order Matters
+
+Source metadata should come before source agreement because the system needs to know what kind of sources are agreeing. Five syndicated copies of one wire article should not count the same as five independent sources.
+
+Observability should come before broader full-text claim extraction because full text increases token use and latency. The system should measure the cost before making a more expensive path common.
+
+Claim comparison should come before contradiction prose because contradictions need durable records. A briefing label like `possible conflict` is useful, but it is not enough for auditability unless the system can point to the conflicting claims.
+
+## Data Model Reference
+
+### `stories`
+
+Master record for each ongoing story.
 
 ```sql
-story_id       INTEGER PRIMARY KEY AUTOINCREMENT
-canonical_label TEXT NOT NULL      -- best-known name, updated by LLM consolidation
-theme          TEXT                -- e.g. "Geopolitics & War", "Economy"
-first_seen     DATE NOT NULL
-last_seen      DATE NOT NULL
+story_id        INTEGER PRIMARY KEY AUTOINCREMENT
+canonical_label TEXT NOT NULL
+theme           TEXT
+first_seen      DATE NOT NULL
+last_seen       DATE NOT NULL
 ```
 
-### story_daily
+### `story_daily`
 
 Daily aggregate metrics per story.
 
 ```sql
-story_id       INTEGER NOT NULL
-date           DATE NOT NULL
-source_count   INTEGER             -- number of unique sources covering the story today
-importance_avg REAL
-labels_seen    TEXT                -- JSON array of label variants seen today
+story_id        INTEGER NOT NULL
+date            DATE NOT NULL
+source_count    INTEGER
+importance_avg  REAL
+labels_seen     TEXT
 PRIMARY KEY (story_id, date)
 ```
 
-### story_observations
+### `story_observations`
 
-Daily observation records — the memory layer.
+Daily story memory. This is where summaries and deltas are stored for future runs.
 
 ```sql
-observation_id INTEGER PRIMARY KEY AUTOINCREMENT
-story_id       INTEGER NOT NULL
-date           DATE NOT NULL
-label_seen     TEXT
-source_count   INTEGER
-article_count  INTEGER
-importance_avg REAL
-summary        TEXT                -- LLM-generated briefing, written back after generation
-delta_summary  TEXT                -- "what changed today", written back after generation
-novelty_score  REAL                -- planned: not yet populated
-created_at     TEXT DEFAULT CURRENT_TIMESTAMP
+observation_id  INTEGER PRIMARY KEY AUTOINCREMENT
+story_id        INTEGER NOT NULL
+date            DATE NOT NULL
+label_seen      TEXT
+source_count    INTEGER
+article_count   INTEGER
+importance_avg  REAL
+summary         TEXT
+delta_summary   TEXT
+novelty_score   REAL
+created_at      TEXT DEFAULT CURRENT_TIMESTAMP
 UNIQUE (story_id, date)
 ```
 
-### articles
+### `articles`
 
-Full article records linked to stories.
+Fetched article records linked to a story.
 
 ```sql
-id             TEXT                -- SHA256 of normalized URL
-story_id       INTEGER
-date           DATE
-source         TEXT
-title          TEXT
-description    TEXT
-url            TEXT
-published_at   TEXT
-importance     INTEGER
+id              TEXT
+story_id        INTEGER
+date            DATE
+source          TEXT
+title           TEXT
+description     TEXT
+url             TEXT
+published_at    TEXT
+importance      INTEGER
 ```
 
-### article_story_links
+### `article_story_links`
 
-Junction table: article ↔ story ↔ observation.
+Junction table from article to story observation.
 
 ```sql
-article_id     TEXT NOT NULL
-story_id       INTEGER NOT NULL
-observation_id INTEGER
-relevance      REAL                -- currently always 1.0; future: partial relevance
+article_id      TEXT NOT NULL
+story_id        INTEGER NOT NULL
+observation_id  INTEGER
+relevance       REAL
 PRIMARY KEY (article_id, story_id, observation_id)
 ```
 
-### article_classifications
+### `article_classifications`
 
 Classification cache.
 
 ```sql
-article_id     TEXT PRIMARY KEY
-url            TEXT NOT NULL
-title          TEXT
-description    TEXT
-content_hash   TEXT NOT NULL       -- SHA256 of title + description
-theme          TEXT NOT NULL
-story_label    TEXT NOT NULL
-importance     INTEGER NOT NULL
-classifier_model TEXT NOT NULL
-prompt_version TEXT NOT NULL
-classified_at  TEXT DEFAULT CURRENT_TIMESTAMP
+article_id        TEXT PRIMARY KEY
+url               TEXT NOT NULL
+title             TEXT
+description       TEXT
+content_hash      TEXT NOT NULL
+theme             TEXT NOT NULL
+story_label       TEXT NOT NULL
+importance        INTEGER NOT NULL
+classifier_model  TEXT NOT NULL
+prompt_version    TEXT NOT NULL
+classified_at     TEXT DEFAULT CURRENT_TIMESTAMP
 ```
 
-### claims
+### `claims`
 
-Atomic claim extraction results.
+Validated claim extraction results.
 
 ```sql
-claim_id       INTEGER PRIMARY KEY AUTOINCREMENT
-article_id     TEXT NOT NULL
-story_id       INTEGER             -- populated directly (no back-fill; tracker runs first)
-claim_text     TEXT NOT NULL
-claim_type     TEXT                -- fact|number|quote|prediction|allegation|background
-entities       TEXT                -- JSON array of named entities
-evidence_span  TEXT                -- the exact sentence from the article supporting this claim
-confidence     REAL
-prompt_version TEXT
-created_at     TEXT DEFAULT CURRENT_TIMESTAMP
+claim_id        INTEGER PRIMARY KEY AUTOINCREMENT
+article_id      TEXT NOT NULL
+story_id        INTEGER
+claim_text      TEXT NOT NULL
+claim_type      TEXT
+entities        TEXT
+evidence_span   TEXT
+confidence      REAL
+prompt_version  TEXT
+created_at      TEXT DEFAULT CURRENT_TIMESTAMP
 ```
 
-### claim_extractions
+### `claim_extractions`
 
-Claim extraction cache records, including zero-claim outputs.
+Claim extraction cache records, including zero-claim results.
 
 ```sql
-article_id     TEXT NOT NULL
-prompt_version TEXT NOT NULL
-story_id       INTEGER
-content_hash   TEXT NOT NULL
-claims_count   INTEGER NOT NULL
-extracted_at   TEXT DEFAULT CURRENT_TIMESTAMP
+article_id      TEXT NOT NULL
+prompt_version  TEXT NOT NULL
+story_id        INTEGER
+content_hash    TEXT NOT NULL
+claims_count    INTEGER NOT NULL
+extracted_at    TEXT DEFAULT CURRENT_TIMESTAMP
 PRIMARY KEY (article_id, prompt_version)
 ```
 
----
+## LLM Call Reference
 
-## Key design decisions
+| Stage | Model | Output | Cached |
+|---|---|---|---|
+| Classification | `gpt-5.4-mini` | theme, story label, importance | Yes |
+| Claim extraction | `gpt-5.4-mini` | structured claims | Yes |
+| Same-day consolidation | `gpt-5.5` | label groups | No |
+| Cross-day matching | `gpt-5.5` | label matches | No |
+| Briefing generation | `gpt-5.5` | story-card fields and prose | No |
 
-See `docs/adr/` for full decision records.
+All LLM stages should return JSON objects and pass through `parse_json_object()` before downstream code uses the response.
 
-| Decision | Choice | Rationale |
+## Output Reference
+
+| Path | Purpose | Git status |
 |---|---|---|
-| Storage | SQLite | Local-first, zero-dependency, sufficient for this scale |
-| Story memory | Observation pattern | Daily snapshots allow temporal diffing without event sourcing complexity |
-| LLM output | Structured JSON | Enables validation, caching, and downstream processing |
-| Claim extraction timing | After tracker | `tracked` articles already carry `story_id`; no NULL → UPDATE needed |
-| Claim validation and caching | article_id + prompt_version + content_hash | Stores only schema-valid claims whose evidence span appears in the extraction input; caches zero-claim results, invalidates changed article content, and updates cached claim `story_id` when tracking changes |
-| Full-text claims | Selective, not default | Current extraction uses RSS title/description broadly; future full-text use should be limited to cases where evidence quality justifies token cost |
-| Story matching | GPT-based label matching | Handles label variation and paraphrasing better than fuzzy string matching |
-
----
-
-## LLM call summary
-
-| Stage | Prompt | Model | Cached? | Per-run frequency |
-|---|---|---|---|---|
-| Classification | `CLASSIFIER_PROMPT` | gpt-5.4-mini | Yes, by content_hash | Once per new/changed article |
-| Claim extraction | `CLAIMS_PROMPT` | gpt-5.4-mini | Yes, by article_id + prompt_version + content_hash | Once per new or changed article when `--show-evidence` is enabled |
-| Same-day consolidation | `CONSOLIDATE_PROMPT` | gpt-5.5 | No | Once per run |
-| Cross-day matching | `MATCH_PROMPT` | gpt-5.5 | No | Once per run |
-| Briefing generation | `BRIEFING_PROMPT` | gpt-5.5 | No | Once per run (batched) |
-
----
-
-## Output directories
-
-| Directory | Contents | Git status |
-|---|---|---|
-| `briefings/` | Daily Markdown briefings | Committed |
-| `newspapers/` | Daily newspaper PDFs | Committed |
+| `briefings/` | Public Markdown briefings | Committed |
+| `newspapers/` | Public newspaper PDFs | Committed |
 | `output/` | Local digest Markdown | Ignored |
-| `data/stories.db` | SQLite database | Ignored |
-| `data/daily/` | Daily JSON article snapshots | Ignored |
+| `data/stories.db` | Local SQLite database | Ignored |
+| `data/daily/` | Daily article snapshots | Ignored |
 | `logs/` | Scheduler logs | Ignored |
 
----
+## What Done Looks Like
 
-## Known limitations
+The architecture is doing its job when a reviewer can trace one story from source material to final output:
 
-- RSS descriptions are often truncated. Evidence spans in claims currently reflect the RSS title/description; fetched full article text is not yet consumed by `src/claims.py`.
-- `novelty_score` field exists but is not yet populated.
-- `sources` table (with reliability metadata) is planned but not yet implemented — sources are currently stored as bare strings.
-- No cost or latency tracking yet (`runs` / `llm_calls` tables are planned).
-- No contradiction detection yet.
+```text
+RSS source
+  -> normalized article
+  -> validated claim and evidence span
+  -> story arc
+  -> daily observation
+  -> delta summary
+  -> briefing section
+```
 
-See `docs/failure-modes.md` for a full list of failure modes.
+The next version should make that trace more inspectable by adding source metadata, run observability, and claim-backed agreement or contradiction records.
+
+See `docs/failure-modes.md`, `docs/model-behavior.md`, and `docs/adr/` for related tradeoffs.
