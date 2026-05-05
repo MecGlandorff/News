@@ -55,7 +55,6 @@ def _get_db():
             importance_avg REAL,
             summary        TEXT,
             delta_summary  TEXT,
-            novelty_score  REAL,
             created_at     TEXT DEFAULT CURRENT_TIMESTAMP,
             UNIQUE (story_id, date)
         );
@@ -63,6 +62,7 @@ def _get_db():
             id             TEXT,
             story_id       INTEGER,
             date           DATE,
+            source_id      INTEGER REFERENCES sources(source_id),
             source         TEXT,
             title          TEXT,
             description    TEXT,
@@ -79,6 +79,7 @@ def _get_db():
         );
     """)
     _ensure_column(conn, "articles", "description", "TEXT")
+    _ensure_column(conn, "articles", "source_id", "INTEGER REFERENCES sources(source_id)")
     conn.commit()
     return conn
 
@@ -276,6 +277,22 @@ def _sync_story_dates(conn):
             FROM story_daily
         )
     """)
+
+
+def _source_id_for_name(conn, source_name):
+    """Return the seeded source id when source metadata is available."""
+    if not source_name:
+        return None
+    has_sources = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'sources'"
+    ).fetchone()
+    if not has_sources:
+        return None
+    row = conn.execute(
+        "SELECT source_id FROM sources WHERE name = ?",
+        (source_name,),
+    ).fetchone()
+    return row["source_id"] if row else None
 
 
 def _label_tokens(label):
@@ -485,15 +502,17 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS):
                     (story_id, observation_id)
                 )
                 for a in articles:
+                    source_id = _source_id_for_name(conn, a.get("source"))
                     conn.execute("""
                         INSERT INTO articles (
-                            id, story_id, date, source, title, description, url, published_at, importance
+                            id, story_id, date, source_id, source, title, description, url, published_at, importance
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, (
                         a["id"],
                         story_id,
                         today,
+                        source_id,
                         a["source"],
                         a["title"],
                         a.get("description", ""),

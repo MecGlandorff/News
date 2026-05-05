@@ -140,12 +140,13 @@ This should be documented clearly so reviewers can understand how the system deg
 
 Right now sources are mostly plain strings. That is enough to ingest feeds, but not enough for source-aware reasoning.
 
-- [ ] Add a `sources` table
-- [ ] Seed it from the configured RSS source list
-- [ ] Add source `type` such as wire, publication, blog, company, government, or unknown
-- [ ] Add source `reliability`
-- [ ] Add optional `bias_notes`
-- [ ] Link articles to `source_id` instead of only storing raw source names
+- [x] Add a `sources` table
+- [x] Seed it from the configured RSS source list
+- [x] Add source `type` such as wire, publication, blog, company, government, or unknown
+- [x] Add source `reliability`
+- [x] Add optional `bias_notes`
+- [x] Add nullable `articles.source_id` while preserving raw source names for compatibility
+- [ ] Use `articles.source_id` in source-agreement logic, with a source-name fallback for older rows
 
 ## 4. Source agreement and contradiction handling
 

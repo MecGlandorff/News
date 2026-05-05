@@ -72,6 +72,8 @@ When enabled, `src/claims.py` extracts structured claims from each tracked artic
 
 The claim layer validates model output before storage. A claim is saved only when its type is allowed, confidence is numeric and bounded, entities are strings, and the evidence span appears in the input sent to the model.
 
+The `claims` and `claim_extractions` tables are created lazily by `src/claims.py`. A local database produced by runs without `--show-evidence` can have story, article, and classification tables without claim tables.
+
 Current claim input is RSS title plus description. The scraper can fetch full article text with `--fetch-article-text`, but claim extraction does not yet consume that body text. This is intentional for now: broad full-text claim extraction should wait until cost and latency observability exists.
 
 ## How Briefings Are Built
@@ -96,10 +98,10 @@ The PDF output uses the same briefing package. `src/newspaper.py` is a renderer,
 
 The core story-memory flow exists, but several trust and observability layers are still incomplete.
 
-- Sources are still stored mostly as bare names such as `Reuters` or `NOS`; there is no `sources` table with source type, reliability, or bias notes.
+- Source metadata is seeded into a `sources` table, and new article rows can store `source_id` alongside the source name. Source metadata is not yet used by source agreement logic.
 - Source agreement is currently a briefing-level model label, not a claim-comparison result backed by a dedicated data model.
 - There is no `runs` or `llm_calls` table, so the system cannot yet report cost, token use, latency, retries, or schema failures by stage.
-- `novelty_score` exists on `story_observations`, but it is not populated.
+- There is no stored novelty score yet; novelty needs a clear claim-backed definition before becoming schema.
 - Contradiction detection is not implemented.
 - Full article text can be fetched, but claim extraction still uses RSS title and description.
 
@@ -109,7 +111,7 @@ These gaps matter because the project aims to produce auditable intelligence art
 
 The next architecture work should be Phase 3: source modeling and observability.
 
-The source model should add a `sources` table seeded from the configured RSS feeds in `src/scraper.py`. Articles should be able to link back to source metadata such as source type, reliability, and notes.
+The next source-model step should make source agreement consume `articles.source_id` where available and fall back to source names for older rows. Until then, the table does not affect story selection or briefing output.
 
 Observability should add `runs` and `llm_calls` tables plus a `--pipeline-report` flag. A run should be able to report article count, duplicate count, claim count, story count, failed fetches, model calls, schema failures, estimated cost, and latency.
 
@@ -124,6 +126,22 @@ Observability should come before broader full-text claim extraction because full
 Claim comparison should come before contradiction prose because contradictions need durable records. A briefing label like `possible conflict` is useful, but it is not enough for auditability unless the system can point to the conflicting claims.
 
 ## Data Model Reference
+
+### `sources`
+
+Configured RSS source metadata. This is seeded from `src/scraper.py`; new article writes store `source_id` when a matching source row exists.
+
+```sql
+source_id   INTEGER PRIMARY KEY AUTOINCREMENT
+name        TEXT NOT NULL UNIQUE
+rss_url     TEXT NOT NULL
+language    TEXT NOT NULL
+type        TEXT NOT NULL
+reliability TEXT NOT NULL DEFAULT 'unknown'
+bias_notes  TEXT NOT NULL DEFAULT ''
+created_at  TEXT DEFAULT CURRENT_TIMESTAMP
+updated_at  TEXT DEFAULT CURRENT_TIMESTAMP
+```
 
 ### `stories`
 
@@ -164,7 +182,6 @@ article_count   INTEGER
 importance_avg  REAL
 summary         TEXT
 delta_summary   TEXT
-novelty_score   REAL
 created_at      TEXT DEFAULT CURRENT_TIMESTAMP
 UNIQUE (story_id, date)
 ```
@@ -177,6 +194,7 @@ Fetched article records linked to a story.
 id              TEXT
 story_id        INTEGER
 date            DATE
+source_id       INTEGER
 source          TEXT
 title           TEXT
 description     TEXT

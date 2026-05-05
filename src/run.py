@@ -7,6 +7,7 @@ from pathlib import Path
 
 import src.article_cache as article_cache
 import src.claims as claims
+import src.sources as sources
 from src.claims import extract_and_save_claims
 from src.classifier import classify_articles
 from src.digest import write_digest
@@ -19,7 +20,7 @@ from src.tracker import track
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Run the news scraper pipeline.")
+    parser = argparse.ArgumentParser(description="Run the news intelligence pipeline.")
     parser.add_argument("--max-per-source", type=int, default=None)
     parser.add_argument("--today", "--date", dest="today", default=None, help="Override tracking date as YYYY-MM-DD")
     parser.add_argument("--skip-digest", action="store_true")
@@ -51,6 +52,7 @@ def temporary_database_paths():
     original_tracker_db = tracker.DB_PATH
     original_tracker_data_dir = tracker.DATA_DIR
     original_claims_db = claims.DB_PATH
+    original_sources_db = sources.DB_PATH
 
     with tempfile.TemporaryDirectory(prefix="news-db-off-") as tmp:
         tmp_path = Path(tmp)
@@ -59,6 +61,7 @@ def temporary_database_paths():
         tracker.DB_PATH = temp_db
         tracker.DATA_DIR = tmp_path / "daily"
         claims.DB_PATH = temp_db
+        sources.DB_PATH = temp_db
         print(f"DB off: using temporary database at {temp_db}")
         try:
             yield
@@ -67,6 +70,7 @@ def temporary_database_paths():
             tracker.DB_PATH = original_tracker_db
             tracker.DATA_DIR = original_tracker_data_dir
             claims.DB_PATH = original_claims_db
+            sources.DB_PATH = original_sources_db
 
 
 def configure_logging(log_level):
@@ -83,6 +87,10 @@ def scrape_articles(args, run_date):
         fetch_article_text=args.fetch_article_text,
         target_date=run_date,
     )
+
+
+def seed_source_metadata():
+    sources.seed_sources()
 
 
 def classify_scraped_articles(articles):
@@ -128,6 +136,7 @@ def write_pipeline_outputs(args, tracked):
 
 def run_pipeline(args):
     run_date = args.today or str(date.today())
+    seed_source_metadata()
     articles = scrape_articles(args, run_date)
     classified = classify_scraped_articles(articles)
     tracked = track_stories(classified, run_date)
