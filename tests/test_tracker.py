@@ -2,6 +2,7 @@ import json
 import sqlite3
 
 import src.tracker as tracker
+import src.sources as sources_module
 
 
 def _article(article_id, title, story_label="Test Story"):
@@ -70,6 +71,27 @@ def test_track_is_idempotent_for_same_day(tmp_path, monkeypatch):
     assert observation_count == 1
     assert link_count == 2
     assert article_count == 2
+
+
+def test_track_populates_source_id_when_source_metadata_exists(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    data_dir = tmp_path / "daily"
+    monkeypatch.setattr(tracker, "DB_PATH", db_path)
+    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
+    monkeypatch.setattr(sources_module, "DB_PATH", db_path)
+    sources_module.seed_sources([("Test Source", "en", "https://example.com/rss")])
+
+    tracker.track([_article(1, "First title")], today="2026-04-18")
+
+    conn = sqlite3.connect(db_path)
+    row = conn.execute("""
+        SELECT a.source_id, s.name
+        FROM articles a
+        JOIN sources s ON s.source_id = a.source_id
+    """).fetchone()
+    conn.close()
+
+    assert row == (1, "Test Source")
 
 
 def test_track_replaces_same_day_article_story_assignment(tmp_path, monkeypatch):

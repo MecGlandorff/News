@@ -2,6 +2,8 @@
 
 This directory is for polished artifacts that show the project's main idea: source-grounded story memory.
 
+Sample outputs are curated showcase artifacts, not necessarily the newest generated run. Use them to review the intended intelligence format; use `briefings/` for the generated archive.
+
 The current sample, [intelligence_brief.md](intelligence_brief.md), demonstrates:
 
 - story arcs instead of isolated article summaries

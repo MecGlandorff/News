@@ -3,6 +3,7 @@ from types import SimpleNamespace
 import src.article_cache as article_cache
 import src.claims as claims
 import src.run as run
+import src.sources as sources
 import src.tracker as tracker
 
 
@@ -28,6 +29,7 @@ def test_db_off_uses_temporary_database_paths_and_restores_originals(tmp_path, m
     real_daily = tmp_path / "real" / "daily"
     monkeypatch.setattr(article_cache, "DB_PATH", real_db)
     monkeypatch.setattr(claims, "DB_PATH", real_db)
+    monkeypatch.setattr(sources, "DB_PATH", real_db)
     monkeypatch.setattr(tracker, "DB_PATH", real_db)
     monkeypatch.setattr(tracker, "DATA_DIR", real_daily)
     monkeypatch.setattr(run, "parse_args", lambda: _args(db_off=True))
@@ -38,6 +40,7 @@ def test_db_off_uses_temporary_database_paths_and_restores_originals(tmp_path, m
 
     def fake_classify(articles):
         seen["article_cache_db"] = article_cache.DB_PATH
+        seen["sources_db"] = sources.DB_PATH
         return [{"id": "article-1"}]
 
     def fake_track(classified, today=None):
@@ -54,9 +57,11 @@ def test_db_off_uses_temporary_database_paths_and_restores_originals(tmp_path, m
     assert seen["article_cache_db"] != real_db
     assert seen["tracker_db"] == seen["article_cache_db"]
     assert seen["claims_db"] == seen["article_cache_db"]
+    assert seen["sources_db"] == seen["article_cache_db"]
     assert seen["tracker_daily"].parent == seen["tracker_db"].parent
     assert article_cache.DB_PATH == real_db
     assert claims.DB_PATH == real_db
+    assert sources.DB_PATH == real_db
     assert tracker.DB_PATH == real_db
     assert tracker.DATA_DIR == real_daily
     assert not real_db.exists()
@@ -67,6 +72,7 @@ def test_normal_run_uses_configured_database_paths(tmp_path, monkeypatch):
     real_daily = tmp_path / "real" / "daily"
     monkeypatch.setattr(article_cache, "DB_PATH", real_db)
     monkeypatch.setattr(claims, "DB_PATH", real_db)
+    monkeypatch.setattr(sources, "DB_PATH", real_db)
     monkeypatch.setattr(tracker, "DB_PATH", real_db)
     monkeypatch.setattr(tracker, "DATA_DIR", real_daily)
     monkeypatch.setattr(run, "parse_args", lambda: _args(db_off=False))
@@ -80,6 +86,7 @@ def test_normal_run_uses_configured_database_paths(tmp_path, monkeypatch):
 
     def fake_classify(articles):
         seen["article_cache_db"] = article_cache.DB_PATH
+        seen["sources_db"] = sources.DB_PATH
         return []
 
     def fake_track(classified, today=None):
@@ -94,6 +101,7 @@ def test_normal_run_uses_configured_database_paths(tmp_path, monkeypatch):
     assert run.main() == []
 
     assert seen["article_cache_db"] == real_db
+    assert seen["sources_db"] == real_db
     assert seen["tracker_db"] == real_db
     assert seen["claims_db"] == real_db
     assert seen["scrape_kwargs"]["target_date"] == "2026-04-28"
