@@ -100,7 +100,7 @@ The core story-memory flow exists, but several trust and observability layers ar
 
 - Source metadata is seeded into a `sources` table, and new article rows can store `source_id` alongside the source name. Source metadata is not yet used by source agreement logic.
 - Source agreement is currently a briefing-level model label, not a claim-comparison result backed by a dedicated data model.
-- There is no `runs` or `llm_calls` table, so the system cannot yet report cost, token use, latency, retries, or schema failures by stage.
+- Run observability stores `runs` and real model calls in `llm_calls`, and `--pipeline-report` reports token use, latency, cache hits, retries, and schema failures. EUR cost estimates are not implemented yet.
 - There is no stored novelty score yet; novelty needs a clear claim-backed definition before becoming schema.
 - Contradiction detection is not implemented.
 - Full article text can be fetched, but claim extraction still uses RSS title and description.
@@ -113,7 +113,7 @@ The next architecture work should be Phase 3: source modeling and observability.
 
 The next source-model step should make source agreement consume `articles.source_id` where available and fall back to source names for older rows. Until then, the table does not affect story selection or briefing output.
 
-Observability should add `runs` and `llm_calls` tables plus a `--pipeline-report` flag. A run should be able to report article count, duplicate count, claim count, story count, failed fetches, model calls, schema failures, estimated cost, and latency.
+The next observability refinement should expose scraper duplicate/failure counts and add cost estimates once model pricing is maintained somewhere explicit. The current report already covers article count, claim count, story count, model calls, cache hits, schema failures, token totals, and total latency.
 
 Only after that should the project expand expensive evidence behavior, such as selective full-text claim extraction for lead stories or contradiction detection across claim sets.
 
@@ -264,6 +264,52 @@ extracted_at    TEXT DEFAULT CURRENT_TIMESTAMP
 PRIMARY KEY (article_id, prompt_version)
 ```
 
+### `runs`
+
+One row per pipeline execution.
+
+```sql
+run_id              INTEGER PRIMARY KEY AUTOINCREMENT
+started_at          TEXT NOT NULL
+finished_at         TEXT
+run_date            TEXT
+cli_args            TEXT NOT NULL
+git_sha             TEXT
+articles_returned   INTEGER
+claims_saved        INTEGER
+stories_touched     INTEGER
+llm_calls_count     INTEGER
+llm_errors_count    INTEGER
+llm_cache_hits      INTEGER
+schema_failures     INTEGER
+retry_count         INTEGER
+prompt_tokens       INTEGER
+completion_tokens   INTEGER
+total_latency_ms    INTEGER
+status              TEXT NOT NULL
+error_message       TEXT
+```
+
+### `llm_calls`
+
+Real model calls only. Cache hits are counted on `runs`, not inserted here.
+
+```sql
+call_id             INTEGER PRIMARY KEY AUTOINCREMENT
+run_id              INTEGER NOT NULL
+model               TEXT NOT NULL
+purpose             TEXT NOT NULL
+prompt_version      TEXT
+latency_ms          INTEGER
+prompt_tokens       INTEGER
+completion_tokens   INTEGER
+schema_failure      INTEGER NOT NULL
+retry_count         INTEGER NOT NULL
+error_type          TEXT
+error_message       TEXT
+created_at          TEXT NOT NULL
+```
+
 ## LLM Call Reference
 
 | Stage | Model | Output | Cached |
@@ -275,6 +321,7 @@ PRIMARY KEY (article_id, prompt_version)
 | Briefing generation | `gpt-5.5` | story-card fields and prose | No |
 
 All LLM stages should return JSON objects and pass through `parse_json_object()` before downstream code uses the response.
+Fresh calls go through the observed chat helper in `src.llm`, which records token and latency metadata when a run context is active.
 
 ## Output Reference
 

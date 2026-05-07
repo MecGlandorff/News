@@ -2,7 +2,7 @@ import json
 import re
 from datetime import date
 
-from src.llm import parse_json_object
+from src.llm import create_chat_completion, mark_schema_failure, parse_json_object
 
 
 CONSOLIDATE_PROMPT = """You are grouping today's news story labels that refer to the same ongoing story.
@@ -118,17 +118,20 @@ def consolidate_today(story_groups, get_client, model):
         return story_groups
 
     client = get_client()
-    response = client.chat.completions.create(
+    response = create_chat_completion(
+        client,
         model=model,
         messages=[
             {"role": "system", "content": CONSOLIDATE_PROMPT},
             {"role": "user", "content": json.dumps(labels, ensure_ascii=False)},
         ],
+        purpose="match-sameday",
         response_format={"type": "json_object"},
     )
     payload = parse_json_object(response)
     groups = payload.get("groups")
     if not isinstance(groups, list):
+        mark_schema_failure('Model response must contain a "groups" list', response=response)
         raise ValueError('Model response must contain a "groups" list')
 
     from collections import defaultdict
@@ -278,7 +281,8 @@ def match_labels(today_labels, recent_stories, get_client, model, today=None, de
         return {label: "NEW" for label in today_labels}
 
     client = get_client()
-    response = client.chat.completions.create(
+    response = create_chat_completion(
+        client,
         model=model,
         messages=[
             {"role": "system", "content": MATCH_PROMPT},
@@ -286,11 +290,13 @@ def match_labels(today_labels, recent_stories, get_client, model, today=None, de
                 "match_cases": match_cases,
             }, ensure_ascii=False)},
         ],
+        purpose="match-crossday",
         response_format={"type": "json_object"},
     )
     payload = parse_json_object(response)
     matches = payload.get("matches")
     if not isinstance(matches, list):
+        mark_schema_failure('Model response must contain a "matches" list', response=response)
         raise ValueError('Model response must contain a "matches" list')
     matched = {}
     for match in matches:
