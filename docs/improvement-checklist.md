@@ -27,8 +27,8 @@ These pieces are already in place and should be protected as the project evolves
 The current prototype is directionally strong, but several important parts are still incomplete or only partially implemented.
 
 - [ ] Claim extraction still relies on RSS title/description rather than article body text
-- [ ] There is no run-level observability for token use, cost, or latency
-- [ ] Source metadata is not yet modeled as a first-class table
+- [ ] Run observability covers token use, latency, cache hits, schema failures, and retries; EUR cost estimates and scraper duplicate/failure counts are still deferred
+- [ ] Source metadata is modeled as a first-class table, but source agreement does not consume it yet
 - [ ] Source agreement is surfaced in the briefing, but not yet backed by a dedicated comparison layer
 - [ ] Contradiction detection is not implemented
 - [ ] Evaluation coverage is still mostly planned rather than operational
@@ -37,8 +37,8 @@ The current prototype is directionally strong, but several important parts are s
 
 The order below matters. The project should measure its pipeline before making expensive behavior broader by default.
 
-- [ ] 1. Add observability tables for runs and LLM calls
-- [ ] 2. Add a pipeline report that shows counts, cost, and latency by stage
+- [x] 1. Add observability tables for runs and LLM calls
+- [x] 2. Add a pipeline report that shows counts and latency by stage (cost-by-stage deferred until model pricing is maintained explicitly)
 - [ ] 3. Define and document selective full-text claim extraction rules
 - [ ] 4. Implement selective full-text claim extraction for the most valuable stories
 - [ ] 5. Add stronger source agreement and contradiction handling

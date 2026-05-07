@@ -94,11 +94,11 @@ This document lists known failure modes in the pipeline, their detection methods
 
 **Detection:** Track source distribution per story. Flag stories dominated by a single source or source type.
 
-**Mitigation:** Briefing prompt asks to "synthesize across all sources provided, surfacing different angles where they exist."
+**Mitigation:** Briefing prompt asks to "synthesize across all sources provided, surfacing different angles where they exist." The `sources` table stores reliability and bias notes per feed; new article rows record `source_id` when a seeded source matches.
 
-**Current status:** Partially mitigated by prompt design. No automated bias flagging.
+**Current status:** Partially mitigated by prompt design and seeded source metadata. No automated bias flagging or source-distribution warnings yet.
 
-**Future improvement:** Add source reliability and bias metadata (`sources` table, Phase 3). Surface source-distribution warnings in briefings.
+**Future improvement:** Use the seeded reliability and bias metadata to surface source-distribution warnings in briefings, and to weight source agreement.
 
 ---
 

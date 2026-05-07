@@ -109,7 +109,7 @@ These gaps matter because the project aims to produce auditable intelligence art
 
 ## What Should Happen Next
 
-The next architecture work should be Phase 3: source modeling and observability.
+The next architecture work is closing out Phase 3 by making source metadata and observability load-bearing rather than just present.
 
 The next source-model step should make source agreement consume `articles.source_id` where available and fall back to source names for older rows. Until then, the table does not affect story selection or briefing output.
 
