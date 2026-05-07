@@ -84,7 +84,7 @@ These labels are briefing-level signals. They make uncertainty visible in the ar
 
 ## Claim extraction cost policy
 
-Claim extraction should remain cost-conscious until observability exists.
+Claim extraction stays cost-conscious by default. Observability now exists, so any broadening of extraction should be justified by measured token, cost, and latency impact rather than asserted.
 
 Default behavior:
 
@@ -104,7 +104,7 @@ Deferred behavior:
 
 - full-text claim extraction for every article
 
-Full-text-for-all should be reconsidered only after `runs`, `llm_calls`, and `--pipeline-report` can measure the token, cost, and latency impact.
+`runs`, `llm_calls`, and `--pipeline-report` now measure token use and latency. The next step is to evaluate selective full-text extraction against those signals. Full-text-for-all stays deferred until selective extraction has demonstrated quality lift against measured cost.
 
 ---
 

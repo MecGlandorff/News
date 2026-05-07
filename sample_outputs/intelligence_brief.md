@@ -129,4 +129,4 @@ Sources:
 - Articles represented in this sample: 21
 - Stories represented: 4
 - Claim evidence: illustrative of the `--show-evidence` rendering path
-- Cost and latency: not yet emitted; planned for the Phase 3 `runs`, `llm_calls`, and `--pipeline-report` work
+- Cost and latency: live runs can report token and latency totals through `--pipeline-report`; this curated sample does not embed run telemetry

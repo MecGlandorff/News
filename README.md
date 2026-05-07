@@ -253,13 +253,20 @@ The project is structured in phases so each layer builds on auditable output fro
 
 **Phase 2 — Story memory & claim grounding (done).** Canonical story labels, same-day consolidation, recent-history matching, daily delta summaries, and structured claim extraction with evidence-span validation against source text.
 
-**Phase 3 — Source modeling and observability (current).**
-- Source metadata seeded from the 21 configured RSS feeds in `src/scraper.py`, with nullable `articles.source_id` populated for new rows when a seeded source matches. Done as a foundation step; source agreement does not use it yet.
-- Run observability via `runs`, `llm_calls`, and `--pipeline-report`, with token, latency, cache-hit, schema-failure, and retry totals. EUR cost estimates are still planned.
-- Content fingerprinting or source-aware weighting for syndicated copies, after the source model exists.
+**Phase 3 — Source modeling and observability (in progress).**
+
+Shipped:
+
+- Source metadata seeded from the 21 configured RSS feeds in `src/scraper.py`, with nullable `articles.source_id` populated for new rows when a seeded source matches. Source agreement does not consume it yet.
+- Run observability via `runs`, `llm_calls`, and `--pipeline-report`, with token, latency, cache-hit, schema-failure, and retry totals.
+
+Still in progress:
+
+- Source-aware reasoning that consumes `articles.source_id` and weights syndicated copies differently from independent reporting.
 - Selective full-text claim extraction gated on a per-article value heuristic, behind `--fetch-article-text`.
 - Claim-backed source agreement and, later, a dedicated contradiction table backing dispute labels that are currently briefing-level only.
-- Budget caps and per-run EUR cost summaries.
+- EUR cost estimates and per-run budget caps once model pricing is maintained explicitly.
+- Scraper duplicate/failure counts surfaced in `--pipeline-report`.
 
 **Phase 4 — Evaluation & hardening (later).**
 - Held-out evaluation set for story matching, classification, and claim grounding with regression tracking.

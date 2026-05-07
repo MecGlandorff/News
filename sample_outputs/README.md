@@ -16,6 +16,6 @@ The current sample, [intelligence_brief.md](intelligence_brief.md), demonstrates
 - evidence spans with source/article attribution
 - source links
 
-The sample intentionally marks cost and latency as not yet emitted. When Phase 3 observability lands, update the pipeline metadata with measured `runs`, `llm_calls`, cache, cost, and latency fields.
+This curated sample is not a live run report. Current generated runs can emit token, latency, cache, and schema-failure totals through `--pipeline-report`; EUR cost estimates are still intentionally omitted until model pricing is represented explicitly.
 
 One excellent sample output is more valuable than many generated artifacts.
