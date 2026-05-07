@@ -1,7 +1,8 @@
 import json
+from src import observability
 from src.article_cache import get_cached_classifications, save_classifications
 from src.config import CLASSIFIER_MODEL
-from src.llm import get_openai_client, parse_json_object
+from src.llm import create_chat_completion, get_openai_client, mark_schema_failure, parse_json_object
 
 THEMES = ["Geopolitics & War", "USA Politics", "Dutch Politics", "Economy", "Tech", "Climate", "Science", "Sports", "Other"]
 CLASSIFIER_PROMPT_VERSION = "2026-04-25-v1"
@@ -51,6 +52,7 @@ def classify_articles(articles):
     )
     missing = [a for a in articles if str(a["id"]) not in cached]
     classification = dict(cached)
+    observability.increment_cache_hits(len(cached))
 
     if missing:
         client = get_openai_client()
@@ -60,18 +62,22 @@ def classify_articles(articles):
             for a in missing
         ]
 
-        response = client.chat.completions.create(
+        response = create_chat_completion(
+            client,
             model=CLASSIFIER_MODEL,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": json.dumps(items, ensure_ascii=False)},
             ],
+            purpose="classify",
+            prompt_version=CLASSIFIER_PROMPT_VERSION,
             response_format={"type": "json_object"},
         )
 
         payload = parse_json_object(response)
         results = payload.get("results")
         if not isinstance(results, list):
+            mark_schema_failure('Model response must contain a "results" list', response=response)
             raise ValueError('Model response must contain a "results" list')
 
         valid_ids = {str(a["id"]) for a in missing}

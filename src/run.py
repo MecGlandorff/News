@@ -7,6 +7,7 @@ from pathlib import Path
 
 import src.article_cache as article_cache
 import src.claims as claims
+import src.observability as observability
 import src.sources as sources
 from src.claims import extract_and_save_claims
 from src.classifier import classify_articles
@@ -41,6 +42,7 @@ def parse_args():
     )
     parser.add_argument("--fetch-article-text", action="store_true", help="Fetch full article pages in addition to RSS metadata")
     parser.add_argument("--show-evidence", action="store_true", help="Extract claims and append evidence spans to briefing")
+    parser.add_argument("--pipeline-report", action="store_true", help="Print run totals, LLM calls, latency, and token usage")
     parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
     return parser.parse_args()
 
@@ -53,6 +55,7 @@ def temporary_database_paths():
     original_tracker_data_dir = tracker.DATA_DIR
     original_claims_db = claims.DB_PATH
     original_sources_db = sources.DB_PATH
+    original_observability_db = observability.DB_PATH
 
     with tempfile.TemporaryDirectory(prefix="news-db-off-") as tmp:
         tmp_path = Path(tmp)
@@ -62,6 +65,7 @@ def temporary_database_paths():
         tracker.DATA_DIR = tmp_path / "daily"
         claims.DB_PATH = temp_db
         sources.DB_PATH = temp_db
+        observability.DB_PATH = temp_db
         print(f"DB off: using temporary database at {temp_db}")
         try:
             yield
@@ -71,6 +75,7 @@ def temporary_database_paths():
             tracker.DATA_DIR = original_tracker_data_dir
             claims.DB_PATH = original_claims_db
             sources.DB_PATH = original_sources_db
+            observability.DB_PATH = original_observability_db
 
 
 def configure_logging(log_level):
@@ -103,7 +108,14 @@ def track_stories(classified, run_date):
 
 def maybe_extract_claims(args, tracked):
     if args.show_evidence:
-        extract_and_save_claims(tracked)
+        return extract_and_save_claims(tracked)
+    return {
+        "articles_extracted": 0,
+        "claims_saved": 0,
+        "cached": 0,
+        "invalid": 0,
+        "failed": 0,
+    }
 
 
 def write_pipeline_outputs(args, tracked):
@@ -134,13 +146,21 @@ def write_pipeline_outputs(args, tracked):
     return outputs
 
 
-def run_pipeline(args):
-    run_date = args.today or str(date.today())
+def run_pipeline(args, run_date=None):
+    run_date = run_date or args.today or str(date.today())
     seed_source_metadata()
     articles = scrape_articles(args, run_date)
+    observability.update_run_totals(articles_returned=len(articles))
     classified = classify_scraped_articles(articles)
     tracked = track_stories(classified, run_date)
-    maybe_extract_claims(args, tracked)
+    stories_touched = len({
+        article.get("story_id")
+        for article in tracked
+        if article.get("story_id") is not None
+    })
+    observability.update_run_totals(stories_touched=stories_touched)
+    claim_stats = maybe_extract_claims(args, tracked)
+    observability.update_run_totals(claims_saved=claim_stats.get("claims_saved", 0))
     return write_pipeline_outputs(args, tracked)
 
 
@@ -151,7 +171,22 @@ def main():
 
     db_context = temporary_database_paths() if args.db_off else nullcontext()
     with db_context:
-        return run_pipeline(args)
+        run_date = args.today or str(date.today())
+        run_id = observability.start_run(args, run_date=run_date)
+        observability.set_current_run_id(run_id)
+        try:
+            outputs = run_pipeline(args, run_date=run_date)
+            observability.finish_run(run_id, status="ok")
+            if getattr(args, "pipeline_report", False):
+                print(observability.pipeline_report(run_id))
+            return outputs
+        except Exception as exc:
+            observability.finish_run(run_id, status="error", error_message=str(exc))
+            if getattr(args, "pipeline_report", False):
+                print(observability.pipeline_report(run_id))
+            raise
+        finally:
+            observability.clear_current_run_id()
 
 
 if __name__ == "__main__":

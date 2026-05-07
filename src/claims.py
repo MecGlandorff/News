@@ -4,8 +4,9 @@ import sqlite3
 import hashlib
 from pathlib import Path
 
+from src import observability
 from src.config import CLAIMS_MODEL
-from src.llm import get_openai_client, parse_json_object
+from src.llm import create_chat_completion, get_openai_client, mark_schema_failure, parse_json_object
 
 DB_PATH = Path("data/stories.db")
 
@@ -150,17 +151,21 @@ def _delete_cached_claims(article_id, conn):
 
 def _call_llm(content):
     client = get_openai_client()
-    response = client.chat.completions.create(
+    response = create_chat_completion(
+        client,
         model=CLAIMS_MODEL,
         messages=[
             {"role": "system", "content": CLAIMS_PROMPT},
             {"role": "user",   "content": content},
         ],
+        purpose="claim",
+        prompt_version=CLAIMS_PROMPT_VERSION,
         response_format={"type": "json_object"},
     )
     payload = parse_json_object(response)
     claims = payload.get("claims")
     if not isinstance(claims, list):
+        mark_schema_failure('Model response must contain a "claims" list', response=response)
         raise ValueError('Model response must contain a "claims" list')
     return claims
 
@@ -263,10 +268,16 @@ def extract_and_save_claims(tracked):
     are skipped entirely.
     """
     if not tracked:
-        return
+        return {
+            "articles_extracted": 0,
+            "claims_saved": 0,
+            "cached": 0,
+            "invalid": 0,
+            "failed": 0,
+        }
 
     conn = _get_db()
-    extracted = skipped = failed = invalid = 0
+    extracted = skipped = failed = invalid = saved_claims = 0
     try:
         for article in tracked:
             article_id = str(article["id"])
@@ -278,6 +289,7 @@ def extract_and_save_claims(tracked):
             content_hash = _article_content_hash(content)
             if _has_cached_claims(article_id, story_id, content_hash, conn):
                 skipped += 1
+                observability.increment_cache_hits()
                 continue
 
             with conn:
@@ -291,7 +303,7 @@ def extract_and_save_claims(tracked):
                 continue
 
             with conn:
-                _, dropped = _replace_claims(
+                saved, dropped = _replace_claims(
                     article_id,
                     story_id,
                     content_hash,
@@ -299,6 +311,7 @@ def extract_and_save_claims(tracked):
                     content,
                     conn,
                 )
+                saved_claims += saved
                 invalid += dropped
             extracted += 1
     finally:
@@ -310,6 +323,13 @@ def extract_and_save_claims(tracked):
         + (f", {failed} failed" if failed else ""),
         flush=True,
     )
+    return {
+        "articles_extracted": extracted,
+        "claims_saved": saved_claims,
+        "cached": skipped,
+        "invalid": invalid,
+        "failed": failed,
+    }
 
 
 def get_claims_for_story(story_id):

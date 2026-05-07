@@ -2,7 +2,7 @@ import json
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 
-from src.llm import parse_json_object
+from src.llm import create_chat_completion, mark_schema_failure, parse_json_object
 
 
 STATUS_VALUES = {"new", "developing", "escalating", "cooling", "disputed", "unresolved"}
@@ -205,18 +205,21 @@ def get_briefings(stories, get_client, model, include_evidence=False):
             item["claims"] = claims_for_prompt(story)
         items.append(item)
 
-    response = client.chat.completions.create(
+    response = create_chat_completion(
+        client,
         model=model,
         messages=[
             {"role": "system", "content": BRIEFING_PROMPT},
             {"role": "user", "content": json.dumps(items, ensure_ascii=False)},
         ],
+        purpose="brief",
         response_format={"type": "json_object"},
     )
 
     payload = parse_json_object(response)
     briefings = payload.get("briefings")
     if not isinstance(briefings, list):
+        mark_schema_failure('Model response must contain a "briefings" list', response=response)
         raise ValueError('Model response must contain a "briefings" list')
     return normalize_briefing_payloads({
         briefing["canonical_label"]: {

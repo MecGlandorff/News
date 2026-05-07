@@ -50,45 +50,45 @@ The project should be able to explain what a pipeline run cost, how long each st
 
 ### Runs table
 
-- [ ] Add a `runs` table
-- [ ] Track `run_id`
-- [ ] Track `started_at` and `finished_at`
-- [ ] Track the pipeline date being processed
-- [ ] Track fetched article count
+- [x] Add a `runs` table
+- [x] Track `run_id`
+- [x] Track `started_at` and `finished_at`
+- [x] Track the pipeline date being processed
+- [x] Track returned article count
 - [ ] Track duplicate count
-- [ ] Track extracted claim count
-- [ ] Track tracked story count
+- [x] Track saved claim count
+- [x] Track tracked story count
 - [ ] Track failed fetch count
-- [ ] Track LLM call count
-- [ ] Track schema-validation failure count
-- [ ] Track retry count
+- [x] Track LLM call count
+- [x] Track schema-validation failure count
+- [x] Track retry count
 - [ ] Track estimated cost
-- [ ] Track total latency in milliseconds
+- [x] Track total latency in milliseconds
 
 ### LLM call logging
 
-- [ ] Add an `llm_calls` table
-- [ ] Log `run_id`
-- [ ] Log `task_type` such as classification, claim extraction, tracking, or briefing
-- [ ] Log model name
-- [ ] Log input tokens
-- [ ] Log output tokens
+- [x] Add an `llm_calls` table
+- [x] Log `run_id`
+- [x] Log `task_type` such as classification, claim extraction, tracking, or briefing
+- [x] Log model name
+- [x] Log input tokens
+- [x] Log output tokens
 - [ ] Log estimated cost
-- [ ] Log latency in milliseconds
-- [ ] Log cache-hit status where relevant
-- [ ] Log whether schema validation passed
-- [ ] Log retry count
-- [ ] Log error type or error message where relevant
+- [x] Log latency in milliseconds
+- [x] Log cache-hit totals where relevant
+- [x] Log whether schema validation passed
+- [x] Log retry count
+- [x] Log error type or error message where relevant
 
 ### Pipeline report
 
-- [ ] Add a `--pipeline-report` CLI flag
-- [ ] Print article, claim, and story counts by stage
+- [x] Add a `--pipeline-report` CLI flag
+- [x] Print article, claim, and story counts by stage
 - [ ] Print estimated cost by stage
-- [ ] Print latency by stage
+- [x] Print total latency
 - [ ] Break out claim extraction cost separately
 - [ ] Break out briefing generation cost separately
-- [ ] Make the report work when `--db-off` is used
+- [x] Make the report work when `--db-off` is used
 
 ## 2. Claim extraction quality
 
@@ -198,7 +198,7 @@ The repo should be able to show that key AI behaviors are improving rather than 
 The repo already communicates a strong architectural idea. The remaining work is to keep implementation details aligned with that story.
 
 - [ ] Keep the README aligned with actual claim-extraction behavior
-- [ ] Update architecture docs when observability lands
+- [x] Update architecture docs when observability lands
 - [ ] Update model-behavior docs when claim-input rules change
 - [ ] Update ADR 0004 only if the decision changes or the implementation plan needs clarification
 - [ ] Add one polished sample output that demonstrates evidence, uncertainty, and story deltas together
@@ -207,8 +207,8 @@ The repo already communicates a strong architectural idea. The remaining work is
 
 If only a few improvements happen next, they should be these:
 
-- [ ] Add run-level observability
-- [ ] Add `--pipeline-report`
+- [x] Add run-level observability
+- [x] Add `--pipeline-report`
 - [ ] Implement selective full-text claim extraction for the most valuable stories
 - [ ] Back source agreement with claim-level comparison
 - [ ] Add evals that measure quality against cost and latency

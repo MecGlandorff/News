@@ -1,6 +1,6 @@
 # News
 
-> **Status:** Active prototype. Story memory is working end-to-end; the claim-grounding path is implemented and tested behind `--show-evidence`. Selective full-text evidence extraction, source-agreement detection, and cost/latency telemetry are in progress. See the [Roadmap](#roadmap).
+> **Status:** Active prototype. Story memory is working end-to-end; the claim-grounding path is implemented and tested behind `--show-evidence`. Token and latency telemetry exist via `--pipeline-report`; source-agreement detection, cost estimates, and selective full-text evidence extraction are still in progress. See the [Roadmap](#roadmap).
 
 A local-first AI news intelligence prototype that turns noisy RSS feeds into source-grounded, evolving story memory.
 
@@ -173,6 +173,7 @@ python -m src.run --skip-digest
 python -m src.run --db-off
 python -m src.run --date 2026-05-02
 python -m src.run --top-developments 5
+python -m src.run --pipeline-report
 ```
 
 Append extracted claim evidence spans to the Markdown briefing:
@@ -209,6 +210,7 @@ python -m src.run --db-off --max-per-source 1 --top-developments 5 --skip-digest
 
 `--db-off` uses a temporary database and classification cache for that run, leaving `data/stories.db` untouched.
 `--today` is kept as a backwards-compatible alias for `--date`.
+`--pipeline-report` stores a `runs` row, stores real model calls in `llm_calls`, and prints returned-article, story, saved-claim, LLM-error, latency, cache-hit, and token totals. EUR cost estimates are not shown yet.
 
 ## Local Data
 
@@ -240,7 +242,7 @@ The `claims` and `claim_extractions` tables are created lazily when a run uses `
 - Claim extraction does not yet consume fetched full article text.
 - Source metadata is seeded, and new article rows include nullable `source_id` when a source row exists. Source agreement detection is not claim-backed yet.
 - Current source agreement and dispute labels are briefing-level signals, not yet backed by a dedicated contradiction table.
-- Cost and latency tracking are planned but not implemented yet.
+- Run-level latency, token, cache-hit, and schema-failure tracking exists via `--pipeline-report`; EUR cost estimates are still planned.
 - The project stores data locally and does not include a hosted UI.
 
 ## Roadmap
@@ -249,14 +251,15 @@ The project is structured in phases so each layer builds on auditable output fro
 
 **Phase 1 — Ingestion & classification (done).** Multi-source RSS scraping, URL normalization, URL-based deduplication, and theme/importance classification with a content-hash cache.
 
-**Phase 2 — Story memory & claim grounding (current).** Canonical story labels, same-day consolidation, recent-history matching, daily delta summaries, and structured claim extraction with evidence-span validation against source text.
+**Phase 2 — Story memory & claim grounding (done).** Canonical story labels, same-day consolidation, recent-history matching, daily delta summaries, and structured claim extraction with evidence-span validation against source text.
 
-**Phase 3 — Source-aware reasoning (next).**
+**Phase 3 — Source modeling and observability (current).**
 - Source metadata seeded from the 21 configured RSS feeds in `src/scraper.py`, with nullable `articles.source_id` populated for new rows when a seeded source matches. Done as a foundation step; source agreement does not use it yet.
+- Run observability via `runs`, `llm_calls`, and `--pipeline-report`, with token, latency, cache-hit, schema-failure, and retry totals. EUR cost estimates are still planned.
 - Content fingerprinting or source-aware weighting for syndicated copies, after the source model exists.
 - Selective full-text claim extraction gated on a per-article value heuristic, behind `--fetch-article-text`.
 - Claim-backed source agreement and, later, a dedicated contradiction table backing dispute labels that are currently briefing-level only.
-- Cost and latency telemetry per pipeline stage; budget caps and per-run cost summaries.
+- Budget caps and per-run EUR cost summaries.
 
 **Phase 4 — Evaluation & hardening (later).**
 - Held-out evaluation set for story matching, classification, and claim grounding with regression tracking.

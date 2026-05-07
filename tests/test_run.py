@@ -1,7 +1,9 @@
+import sqlite3
 from types import SimpleNamespace
 
 import src.article_cache as article_cache
 import src.claims as claims
+import src.observability as observability
 import src.run as run
 import src.sources as sources
 import src.tracker as tracker
@@ -18,6 +20,7 @@ def _args(**overrides):
         "top_developments": 5,
         "fetch_article_text": False,
         "show_evidence": False,
+        "pipeline_report": False,
         "log_level": "INFO",
     }
     values.update(overrides)
@@ -29,6 +32,7 @@ def test_db_off_uses_temporary_database_paths_and_restores_originals(tmp_path, m
     real_daily = tmp_path / "real" / "daily"
     monkeypatch.setattr(article_cache, "DB_PATH", real_db)
     monkeypatch.setattr(claims, "DB_PATH", real_db)
+    monkeypatch.setattr(observability, "DB_PATH", real_db)
     monkeypatch.setattr(sources, "DB_PATH", real_db)
     monkeypatch.setattr(tracker, "DB_PATH", real_db)
     monkeypatch.setattr(tracker, "DATA_DIR", real_daily)
@@ -47,6 +51,7 @@ def test_db_off_uses_temporary_database_paths_and_restores_originals(tmp_path, m
         seen["tracker_db"] = tracker.DB_PATH
         seen["tracker_daily"] = tracker.DATA_DIR
         seen["claims_db"] = claims.DB_PATH
+        seen["observability_db"] = observability.DB_PATH
         return []
 
     monkeypatch.setattr(run, "classify_articles", fake_classify)
@@ -57,10 +62,12 @@ def test_db_off_uses_temporary_database_paths_and_restores_originals(tmp_path, m
     assert seen["article_cache_db"] != real_db
     assert seen["tracker_db"] == seen["article_cache_db"]
     assert seen["claims_db"] == seen["article_cache_db"]
+    assert seen["observability_db"] == seen["article_cache_db"]
     assert seen["sources_db"] == seen["article_cache_db"]
     assert seen["tracker_daily"].parent == seen["tracker_db"].parent
     assert article_cache.DB_PATH == real_db
     assert claims.DB_PATH == real_db
+    assert observability.DB_PATH == real_db
     assert sources.DB_PATH == real_db
     assert tracker.DB_PATH == real_db
     assert tracker.DATA_DIR == real_daily
@@ -72,6 +79,7 @@ def test_normal_run_uses_configured_database_paths(tmp_path, monkeypatch):
     real_daily = tmp_path / "real" / "daily"
     monkeypatch.setattr(article_cache, "DB_PATH", real_db)
     monkeypatch.setattr(claims, "DB_PATH", real_db)
+    monkeypatch.setattr(observability, "DB_PATH", real_db)
     monkeypatch.setattr(sources, "DB_PATH", real_db)
     monkeypatch.setattr(tracker, "DB_PATH", real_db)
     monkeypatch.setattr(tracker, "DATA_DIR", real_daily)
@@ -92,6 +100,7 @@ def test_normal_run_uses_configured_database_paths(tmp_path, monkeypatch):
     def fake_track(classified, today=None):
         seen["tracker_db"] = tracker.DB_PATH
         seen["claims_db"] = claims.DB_PATH
+        seen["observability_db"] = observability.DB_PATH
         return []
 
     monkeypatch.setattr(run, "scrape_all", fake_scrape)
@@ -104,4 +113,116 @@ def test_normal_run_uses_configured_database_paths(tmp_path, monkeypatch):
     assert seen["sources_db"] == real_db
     assert seen["tracker_db"] == real_db
     assert seen["claims_db"] == real_db
+    assert seen["observability_db"] == real_db
     assert seen["scrape_kwargs"]["target_date"] == "2026-04-28"
+
+
+def test_pipeline_report_prints_run_totals(tmp_path, monkeypatch, capsys):
+    real_db = tmp_path / "real" / "stories.db"
+    real_daily = tmp_path / "real" / "daily"
+    monkeypatch.setattr(article_cache, "DB_PATH", real_db)
+    monkeypatch.setattr(claims, "DB_PATH", real_db)
+    monkeypatch.setattr(observability, "DB_PATH", real_db)
+    monkeypatch.setattr(sources, "DB_PATH", real_db)
+    monkeypatch.setattr(tracker, "DB_PATH", real_db)
+    monkeypatch.setattr(tracker, "DATA_DIR", real_daily)
+    monkeypatch.setattr(run, "parse_args", lambda: _args(pipeline_report=True))
+    monkeypatch.setattr(run, "require_openai_api_key", lambda: None)
+
+    monkeypatch.setattr(
+        run,
+        "scrape_all",
+        lambda **kwargs: [{"id": "article-1"}, {"id": "article-2"}],
+    )
+    monkeypatch.setattr(run, "classify_articles", lambda articles: articles)
+    monkeypatch.setattr(
+        run,
+        "track",
+        lambda classified, today=None: [
+            {"id": "article-1", "story_id": 7},
+            {"id": "article-2", "story_id": 7},
+        ],
+    )
+
+    assert run.main() == []
+
+    output = capsys.readouterr().out
+    assert "Run #1 (2026-04-28, ok" in output
+    assert "Articles returned:      2" in output
+    assert "Claims saved:           0" in output
+    assert "Stories touched:        1" in output
+    assert "LLM errors:             0" in output
+
+    conn = sqlite3.connect(real_db)
+    try:
+        row = conn.execute(
+            """
+            SELECT status, articles_returned, stories_touched
+            FROM runs
+            """
+        ).fetchone()
+    finally:
+        conn.close()
+
+    assert row == ("ok", 2, 1)
+
+
+def test_main_finalizes_run_as_error_when_pipeline_fails(tmp_path, monkeypatch):
+    real_db = tmp_path / "real" / "stories.db"
+    real_daily = tmp_path / "real" / "daily"
+    monkeypatch.setattr(article_cache, "DB_PATH", real_db)
+    monkeypatch.setattr(claims, "DB_PATH", real_db)
+    monkeypatch.setattr(observability, "DB_PATH", real_db)
+    monkeypatch.setattr(sources, "DB_PATH", real_db)
+    monkeypatch.setattr(tracker, "DB_PATH", real_db)
+    monkeypatch.setattr(tracker, "DATA_DIR", real_daily)
+    monkeypatch.setattr(run, "parse_args", lambda: _args())
+    monkeypatch.setattr(run, "require_openai_api_key", lambda: None)
+
+    def fail_scrape(**kwargs):
+        raise RuntimeError("scrape failed")
+
+    monkeypatch.setattr(run, "scrape_all", fail_scrape)
+
+    try:
+        run.main()
+    except RuntimeError as exc:
+        assert str(exc) == "scrape failed"
+    else:
+        raise AssertionError("run.main should raise the pipeline error")
+
+    conn = sqlite3.connect(real_db)
+    try:
+        row = conn.execute(
+            "SELECT status, error_message FROM runs"
+        ).fetchone()
+    finally:
+        conn.close()
+
+    assert row == ("error", "scrape failed")
+
+
+def test_missing_api_key_does_not_create_run_row(tmp_path, monkeypatch):
+    real_db = tmp_path / "real" / "stories.db"
+    real_daily = tmp_path / "real" / "daily"
+    monkeypatch.setattr(article_cache, "DB_PATH", real_db)
+    monkeypatch.setattr(claims, "DB_PATH", real_db)
+    monkeypatch.setattr(observability, "DB_PATH", real_db)
+    monkeypatch.setattr(sources, "DB_PATH", real_db)
+    monkeypatch.setattr(tracker, "DB_PATH", real_db)
+    monkeypatch.setattr(tracker, "DATA_DIR", real_daily)
+    monkeypatch.setattr(run, "parse_args", lambda: _args())
+    monkeypatch.setattr(
+        run,
+        "require_openai_api_key",
+        lambda: (_ for _ in ()).throw(RuntimeError("missing key")),
+    )
+
+    try:
+        run.main()
+    except RuntimeError as exc:
+        assert str(exc) == "missing key"
+    else:
+        raise AssertionError("run.main should raise when the API key is missing")
+
+    assert not real_db.exists()
