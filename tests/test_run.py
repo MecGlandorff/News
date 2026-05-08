@@ -20,6 +20,7 @@ def _args(**overrides):
         "top_developments": 5,
         "fetch_article_text": False,
         "show_evidence": False,
+        "verify_story_matches": False,
         "pipeline_report": False,
         "log_level": "INFO",
     }
@@ -115,6 +116,21 @@ def test_normal_run_uses_configured_database_paths(tmp_path, monkeypatch):
     assert seen["claims_db"] == real_db
     assert seen["observability_db"] == real_db
     assert seen["scrape_kwargs"]["target_date"] == "2026-04-28"
+    assert seen["scrape_kwargs"]["fetch_article_text"] is False
+
+
+def test_show_evidence_requests_article_text(monkeypatch):
+    seen = {}
+
+    def fake_scrape(**kwargs):
+        seen.update(kwargs)
+        return []
+
+    monkeypatch.setattr(run, "scrape_all", fake_scrape)
+
+    run.scrape_articles(_args(show_evidence=True), "2026-04-28")
+
+    assert seen["fetch_article_text"] is True
 
 
 def test_pipeline_report_prints_run_totals(tmp_path, monkeypatch, capsys):
@@ -165,6 +181,33 @@ def test_pipeline_report_prints_run_totals(tmp_path, monkeypatch, capsys):
         conn.close()
 
     assert row == ("ok", 2, 1)
+
+
+def test_verify_story_matches_flag_is_passed_to_tracker(tmp_path, monkeypatch):
+    real_db = tmp_path / "real" / "stories.db"
+    real_daily = tmp_path / "real" / "daily"
+    monkeypatch.setattr(article_cache, "DB_PATH", real_db)
+    monkeypatch.setattr(claims, "DB_PATH", real_db)
+    monkeypatch.setattr(observability, "DB_PATH", real_db)
+    monkeypatch.setattr(sources, "DB_PATH", real_db)
+    monkeypatch.setattr(tracker, "DB_PATH", real_db)
+    monkeypatch.setattr(tracker, "DATA_DIR", real_daily)
+    monkeypatch.setattr(run, "parse_args", lambda: _args(verify_story_matches=True))
+    monkeypatch.setattr(run, "require_openai_api_key", lambda: None)
+
+    seen = {}
+
+    monkeypatch.setattr(run, "scrape_all", lambda **kwargs: [{"id": "article-1"}])
+    monkeypatch.setattr(run, "classify_articles", lambda articles: articles)
+
+    def fake_track(classified, today=None, verify_story_matches=False):
+        seen["verify_story_matches"] = verify_story_matches
+        return []
+
+    monkeypatch.setattr(run, "track", fake_track)
+
+    assert run.main() == []
+    assert seen["verify_story_matches"] is True
 
 
 def test_main_finalizes_run_as_error_when_pipeline_fails(tmp_path, monkeypatch):

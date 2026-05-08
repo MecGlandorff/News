@@ -26,7 +26,7 @@ These pieces are already in place and should be protected as the project evolves
 
 The current prototype is directionally strong, but several important parts are still incomplete or only partially implemented.
 
-- [ ] Claim extraction still relies on RSS title/description rather than article body text
+- [ ] Full-text claim extraction is enabled for evidence runs, but its cost and quality impact still need review
 - [ ] Run observability covers token use, latency, cache hits, schema failures, and retries; EUR cost estimates and scraper duplicate/failure counts are still deferred
 - [ ] Source metadata is modeled as a first-class table, but source agreement does not consume it yet
 - [ ] Source agreement is surfaced in the briefing, but not yet backed by a dedicated comparison layer
@@ -39,8 +39,8 @@ The order below matters. The project should measure its pipeline before making e
 
 - [x] 1. Add observability tables for runs and LLM calls
 - [x] 2. Add a pipeline report that shows counts and latency by stage (cost-by-stage deferred until model pricing is maintained explicitly)
-- [ ] 3. Define and document selective full-text claim extraction rules
-- [ ] 4. Implement selective full-text claim extraction for the most valuable stories
+- [x] 3. Define and document full-text claim extraction for evidence runs
+- [x] 4. Implement full-text claim extraction behind `--show-evidence`
 - [ ] 5. Add stronger source agreement and contradiction handling
 - [ ] 6. Add evaluation coverage for quality, cost, and latency tradeoffs
 
@@ -92,7 +92,7 @@ The project should be able to explain what a pipeline run cost, how long each st
 
 ## 2. Claim extraction quality
 
-Claim extraction is already structured and validated, but the evidence quality is limited because the extractor currently works from RSS title and description rather than full article text.
+Claim extraction is already structured and validated. Evidence runs now fetch full article text and use it when available, while preserving the RSS title/description fallback.
 
 ### Current protected behavior
 
@@ -106,23 +106,23 @@ These behaviors already exist and should remain true after refactoring:
 - [x] Cache zero-claim results
 - [x] Keep cached claims aligned with the current `story_id`
 
-### Selective full-text claim extraction
+### Full-text claim extraction
 
-The next step is not "use full text everywhere." The next step is "use full text where it materially improves the final intelligence artifact."
+The richer path is gated behind `--show-evidence`; ordinary runs do not extract claims.
 
-- [ ] Implement selective full-text claim extraction
-- [ ] Keep RSS title/description as the default broad extraction path
-- [ ] Only use full text when `--fetch-article-text` is enabled
-- [ ] Only use full text when fetched article text is actually present and usable
+- [x] Implement full-text claim extraction for evidence runs
+- [x] Keep ordinary runs claim-free unless `--show-evidence` is enabled
+- [x] Fetch full text when `--show-evidence` is enabled
+- [x] Only use full text when fetched article text is actually present and usable
 - [ ] Record which input source was used for each extraction: `rss` or `full_text`
-- [ ] Measure quality improvement before expanding beyond the selected scope
+- [ ] Measure quality improvement against token and latency cost
 
-### Selection policy
+### Future control policy
 
-The repo should explicitly define which articles qualify for richer claim extraction.
+If evidence runs become too expensive, the repo should explicitly define which articles qualify for richer claim extraction.
 
-- [ ] Decide whether full text is triggered by article importance
-- [ ] Decide whether full text is triggered by final briefing inclusion
+- [ ] Decide whether full text should be limited by article importance
+- [ ] Decide whether full text should be limited by final briefing inclusion
 - [ ] Decide whether both rules should be supported
 - [ ] Define what happens when an article qualifies but body text is missing
 - [ ] Define what happens when fetched text is too short, poor quality, or fetch failed
@@ -131,8 +131,8 @@ The repo should explicitly define which articles qualify for richer claim extrac
 
 This should be documented clearly so reviewers can understand how the system degrades when richer evidence input is unavailable.
 
-- [ ] Document that the pipeline falls back to RSS title/description when full text is unavailable
-- [ ] Document whether fallback is automatic or treated as a warning
+- [x] Document that the pipeline falls back to RSS title/description when full text is unavailable
+- [x] Document whether fallback is automatic or treated as a warning
 - [ ] Count fallback events once observability exists
 - [ ] Ensure fallback does not break the run
 
@@ -188,19 +188,19 @@ The repo should be able to show that key AI behaviors are improving rather than 
 - [ ] Add a citation-support evaluation set
 - [ ] Add a temporal-diffing evaluation set
 - [ ] Add metrics for evidence support rate
-- [ ] Measure the quality lift from selective full-text claims
-- [ ] Measure the token-cost increase from selective full-text claims
-- [ ] Measure the latency increase from selective full-text claims
+- [ ] Measure the quality lift from full-text claims
+- [ ] Measure the token-cost increase from full-text claims
+- [ ] Measure the latency increase from full-text claims
 - [ ] Write an evaluation README with success criteria
 
 ## 7. Documentation alignment
 
 The repo already communicates a strong architectural idea. The remaining work is to keep implementation details aligned with that story.
 
-- [ ] Keep the README aligned with actual claim-extraction behavior
+- [x] Keep the README aligned with actual claim-extraction behavior
 - [x] Update architecture docs when observability lands
-- [ ] Update model-behavior docs when claim-input rules change
-- [ ] Update ADR 0004 only if the decision changes or the implementation plan needs clarification
+- [x] Update model-behavior docs when claim-input rules change
+- [x] Update ADR 0004 only if the decision changes or the implementation plan needs clarification
 - [ ] Add one polished sample output that demonstrates evidence, uncertainty, and story deltas together
 
 ## Short version
@@ -209,6 +209,6 @@ If only a few improvements happen next, they should be these:
 
 - [x] Add run-level observability
 - [x] Add `--pipeline-report`
-- [ ] Implement selective full-text claim extraction for the most valuable stories
+- [x] Implement full-text claim extraction for evidence runs
 - [ ] Back source agreement with claim-level comparison
 - [ ] Add evals that measure quality against cost and latency

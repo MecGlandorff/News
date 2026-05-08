@@ -2,6 +2,8 @@
 
 The project should evaluate the behaviors that make it more than an article summarizer: story clustering, claim extraction, evidence grounding, temporal diffing, contradiction detection, and briefing quality.
 
+Use [how-it-works.md](how-it-works.md) as the current behavior baseline before turning any item here into an eval.
+
 The near-term goal is not a large benchmark. The goal is a small, inspectable eval harness that catches obvious regressions before adding more AI behavior.
 
 ---
@@ -19,6 +21,17 @@ Useful checks:
 - false-split examples where the same event receives multiple labels
 
 Current motivating failure: a sample output grouped an "OpenAI Shooter Lawsuit" memory with White House Correspondents' Dinner shooting coverage. That should become a golden false-merge case.
+
+Second motivating failure: Run #2 on 2026-05-07 attached Al Jazeera's `Palestinians expose torture and sexual violence in Israeli detention` to `Gaza flotilla raid`. The correct behavior is not to reuse the flotilla story, because the article is adjacent Gaza/Israel detention context rather than the same flotilla event.
+
+For `--verify-story-matches`, evaluate both the final match result and the stored verifier decision:
+
+- accepted vs rejected candidate
+- `relationship`
+- `confidence`
+- continuity evidence quality
+- reject reason quality
+- whether full article text changed the decision compared with RSS-only context
 
 ### 2. Claim extraction
 
@@ -76,6 +89,7 @@ Useful rubric dimensions:
 evals/
   datasets/
     article_pairs.jsonl
+    story_match_cases.jsonl
     golden_story_clusters.jsonl
     golden_claims.jsonl
     golden_citations.jsonl
@@ -96,6 +110,7 @@ Keep datasets small at first. Ten high-quality examples per behavior are more us
 |---|---|
 | Article deduplication | precision / recall / F1 |
 | Story clustering | pairwise precision / recall / F1 |
+| Story-match verification | accepted / rejected accuracy, false-merge rate |
 | Claim extraction | validity / coverage / semantic match |
 | Citation accuracy | supported / unsupported / missing |
 | Temporal diffing | new-vs-repeated accuracy |
@@ -114,7 +129,8 @@ Examples:
 
 - before source agreement detection, create claim-pair examples where sources agree, differ, or merely repeat the same wire copy
 - before contradiction detection, create numeric/date/status conflict examples with expected labels
-- before full-text claim extraction for all articles, measure claim quality improvement against token and latency increase
+- before enabling `--verify-story-matches` by default, review 5-10 accepted and rejected match cases from recent newspapers
+- before making evidence extraction part of ordinary runs or broadening it into source agreement and contradiction work, measure claim quality improvement against token and latency increase
 
 ---
 

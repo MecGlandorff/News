@@ -1,6 +1,7 @@
 CLASSIFIER_MODEL = "gpt-5.4-mini"
-CLAIMS_MODEL     = "gpt-5.4-mini"
+CLAIMS_MODEL     = "gpt-5.4-nano"
 TRACKER_MODEL    = "gpt-5.5"
+STORY_MATCH_VERIFIER_MODEL = "gpt-5.4-nano"
 BRIEFING_MODEL   = "gpt-5.5"
 
 DEFAULT_LOOKBACK_DAYS = 14

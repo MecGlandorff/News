@@ -2,9 +2,9 @@ import json
 import sqlite3
 from datetime import date, timedelta
 from pathlib import Path
-from src.config import DEFAULT_LOOKBACK_DAYS, TRACKER_MODEL
+from src.config import DEFAULT_LOOKBACK_DAYS, STORY_MATCH_VERIFIER_MODEL, TRACKER_MODEL
 from src.llm import get_openai_client
-from src import story_matching
+from src import observability, story_matching
 
 DB_PATH  = Path("data/stories.db")
 DATA_DIR = Path("data/daily")
@@ -17,6 +17,7 @@ CANDIDATES_PER_LABEL = story_matching.CANDIDATES_PER_LABEL
 SUMMARY_CHAR_LIMIT = story_matching.SUMMARY_CHAR_LIMIT
 DELTA_CHAR_LIMIT = story_matching.DELTA_CHAR_LIMIT
 TITLE_CHAR_LIMIT = story_matching.TITLE_CHAR_LIMIT
+VERIFY_PROMPT_VERSION = story_matching.VERIFY_PROMPT_VERSION
 
 
 def _ensure_column(conn, table, column, definition):
@@ -77,6 +78,29 @@ def _get_db():
             relevance       REAL,
             PRIMARY KEY (article_id, story_id, observation_id)
         );
+        CREATE TABLE IF NOT EXISTS story_match_decisions (
+            decision_id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id               INTEGER,
+            run_date             TEXT NOT NULL,
+            today_label          TEXT NOT NULL,
+            candidate_label      TEXT NOT NULL,
+            candidate_story_id   INTEGER,
+            accepted             INTEGER NOT NULL,
+            same_event           INTEGER NOT NULL,
+            relationship         TEXT NOT NULL,
+            confidence           TEXT,
+            article_dates        TEXT,
+            candidate_last_seen  TEXT,
+            continuity_evidence  TEXT,
+            reject_reason        TEXT,
+            verifier_model       TEXT,
+            prompt_version       TEXT NOT NULL,
+            created_at           TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS idx_story_match_decisions_run_id
+            ON story_match_decisions (run_id);
+        CREATE INDEX IF NOT EXISTS idx_story_match_decisions_run_date
+            ON story_match_decisions (run_date);
     """)
     _ensure_column(conn, "articles", "description", "TEXT")
     _ensure_column(conn, "articles", "source_id", "INTEGER REFERENCES sources(source_id)")
@@ -295,6 +319,70 @@ def _source_id_for_name(conn, source_name):
     return row["source_id"] if row else None
 
 
+def _save_story_match_decisions(conn, decisions, run_date):
+    if not decisions:
+        return
+    run_id = observability.current_run_id()
+    for decision in decisions:
+        conn.execute(
+            """
+            INSERT INTO story_match_decisions (
+                run_id, run_date, today_label, candidate_label, candidate_story_id,
+                accepted, same_event, relationship, confidence, article_dates,
+                candidate_last_seen, continuity_evidence, reject_reason,
+                verifier_model, prompt_version
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                run_id,
+                run_date,
+                decision["today_label"],
+                decision["candidate_label"],
+                decision.get("candidate_story_id"),
+                1 if decision.get("accepted") else 0,
+                1 if decision.get("same_event") else 0,
+                decision.get("relationship", "uncertain"),
+                decision.get("confidence", "low"),
+                json.dumps(decision.get("article_dates", []), ensure_ascii=False),
+                decision.get("candidate_last_seen", ""),
+                json.dumps(decision.get("continuity_evidence", []), ensure_ascii=False),
+                decision.get("reject_reason", ""),
+                decision.get("verifier_model", STORY_MATCH_VERIFIER_MODEL),
+                decision.get("prompt_version", VERIFY_PROMPT_VERSION),
+            ),
+        )
+
+
+def _record_story_match_verification_totals(decisions):
+    if not decisions:
+        return
+    observability.update_run_totals(
+        story_match_verifications=len(decisions),
+        story_match_accepts=sum(1 for decision in decisions if decision.get("accepted")),
+        story_match_rejections=sum(1 for decision in decisions if not decision.get("accepted")),
+    )
+
+
+def _fetch_article_text_for_match(url):
+    from src.scraper import fetch_article_text
+    return fetch_article_text(url)
+
+
+def _ensure_match_article_text(story_groups, labels):
+    for label in labels:
+        for article in story_groups.get(label, []):
+            if (article.get("text") or "").strip():
+                continue
+            url = article.get("url")
+            if not url:
+                continue
+            try:
+                article["text"] = _fetch_article_text_for_match(url)
+            except Exception:
+                article["text"] = article.get("text") or ""
+
+
 def _label_tokens(label):
     return story_matching.label_tokens(label)
 
@@ -378,6 +466,17 @@ def _match_labels(today_labels, recent_stories, today=None):
     )
 
 
+def _verify_story_matches(label_map, recent_stories, story_groups, today=None):
+    return story_matching.verify_story_matches(
+        label_map,
+        recent_stories,
+        story_groups,
+        get_client=get_openai_client,
+        model=STORY_MATCH_VERIFIER_MODEL,
+        today=today,
+    )
+
+
 def _trend(story_id, today_count, conn, today):
     row = conn.execute(
         """
@@ -397,7 +496,7 @@ def _trend(story_id, today_count, conn, today):
     return "steady"
 
 
-def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS):
+def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_story_matches=False):
     if not classified:
         return []
 
@@ -430,10 +529,25 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS):
 
     # Match today's labels to recent canonical labels outside the write transaction.
     label_map = _match_labels(set(story_groups.keys()), recent_story_options, today=today)
+    match_decisions = []
+    if verify_story_matches:
+        candidate_labels = {
+            label
+            for label, canonical in label_map.items()
+            if canonical != "NEW" and canonical in recent_story_options
+        }
+        _ensure_match_article_text(story_groups, candidate_labels)
+        label_map, match_decisions = _verify_story_matches(
+            label_map,
+            recent_story_options,
+            story_groups,
+            today=today,
+        )
 
     conn = _get_db()
     try:
         with conn:
+            _save_story_match_decisions(conn, match_decisions, today)
             _reset_tracking_date(conn, today)
 
             # Upsert stories and story_daily
@@ -537,5 +651,6 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS):
     finally:
         conn.close()
 
+    _record_story_match_verification_totals(match_decisions)
     print(f"Tracked {len(story_groups)} stories ({sum(1 for v in label_map.values() if v == 'NEW')} new)")
     return tracked

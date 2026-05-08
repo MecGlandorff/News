@@ -147,6 +147,10 @@ def _extract_text(url, session=None):
     return re.sub(r"\n{3,}", "\n\n", body.get_text(separator="\n")).strip()
 
 
+def fetch_article_text(url, session=None):
+    return _extract_text(url, session=session)
+
+
 def scrape_all(sources=None, max_per_source=None, fetch_article_text=FETCH_ARTICLE_TEXT, target_date=None):
     sources = sources or SOURCES
     if max_per_source is None:

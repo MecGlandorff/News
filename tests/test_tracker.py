@@ -44,6 +44,39 @@ def _fake_tracker_client(payload):
     return Client()
 
 
+def _fake_tracker_client_sequence(payloads, captured=None):
+    class Message:
+        def __init__(self, content):
+            self.content = content
+
+    class Choice:
+        def __init__(self, content):
+            self.message = Message(content)
+
+    class Response:
+        def __init__(self, payload):
+            self.choices = [Choice(json.dumps(payload))]
+
+    class Completions:
+        def __init__(self):
+            self.payloads = list(payloads)
+
+        def create(self, **kwargs):
+            if captured is not None:
+                captured.append(kwargs)
+            return Response(self.payloads.pop(0))
+
+    class Chat:
+        def __init__(self):
+            self.completions = Completions()
+
+    class Client:
+        def __init__(self):
+            self.chat = Chat()
+
+    return Client()
+
+
 def test_track_is_idempotent_for_same_day(tmp_path, monkeypatch):
     db_path = tmp_path / "stories.db"
     data_dir = tmp_path / "daily"
@@ -246,6 +279,151 @@ def test_match_labels_rejects_known_shooting_false_merge(monkeypatch):
     )
 
     assert matches["White House Shooting"] == "NEW"
+
+
+def test_story_match_verifier_rejects_gaza_detention_false_merge(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    data_dir = tmp_path / "daily"
+    client = _fake_tracker_client_sequence([
+        {
+            "matches": [{
+                "today_label": "Israel Detention Abuse",
+                "canonical_label": "Gaza flotilla raid",
+            }]
+        },
+        {
+            "decisions": [{
+                "today_label": "Israel Detention Abuse",
+                "canonical_label": "Gaza flotilla raid",
+                "same_event": False,
+                "relationship": "adjacent_topic",
+                "confidence": "high",
+                "article_dates": ["2026-05-07"],
+                "candidate_last_seen": "2026-05-04",
+                "continuity_evidence": [],
+                "reject_reason": (
+                    "The article concerns Palestinian detainees generally, "
+                    "not the flotilla raid or detained flotilla activists."
+                ),
+            }]
+        },
+    ])
+    monkeypatch.setattr(tracker, "DB_PATH", db_path)
+    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
+    monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
+
+    first = tracker.track(
+        [_article(1, "Israel intercepts Gaza-bound flotilla", "Gaza flotilla raid")],
+        today="2026-05-04",
+    )
+    tracker.save_observation_memory([{
+        "observation_id": first[0]["observation_id"],
+        "summary": "Israel intercepted a Gaza-bound aid flotilla and detained activists.",
+        "delta_summary": "British Gaza flotilla activists alleged abuse after detention.",
+    }])
+
+    article = _article(
+        2,
+        "Palestinians expose torture and sexual violence in Israeli detention",
+        "Israel Detention Abuse",
+    )
+    article["source"] = "Al Jazeera"
+    article["description"] = (
+        "Palestinian detainees and rights groups share disturbing accounts of rape, "
+        "sexual violence and physical abuse."
+    )
+    article["text"] = (
+        "Palestinian detainees and rights groups share disturbing accounts of rape, "
+        "sexual violence and physical abuse in Israeli detention."
+    )
+
+    tracked = tracker.track([article], today="2026-05-07", verify_story_matches=True)
+
+    assert tracked[0]["canonical_label"] == "Israel Detention Abuse"
+
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    try:
+        decision = dict(conn.execute(
+            """
+            SELECT today_label, candidate_label, accepted, same_event,
+                   relationship, reject_reason
+            FROM story_match_decisions
+            """
+        ).fetchone())
+        story_rows = conn.execute("""
+            SELECT s.canonical_label
+            FROM articles a
+            JOIN stories s ON s.story_id = a.story_id
+            WHERE a.id = ?
+        """, ("2",)).fetchall()
+    finally:
+        conn.close()
+
+    assert decision["today_label"] == "Israel Detention Abuse"
+    assert decision["candidate_label"] == "Gaza flotilla raid"
+    assert decision["accepted"] == 0
+    assert decision["same_event"] == 0
+    assert decision["relationship"] == "adjacent_topic"
+    assert "not the flotilla raid" in decision["reject_reason"]
+    assert [row["canonical_label"] for row in story_rows] == ["Israel Detention Abuse"]
+
+
+def test_story_match_verifier_fetches_full_text_for_candidate_match(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    data_dir = tmp_path / "daily"
+    captured = []
+    client = _fake_tracker_client_sequence([
+        {
+            "matches": [{
+                "today_label": "Iran Peace Proposal",
+                "canonical_label": "Iran Nuclear Talks",
+            }]
+        },
+        {
+            "decisions": [{
+                "today_label": "Iran Peace Proposal",
+                "canonical_label": "Iran Nuclear Talks",
+                "same_event": True,
+                "relationship": "direct_follow_up",
+                "confidence": "high",
+                "article_dates": ["2026-05-02"],
+                "candidate_last_seen": "2026-05-01",
+                "continuity_evidence": ["The article reports a new proposal in the same nuclear talks."],
+                "reject_reason": "",
+            }]
+        },
+    ], captured=captured)
+    monkeypatch.setattr(tracker, "DB_PATH", db_path)
+    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
+    monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
+    monkeypatch.setattr(
+        tracker,
+        "_fetch_article_text_for_match",
+        lambda url: "Full article text about the latest Iran nuclear talks proposal.",
+    )
+
+    first = tracker.track(
+        [_article(1, "Iran sends proposal through mediators", "Iran Nuclear Talks")],
+        today="2026-05-01",
+    )
+    tracker.save_observation_memory([{
+        "observation_id": first[0]["observation_id"],
+        "summary": "US-Iran nuclear negotiations continued through mediators.",
+        "delta_summary": "Iran sent a proposal but the US response remained unclear.",
+    }])
+
+    article = _article(2, "Iran sends revised peace proposal", "Iran Peace Proposal")
+    article["published_at"] = "Sat, 02 May 2026 12:00:00 GMT"
+    article["text"] = ""
+
+    tracked = tracker.track([article], today="2026-05-02", verify_story_matches=True)
+
+    assert tracked[0]["canonical_label"] == "Iran Nuclear Talks"
+    verifier_payload = json.loads(captured[1]["messages"][1]["content"])
+    current_article = verifier_payload["cases"][0]["current_articles"][0]
+    assert current_article["article_date"] == "2026-05-02"
+    assert current_article["article_text"] == "Full article text about the latest Iran nuclear talks proposal."
 
 
 def test_match_labels_allows_ongoing_story_rewording(monkeypatch):

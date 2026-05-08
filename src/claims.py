@@ -10,7 +10,7 @@ from src.llm import create_chat_completion, get_openai_client, mark_schema_failu
 
 DB_PATH = Path("data/stories.db")
 
-CLAIMS_PROMPT_VERSION = "2026-05-03-v1"
+CLAIMS_PROMPT_VERSION = "2026-05-09-v1"
 CLAIM_TYPES = {"fact", "number", "quote", "prediction", "allegation", "background"}
 
 CLAIMS_PROMPT = """You are extracting atomic claims from a news article.
@@ -83,10 +83,18 @@ def _strip_html(text):
     return re.sub(r"<[^>]+>", " ", text or "").strip()
 
 
+def _clean_article_part(text):
+    return re.sub(r"\s+", " ", _strip_html(text)).strip()
+
+
 def _article_content(article):
-    title = (article.get("title") or "").strip()
-    description = _strip_html(article.get("description") or "")
-    return f"{title}\n\n{description}".strip()
+    title = _clean_article_part(article.get("title"))
+    description = _clean_article_part(article.get("description"))
+    full_text = _clean_article_part(article.get("text"))
+    parts = [title, description]
+    if full_text:
+        parts.append(full_text)
+    return "\n\n".join(part for part in parts if part)
 
 
 def _article_content_hash(content):

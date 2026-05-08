@@ -41,7 +41,16 @@ def parse_args():
         help="Number of lead stories in the briefing, clamped to 3-8",
     )
     parser.add_argument("--fetch-article-text", action="store_true", help="Fetch full article pages in addition to RSS metadata")
-    parser.add_argument("--show-evidence", action="store_true", help="Extract claims and append evidence spans to briefing")
+    parser.add_argument(
+        "--show-evidence",
+        action="store_true",
+        help="Extract claims with full article text when available and append evidence spans to briefing",
+    )
+    parser.add_argument(
+        "--verify-story-matches",
+        action="store_true",
+        help="Verify candidate story matches with full article text and gpt-5.4-nano before reusing story memory",
+    )
     parser.add_argument("--pipeline-report", action="store_true", help="Print run totals, LLM calls, latency, and token usage")
     parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
     return parser.parse_args()
@@ -89,7 +98,7 @@ def configure_logging(log_level):
 def scrape_articles(args, run_date):
     return scrape_all(
         max_per_source=args.max_per_source,
-        fetch_article_text=args.fetch_article_text,
+        fetch_article_text=args.fetch_article_text or args.show_evidence,
         target_date=run_date,
     )
 
@@ -102,7 +111,9 @@ def classify_scraped_articles(articles):
     return classify_articles(articles)
 
 
-def track_stories(classified, run_date):
+def track_stories(classified, run_date, verify_story_matches=False):
+    if verify_story_matches:
+        return track(classified, today=run_date, verify_story_matches=True)
     return track(classified, today=run_date)
 
 
@@ -152,7 +163,11 @@ def run_pipeline(args, run_date=None):
     articles = scrape_articles(args, run_date)
     observability.update_run_totals(articles_returned=len(articles))
     classified = classify_scraped_articles(articles)
-    tracked = track_stories(classified, run_date)
+    tracked = track_stories(
+        classified,
+        run_date,
+        verify_story_matches=getattr(args, "verify_story_matches", False),
+    )
     stories_touched = len({
         article.get("story_id")
         for article in tracked

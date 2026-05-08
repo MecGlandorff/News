@@ -1,27 +1,58 @@
 # News
 
-> **Status:** Active prototype. Story memory is working end-to-end; the claim-grounding path is implemented and tested behind `--show-evidence`. Token and latency telemetry exist via `--pipeline-report`; source-agreement detection, cost estimates, and selective full-text evidence extraction are still in progress. See the [Roadmap](#roadmap).
+<p align="center">
+  <img src="docs/assets/readme-hero.svg" alt="News source-grounded event memory system preview" width="100%">
+</p>
 
-A local-first AI news intelligence prototype that turns noisy RSS feeds into source-grounded, evolving story memory.
+## AI News Intelligence That Remembers What Changed
 
-Most AI news tools summarize articles.
-This project tracks stories.
+Most AI news tools summarize the article in front of them. **News** builds a local, source-grounded memory of real-world events: what happened today, what changed since the previous run, which sources support it, and where uncertainty remains.
 
-It ingests RSS coverage, classifies articles, links them into continuing story arcs, extracts source-grounded claims, remembers what changed across runs, and publishes daily Markdown briefings plus newspaper-style PDFs.
+It is a builder-grade prototype of an intelligence briefing system: RSS ingestion, structured LLM stages, SQLite event memory, evidence-span validation, story-match verification, run observability, Markdown briefings, and newspaper-style PDFs.
+
+```text
+Source -> Article -> Claim -> Story Arc -> Story Delta -> Briefing
+```
+
+> **Status:** Active prototype. Story memory, full-text claim grounding, source metadata, LLM observability, and optional full-text story-match verification are implemented. Claim-backed source agreement, contradiction records, and cost estimates are still in progress.
+
+## Why it is great! 
+
+- **Product idea:** source-grounded event memory, not another RSS summary feed.
+- **System design:** explicit pipeline from source to article to claim to story delta to briefing.
+- **AI discipline:** structured model outputs, prompt versions, schema validation, cache keys, and fallbacks.
+- **Trust layer:** claims require evidence spans that appear in source text before they are stored.
+- **Temporal memory:** story observations preserve what the system knew yesterday so today's briefing can explain movement.
+- **Observability:** `runs` and `llm_calls` record model usage, cache hits, schema failures, latency, and tokens.
+- **Regression posture:** the pytest suite covers scraper behavior, source seeding, caching, tracking, claims, observability, CLI behavior, and PDF output.
+
+The flagship outcome is an intelligence-style briefing with status, confidence, source agreement, dispute labels, deltas, source links, and optional evidence spans.
+
+## Product Snapshot
+
+| Capability | What it does today |
+|---|---|
+| Story memory | Groups articles into continuing event arcs and compares against recent history |
+| Daily delta | Writes "what changed today" instead of repeating generic summaries |
+| Claim grounding | Uses `gpt-5.4-nano` with full article text when available and only saves evidence spans found in source input |
+| Match verifier | Uses full article text and `gpt-5.4-nano` to reject adjacent-topic story merges |
+| Local database | Keeps stories, articles, observations, claims, sources, runs, and LLM calls in SQLite |
+| Outputs | Publishes Markdown briefings, digest files, and newspaper-style PDFs |
+| Inspectability | Includes ADRs, failure modes, model behavior docs, database queries, and pipeline diagrams |
 
 ## Outputs
 
-- [Latest generated Markdown briefing](briefings/briefing_20260504_2218.md)
-- [Latest generated newspaper PDF](newspapers/newspaper_20260504_2218.pdf)
+- [Latest generated Markdown briefing](briefings/briefing_20260507_2339.md)
+- [Latest generated newspaper PDF](newspapers/newspaper_20260507_2339.pdf)
 - [Curated sample intelligence brief](sample_outputs/intelligence_brief.md)
 - [Briefing archive](briefings/)
 - [Newspaper archive](newspapers/)
 
-The latest generated briefing shows the current daily pipeline output. The curated sample is the stronger showcase artifact: it demonstrates the intended story-card shape with status, confidence, source agreement, deltas, evidence, and source links.
+The generated files show current pipeline behavior. The curated sample is the best compact showcase of the intended story-card shape.
 
-## Sample Output
+## Sample Story Card
 
-A curated story card from [sample_outputs/intelligence_brief.md](sample_outputs/intelligence_brief.md), trimmed for length:
+Trimmed from [sample_outputs/intelligence_brief.md](sample_outputs/intelligence_brief.md):
 
 > ### COVERAGE DECREASING US troop presence in Germany
 > _Geopolitics & War / USA Politics - importance 3.9 - 7 sources - latest reported 2026-05-03 13:39 UTC_
@@ -34,80 +65,58 @@ A curated story card from [sample_outputs/intelligence_brief.md](sample_outputs/
 >
 > _Sources: The Guardian, Al Jazeera, de Volkskrant, NOS, BBC News._
 
-Note the trend tag, explicit `What changed today` delta, bounded uncertainty labels, evidence spans, and source links. None of these come from a single article; they are emitted by the story-memory, claim-grounding, and briefing layers.
+This is not a single-article summary. It is produced by story tracking, temporal memory, claim grounding, source aggregation, and briefing generation.
 
-## Why It Is Interesting
+## How It Works
 
-- **Story memory:** articles are grouped into canonical stories and matched against recent history.
-- **Daily deltas:** each story surfaces what changed today, not just what happened.
-- **Claim extraction:** articles can be converted into atomic claims with evidence spans via `--show-evidence`.
-- **Story-card briefings:** output surfaces status, confidence, source agreement, dispute flags, and open questions.
-- **Source-aware synthesis:** briefings include source links, reported timestamps, source counts, importance, and trend signals.
-- **Local-first operation:** SQLite, local files, Markdown, and PDFs; no hosted service or heavy infrastructure.
-- **Cost discipline:** high-volume calls use `gpt-5.4-mini`; stronger models are reserved for story reasoning and final prose.
-
-## Design Decisions
-
-These are the load-bearing tradeoffs. They are documented in more detail as ADRs under [docs/adr/](docs/adr/).
-
-- **Local-first storage over a hosted backend.** SQLite plus Markdown files on disk. Trades the convenience of a UI and multi-user access for transparency, cheap iteration, git-diffable outputs, and zero infrastructure to keep alive.
-- **URL deduplication now, content fingerprinting later.** The scraper currently deduplicates exact repeated feed items by normalized URL. Classification and claim extraction use content hashes for cache invalidation, but article-level content fingerprinting across syndicated copies is still future work. This keeps ingestion simple while making the current limitation visible.
-- **Tiered model routing.** `gpt-5.4-mini` for high-volume per-article classification; stronger models reserved for story-level reasoning and final briefing prose. Tradeoff: occasional miscategorization at the cheap tier, accepted because story-level reasoning is where reasoning quality actually shows up to a reader.
-- **Same-day story consolidation before memory match.** Articles are merged into canonical labels within a day before being matched against history. Costs one extra LLM pass per run but materially reduces duplicate story arcs in the long-term memory.
-- **Evidence spans validated against source text, not trusted from the model.** A claim is only persisted when its `evidence_span` is found verbatim in the input used to extract it. Drops some genuine-but-paraphrased claims; eliminates a class of hallucination that would otherwise be invisible to a reader of the briefing.
-- **Claim extraction on RSS title/description first, full text deferred.** Selective full-text extraction is gated on cost-and-latency observability landing (Phase 3) so we can measure what we are buying before turning it on for every article. Tradeoff: weaker evidence on stories where the headline does not carry the substance.
-- **Briefings as the contract, not the database.** The Markdown briefing is the human-facing artifact and the test surface; the SQLite schema is allowed to change as long as the briefing remains stable and sourced. This keeps schema refactors cheap.
-
-## Pipeline
-
-```text
-Source
-  -> Article
-  -> Claim
-  -> Story Arc
-  -> Story Delta
-  -> Briefing
-```
-
-Current implementation:
+The run starts in `src/run.py` and moves through these stages:
 
 ```text
 RSS feeds
-  -> scrape, normalize URLs, deduplicate exact URL repeats
-  -> classify theme, story_label, importance
-  -> consolidate same-day story labels
-  -> match stories against recent memory
-  -> optionally extract claims and evidence spans
-  -> generate story deltas and briefing prose
-  -> write Markdown briefing and newspaper PDF
+  -> src/sources.py      seed configured sources into SQLite
+  -> src/scraper.py      fetch RSS, normalize URLs, filter dates, deduplicate URLs
+  -> src/classifier.py   classify theme, story_label, and importance
+  -> src/tracker.py      consolidate labels, match recent stories, write story memory
+  -> src/story_matching.py optionally verify candidate matches with full article text
+  -> src/claims.py       optionally extract validated claims and evidence spans
+  -> src/top10.py        select stories and generate briefing cards
+  -> src/digest.py       write local digest Markdown
+  -> src/newspaper.py    render the PDF from the same briefing package
+  -> src/observability.py record run totals, model calls, cache hits, and tokens
 ```
 
-See [docs/architecture.md](docs/architecture.md) for the database model and pipeline details.
+For the detailed code-path audit, read [docs/how-it-works.md](docs/how-it-works.md).
 
-## Story Intelligence
+For the SQLite inspection guide, read [docs/database-guide.md](docs/database-guide.md).
 
-The tracker keeps a compact local memory of each story:
+## Story Memory
+
+The tracker keeps a compact local memory of each event:
 
 - canonical story label
 - first seen and last seen dates
-- daily source count and average importance
-- trend signal: new, increasing, steady, or decreasing
-- article links and observations for each tracked date
-- generated summary and delta memory for future context
+- daily source count and importance average
+- trend signal: `new`, `up`, `steady`, or `down`
+- linked articles and observations per day
+- generated summary and `delta_summary` for the next run
 
-Briefings surface that memory as an explicit delta:
+Candidate cross-day matches can be verified before memory is reused:
 
-```md
-**What changed today:** Police classified the Golders Green stabbing as terrorism, shifting the story from a local attack to a national security and antisemitism concern.
+```bash
+python -m src.run --verify-story-matches
 ```
 
-That makes the output read less like a daily article summary and more like an intelligence update.
+That verifier uses `gpt-5.4-nano` and full article text for candidate matches. It asks whether today's article group continues the same real-world event, stores rows in `story_match_decisions`, and defaults to a new story when continuity evidence is weak.
 
 ## Source Grounding
 
-The claim layer is the bridge from article text to auditable briefing output.
+Claim extraction is optional:
 
-With `--show-evidence`, the pipeline extracts structured claims:
+```bash
+python -m src.run --show-evidence
+```
+
+When enabled, the claim layer extracts:
 
 - `claim_text`
 - `claim_type`
@@ -115,9 +124,7 @@ With `--show-evidence`, the pipeline extracts structured claims:
 - `evidence_span`
 - `confidence`
 
-> **Hallucination guard:** a claim is persisted only when its `evidence_span` is found verbatim in the article input used for extraction. Model-paraphrased spans are dropped, never silently substituted, and the briefing never falls back to model-restated claim text. This drops some genuine-but-rephrased claims on purpose — the alternative is unfalsifiable evidence in the briefing.
-
-The near-term strategy is intentionally cost-conscious: broad claim extraction uses RSS title/description by default and is cached by input content hash. A future pass should use full article text selectively for high-value evidence work when `--fetch-article-text` is enabled. Full-text claim extraction for every article is deferred until cost and latency observability exists.
+A claim is saved only if the `evidence_span` appears in the article input. With `--show-evidence`, the scraper fetches full article pages and claim extraction uses title, RSS description, and full article text when available. If full-text extraction fails, claims fall back to title and description.
 
 ## Setup
 
@@ -136,15 +143,7 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-## Configuration
-
-Copy `.env.example` to `.env` and add your OpenAI API key:
-
-```bash
-OPENAI_API_KEY=your-api-key
-```
-
-Or set the key for your current shell session:
+Copy `.env.example` to `.env` and add your OpenAI API key, or export it for the current shell:
 
 ```bash
 export OPENAI_API_KEY="your-api-key"
@@ -152,8 +151,7 @@ export OPENAI_API_KEY="your-api-key"
 
 `OPENAI_API_KEY` is required for classification, story tracking, claim extraction when enabled, and briefing generation. Running the pipeline makes OpenAI API calls and may incur API costs.
 
-Model choices and story lookback are configured in [src/config.py](src/config.py).
-RSS sources are configured in [src/scraper.py](src/scraper.py); the current list contains 21 feeds. Each run seeds those feeds into the local `sources` table for later source-aware reasoning.
+Model choices and the story lookback window live in [src/config.py](src/config.py). RSS feeds live in [src/scraper.py](src/scraper.py).
 
 ## Usage
 
@@ -167,67 +165,54 @@ Useful options:
 
 ```bash
 python -m src.run --max-per-source 5
+python -m src.run --date 2026-05-07
+python -m src.run --top-developments 5
+python -m src.run --show-evidence
+python -m src.run --fetch-article-text
+python -m src.run --verify-story-matches
+python -m src.run --pipeline-report
+python -m src.run --db-off
+python -m src.run --skip-digest
 python -m src.run --skip-briefing
 python -m src.run --skip-pdf
-python -m src.run --skip-digest
-python -m src.run --db-off
-python -m src.run --date 2026-05-02
-python -m src.run --top-developments 5
-python -m src.run --pipeline-report
 ```
 
-Append extracted claim evidence spans to the Markdown briefing:
+Notes:
+
+- `--today` is a backwards-compatible alias for `--date`.
+- `--db-off` uses a temporary SQLite database/cache and leaves `data/stories.db` untouched.
+- `--show-evidence` fetches article bodies for claim extraction and falls back to RSS title/description when body text is unavailable.
+- `--fetch-article-text` fetches article bodies even when evidence extraction is disabled.
+- `--verify-story-matches` does not require `--show-evidence`.
+- `--pipeline-report` prints run totals after success or failure.
+
+Example audit run:
 
 ```bash
-python -m src.run --show-evidence
+python -m src.run --date 2026-05-07 --fetch-article-text --verify-story-matches --show-evidence --pipeline-report
 ```
-
-Fetch full article-page text in addition to RSS metadata:
-
-```bash
-python -m src.run --fetch-article-text
-```
-
-Current note: the scraper can fetch full article text, but claim extraction still uses title/description until selective full-text evidence extraction is wired in.
-
-Use both once selective full-text evidence extraction lands and you want higher-quality evidence for the current run:
-
-```bash
-python -m src.run --show-evidence --fetch-article-text
-```
-
-Preview the newspaper PDF design without scraping or API calls:
-
-```bash
-python scripts/preview_newspaper.py
-```
-
-For a cheap real newspaper test that does not touch the normal story database:
-
-```bash
-python -m src.run --db-off --max-per-source 1 --top-developments 5 --skip-digest --skip-briefing
-```
-
-`--db-off` uses a temporary database and classification cache for that run, leaving `data/stories.db` untouched.
-`--today` is kept as a backwards-compatible alias for `--date`.
-`--pipeline-report` stores a `runs` row, stores real model calls in `llm_calls`, and prints returned-article, story, saved-claim, LLM-error, latency, cache-hit, and token totals. EUR cost estimates are not shown yet.
 
 ## Local Data
 
-Generated runtime data is intentionally ignored by git:
+Generated runtime data is intentionally local:
 
-- `data/`: SQLite database and daily JSON article snapshots.
-- `output/`: local generated Markdown digests and older scratch outputs.
-- `logs/`: local logs if you run scheduled jobs.
+- `data/stories.db`: SQLite story memory, article rows, claims, source metadata, runs, and LLM call logs.
+- `data/daily/`: JSON snapshots of classified articles for each run date.
+- `output/`: generated digest Markdown and scratch outputs.
+- `briefings/`: generated Markdown briefings intended to be browsed or published.
+- `newspapers/`: generated newspaper-style PDFs intended to be browsed or published.
 
-Public briefing files in `briefings/` are intended to be committed and published with the repository.
-Public newspaper PDF files in `newspapers/` are intended to be committed and clicked from the repository.
-
-The `claims` and `claim_extractions` tables are created lazily when a run uses `--show-evidence`. A local database from a normal run can therefore contain story and article tables without claim tables.
+The `claims` and `claim_extractions` tables are created lazily. A database from runs without `--show-evidence` can therefore contain story and article tables without claim tables.
 
 ## Documentation
 
-- [Architecture](docs/architecture.md)
+Start with [docs/README.md](docs/README.md).
+
+Core docs:
+
+- [How the project works](docs/how-it-works.md)
+- [Database guide](docs/database-guide.md)
+- [Architecture reference](docs/architecture.md)
 - [Model behavior](docs/model-behavior.md)
 - [Evaluation plan](docs/evaluation.md)
 - [Failure modes](docs/failure-modes.md)
@@ -235,42 +220,27 @@ The `claims` and `claim_extractions` tables are created lazily when a run uses `
 
 ## Current Limitations
 
-- RSS feed availability and formatting vary by source.
-- Article deduplication is URL-based today; content fingerprinting across syndicated copies is planned.
-- Story matching can over-merge distinct but similar stories.
-- Claim extraction is cached by input content hash and caches zero-claim results, but it still uses RSS title/description rather than fetched full article text.
-- Claim extraction does not yet consume fetched full article text.
-- Source metadata is seeded, and new article rows include nullable `source_id` when a source row exists. Source agreement detection is not claim-backed yet.
-- Current source agreement and dispute labels are briefing-level signals, not yet backed by a dedicated contradiction table.
-- Run-level latency, token, cache-hit, and schema-failure tracking exists via `--pipeline-report`; EUR cost estimates are still planned.
-- The project stores data locally and does not include a hosted UI.
+- Article deduplication is URL-based; content fingerprinting across syndicated copies is planned.
+- Story matching can over-merge adjacent topics when the verifier is disabled, and verifier decisions are not cached yet.
+- Claim extraction is cached and evidence-validated; evidence runs now use fetched full text when available.
+- Source metadata is seeded and attached to new articles, but source agreement is not claim-backed yet.
+- Current source agreement and dispute labels are briefing-level model signals, not contradiction records.
+- EUR cost estimates are not shown until model pricing is represented explicitly.
+- Scraper duplicate/failure counts are not yet surfaced in `--pipeline-report`.
+- The project has no hosted UI; the core artifact is local Markdown/PDF plus SQLite memory.
 
 ## Roadmap
 
-The project is structured in phases so each layer builds on auditable output from the previous one.
+**Phase 1 - Ingestion and classification: done.**
+Multi-source RSS scraping, URL normalization, URL deduplication, and cached article classification.
 
-**Phase 1 — Ingestion & classification (done).** Multi-source RSS scraping, URL normalization, URL-based deduplication, and theme/importance classification with a content-hash cache.
+**Phase 2 - Story memory and claim grounding: done.**
+Canonical labels, same-day consolidation, recent-history matching, daily observations, delta summaries, structured claim extraction, and evidence-span validation.
 
-**Phase 2 — Story memory & claim grounding (done).** Canonical story labels, same-day consolidation, recent-history matching, daily delta summaries, and structured claim extraction with evidence-span validation against source text.
+**Phase 3 - Source modeling and observability: in progress.**
+Source metadata, full-text evidence extraction, and run observability have shipped. Next work is using `articles.source_id` in source agreement, adding scraper duplicate/failure counts, adding explicit EUR cost estimates, and measuring the cost/quality impact of the new claim path.
 
-**Phase 3 — Source modeling and observability (in progress).**
+**Phase 4 - Evaluation and hardening: later.**
+Claim-backed agreement, contradiction records, story-matching fixtures, and regression evals should land before the system becomes more autonomous.
 
-Shipped:
-
-- Source metadata seeded from the 21 configured RSS feeds in `src/scraper.py`, with nullable `articles.source_id` populated for new rows when a seeded source matches. Source agreement does not consume it yet.
-- Run observability via `runs`, `llm_calls`, and `--pipeline-report`, with token, latency, cache-hit, schema-failure, and retry totals.
-
-Still in progress:
-
-- Source-aware reasoning that consumes `articles.source_id` and weights syndicated copies differently from independent reporting.
-- Selective full-text claim extraction gated on a per-article value heuristic, behind `--fetch-article-text`.
-- Claim-backed source agreement and, later, a dedicated contradiction table backing dispute labels that are currently briefing-level only.
-- EUR cost estimates and per-run budget caps once model pricing is maintained explicitly.
-- Scraper duplicate/failure counts surfaced in `--pipeline-report`.
-
-**Phase 4 — Evaluation & hardening (later).**
-- Held-out evaluation set for story matching, classification, and claim grounding with regression tracking.
-- Failure-mode test fixtures based on issues found in production runs (see [docs/failure-modes.md](docs/failure-modes.md)).
-- Optional hosted read-only UI for browsing the briefing archive; the core pipeline stays local-first.
-
-Out of scope for now: real-time push, multi-user accounts, social signals, paid-source ingestion.
+Out of scope for now: real-time push, multi-user accounts, social signals, paid-source ingestion, cloud deployment, Kubernetes, Terraform, or a heavy frontend.

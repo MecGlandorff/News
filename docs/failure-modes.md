@@ -2,6 +2,8 @@
 
 This document lists known failure modes in the pipeline, their detection methods, current mitigations, and planned improvements.
 
+For the end-to-end flow where these failures can enter, read [how-it-works.md](how-it-works.md).
+
 ---
 
 ## 1. Source publishes a correction after ingestion
@@ -52,25 +54,27 @@ This document lists known failure modes in the pipeline, their detection methods
 
 **Detection:** Structural: if `text` field is empty, the article was not fully fetched.
 
-**Mitigation:** `--fetch-article-text` flag fetches the full article page. Off by default due to cost and rate-limiting risk. The fetched body text is not yet used by claim extraction.
+**Mitigation:** `--show-evidence` fetches the full article page for claim extraction, and `--fetch-article-text` can fetch body text even when evidence extraction is disabled. Body text fetching is still gated because of cost and rate-limiting risk.
 
-**Current status:** Partially mitigated for article capture. Not yet mitigated for claims; evidence spans currently reflect RSS title/description.
+**Current status:** Mitigated for evidence runs when body extraction succeeds. Claims fall back to RSS title/description when article text is empty or unavailable.
 
-**Future improvement:** Use fetched full text selectively for lead-story claim extraction before considering full-text fetching by default.
+**Future improvement:** Measure how much full-text evidence improves claim quality against the added fetch latency, token use, and failure rate.
 
 ---
 
 ## 5. LLM merges unrelated stories
 
-**Description:** The consolidation or matching LLM merges two distinct stories that share keywords (e.g. "Iran nuclear deal" and "Iran ceasefire talks" treated as one story).
+**Description:** The consolidation or matching LLM merges two distinct stories that share keywords, actors, geography, or broad context (e.g. "Iran nuclear deal" and "Iran ceasefire talks" treated as one story).
 
-**Detection:** Manual review of canonical labels. Eval: story clustering pairwise F1 against a golden set.
+**Detection:** Manual review of canonical labels. Eval: story clustering pairwise F1 against a golden set. When `--verify-story-matches` is enabled, inspect `story_match_decisions` for rejected/accepted candidate matches.
 
-**Mitigation:** `CONSOLIDATE_PROMPT` is explicit about only merging "clearly the same event." `MATCH_PROMPT` says broad topic similarity is not enough. The tracker also applies a deterministic guard for generic incident/category labels: labels such as accidents, crashes, shootings, and lawsuits may not merge unless they share a distinctive token beyond the generic category.
+**Mitigation:** `CONSOLIDATE_PROMPT` is explicit about only merging "clearly the same event." `MATCH_PROMPT` says broad topic similarity is not enough. The tracker also applies a deterministic guard for generic incident/category labels: labels such as accidents, crashes, shootings, and lawsuits may not merge unless they share a distinctive token beyond the generic category. With `--verify-story-matches`, candidate cross-day matches are checked using full article text and `gpt-5.4-nano`; weak, uncertain, adjacent-topic, or malformed verifier decisions default to a new story.
 
-**Current status:** Partially mitigated by prompt design and deterministic false-merge guards. No automated eval.
+**Current status:** Partially mitigated by prompt design, deterministic false-merge guards, and optional story-match verification. The verifier is not enabled by default and decisions are not cached.
 
-**Future improvement:** Add a story clustering eval dataset. Track false-merge rate over time.
+**Future improvement:** Add a story clustering eval dataset and a `story_match_cases.jsonl` fixture set. Track false-merge rate over time and decide when the verifier is safe to enable by default.
+
+**Motivating example:** Run #2 on 2026-05-07 attached Al Jazeera's `Palestinians expose torture and sexual violence in Israeli detention` to `Gaza flotilla raid`. The correct behavior is to reject that as an adjacent topic and keep it as a separate story.
 
 ---
 
@@ -118,13 +122,13 @@ This document lists known failure modes in the pipeline, their detection methods
 
 ## 9. Paywalled article provides incomplete content
 
-**Description:** Some RSS feeds return a full description; others return a paywall stub. The classifier and claim extractor see incomplete content.
+**Description:** Some RSS feeds return a full description; others return a paywall stub. The classifier still sees the RSS title and description. Evidence runs fetch article bodies for claim extraction, but paywalls and extraction failures can still leave the claim extractor with incomplete content.
 
 **Detection:** Description length < 100 characters, or contains "subscribe" / "login" in the stub.
 
-**Mitigation:** None currently. Short descriptions produce fewer extracted claims.
+**Mitigation:** `--show-evidence` now fetches full article text for claims and falls back to title plus RSS description when body text is unavailable. Short or blocked article bodies still produce fewer extracted claims.
 
-**Current status:** Unmitigated.
+**Current status:** Partially mitigated for evidence runs; still not modeled as a source-quality signal.
 
 **Future improvement:** Detect paywall stubs and mark articles accordingly. Skip claim extraction for stubs. Weight paywalled sources lower in source agreement.
 
