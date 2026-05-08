@@ -60,5 +60,5 @@ Track prompt and completion tokens now. Defer EUR cost estimates until pricing i
 Revisit this decision when:
 - model pricing is added for EUR cost estimates
 - scraper observability exposes duplicate and fetch-failure counts
-- selective full-text claim extraction needs per-stage budget reporting
+- full-text evidence runs need per-stage budget reporting
 - retry behavior is implemented beyond recording retry counts

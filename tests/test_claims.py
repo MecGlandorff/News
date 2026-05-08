@@ -84,6 +84,62 @@ def test_extract_saves_claims_and_caches(tmp_path, monkeypatch):
     assert "3.67%" in saved[0]["evidence_span"]
 
 
+def test_extract_uses_full_article_text_and_nano_model(tmp_path, monkeypatch):
+    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
+
+    full_text = "Full article says Iran submitted a written offer to inspectors."
+    response = {
+        "claims": [
+            {
+                "claim_text": "Iran submitted a written offer to inspectors.",
+                "claim_type": "fact",
+                "entities": ["Iran"],
+                "evidence_span": full_text,
+                "confidence": 0.9,
+            }
+        ]
+    }
+    captured = {}
+
+    class Completions:
+        def create(self, **kwargs):
+            captured["model"] = kwargs["model"]
+            captured["user"] = kwargs["messages"][1]["content"]
+
+            class Message:
+                content = json.dumps(response)
+
+            class Choice:
+                message = Message()
+
+            class Response:
+                choices = [Choice()]
+
+            return Response()
+
+    class Chat:
+        completions = Completions()
+
+    class Client:
+        chat = Chat()
+
+    monkeypatch.setattr(claims_module, "get_openai_client", lambda: Client())
+
+    article = {
+        **ARTICLE,
+        "id": "article-full-text",
+        "description": "RSS summary without the written-offer evidence.",
+        "text": full_text,
+    }
+    extract_and_save_claims([article])
+
+    saved = get_claims_for_story(42)
+    assert captured["model"] == "gpt-5.4-nano"
+    assert full_text in captured["user"]
+    assert len(saved) == 1
+    assert saved[0]["evidence_span"] == full_text
+
+
 def test_extract_skips_already_cached(tmp_path, monkeypatch):
     monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
 

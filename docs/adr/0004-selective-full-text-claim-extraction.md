@@ -1,13 +1,15 @@
 # ADR 0004: Selective full-text claim extraction
 
 **Date:** 2026-05-02  
-**Status:** Accepted
+**Status:** Superseded by ADR 0009
+
+This ADR is a historical record. Current claim-extraction behavior is defined by ADR 0009.
 
 ---
 
 ## Context
 
-The claim extractor turns article input into structured claims with evidence spans. It currently uses `gpt-5.4-mini`, runs only when `--show-evidence` is enabled, reads RSS title/description, and stores claims in SQLite for reuse.
+The claim extractor turns article input into structured claims with evidence spans. At the time of this ADR, it used `gpt-5.4-mini`, ran only when `--show-evidence` was enabled, read RSS title/description, and stored claims in SQLite for reuse.
 
 Two input strategies are available:
 

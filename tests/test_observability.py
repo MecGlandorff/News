@@ -45,6 +45,26 @@ def test_run_lifecycle_records_success_totals(tmp_path, monkeypatch):
     assert row["finished_at"] is not None
 
 
+def test_pipeline_report_includes_story_match_verifier_totals(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    monkeypatch.setattr(observability, "DB_PATH", db_path)
+
+    run_id = observability.start_run(_run_args(), run_date="2026-05-07")
+    observability.update_run_totals(
+        run_id,
+        story_match_verifications=6,
+        story_match_accepts=4,
+        story_match_rejections=2,
+    )
+    observability.finish_run(run_id, status="ok")
+
+    report = observability.pipeline_report(run_id)
+
+    assert "Story match checks:     6" in report
+    assert "Story match accepted:   4" in report
+    assert "Story match rejected:   2" in report
+
+
 def test_run_lifecycle_records_error_status(tmp_path, monkeypatch):
     db_path = tmp_path / "stories.db"
     monkeypatch.setattr(observability, "DB_PATH", db_path)

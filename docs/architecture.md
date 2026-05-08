@@ -2,6 +2,9 @@
 
 This project turns RSS articles into local story memory and publishes daily intelligence briefings.
 
+For a step-by-step runtime walkthrough, read [how-it-works.md](how-it-works.md).
+For practical SQLite inspection queries, read [database-guide.md](database-guide.md).
+
 The important design choice is simple:
 
 ```text
@@ -32,6 +35,7 @@ Configured RSS feeds
   -> src/scraper.py       fetch feeds, normalize URLs, filter dates, deduplicate URLs
   -> src/classifier.py    classify theme, story label, and importance
   -> src/tracker.py       consolidate labels, match recent stories, write story memory
+  -> src/story_matching.py optionally verify candidate story matches with full article text
   -> src/claims.py        optionally extract claims and evidence spans
   -> src/top10.py         select stories and generate briefing cards
   -> src/digest.py        write a lightweight local digest
@@ -48,6 +52,8 @@ Story memory is built in two layers.
 
 First, `src/tracker.py` groups today's classified articles by story label. It asks the tracking model to consolidate same-day label variants, then asks whether today's labels continue recent canonical stories. The tracker is conservative about generic incident labels such as crashes, shootings, lawsuits, and attacks because false merges corrupt memory more severely than false splits.
 
+When `--verify-story-matches` is enabled, the tracker verifies candidate cross-day matches before it reuses an existing story ID. The verifier uses `gpt-5.4-nano`, the current article title, RSS description, normalized article date, full article text when available, and compact recent story memory. If full text is missing, the tracker fetches it only for candidate matches. Accepted matches require structured same-event evidence; adjacent, broad-context, uncertain, malformed, or weak decisions become new stories instead of corrupting existing memory.
+
 Second, the tracker writes a daily observation for each story. This observation records the label seen today, source count, article count, average importance, and later the generated summary and `delta_summary`. The next run can use that saved memory to answer: what changed since the last observation?
 
 The key tables are:
@@ -57,6 +63,7 @@ The key tables are:
 - `story_observations`: the memory layer used for summaries and deltas.
 - `articles`: fetched articles linked to stories for the run date.
 - `article_story_links`: junction rows from article to story observation.
+- `story_match_decisions`: optional verifier audit rows for accepted and rejected candidate story matches.
 
 ## How Source Grounding Works
 
@@ -74,7 +81,7 @@ The claim layer validates model output before storage. A claim is saved only whe
 
 The `claims` and `claim_extractions` tables are created lazily by `src/claims.py`. A local database produced by runs without `--show-evidence` can have story, article, and classification tables without claim tables.
 
-Current claim input is RSS title plus description. The scraper can fetch full article text with `--fetch-article-text`, but claim extraction does not yet consume that body text. This is intentional for now: broad full-text claim extraction should wait until cost and latency observability exists.
+When `--show-evidence` is enabled, scraping fetches full article text and claim extraction uses title, RSS description, and full article text when available. If body extraction fails or a source blocks scraping, the claim extractor falls back to title and RSS description. The claim model is `gpt-5.4-nano`; classification remains on RSS title/description with `gpt-5.4-mini`.
 
 ## How Briefings Are Built
 
@@ -100,10 +107,11 @@ The core story-memory flow exists, but several trust and observability layers ar
 
 - Source metadata is seeded into a `sources` table, and new article rows can store `source_id` alongside the source name. Source metadata is not yet used by source agreement logic.
 - Source agreement is currently a briefing-level model label, not a claim-comparison result backed by a dedicated data model.
-- Run observability stores `runs` and real model calls in `llm_calls`, and `--pipeline-report` reports token use, latency, cache hits, retries, and schema failures. EUR cost estimates are not implemented yet.
+- Run observability stores `runs` and real model calls in `llm_calls`, and `--pipeline-report` reports token use, latency, cache hits, retries, schema failures, and story-match verifier counts. EUR cost estimates are not implemented yet.
 - There is no stored novelty score yet; novelty needs a clear claim-backed definition before becoming schema.
 - Contradiction detection is not implemented.
-- Full article text can be fetched, but claim extraction still uses RSS title and description.
+- Full-text claim extraction is enabled for evidence runs, but its cost and quality impact still need review against run telemetry.
+- Story-match verifier decisions are stored for audit but are not yet cached or evaluated against a curated fixture set.
 
 These gaps matter because the project aims to produce auditable intelligence artifacts, not just summaries.
 
@@ -113,15 +121,17 @@ The next architecture work is closing out Phase 3 by making source metadata and 
 
 The next source-model step should make source agreement consume `articles.source_id` where available and fall back to source names for older rows. Until then, the table does not affect story selection or briefing output.
 
-The next observability refinement should expose scraper duplicate/failure counts and add cost estimates once model pricing is maintained somewhere explicit. The current report already covers article count, claim count, story count, model calls, cache hits, schema failures, token totals, and total latency.
+The next observability refinement should expose scraper duplicate/failure counts and add cost estimates once model pricing is maintained somewhere explicit. The current report already covers article count, claim count, story count, story-match verifier counts, model calls, cache hits, schema failures, token totals, and total latency.
 
-Only after that should the project expand expensive evidence behavior, such as selective full-text claim extraction for lead stories or contradiction detection across claim sets.
+The next story-matching refinement should build a small reviewed fixture set from recent generated newspapers. It should include true continuations and false merges, including the 2026-05-07 Gaza detention/flotilla failure, before the verifier is enabled by default.
+
+Only after that should the project expand expensive evidence behavior further, such as claim-backed contradiction detection across broader claim sets.
 
 ## Why This Order Matters
 
 Source metadata should come before source agreement because the system needs to know what kind of sources are agreeing. Five syndicated copies of one wire article should not count the same as five independent sources.
 
-Observability should come before broader full-text claim extraction because full text increases token use and latency. The system should measure the cost before making a more expensive path common.
+Observability should guide broader evidence behavior because full text increases token use and latency. The system should measure the cost of evidence runs before making that path common.
 
 Claim comparison should come before contradiction prose because contradictions need durable records. A briefing label like `possible conflict` is useful, but it is not enough for auditability unless the system can point to the conflicting claims.
 
@@ -215,6 +225,30 @@ relevance       REAL
 PRIMARY KEY (article_id, story_id, observation_id)
 ```
 
+### `story_match_decisions`
+
+Audit rows written when `--verify-story-matches` checks candidate cross-day matches.
+
+```sql
+decision_id          INTEGER PRIMARY KEY AUTOINCREMENT
+run_id               INTEGER
+run_date             TEXT NOT NULL
+today_label          TEXT NOT NULL
+candidate_label      TEXT NOT NULL
+candidate_story_id   INTEGER
+accepted             INTEGER NOT NULL
+same_event           INTEGER NOT NULL
+relationship         TEXT NOT NULL
+confidence           TEXT
+article_dates        TEXT
+candidate_last_seen  TEXT
+continuity_evidence  TEXT
+reject_reason        TEXT
+verifier_model       TEXT
+prompt_version       TEXT NOT NULL
+created_at           TEXT DEFAULT CURRENT_TIMESTAMP
+```
+
 ### `article_classifications`
 
 Classification cache.
@@ -278,6 +312,9 @@ git_sha             TEXT
 articles_returned   INTEGER
 claims_saved        INTEGER
 stories_touched     INTEGER
+story_match_verifications INTEGER
+story_match_accepts INTEGER
+story_match_rejections INTEGER
 llm_calls_count     INTEGER
 llm_errors_count    INTEGER
 llm_cache_hits      INTEGER
@@ -315,9 +352,10 @@ created_at          TEXT NOT NULL
 | Stage | Model | Output | Cached |
 |---|---|---|---|
 | Classification | `gpt-5.4-mini` | theme, story label, importance | Yes |
-| Claim extraction | `gpt-5.4-mini` | structured claims | Yes |
+| Claim extraction | `gpt-5.4-nano` | structured claims | Yes |
 | Same-day consolidation | `gpt-5.5` | label groups | No |
 | Cross-day matching | `gpt-5.5` | label matches | No |
+| Story-match verification | `gpt-5.4-nano` | continuity decisions | No |
 | Briefing generation | `gpt-5.5` | story-card fields and prose | No |
 
 All LLM stages should return JSON objects and pass through `parse_json_object()` before downstream code uses the response.

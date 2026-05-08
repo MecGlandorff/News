@@ -1,6 +1,7 @@
 import json
 import re
 from datetime import date
+from email.utils import parsedate_to_datetime
 
 from src.llm import create_chat_completion, mark_schema_failure, parse_json_object
 
@@ -27,6 +28,39 @@ Only match a today_label to one of its supplied candidates. If no candidate is a
 Return a JSON object with key "matches": array of {today_label, canonical_label}.
 canonical_label is either the exact string from the recent-history list or "NEW"."""
 
+VERIFY_PROMPT_VERSION = "2026-05-08-v1"
+VERIFY_PROMPT = """You are verifying whether today's article group continues an existing tracked news story.
+
+For each case, decide whether the current article group is the same real-world event or continuing story arc as the candidate story.
+
+Accept only direct continuity:
+- same_event: the same named incident, raid, attack, lawsuit, negotiation, vote, court case, investigation, disaster, policy decision, or operation
+- same_story_arc: a direct continuation of the same named ongoing arc, with shared concrete actors and event identity
+- direct_follow_up: a later legal, diplomatic, operational, or factual follow-up to the same concrete event
+
+Reject broad or adjacent relationships:
+- adjacent_topic: same broad topic, place, actor, allegation type, or conflict context, but not the same tracked event
+- broader_context: useful background or big-picture context, but not a continuation of the candidate story
+- unrelated: no meaningful relationship
+- uncertain: not enough concrete continuity evidence
+
+Big-picture context can be useful, but it must not be merged into the same story unless the article directly continues the candidate event.
+
+Return a JSON object with key "decisions": array of:
+{
+  "today_label": string,
+  "canonical_label": string,
+  "same_event": boolean,
+  "relationship": one of: same_event | same_story_arc | direct_follow_up | adjacent_topic | broader_context | unrelated | uncertain,
+  "confidence": one of: high | medium | low,
+  "article_dates": array of date strings from the current articles,
+  "candidate_last_seen": date string,
+  "continuity_evidence": array of short strings naming the shared concrete event evidence,
+  "reject_reason": string
+}
+
+If evidence is weak or the relationship is adjacent, set same_event=false."""
+
 LABEL_STOPWORDS = {
     "a", "an", "and", "as", "at", "by", "for", "from", "in", "into",
     "of", "on", "or", "over", "the", "to", "with",
@@ -43,6 +77,15 @@ CANDIDATES_PER_LABEL = 10
 SUMMARY_CHAR_LIMIT = 400
 DELTA_CHAR_LIMIT = 240
 TITLE_CHAR_LIMIT = 160
+VERIFY_ARTICLE_TEXT_CHAR_LIMIT = 16000
+VERIFY_DESCRIPTION_CHAR_LIMIT = 1200
+VERIFY_ARTICLES_PER_CASE = 4
+VERIFY_CASES_PER_CALL = 8
+VERIFY_ACCEPT_RELATIONSHIPS = {"same_event", "same_story_arc", "direct_follow_up"}
+VERIFY_RELATIONSHIPS = VERIFY_ACCEPT_RELATIONSHIPS | {
+    "adjacent_topic", "broader_context", "unrelated", "uncertain",
+}
+VERIFY_CONFIDENCE_VALUES = {"high", "medium", "low"}
 
 
 def label_tokens(label):
@@ -55,6 +98,35 @@ def truncate_text(value, limit):
     if len(text) <= limit:
         return text
     return text[:limit].rsplit(" ", 1)[0].rstrip() + "..."
+
+
+def clean_string(value):
+    return re.sub(r"\s+", " ", str(value or "")).strip()
+
+
+def clean_list(value):
+    if not isinstance(value, list):
+        return []
+    cleaned = []
+    for item in value:
+        text = clean_string(item)
+        if text:
+            cleaned.append(text)
+    return cleaned
+
+
+def article_date(value):
+    text = clean_string(value)
+    if not text:
+        return ""
+    try:
+        return parsedate_to_datetime(text).date().isoformat()
+    except Exception:
+        pass
+    try:
+        return date.fromisoformat(text[:10]).isoformat()
+    except Exception:
+        return text
 
 
 def days_since(value, today, default_days):
@@ -234,6 +306,208 @@ def compact_story_option(label, value):
     if recent_titles:
         option["recent_titles"] = recent_titles
     return option
+
+
+def compact_current_article(article):
+    item = {
+        "id": str(article.get("id") or ""),
+        "source": article.get("source", ""),
+        "title": truncate_text(article.get("title", ""), TITLE_CHAR_LIMIT),
+        "description": truncate_text(article.get("description", ""), VERIFY_DESCRIPTION_CHAR_LIMIT),
+        "article_date": article_date(article.get("published_at", "")),
+        "reported_at": article.get("published_at", ""),
+        "url": article.get("url", ""),
+    }
+    text = truncate_text(article.get("text", ""), VERIFY_ARTICLE_TEXT_CHAR_LIMIT)
+    if text:
+        item["article_text"] = text
+    return item
+
+
+def compact_verifier_candidate(label, value):
+    option = compact_story_option(label, value)
+    if isinstance(value, dict):
+        option["story_id"] = value.get("story_id")
+        recent_articles = []
+        for article in value.get("recent_articles", [])[:3]:
+            title = truncate_text(article.get("title", ""), TITLE_CHAR_LIMIT)
+            if title:
+                recent_articles.append({
+                    "date": article.get("date", ""),
+                    "source": article.get("source", ""),
+                    "title": title,
+                })
+        if recent_articles:
+            option["recent_articles"] = recent_articles
+    return option
+
+
+def verifier_cases_for_prompt(label_map, recent_stories, story_groups, today=None):
+    cases = []
+    for today_label in sorted(label_map):
+        canonical_label = label_map[today_label]
+        if canonical_label == "NEW" or canonical_label not in recent_stories:
+            continue
+        current_articles = [
+            compact_current_article(article)
+            for article in story_groups.get(today_label, [])[:VERIFY_ARTICLES_PER_CASE]
+        ]
+        if not current_articles:
+            continue
+        candidate = recent_stories[canonical_label]
+        cases.append({
+            "today_label": today_label,
+            "run_date": today or "",
+            "current_articles": current_articles,
+            "candidate_story": compact_verifier_candidate(canonical_label, candidate),
+        })
+    return cases
+
+
+def chunked(items, size):
+    for index in range(0, len(items), size):
+        yield items[index:index + size]
+
+
+def case_key(case):
+    return (
+        case["today_label"],
+        case["candidate_story"]["canonical_label"],
+    )
+
+
+def decision_from_model(raw, expected_case, model):
+    today_label, canonical_label = case_key(expected_case)
+    article_dates = [
+        article.get("article_date", "") or article.get("reported_at", "")
+        for article in expected_case.get("current_articles", [])
+        if article.get("article_date") or article.get("reported_at")
+    ]
+    candidate_last_seen = expected_case["candidate_story"].get("last_seen", "")
+    if not isinstance(raw, dict):
+        raw = {}
+
+    relationship = clean_string(raw.get("relationship")) or "uncertain"
+    if relationship not in VERIFY_RELATIONSHIPS:
+        relationship = "uncertain"
+    confidence = clean_string(raw.get("confidence")).casefold() or "low"
+    if confidence not in VERIFY_CONFIDENCE_VALUES:
+        confidence = "low"
+    evidence = clean_list(raw.get("continuity_evidence"))
+    same_event = raw.get("same_event") is True
+    canonical_returned = clean_string(raw.get("canonical_label"))
+    today_returned = clean_string(raw.get("today_label"))
+    schema_matches_case = (
+        today_returned == today_label
+        and canonical_returned == canonical_label
+    )
+    accepted = (
+        schema_matches_case
+        and same_event
+        and relationship in VERIFY_ACCEPT_RELATIONSHIPS
+        and confidence in {"high", "medium"}
+        and bool(evidence)
+    )
+    reject_reason = clean_string(raw.get("reject_reason"))
+    if not accepted and not reject_reason:
+        if not schema_matches_case:
+            reject_reason = "Verifier response did not match the supplied case."
+        elif relationship == "uncertain":
+            reject_reason = "Verifier did not provide enough concrete continuity evidence."
+        else:
+            reject_reason = "Verifier did not accept this as the same tracked event."
+
+    return {
+        "today_label": today_label,
+        "candidate_label": canonical_label,
+        "candidate_story_id": (
+            expected_case.get("candidate_story", {}).get("story_id")
+            if isinstance(expected_case.get("candidate_story"), dict)
+            else None
+        ),
+        "accepted": accepted,
+        "same_event": same_event,
+        "relationship": relationship,
+        "confidence": confidence,
+        "article_dates": article_dates,
+        "candidate_last_seen": candidate_last_seen,
+        "continuity_evidence": evidence,
+        "reject_reason": reject_reason,
+        "verifier_model": model,
+        "prompt_version": VERIFY_PROMPT_VERSION,
+    }
+
+
+def missing_decision(expected_case, model):
+    return decision_from_model({
+        "today_label": expected_case["today_label"],
+        "canonical_label": expected_case["candidate_story"]["canonical_label"],
+        "same_event": False,
+        "relationship": "uncertain",
+        "confidence": "low",
+        "continuity_evidence": [],
+        "reject_reason": "Verifier returned no decision for this candidate match.",
+    }, expected_case, model)
+
+
+def verify_story_matches(label_map, recent_stories, story_groups, get_client, model, today=None):
+    """Verify candidate cross-day matches with richer article context.
+
+    The base label matcher proposes at most one candidate per today label.
+    This verifier decides whether that candidate is the same tracked event.
+    Weak, missing, adjacent, or uncertain decisions are not accepted.
+    """
+    cases = verifier_cases_for_prompt(label_map, recent_stories, story_groups, today=today)
+    if not cases:
+        return dict(label_map), []
+
+    verified = dict(label_map)
+    decisions = []
+    client = get_client()
+    for batch in chunked(cases, VERIFY_CASES_PER_CALL):
+        expected_by_key = {case_key(case): case for case in batch}
+        response = create_chat_completion(
+            client,
+            model=model,
+            messages=[
+                {"role": "system", "content": VERIFY_PROMPT},
+                {"role": "user", "content": json.dumps({"cases": batch}, ensure_ascii=False)},
+            ],
+            purpose="match-verify",
+            prompt_version=VERIFY_PROMPT_VERSION,
+            response_format={"type": "json_object"},
+        )
+        payload = parse_json_object(response)
+        raw_decisions = payload.get("decisions")
+        if not isinstance(raw_decisions, list):
+            mark_schema_failure('Model response must contain a "decisions" list', response=response)
+            raise ValueError('Model response must contain a "decisions" list')
+
+        seen_keys = set()
+        for raw in raw_decisions:
+            if not isinstance(raw, dict):
+                continue
+            key = (
+                clean_string(raw.get("today_label")),
+                clean_string(raw.get("canonical_label")),
+            )
+            expected_case = expected_by_key.get(key)
+            if expected_case is None:
+                continue
+            decision = decision_from_model(raw, expected_case, model)
+            seen_keys.add(key)
+            decisions.append(decision)
+            if not decision["accepted"]:
+                verified[decision["today_label"]] = "NEW"
+
+        for key, expected_case in expected_by_key.items():
+            if key in seen_keys:
+                continue
+            decision = missing_decision(expected_case, model)
+            decisions.append(decision)
+            verified[decision["today_label"]] = "NEW"
+
+    return verified, decisions
 
 
 def candidate_cases_for_prompt(today_labels, recent_stories, today=None, limit=CANDIDATES_PER_LABEL, default_days=14):

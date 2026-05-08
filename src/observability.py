@@ -16,6 +16,9 @@ RUN_TOTAL_COLUMNS = {
     "claims_saved",
     "stories_touched",
     "llm_cache_hits",
+    "story_match_verifications",
+    "story_match_accepts",
+    "story_match_rejections",
 }
 
 
@@ -44,6 +47,9 @@ def _create_schema(conn):
             articles_returned   INTEGER DEFAULT 0,
             claims_saved        INTEGER DEFAULT 0,
             stories_touched     INTEGER DEFAULT 0,
+            story_match_verifications INTEGER DEFAULT 0,
+            story_match_accepts INTEGER DEFAULT 0,
+            story_match_rejections INTEGER DEFAULT 0,
             llm_calls_count     INTEGER DEFAULT 0,
             llm_errors_count    INTEGER DEFAULT 0,
             llm_cache_hits      INTEGER DEFAULT 0,
@@ -75,6 +81,9 @@ def _create_schema(conn):
     """)
     _ensure_column(conn, "runs", "articles_returned", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "claims_saved", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "story_match_verifications", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "story_match_accepts", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "story_match_rejections", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "llm_errors_count", "INTEGER DEFAULT 0")
 
 
@@ -348,7 +357,9 @@ def get_run_report_data(run_id):
             """
             SELECT run_id, run_date, status, total_latency_ms,
                    articles_returned, claims_saved,
-                   stories_touched, llm_calls_count, llm_cache_hits,
+                   stories_touched, story_match_verifications,
+                   story_match_accepts, story_match_rejections,
+                   llm_calls_count, llm_cache_hits,
                    llm_errors_count, schema_failures, retry_count, prompt_tokens,
                    completion_tokens, error_message
             FROM runs
@@ -371,6 +382,9 @@ def pipeline_report(run_id):
         f"Articles returned:      {row['articles_returned'] or 0}",
         f"Claims saved:           {row['claims_saved'] or 0}",
         f"Stories touched:        {row['stories_touched'] or 0}",
+        f"Story match checks:     {row['story_match_verifications'] or 0}",
+        f"Story match accepted:   {row['story_match_accepts'] or 0}",
+        f"Story match rejected:   {row['story_match_rejections'] or 0}",
         f"LLM calls:              {row['llm_calls_count'] or 0}",
         f"LLM errors:             {row['llm_errors_count'] or 0}",
         f"LLM cache hits:         {row['llm_cache_hits'] or 0}",

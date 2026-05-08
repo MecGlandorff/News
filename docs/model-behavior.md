@@ -2,6 +2,8 @@
 
 This document describes how the project uses LLMs, what each model call is allowed to decide, and where the current failure boundaries are.
 
+For the full runtime flow around these calls, read [how-it-works.md](how-it-works.md).
+
 The guiding rule is: LLMs produce structured intermediate artifacts where possible, and prose only at the final briefing layer.
 
 ---
@@ -11,12 +13,13 @@ The guiding rule is: LLMs produce structured intermediate artifacts where possib
 | Task | Model | Output | Cache status | Purpose |
 |---|---|---|---|---|
 | Article classification | `gpt-5.4-mini` | JSON | Cached by `content_hash + model + prompt_version` | Assign theme, story label, and importance |
-| Claim extraction | `gpt-5.4-mini` | JSON | Cached by `article_id + prompt_version + content_hash` | Extract atomic claims and evidence spans |
+| Claim extraction | `gpt-5.4-nano` | JSON | Cached by `article_id + prompt_version + content_hash` | Extract atomic claims and evidence spans from full text when available |
 | Same-day consolidation | `gpt-5.5` | JSON | Not cached | Merge same-day labels that refer to the same event |
 | Cross-day matching | `gpt-5.5` | JSON | Not cached | Match today's labels to recent canonical stories |
+| Story-match verification | `gpt-5.4-nano` | JSON | Not cached | Verify candidate cross-day matches with full article text before reusing story memory |
 | Briefing generation | `gpt-5.5` | JSON story-card fields plus prose | Not cached | Produce status, confidence, source agreement, dispute flag, `delta_summary`, briefing text, and open questions |
 
-High-volume calls use `gpt-5.4-mini`. Cross-story reasoning and final prose use `gpt-5.5`.
+Classification uses `gpt-5.4-mini`. Claim extraction uses `gpt-5.4-nano` behind `--show-evidence`, with full article text when available. Cross-story reasoning and final prose use `gpt-5.5`.
 
 ---
 
@@ -30,6 +33,7 @@ Expected behavior:
 - claim extraction returns a `claims` list
 - same-day consolidation returns a `groups` list
 - cross-day matching returns a `matches` list
+- story-match verification returns a `decisions` list
 - briefing generation returns a `briefings` list with bounded story-card fields
 
 Free-form model text should not become internal state unless it is the final briefing prose or a stored story memory summary.
@@ -66,6 +70,20 @@ The claim layer validates each returned claim before storage. A claim must have 
 
 Tracking decides whether labels refer to the same ongoing story. It should preserve temporal continuity and avoid merging stories merely because they share broad topics.
 
+When `--verify-story-matches` is enabled, candidate cross-day matches are checked by a separate verifier before the tracker reuses a story ID. The verifier receives today's title, RSS description, normalized article date, full article text when available, and compact recent story memory. It returns structured fields including:
+
+- `same_event`
+- `relationship`
+- `confidence`
+- `article_dates`
+- `candidate_last_seen`
+- `continuity_evidence`
+- `reject_reason`
+
+Only `same_event`, `same_story_arc`, and `direct_follow_up` relationships can be accepted, and only when confidence is at least medium and continuity evidence is present. `adjacent_topic`, `broader_context`, `unrelated`, `uncertain`, malformed, or missing verifier decisions default to a new story. Decisions are stored in `story_match_decisions` for review.
+
+The verifier is deliberately separate from claim extraction. It asks whether an article group continues an existing story; it does not extract factual claims for evidence rendering.
+
 ### Briefing generation
 
 Briefing generation is the final prose layer. It may synthesize across sources, but should use today's articles as the authority for current developments and previous context only for continuity.
@@ -84,12 +102,14 @@ These labels are briefing-level signals. They make uncertainty visible in the ar
 
 ## Claim extraction cost policy
 
-Claim extraction stays cost-conscious by default. Observability now exists, so any broadening of extraction should be justified by measured token, cost, and latency impact rather than asserted.
+Claim extraction stays gated behind `--show-evidence`. Observability now exists, so the broader full-text path should be reviewed with measured token, cost, and latency impact rather than assumed to be cheap.
 
 Default behavior:
 
-- extract broad claims from RSS title/description
-- use `gpt-5.4-mini`
+- when `--show-evidence` is enabled, fetch full article text during scraping
+- build claim input from title, RSS description, and full article text when available
+- fall back to title and RSS description when full text is empty or unavailable
+- use `gpt-5.4-nano`
 - cache aggressively
 
 Current cache behavior:
@@ -100,11 +120,7 @@ Current cache behavior:
 - ignore older prompt-version claims when rendering current evidence
 - render evidence with source and article context
 
-Deferred behavior:
-
-- full-text claim extraction for every article
-
-`runs`, `llm_calls`, and `--pipeline-report` now measure token use and latency. The next step is to evaluate selective full-text extraction against those signals. Full-text-for-all stays deferred until selective extraction has demonstrated quality lift against measured cost.
+`runs`, `llm_calls`, and `--pipeline-report` now measure token use and latency. The next step is to review evidence runs against those signals and add explicit cost estimates once model pricing is represented in code.
 
 ---
 
@@ -113,11 +129,12 @@ Deferred behavior:
 The most important current risks are:
 
 - story consolidation over-merges distinct events with similar keywords
-- cross-day matching attaches fresh reporting to an old canonical label
+- cross-day matching attaches fresh reporting to an old canonical label when the verifier is disabled or when the verifier lacks enough context
 - briefing prose overstates certainty compared with source claims
 - claim extraction treats allegations as confirmed facts
-- RSS-only claims miss qualifications present in full article text
+- full-text extraction can increase latency and token use when `--show-evidence` is enabled
 - numeric claims conflict across sources but are not yet compared
+- stored story-match verifier decisions are not reused as a cache yet
 
 See [failure-modes.md](failure-modes.md) for the broader list.
 
