@@ -26,9 +26,9 @@ These pieces are already in place and should be protected as the project evolves
 
 The current prototype is directionally strong, but several important parts are still incomplete or only partially implemented.
 
-- [ ] Full-text claim extraction is enabled for evidence runs, but its cost and quality impact still need review
-- [ ] Run observability covers token use, latency, cache hits, schema failures, and retries; EUR cost estimates and scraper duplicate/failure counts are still deferred
-- [ ] Source metadata is modeled as a first-class table, but source agreement does not consume it yet
+- [ ] Full-text claim extraction is enabled for evidence runs, and its cost/latency is visible; quality impact still needs review
+- [x] Run observability covers token use, latency, cache hits, schema failures, retries, EUR estimates, and scraper duplicate/failure counts
+- [x] Source metadata is modeled as a first-class table, and source identity is used before source-name fallback
 - [ ] Source agreement is surfaced in the briefing, but not yet backed by a dedicated comparison layer
 - [ ] Contradiction detection is not implemented
 - [ ] Evaluation coverage is still mostly planned rather than operational
@@ -38,7 +38,7 @@ The current prototype is directionally strong, but several important parts are s
 The order below matters. The project should measure its pipeline before making expensive behavior broader by default.
 
 - [x] 1. Add observability tables for runs and LLM calls
-- [x] 2. Add a pipeline report that shows counts and latency by stage (cost-by-stage deferred until model pricing is maintained explicitly)
+- [x] 2. Add a pipeline report that shows counts, latency, and estimated cost by stage
 - [x] 3. Define and document full-text claim extraction for evidence runs
 - [x] 4. Implement full-text claim extraction behind `--show-evidence`
 - [ ] 5. Add stronger source agreement and contradiction handling
@@ -55,14 +55,14 @@ The project should be able to explain what a pipeline run cost, how long each st
 - [x] Track `started_at` and `finished_at`
 - [x] Track the pipeline date being processed
 - [x] Track returned article count
-- [ ] Track duplicate count
+- [x] Track duplicate count
 - [x] Track saved claim count
 - [x] Track tracked story count
-- [ ] Track failed fetch count
+- [x] Track failed fetch count
 - [x] Track LLM call count
 - [x] Track schema-validation failure count
 - [x] Track retry count
-- [ ] Track estimated cost
+- [x] Track estimated cost
 - [x] Track total latency in milliseconds
 
 ### LLM call logging
@@ -73,7 +73,7 @@ The project should be able to explain what a pipeline run cost, how long each st
 - [x] Log model name
 - [x] Log input tokens
 - [x] Log output tokens
-- [ ] Log estimated cost
+- [x] Estimate cost from logged token usage and explicit pricing
 - [x] Log latency in milliseconds
 - [x] Log cache-hit totals where relevant
 - [x] Log whether schema validation passed
@@ -84,10 +84,10 @@ The project should be able to explain what a pipeline run cost, how long each st
 
 - [x] Add a `--pipeline-report` CLI flag
 - [x] Print article, claim, and story counts by stage
-- [ ] Print estimated cost by stage
+- [x] Print estimated cost by stage
 - [x] Print total latency
-- [ ] Break out claim extraction cost separately
-- [ ] Break out briefing generation cost separately
+- [x] Break out claim extraction cost separately
+- [x] Break out briefing generation cost separately
 - [x] Make the report work when `--db-off` is used
 
 ## 2. Claim extraction quality
@@ -146,7 +146,7 @@ Right now sources are mostly plain strings. That is enough to ingest feeds, but 
 - [x] Add source `reliability`
 - [x] Add optional `bias_notes`
 - [x] Add nullable `articles.source_id` while preserving raw source names for compatibility
-- [ ] Use `articles.source_id` in source-agreement logic, with a source-name fallback for older rows
+- [x] Use `articles.source_id` in source-support logic, with a source-name fallback for older rows
 
 ## 4. Source agreement and contradiction handling
 
@@ -189,8 +189,8 @@ The repo should be able to show that key AI behaviors are improving rather than 
 - [ ] Add a temporal-diffing evaluation set
 - [ ] Add metrics for evidence support rate
 - [ ] Measure the quality lift from full-text claims
-- [ ] Measure the token-cost increase from full-text claims
-- [ ] Measure the latency increase from full-text claims
+- [x] Measure the token-cost increase from full-text claims
+- [x] Measure the latency increase from full-text claims
 - [ ] Write an evaluation README with success criteria
 
 ## 7. Documentation alignment

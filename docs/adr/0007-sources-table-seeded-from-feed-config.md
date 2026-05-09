@@ -29,7 +29,9 @@ Schema:
 - `seed_sources()` in `src/sources.py` runs every pipeline start. It UPSERTs by `name`, refreshing fields owned by RSS configuration (`rss_url`, `language`, `updated_at`) and preserving fields that may be edited manually later (`reliability`, `bias_notes`).
 - `_sources_schema_needs_rebuild()` upgrades pre-existing `sources` tables in place when their constraints predate the current schema. The rebuild is non-destructive: existing rows are copied with sensible defaults.
 
-Defaults for new sources are `type='publication'`, `reliability='unknown'`, `bias_notes=''`. Source agreement logic does not yet consume `source_id`. That is the next Phase 3 deliverable, kept separate from this one.
+Defaults for new sources are `type='publication'`, `reliability='unknown'`, `bias_notes=''`.
+
+2026-05-09 follow-up: ADR 0010 adds deterministic source support that consumes `articles.source_id` first and falls back to normalized source names for older rows. Claim-backed source agreement remains a separate Phase 3 deliverable.
 
 ---
 
@@ -43,7 +45,7 @@ Defaults for new sources are `type='publication'`, `reliability='unknown'`, `bia
 
 **Defaults are honest.** `reliability='unknown'` is explicit rather than fake. Future bias-aware logic can detect the absence and prompt a review instead of trusting an unset value.
 
-**Foundation before consumption.** Wiring `source_id` into source-agreement logic is a separate decision with its own tradeoffs. Splitting them keeps each step independently testable and reviewable.
+**Foundation before consumption.** Wiring `source_id` into source-support logic is a separate decision with its own tradeoffs. Splitting them keeps each step independently testable and reviewable.
 
 ---
 
@@ -66,7 +68,7 @@ Defaults for new sources are `type='publication'`, `reliability='unknown'`, `bia
 ## Review trigger
 
 Revisit this decision when:
-- source-agreement logic needs to consume `source_id` and defines a fallback for `NULL` rows
+- claim-backed source-agreement logic needs more source metadata than source identity
 - the configured feed list outgrows a single Python list and needs separate config
 - reliability or bias notes need to evolve into an enum or scored field rather than free text
 - a content-fingerprint deduplication layer changes how syndicated copies are counted

@@ -105,9 +105,9 @@ The PDF output uses the same briefing package. `src/newspaper.py` is a renderer,
 
 The core story-memory flow exists, but several trust and observability layers are still incomplete.
 
-- Source metadata is seeded into a `sources` table, and new article rows can store `source_id` alongside the source name. Source metadata is not yet used by source agreement logic.
+- Source metadata is seeded into a `sources` table, and new article rows can store `source_id` alongside the source name. Deterministic source support uses `source_id` first and falls back to source names for older rows.
 - Source agreement is currently a briefing-level model label, not a claim-comparison result backed by a dedicated data model.
-- Run observability stores `runs` and real model calls in `llm_calls`, and `--pipeline-report` reports token use, latency, cache hits, retries, schema failures, and story-match verifier counts. EUR cost estimates are not implemented yet.
+- Run observability stores `runs` and real model calls in `llm_calls`, and `--pipeline-report` reports scraper counts, claim metrics, token use, latency, cache hits, retries, schema failures, story-match verifier counts, and estimated EUR cost.
 - There is no stored novelty score yet; novelty needs a clear claim-backed definition before becoming schema.
 - Contradiction detection is not implemented.
 - Full-text claim extraction is enabled for evidence runs, but its cost and quality impact still need review against run telemetry.
@@ -119,9 +119,9 @@ These gaps matter because the project aims to produce auditable intelligence art
 
 The next architecture work is closing out Phase 3 by making source metadata and observability load-bearing rather than just present.
 
-The next source-model step should make source agreement consume `articles.source_id` where available and fall back to source names for older rows. Until then, the table does not affect story selection or briefing output.
+The next source-model step should make source agreement consume claim-level support, not just story-level source identity.
 
-The next observability refinement should expose scraper duplicate/failure counts and add cost estimates once model pricing is maintained somewhere explicit. The current report already covers article count, claim count, story count, story-match verifier counts, model calls, cache hits, schema failures, token totals, and total latency.
+The next observability refinement should compare the quality impact of full-text `gpt-5.4-nano` claim extraction against its measured token and latency cost.
 
 The next story-matching refinement should build a small reviewed fixture set from recent generated newspapers. It should include true continuations and false merges, including the 2026-05-07 Gaza detention/flotilla failure, before the verifier is enabled by default.
 
@@ -129,9 +129,9 @@ Only after that should the project expand expensive evidence behavior further, s
 
 ## Why This Order Matters
 
-Source metadata should come before source agreement because the system needs to know what kind of sources are agreeing. Five syndicated copies of one wire article should not count the same as five independent sources.
+Source metadata should come before claim-backed source agreement because the system needs to know what kind of sources are agreeing. Five syndicated copies of one wire article should not count the same as five independent sources.
 
-Observability should guide broader evidence behavior because full text increases token use and latency. The system should measure the cost of evidence runs before making that path common.
+Observability should guide broader evidence behavior because full text increases token use and latency. The system should measure the cost and quality of evidence runs before making that path common.
 
 Claim comparison should come before contradiction prose because contradictions need durable records. A briefing label like `possible conflict` is useful, but it is not enough for auditability unless the system can point to the conflicting claims.
 
@@ -315,6 +315,15 @@ stories_touched     INTEGER
 story_match_verifications INTEGER
 story_match_accepts INTEGER
 story_match_rejections INTEGER
+duplicate_url_skips INTEGER
+feed_fetch_failures INTEGER
+article_text_fetch_successes INTEGER
+article_text_fetch_failures INTEGER
+claim_articles_extracted INTEGER
+claim_articles_cached INTEGER
+claim_invalid_dropped INTEGER
+claim_extraction_failures INTEGER
+claim_zero_results INTEGER
 llm_calls_count     INTEGER
 llm_errors_count    INTEGER
 llm_cache_hits      INTEGER

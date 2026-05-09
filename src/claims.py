@@ -282,10 +282,11 @@ def extract_and_save_claims(tracked):
             "cached": 0,
             "invalid": 0,
             "failed": 0,
+            "zero_claim_results": 0,
         }
 
     conn = _get_db()
-    extracted = skipped = failed = invalid = saved_claims = 0
+    extracted = skipped = failed = invalid = saved_claims = zero_claim_results = 0
     try:
         for article in tracked:
             article_id = str(article["id"])
@@ -321,6 +322,8 @@ def extract_and_save_claims(tracked):
                 )
                 saved_claims += saved
                 invalid += dropped
+                if saved == 0:
+                    zero_claim_results += 1
             extracted += 1
     finally:
         conn.close()
@@ -337,6 +340,7 @@ def extract_and_save_claims(tracked):
         "cached": skipped,
         "invalid": invalid,
         "failed": failed,
+        "zero_claim_results": zero_claim_results,
     }
 
 

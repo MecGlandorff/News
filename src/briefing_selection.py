@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+from src.source_agreement import source_identity, source_support
+
 
 THEME_ORDER = ["Geopolitics & War", "USA Politics", "Dutch Politics", "Economy", "Tech", "Climate", "Science", "Sports", "Other"]
 POLITICS_THEMES = {"Geopolitics & War", "USA Politics", "Dutch Politics"}
@@ -40,7 +42,7 @@ def aggregate(tracked):
         label = article.get("canonical_label", article["story_label"])
         theme = article["theme"]
         stories[label]["articles"].append(article)
-        stories[label]["sources"].add(article["source"])
+        stories[label]["sources"].add(source_identity(article))
         stories[label]["importance_sum"] += article["importance"]
         stories[label]["theme_counts"][theme] += 1
         if article.get("previous_context") and not stories[label]["previous_context"]:
@@ -65,6 +67,7 @@ def aggregate(tracked):
             "themes": themes,
             "trend": articles[0].get("trend", "steady"),
             "source_count": len(data["sources"]),
+            "source_support": source_support(articles),
             "importance_avg": data["importance_sum"] / len(articles),
             "previous_context": data["previous_context"] or {},
             "observation_ids": sorted(data["observation_ids"]),

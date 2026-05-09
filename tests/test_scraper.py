@@ -39,6 +39,57 @@ def test_scrape_all_can_fetch_article_text_when_requested(monkeypatch):
     )
 
     assert articles[0]["text"] == "Full text"
+    assert scraper.last_scrape_stats()["article_text_fetch_successes"] == 1
+
+
+def test_scrape_all_records_duplicate_and_failure_counts(monkeypatch):
+    def fake_parse_rss(url, session=None):
+        if url.endswith("/bad"):
+            raise RuntimeError("feed down")
+        return [
+            {
+                "title": "First",
+                "url": "https://example.com/article?utm_source=x",
+                "description": "Description",
+                "published_at": "Sat, 18 Apr 2026 10:00:00 GMT",
+            },
+            {
+                "title": "Duplicate",
+                "url": "https://example.com/article",
+                "description": "Description",
+                "published_at": "Sat, 18 Apr 2026 11:00:00 GMT",
+            },
+            {
+                "title": "Empty body",
+                "url": "https://example.com/empty",
+                "description": "Description",
+                "published_at": "Sat, 18 Apr 2026 12:00:00 GMT",
+            },
+        ]
+
+    def fake_extract_text(url, session=None):
+        if url.endswith("/empty"):
+            return ""
+        return "Full text"
+
+    monkeypatch.setattr(scraper, "_parse_rss", fake_parse_rss)
+    monkeypatch.setattr(scraper, "_extract_text", fake_extract_text)
+    monkeypatch.setattr(scraper.time, "sleep", lambda delay: None)
+
+    articles = scraper.scrape_all(
+        sources=[
+            ("Good", "en", "https://example.com/good"),
+            ("Bad", "en", "https://example.com/bad"),
+        ],
+        fetch_article_text=True,
+    )
+
+    stats = scraper.last_scrape_stats()
+    assert [article["title"] for article in articles] == ["First", "Empty body"]
+    assert stats["duplicate_url_skips"] == 1
+    assert stats["feed_fetch_failures"] == 1
+    assert stats["article_text_fetch_successes"] == 1
+    assert stats["article_text_fetch_failures"] == 1
 
 
 def test_scrape_all_reads_all_feed_items_by_default(monkeypatch):

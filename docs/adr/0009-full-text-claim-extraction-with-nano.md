@@ -9,7 +9,7 @@
 
 Claim extraction turns article input into structured claims with evidence spans. Before this decision, the extractor used `gpt-5.4-mini` and read only RSS title plus description. That kept claim extraction cheap, but it also meant evidence quality was limited by feed summaries.
 
-The project now has run and LLM observability for token use, latency, cache hits, schema failures, and claim totals. That makes it reasonable to try a richer claim input path while still measuring the cost.
+The project now has run and LLM observability for token use, latency, cache hits, schema failures, scraper counts, claim totals, and estimated cost. That makes it reasonable to try a richer claim input path while still measuring the impact.
 
 The working hypothesis is:
 
@@ -63,7 +63,7 @@ Negative:
 - `--show-evidence` now performs more network work because it fetches article bodies.
 - Full-text inputs can increase token use and latency.
 - Some sources may block body extraction, so evidence depth will vary by source.
-- Cost estimates are still not shown in EUR until model pricing is represented explicitly.
+- Cost estimates depend on manually maintained pricing and a static USD-to-EUR rate.
 
 ---
 
@@ -81,8 +81,7 @@ Negative:
 
 Revisit this decision when:
 
-- `--pipeline-report` includes explicit model cost estimates
+- measured evidence-run cost or latency exceeds the project's tolerance
 - source agreement uses claim-level comparison
 - contradiction detection compares extracted claims
-- evidence runs become too slow or too expensive for routine use
 - evals show that `gpt-5.4-nano` materially reduces claim quality compared with `gpt-5.4-mini`

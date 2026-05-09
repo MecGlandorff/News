@@ -8,6 +8,7 @@ from pathlib import Path
 import src.article_cache as article_cache
 import src.claims as claims
 import src.observability as observability
+import src.scraper as scraper
 import src.sources as sources
 from src.claims import extract_and_save_claims
 from src.classifier import classify_articles
@@ -51,7 +52,7 @@ def parse_args():
         action="store_true",
         help="Verify candidate story matches with full article text and gpt-5.4-nano before reusing story memory",
     )
-    parser.add_argument("--pipeline-report", action="store_true", help="Print run totals, LLM calls, latency, and token usage")
+    parser.add_argument("--pipeline-report", action="store_true", help="Print run totals, LLM calls, latency, token usage, and estimated cost")
     parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
     return parser.parse_args()
 
@@ -96,11 +97,14 @@ def configure_logging(log_level):
 
 
 def scrape_articles(args, run_date):
-    return scrape_all(
+    scraper.reset_scrape_stats()
+    articles = scrape_all(
         max_per_source=args.max_per_source,
         fetch_article_text=args.fetch_article_text or args.show_evidence,
         target_date=run_date,
     )
+    observability.update_run_totals(**scraper.last_scrape_stats())
+    return articles
 
 
 def seed_source_metadata():
@@ -126,6 +130,7 @@ def maybe_extract_claims(args, tracked):
         "cached": 0,
         "invalid": 0,
         "failed": 0,
+        "zero_claim_results": 0,
     }
 
 
@@ -175,7 +180,14 @@ def run_pipeline(args, run_date=None):
     })
     observability.update_run_totals(stories_touched=stories_touched)
     claim_stats = maybe_extract_claims(args, tracked)
-    observability.update_run_totals(claims_saved=claim_stats.get("claims_saved", 0))
+    observability.update_run_totals(
+        claims_saved=claim_stats.get("claims_saved", 0),
+        claim_articles_extracted=claim_stats.get("articles_extracted", 0),
+        claim_articles_cached=claim_stats.get("cached", 0),
+        claim_invalid_dropped=claim_stats.get("invalid", 0),
+        claim_extraction_failures=claim_stats.get("failed", 0),
+        claim_zero_results=claim_stats.get("zero_claim_results", 0),
+    )
     return write_pipeline_outputs(args, tracked)
 
 

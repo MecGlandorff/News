@@ -65,6 +65,47 @@ def test_pipeline_report_includes_story_match_verifier_totals(tmp_path, monkeypa
     assert "Story match rejected:   2" in report
 
 
+def test_pipeline_report_includes_scraper_claim_and_cost_totals(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    monkeypatch.setattr(observability, "DB_PATH", db_path)
+
+    run_id = observability.start_run(_run_args(), run_date="2026-05-07")
+    observability.update_run_totals(
+        run_id,
+        duplicate_url_skips=2,
+        feed_fetch_failures=1,
+        article_text_fetch_successes=7,
+        article_text_fetch_failures=3,
+        claim_articles_extracted=4,
+        claim_articles_cached=5,
+        claim_invalid_dropped=6,
+        claim_extraction_failures=1,
+        claim_zero_results=2,
+    )
+    observability.record_llm_call(
+        run_id=run_id,
+        model="gpt-5.4-nano",
+        purpose="claim",
+        usage={"prompt_tokens": 1000, "completion_tokens": 500},
+        latency_ms=1200,
+    )
+    observability.finish_run(run_id, status="ok")
+
+    report = observability.pipeline_report(run_id)
+
+    assert "Duplicate URLs skipped: 2" in report
+    assert "Feed fetch failures:    1" in report
+    assert "Article text fetched:   7" in report
+    assert "Article text failures:  3" in report
+    assert "Claims extracted:       4" in report
+    assert "Claims cached:          5" in report
+    assert "Claims invalid:         6" in report
+    assert "Claim failures:         1" in report
+    assert "Zero-claim results:     2" in report
+    assert "Estimated cost:         EUR 0.0007" in report
+    assert "claim: 1 calls, tokens 1000/500, latency 1.2s, EUR 0.0007" in report
+
+
 def test_run_lifecycle_records_error_status(tmp_path, monkeypatch):
     db_path = tmp_path / "stories.db"
     monkeypatch.setattr(observability, "DB_PATH", db_path)

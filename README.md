@@ -14,7 +14,7 @@ It is a builder-grade prototype of an intelligence briefing system: RSS ingestio
 Source -> Article -> Claim -> Story Arc -> Story Delta -> Briefing
 ```
 
-> **Status:** Active prototype. Story memory, full-text claim grounding, source metadata, LLM observability, and optional full-text story-match verification are implemented. Claim-backed source agreement, contradiction records, and cost estimates are still in progress.
+> **Status:** Active prototype. Story memory, full-text claim grounding, source metadata, source-identity support, LLM observability, estimated run cost, and optional full-text story-match verification are implemented. Claim-backed source agreement, contradiction records, and full-text claim quality review are still in progress.
 
 ## Why it is great! 
 
@@ -23,7 +23,7 @@ Source -> Article -> Claim -> Story Arc -> Story Delta -> Briefing
 - **AI discipline:** structured model outputs, prompt versions, schema validation, cache keys, and fallbacks.
 - **Trust layer:** claims require evidence spans that appear in source text before they are stored.
 - **Temporal memory:** story observations preserve what the system knew yesterday so today's briefing can explain movement.
-- **Observability:** `runs` and `llm_calls` record model usage, cache hits, schema failures, latency, and tokens.
+- **Observability:** `runs` and `llm_calls` record model usage, cache hits, schema failures, scraper counts, claim metrics, latency, tokens, and estimated cost.
 - **Regression posture:** the pytest suite covers scraper behavior, source seeding, caching, tracking, claims, observability, CLI behavior, and PDF output.
 
 The flagship outcome is an intelligence-style briefing with status, confidence, source agreement, dispute labels, deltas, source links, and optional evidence spans.
@@ -35,6 +35,7 @@ The flagship outcome is an intelligence-style briefing with status, confidence, 
 | Story memory | Groups articles into continuing event arcs and compares against recent history |
 | Daily delta | Writes "what changed today" instead of repeating generic summaries |
 | Claim grounding | Uses `gpt-5.4-nano` with full article text when available and only saves evidence spans found in source input |
+| Source support | Counts distinct source identities with `source_id` first and source-name fallback |
 | Match verifier | Uses full article text and `gpt-5.4-nano` to reject adjacent-topic story merges |
 | Local database | Keeps stories, articles, observations, claims, sources, runs, and LLM calls in SQLite |
 | Outputs | Publishes Markdown briefings, digest files, and newspaper-style PDFs |
@@ -184,7 +185,7 @@ Notes:
 - `--show-evidence` fetches article bodies for claim extraction and falls back to RSS title/description when body text is unavailable.
 - `--fetch-article-text` fetches article bodies even when evidence extraction is disabled.
 - `--verify-story-matches` does not require `--show-evidence`.
-- `--pipeline-report` prints run totals after success or failure.
+- `--pipeline-report` prints run totals, scraper counts, claim metrics, model tokens, latency, and estimated EUR cost after success or failure.
 
 Example audit run:
 
@@ -223,10 +224,10 @@ Core docs:
 - Article deduplication is URL-based; content fingerprinting across syndicated copies is planned.
 - Story matching can over-merge adjacent topics when the verifier is disabled, and verifier decisions are not cached yet.
 - Claim extraction is cached and evidence-validated; evidence runs now use fetched full text when available.
-- Source metadata is seeded and attached to new articles, but source agreement is not claim-backed yet.
+- Source metadata is seeded and attached to new articles; deterministic source support uses `source_id` first, but source agreement is not claim-backed yet.
 - Current source agreement and dispute labels are briefing-level model signals, not contradiction records.
-- EUR cost estimates are not shown until model pricing is represented explicitly.
-- Scraper duplicate/failure counts are not yet surfaced in `--pipeline-report`.
+- EUR cost estimates use explicitly maintained pricing and a static USD-to-EUR rate.
+- Scraper duplicate/failure counts are surfaced in `--pipeline-report`.
 - The project has no hosted UI; the core artifact is local Markdown/PDF plus SQLite memory.
 
 ## Roadmap
@@ -238,7 +239,7 @@ Multi-source RSS scraping, URL normalization, URL deduplication, and cached arti
 Canonical labels, same-day consolidation, recent-history matching, daily observations, delta summaries, structured claim extraction, and evidence-span validation.
 
 **Phase 3 - Source modeling and observability: in progress.**
-Source metadata, full-text evidence extraction, and run observability have shipped. Next work is using `articles.source_id` in source agreement, adding scraper duplicate/failure counts, adding explicit EUR cost estimates, and measuring the cost/quality impact of the new claim path.
+Source metadata, source-identity support, full-text evidence extraction, scraper observability, cost estimates, and run observability have shipped. Next work is measuring the quality impact of the new claim path and backing source agreement with claim-level comparison.
 
 **Phase 4 - Evaluation and hardening: later.**
 Claim-backed agreement, contradiction records, story-matching fixtures, and regression evals should land before the system becomes more autonomous.

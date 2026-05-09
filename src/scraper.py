@@ -49,6 +49,25 @@ SKIP_TAGS = {"nav", "footer", "header", "aside", "script", "style", "noscript", 
 LOGGER = logging.getLogger(__name__)
 TRACKING_QUERY_PREFIXES = ("utm_",)
 TRACKING_QUERY_PARAMS = {"fbclid", "gclid", "mc_cid", "mc_eid"}
+_LAST_SCRAPE_STATS = {}
+
+
+def _new_scrape_stats():
+    return {
+        "duplicate_url_skips": 0,
+        "feed_fetch_failures": 0,
+        "article_text_fetch_successes": 0,
+        "article_text_fetch_failures": 0,
+    }
+
+
+def last_scrape_stats():
+    return dict(_LAST_SCRAPE_STATS)
+
+
+def reset_scrape_stats():
+    global _LAST_SCRAPE_STATS
+    _LAST_SCRAPE_STATS = _new_scrape_stats()
 
 
 def _session():
@@ -152,11 +171,14 @@ def fetch_article_text(url, session=None):
 
 
 def scrape_all(sources=None, max_per_source=None, fetch_article_text=FETCH_ARTICLE_TEXT, target_date=None):
+    global _LAST_SCRAPE_STATS
     sources = sources or SOURCES
     if max_per_source is None:
         max_per_source = MAX_ARTICLES_PER_SOURCE
 
     articles = []
+    stats = _new_scrape_stats()
+    _LAST_SCRAPE_STATS = stats
     seen_urls = set()
     skipped_outside_date = 0
     skipped_missing_timestamp = 0
@@ -172,6 +194,7 @@ def scrape_all(sources=None, max_per_source=None, fetch_article_text=FETCH_ARTIC
         try:
             feed_items = _parse_rss(rss_url, session=session)
         except Exception as e:
+            stats["feed_fetch_failures"] += 1
             LOGGER.warning("Feed fetch failed for %s: %s", source_name, e)
             LOGGER.debug("Feed fetch traceback for %s", source_name, exc_info=True)
             print(f"  ERR feed: {e}", flush=True)
@@ -201,13 +224,19 @@ def scrape_all(sources=None, max_per_source=None, fetch_article_text=FETCH_ARTIC
         for item in items:
             normalized_url = _normalize_url(item["url"])
             if normalized_url in seen_urls:
+                stats["duplicate_url_skips"] += 1
                 continue
             seen_urls.add(normalized_url)
             text = ""
             if fetch_article_text:
                 try:
                     text = _extract_text(item["url"], session=session)
+                    if text:
+                        stats["article_text_fetch_successes"] += 1
+                    else:
+                        stats["article_text_fetch_failures"] += 1
                 except Exception as e:
+                    stats["article_text_fetch_failures"] += 1
                     LOGGER.warning("Article text extraction failed for %s: %s", item["url"], e)
             article_id = _article_id(item["url"])
             articles.append({
@@ -243,4 +272,5 @@ def scrape_all(sources=None, max_per_source=None, fetch_article_text=FETCH_ARTIC
                 )
             print("Timestamp skips by source: " + "; ".join(parts), flush=True)
     print(f"\nTotal: {len(articles)} articles", flush=True)
+    _LAST_SCRAPE_STATS = stats
     return articles

@@ -74,7 +74,16 @@ SELECT
   status,
   ROUND(COALESCE(total_latency_ms, 0) / 1000.0, 1) AS seconds,
   articles_returned,
+  duplicate_url_skips,
+  feed_fetch_failures,
+  article_text_fetch_successes,
+  article_text_fetch_failures,
   claims_saved,
+  claim_articles_extracted,
+  claim_articles_cached,
+  claim_invalid_dropped,
+  claim_extraction_failures,
+  claim_zero_results,
   stories_touched,
   llm_calls_count,
   llm_cache_hits,
@@ -107,7 +116,16 @@ SELECT
   status,
   articles_returned,
   claims_saved,
+  claim_articles_extracted,
+  claim_articles_cached,
+  claim_invalid_dropped,
+  claim_extraction_failures,
+  claim_zero_results,
   stories_touched,
+  duplicate_url_skips,
+  feed_fetch_failures,
+  article_text_fetch_successes,
+  article_text_fetch_failures,
   story_match_verifications,
   story_match_accepts,
   story_match_rejections,
@@ -483,7 +501,7 @@ The database is memory and audit state, not a source of truth by itself.
 - `source_agreement` is not claim-backed yet.
 - There is no `contradictions` table yet.
 - Publication date is stored; true event date is not separately extracted yet.
-- Source counts can be inflated by syndicated or repeated coverage.
+- Source support uses `source_id` where available and source-name fallback for older rows, but it still does not prove independent corroboration.
 - A stored claim means "the model extracted this from source text and validation passed", not "the real world fact is adjudicated."
 
 For trust decisions, trace back:
