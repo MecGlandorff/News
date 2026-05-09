@@ -1,9 +1,5 @@
 # News
 
-<p align="center">
-  <img src="docs/assets/readme-hero.svg" alt="News source-grounded event memory system preview" width="100%">
-</p>
-
 ## AI News Intelligence That Remembers What Changed
 
 Most AI news tools summarize the article in front of them. **News** builds a local, source-grounded memory of real-world events: what happened today, what changed since the previous run, which sources support it, and where uncertainty remains.
