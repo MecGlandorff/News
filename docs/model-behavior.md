@@ -120,7 +120,7 @@ Current cache behavior:
 - ignore older prompt-version claims when rendering current evidence
 - render evidence with source and article context
 
-`runs`, `llm_calls`, and `--pipeline-report` now measure token use and latency. The next step is to review evidence runs against those signals and add explicit cost estimates once model pricing is represented in code.
+`runs`, `llm_calls`, and `--pipeline-report` now measure token use, latency, claim metrics, and estimated cost from explicit model pricing. The next step is to review evidence runs against those signals and decide whether the quality lift is worth the cost.
 
 ---
 

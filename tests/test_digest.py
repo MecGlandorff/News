@@ -271,6 +271,19 @@ def test_briefing_bounds_invalid_structured_story_card_fields(monkeypatch):
     assert "**Dispute:** None" in markdown
 
 
+def test_briefing_default_source_agreement_uses_source_id(monkeypatch):
+    monkeypatch.setattr(top10, "_get_briefings", lambda stories: {})
+
+    first = _briefing_article(1, "Economy", "Example Story", 4, source="Reuters")
+    first["source_id"] = 1
+    second = _briefing_article(2, "Economy", "Example Story", 4, source="Reuters Copy")
+    second["source_id"] = 1
+
+    markdown = build_briefing_markdown([first, second])
+
+    assert "**Source agreement:** Single Source" in markdown
+
+
 def test_get_briefings_sends_claims_when_evidence_enabled(tmp_path, monkeypatch):
     monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
 

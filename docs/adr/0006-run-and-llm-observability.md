@@ -24,7 +24,9 @@ Add `--pipeline-report` as an operator-facing CLI report over the latest run row
 
 Cache hits are counted on `runs`; they are not inserted into `llm_calls`, because no model call occurred.
 
-Track prompt and completion tokens now. Defer EUR cost estimates until pricing is represented explicitly and maintained deliberately.
+Track prompt and completion tokens now. EUR cost estimates require explicit pricing and should only be added once that table is represented and maintained deliberately.
+
+2026-05-09 follow-up: ADR 0010 adds scraper counters, claim counters, and estimated EUR cost to `--pipeline-report` using explicit model pricing in code.
 
 ---
 
@@ -49,8 +51,8 @@ Track prompt and completion tokens now. Defer EUR cost estimates until pricing i
 - Future cost and latency tradeoffs have a measurement base
 
 **Negative:**
-- The first report does not yet show EUR cost estimates
-- Scraper duplicate and fetch-failure counts need additional scraper instrumentation
+- Cost estimates depend on a manually maintained model-pricing table and static USD-to-EUR rate
+- Cached-input token pricing is not represented because the current LLM call telemetry records prompt and completion tokens, not provider-side cached-token split
 - Cache-hit counts are aggregate run totals, not yet broken out by stage
 
 ---
@@ -58,7 +60,6 @@ Track prompt and completion tokens now. Defer EUR cost estimates until pricing i
 ## Review trigger
 
 Revisit this decision when:
-- model pricing is added for EUR cost estimates
-- scraper observability exposes duplicate and fetch-failure counts
+- model pricing changes or the project needs provider-side cached-input pricing
 - full-text evidence runs need per-stage budget reporting
 - retry behavior is implemented beyond recording retry counts

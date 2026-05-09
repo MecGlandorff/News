@@ -5,6 +5,8 @@
 
 This ADR is a historical record. Current claim-extraction behavior is defined by ADR 0009.
 
+2026-05-09 follow-up: ADR 0009 defines the current full-text evidence-run behavior, and ADR 0010 adds scraper counters, claim counters, and cost reporting to `--pipeline-report`.
+
 ---
 
 ## Context

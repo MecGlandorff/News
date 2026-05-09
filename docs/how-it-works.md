@@ -326,6 +326,9 @@ At the end, `finish_run()` aggregates LLM rows into the run:
 - prompt tokens
 - completion tokens
 - total latency
+- estimated cost from explicit model pricing
+
+Scraper and claim-extraction counters are written to the run as the pipeline executes. Cache hits remain aggregate run totals and are not inserted as fake `llm_calls` rows.
 
 ```mermaid
 flowchart TD
@@ -347,7 +350,16 @@ Current report shape:
 ```text
 Run #42 (2026-05-07, ok, 74.2s)
 Articles returned:      231
+Duplicate URLs skipped: 12
+Feed fetch failures:    1
+Article text fetched:   90
+Article text failures:  18
 Claims saved:           612
+Claims extracted:       112
+Claims cached:          35
+Claims invalid:         24
+Claim failures:         2
+Zero-claim results:     19
 Stories touched:        38
 Story match checks:     14
 Story match accepted:   10
@@ -358,9 +370,11 @@ LLM cache hits:         9
 Schema failures:        0
 Retries:                0
 Tokens:                 prompt 18420 / completion 3910
+Estimated cost:         EUR 0.21
+  claim: 7 calls, tokens 7200/1300, latency 9.4s, EUR 0.01
 ```
 
-EUR cost is intentionally absent until model pricing is represented explicitly.
+Cost estimates use explicitly maintained model pricing in `src/config.py` and the token totals stored in `llm_calls`.
 
 ## What Costs Money
 
@@ -381,7 +395,7 @@ Cost controls today:
 - batched briefing generation
 - `--max-per-source` for smaller runs
 - `--db-off` for isolated experiments
-- `--pipeline-report` for token and latency inspection
+- `--pipeline-report` for scraper counts, claim metrics, token, latency, and cost inspection
 
 The most expensive failure mode is not just token spend. A false story merge can corrupt memory across future runs, which is why conservative matching and verifier audit rows matter.
 
@@ -389,13 +403,12 @@ The most expensive failure mode is not just token spend. A false story merge can
 
 The current system is useful, but several important trust layers are incomplete:
 
-- Source metadata is stored, but source agreement does not yet consume it.
+- Source metadata is stored and deterministic source support uses `source_id` with a source-name fallback, but agreement is not yet claim-backed.
 - Source agreement is a briefing-level label, not a claim-comparison result.
 - Contradiction detection is not implemented.
 - Evidence runs use full article text for claim extraction when body text is available.
 - Story-match verifier decisions are stored but not cached.
 - Article deduplication is URL-based, not content-fingerprint-based.
-- Scraper duplicate/failure counts are not yet included in `--pipeline-report`.
-- EUR cost estimates are deferred until model pricing is represented explicitly.
+- Source agreement is still not backed by claim-level comparison.
 
 These are the right next improvements because they make the system more inspectable, grounded, and hard to fool.

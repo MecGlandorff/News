@@ -158,11 +158,13 @@ def test_extract_caches_zero_claim_results(tmp_path, monkeypatch):
     client = _fake_client({"claims": []})
     monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
 
-    extract_and_save_claims([ARTICLE])
-    extract_and_save_claims([ARTICLE])
+    first = extract_and_save_claims([ARTICLE])
+    second = extract_and_save_claims([ARTICLE])
 
     assert client.chat.completions.calls == 1
     assert get_claims_for_story(42) == []
+    assert first["zero_claim_results"] == 1
+    assert second["cached"] == 1
 
 
 def test_extract_rejects_invalid_or_ungrounded_claims(tmp_path, monkeypatch):

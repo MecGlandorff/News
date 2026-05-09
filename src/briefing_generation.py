@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 
 from src.llm import create_chat_completion, mark_schema_failure, parse_json_object
+from src.source_agreement import source_agreement_label
 
 
 STATUS_VALUES = {"new", "developing", "escalating", "cooling", "disputed", "unresolved"}
@@ -129,14 +130,10 @@ def default_confidence(story):
 
 
 def default_source_agreement(story):
-    if local_dispute_flag(story) != "none":
-        return "mixed"
-    source_count = story.get("source_count", 0)
-    if source_count <= 1:
-        return "single-source"
-    if source_count >= 4:
-        return "broad"
-    return "partial"
+    return source_agreement_label(
+        story.get("articles", []),
+        has_dispute=local_dispute_flag(story) != "none",
+    )
 
 
 def default_briefing_payload(story=None):
@@ -188,8 +185,10 @@ def get_briefings(stories, get_client, model, include_evidence=False):
     for story in stories:
         item = {
             "canonical_label": story["canonical_label"],
+            "source_support": story.get("source_support", {}),
             "articles": [
                 {
+                    "source_id": article.get("source_id"),
                     "source": article["source"],
                     "title": article["title"],
                     "description": article["description"],

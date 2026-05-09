@@ -5,6 +5,8 @@ from contextvars import ContextVar
 from datetime import datetime, timezone
 from pathlib import Path
 
+from src import pricing
+
 
 DB_PATH = Path("data/stories.db")
 
@@ -19,6 +21,15 @@ RUN_TOTAL_COLUMNS = {
     "story_match_verifications",
     "story_match_accepts",
     "story_match_rejections",
+    "duplicate_url_skips",
+    "feed_fetch_failures",
+    "article_text_fetch_successes",
+    "article_text_fetch_failures",
+    "claim_articles_extracted",
+    "claim_articles_cached",
+    "claim_invalid_dropped",
+    "claim_extraction_failures",
+    "claim_zero_results",
 }
 
 
@@ -50,6 +61,15 @@ def _create_schema(conn):
             story_match_verifications INTEGER DEFAULT 0,
             story_match_accepts INTEGER DEFAULT 0,
             story_match_rejections INTEGER DEFAULT 0,
+            duplicate_url_skips INTEGER DEFAULT 0,
+            feed_fetch_failures INTEGER DEFAULT 0,
+            article_text_fetch_successes INTEGER DEFAULT 0,
+            article_text_fetch_failures INTEGER DEFAULT 0,
+            claim_articles_extracted INTEGER DEFAULT 0,
+            claim_articles_cached INTEGER DEFAULT 0,
+            claim_invalid_dropped INTEGER DEFAULT 0,
+            claim_extraction_failures INTEGER DEFAULT 0,
+            claim_zero_results INTEGER DEFAULT 0,
             llm_calls_count     INTEGER DEFAULT 0,
             llm_errors_count    INTEGER DEFAULT 0,
             llm_cache_hits      INTEGER DEFAULT 0,
@@ -84,6 +104,15 @@ def _create_schema(conn):
     _ensure_column(conn, "runs", "story_match_verifications", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "story_match_accepts", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "story_match_rejections", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "duplicate_url_skips", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "feed_fetch_failures", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "article_text_fetch_successes", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "article_text_fetch_failures", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "claim_articles_extracted", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "claim_articles_cached", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "claim_invalid_dropped", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "claim_extraction_failures", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "claim_zero_results", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "llm_errors_count", "INTEGER DEFAULT 0")
 
 
@@ -359,6 +388,11 @@ def get_run_report_data(run_id):
                    articles_returned, claims_saved,
                    stories_touched, story_match_verifications,
                    story_match_accepts, story_match_rejections,
+                   duplicate_url_skips, feed_fetch_failures,
+                   article_text_fetch_successes, article_text_fetch_failures,
+                   claim_articles_extracted, claim_articles_cached,
+                   claim_invalid_dropped, claim_extraction_failures,
+                   claim_zero_results,
                    llm_calls_count, llm_cache_hits,
                    llm_errors_count, schema_failures, retry_count, prompt_tokens,
                    completion_tokens, error_message
@@ -371,16 +405,91 @@ def get_run_report_data(run_id):
         conn.close()
 
 
+def llm_cost_summary(run_id):
+    conn = _get_db()
+    try:
+        rows = conn.execute(
+            """
+            SELECT purpose, model,
+                   COALESCE(SUM(prompt_tokens), 0) AS prompt_tokens,
+                   COALESCE(SUM(completion_tokens), 0) AS completion_tokens,
+                   COUNT(*) AS calls,
+                   COALESCE(SUM(latency_ms), 0) AS latency_ms
+            FROM llm_calls
+            WHERE run_id = ?
+            GROUP BY purpose, model
+            ORDER BY purpose, model
+            """,
+            (run_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+    by_purpose = {}
+    unpriced_models = set()
+    total = 0.0
+    for row in rows:
+        cost = pricing.estimate_llm_cost_eur(
+            row["model"],
+            row["prompt_tokens"],
+            row["completion_tokens"],
+        )
+        if cost is None:
+            unpriced_models.add(row["model"])
+        else:
+            total += cost
+        purpose = by_purpose.setdefault(row["purpose"], {
+            "purpose": row["purpose"],
+            "calls": 0,
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "latency_ms": 0,
+            "cost_eur": 0.0,
+            "unpriced_models": set(),
+        })
+        purpose["calls"] += row["calls"]
+        purpose["prompt_tokens"] += row["prompt_tokens"]
+        purpose["completion_tokens"] += row["completion_tokens"]
+        purpose["latency_ms"] += row["latency_ms"]
+        if cost is None:
+            purpose["unpriced_models"].add(row["model"])
+        else:
+            purpose["cost_eur"] += cost
+
+    return {
+        "total_cost_eur": total if not unpriced_models else None,
+        "priced_cost_eur": total,
+        "unpriced_models": sorted(unpriced_models),
+        "by_purpose": [
+            {
+                **value,
+                "unpriced_models": sorted(value["unpriced_models"]),
+            }
+            for value in by_purpose.values()
+        ],
+    }
+
+
 def pipeline_report(run_id):
     row = get_run_report_data(run_id)
     if row is None:
         return f"Run #{run_id} not found."
 
     seconds = (row["total_latency_ms"] or 0) / 1000
+    cost = llm_cost_summary(run_id)
     lines = [
         f"Run #{row['run_id']} ({row['run_date'] or 'unknown date'}, {row['status']}, {seconds:.1f}s)",
         f"Articles returned:      {row['articles_returned'] or 0}",
+        f"Duplicate URLs skipped: {row['duplicate_url_skips'] or 0}",
+        f"Feed fetch failures:    {row['feed_fetch_failures'] or 0}",
+        f"Article text fetched:   {row['article_text_fetch_successes'] or 0}",
+        f"Article text failures:  {row['article_text_fetch_failures'] or 0}",
         f"Claims saved:           {row['claims_saved'] or 0}",
+        f"Claims extracted:       {row['claim_articles_extracted'] or 0}",
+        f"Claims cached:          {row['claim_articles_cached'] or 0}",
+        f"Claims invalid:         {row['claim_invalid_dropped'] or 0}",
+        f"Claim failures:         {row['claim_extraction_failures'] or 0}",
+        f"Zero-claim results:     {row['claim_zero_results'] or 0}",
         f"Stories touched:        {row['stories_touched'] or 0}",
         f"Story match checks:     {row['story_match_verifications'] or 0}",
         f"Story match accepted:   {row['story_match_accepts'] or 0}",
@@ -395,6 +504,25 @@ def pipeline_report(run_id):
             f"prompt {row['prompt_tokens'] or 0} / completion {row['completion_tokens'] or 0}"
         ),
     ]
+    if cost["unpriced_models"]:
+        lines.append(
+            "Estimated cost:         "
+            f"{pricing.format_eur(cost['priced_cost_eur'])} priced; "
+            f"unpriced models: {', '.join(cost['unpriced_models'])}"
+        )
+    else:
+        lines.append(f"Estimated cost:         {pricing.format_eur(cost['total_cost_eur'])}")
+    for item in cost["by_purpose"]:
+        suffix = ""
+        if item["unpriced_models"]:
+            suffix = f" (unpriced: {', '.join(item['unpriced_models'])})"
+        lines.append(
+            f"  {item['purpose']}: "
+            f"{item['calls']} calls, "
+            f"tokens {item['prompt_tokens']}/{item['completion_tokens']}, "
+            f"latency {(item['latency_ms'] or 0) / 1000:.1f}s, "
+            f"{pricing.format_eur(item['cost_eur'])}{suffix}"
+        )
     if row["error_message"]:
         lines.append(f"Error:                  {row['error_message']}")
     return "\n".join(lines)

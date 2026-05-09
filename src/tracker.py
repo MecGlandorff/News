@@ -640,6 +640,7 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
                     """, (str(a["id"]), story_id, observation_id, 1.0))
                     tracked.append({
                         **a,
+                        "source_id": source_id,
                         "story_id": story_id,
                         "observation_id": observation_id,
                         "canonical_label": canonical if canonical != "NEW" else story_label,
