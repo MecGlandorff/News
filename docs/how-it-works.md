@@ -254,8 +254,8 @@ flowchart TD
 Important boundary:
 
 - Claim extraction is extraction, not interpretation.
-- Source agreement and contradiction detection are downstream work.
-- The briefing may receive claims as grounding, but the claims table does not yet prove agreement or conflict.
+- Source agreement and source-divergence notes are downstream work.
+- The briefing may receive claims as grounding, but the claims table does not yet prove agreement or source divergence.
 - Full text can be empty when scraping fails; in that case the claim extractor falls back to title and RSS description.
 
 ## Stage 5: Briefing Package And Outputs
@@ -299,7 +299,7 @@ Trust boundary:
 
 - The briefing is the final prose layer.
 - It may synthesize across articles and claims, but it should not invent unsupported facts.
-- Current `source_agreement` and `dispute_flag` are briefing-level signals, not claim-backed records.
+- Current `source_agreement` and `dispute_flag` are briefing-level signals, not claim-backed source-agreement or source-divergence records.
 
 ## Stage 6: Observability
 

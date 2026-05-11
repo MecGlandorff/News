@@ -62,7 +62,7 @@ Claim extraction should only extract article-supported statements:
 - `evidence_span`
 - `confidence`
 
-It should not decide source agreement, contradiction, or final confidence. Those are downstream interpretation steps.
+It should not decide source agreement, source divergence, or final confidence. Those are downstream interpretation steps.
 
 The claim layer validates each returned claim before storage. A claim must have a valid type, string entities, numeric confidence in `[0.0, 1.0]`, and a non-empty evidence span that appears in the article input sent to the extractor.
 
@@ -93,10 +93,10 @@ It returns story-card metadata as bounded labels:
 - `status`: `new`, `developing`, `escalating`, `cooling`, `disputed`, or `unresolved`
 - `confidence`: `high`, `medium`, or `low`
 - `source_agreement`: `broad`, `partial`, `mixed`, `single-source`, or `disputed`
-- `dispute_flag`: `none`, `possible conflict`, or `confirmed conflict`
+- `dispute_flag`: `none` or `possible conflict`
 - `open_questions`: short watch items grounded in the supplied articles and claims
 
-These labels are briefing-level signals. They make uncertainty visible in the artifact, but they are not yet a replacement for the planned dedicated source-agreement and contradiction subsystems.
+These labels are briefing-level signals. They make uncertainty visible in the artifact, but they are not yet a replacement for the planned claim-backed source-agreement and source-divergence layer. `confirmed conflict` is intentionally not an allowed briefing value until there is structured claim backing for it.
 
 ---
 
@@ -120,7 +120,13 @@ Current cache behavior:
 - ignore older prompt-version claims when rendering current evidence
 - render evidence with source and article context
 
-`runs`, `llm_calls`, and `--pipeline-report` now measure token use, latency, claim metrics, and estimated cost from explicit model pricing. The next step is to review evidence runs against those signals and decide whether the quality lift is worth the cost.
+`runs`, `llm_calls`, and `--pipeline-report` now measure token use, latency, claim metrics, and estimated cost from explicit model pricing. The claim-quality eval compares RSS-only input against full-text input with the same claim model:
+
+```bash
+python -m evals.run_claim_quality_eval
+```
+
+Use that report to decide whether the full-text quality lift is worth the extra cost before broadening claim extraction or using it for source agreement and source-divergence notes.
 
 ---
 
@@ -133,7 +139,7 @@ The most important current risks are:
 - briefing prose overstates certainty compared with source claims
 - claim extraction treats allegations as confirmed facts
 - full-text extraction can increase latency and token use when `--show-evidence` is enabled
-- numeric claims conflict across sources but are not yet compared
+- numeric/status/attribution claims can diverge across sources but are not yet compared
 - stored story-match verifier decisions are not reused as a cache yet
 
 See [failure-modes.md](failure-modes.md) for the broader list.

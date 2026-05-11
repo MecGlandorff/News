@@ -14,8 +14,9 @@ Only the documents linked from this page are part of the maintained project docu
 ## Trust And Quality
 
 - [Failure modes](failure-modes.md) - known ways the system can be wrong, how to detect them, and what mitigates them today.
-- [Evaluation plan](evaluation.md) - planned eval harnesses for story matching, claims, evidence, temporal deltas, and briefing quality.
-- [Improvement checklist](improvement-checklist.md) - practical hardening backlog for observability, full-text claims, source agreement, contradictions, and evals.
+- [Evaluation plan](evaluation.md) - planned and current eval harnesses for story matching, claims, evidence, temporal deltas, and briefing quality.
+- [Evaluation harnesses](../evals/README.md) - runnable eval commands, starting with RSS-vs-full-text claim quality.
+- [Improvement checklist](improvement-checklist.md) - practical hardening backlog for observability, full-text claims, source agreement, source divergence, and evals.
 
 ## Engineering Practice
 

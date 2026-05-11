@@ -9,7 +9,7 @@
 
 Phase 3 requires the pipeline to be inspectable before it becomes more expensive or autonomous.
 
-Before this change, the system could produce story memory, claims, Markdown briefings, and PDFs, but it could not explain a run's model usage, token load, latency, schema failures, or cache behavior. That made it hard to evaluate cost-sensitive choices such as full-text claim extraction, source-agreement logic, or contradiction detection.
+Before this change, the system could produce story memory, claims, Markdown briefings, and PDFs, but it could not explain a run's model usage, token load, latency, schema failures, or cache behavior. That made it hard to evaluate cost-sensitive choices such as full-text claim extraction, source-agreement logic, or source-divergence notes.
 
 ---
 
@@ -32,7 +32,7 @@ Track prompt and completion tokens now. EUR cost estimates require explicit pric
 
 ## Rationale
 
-**Observability comes before expensive behavior.** Full-text claim extraction and contradiction work can increase token use and latency. The system should measure that impact before expanding those paths.
+**Observability comes before expensive behavior.** Full-text claim extraction and source-divergence work can increase token use and latency. The system should measure that impact before expanding those paths.
 
 **`llm_calls` should mean real calls.** Treating cache hits as call rows would inflate call counts and make latency and token reports harder to interpret.
 

@@ -83,5 +83,5 @@ Revisit this decision when:
 
 - measured evidence-run cost or latency exceeds the project's tolerance
 - source agreement uses claim-level comparison
-- contradiction detection compares extracted claims
+- source-divergence notes compare extracted claims
 - evals show that `gpt-5.4-nano` materially reduces claim quality compared with `gpt-5.4-mini`
