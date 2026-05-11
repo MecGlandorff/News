@@ -7,6 +7,7 @@ from pathlib import Path
 
 import src.article_cache as article_cache
 import src.claims as claims
+import src.llm_response_cache as llm_response_cache
 import src.observability as observability
 import src.scraper as scraper
 import src.sources as sources
@@ -64,6 +65,7 @@ def temporary_database_paths():
     original_tracker_db = tracker.DB_PATH
     original_tracker_data_dir = tracker.DATA_DIR
     original_claims_db = claims.DB_PATH
+    original_llm_response_cache_db = llm_response_cache.DB_PATH
     original_sources_db = sources.DB_PATH
     original_observability_db = observability.DB_PATH
 
@@ -74,6 +76,7 @@ def temporary_database_paths():
         tracker.DB_PATH = temp_db
         tracker.DATA_DIR = tmp_path / "daily"
         claims.DB_PATH = temp_db
+        llm_response_cache.DB_PATH = temp_db
         sources.DB_PATH = temp_db
         observability.DB_PATH = temp_db
         print(f"DB off: using temporary database at {temp_db}")
@@ -84,6 +87,7 @@ def temporary_database_paths():
             tracker.DB_PATH = original_tracker_db
             tracker.DATA_DIR = original_tracker_data_dir
             claims.DB_PATH = original_claims_db
+            llm_response_cache.DB_PATH = original_llm_response_cache_db
             sources.DB_PATH = original_sources_db
             observability.DB_PATH = original_observability_db
 

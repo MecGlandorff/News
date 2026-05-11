@@ -3,7 +3,12 @@ import re
 from datetime import date
 from email.utils import parsedate_to_datetime
 
-from src.llm import create_chat_completion, mark_schema_failure, parse_json_object
+from src.llm import (
+    create_cached_chat_completion,
+    mark_schema_failure,
+    parse_json_object,
+    save_cached_chat_completion,
+)
 
 
 CONSOLIDATE_PROMPT = """You are grouping today's news story labels that refer to the same ongoing story.
@@ -13,6 +18,8 @@ For each group, pick the best canonical label (clear, concise, in English).
 
 Return a JSON object with key "groups": array of {canonical_label, labels} where labels is the list of today's labels that belong to this group.
 Labels that stand alone still appear as a group of one."""
+
+CONSOLIDATE_PROMPT_VERSION = "2026-05-11-v1"
 
 MATCH_PROMPT = """You are matching today's news story labels to recent canonical story memory.
 
@@ -27,6 +34,8 @@ Only match a today_label to one of its supplied candidates. If no candidate is a
 
 Return a JSON object with key "matches": array of {today_label, canonical_label}.
 canonical_label is either the exact string from the recent-history list or "NEW"."""
+
+MATCH_PROMPT_VERSION = "2026-05-11-v1"
 
 VERIFY_PROMPT_VERSION = "2026-05-08-v1"
 VERIFY_PROMPT = """You are verifying whether today's article group continues an existing tracked news story.
@@ -189,15 +198,16 @@ def consolidate_today(story_groups, get_client, model):
     if len(labels) <= 1:
         return story_groups
 
-    client = get_client()
-    response = create_chat_completion(
-        client,
+    messages = [
+        {"role": "system", "content": CONSOLIDATE_PROMPT},
+        {"role": "user", "content": json.dumps(labels, ensure_ascii=False)},
+    ]
+    response, cache_metadata, cache_hit = create_cached_chat_completion(
+        get_client,
         model=model,
-        messages=[
-            {"role": "system", "content": CONSOLIDATE_PROMPT},
-            {"role": "user", "content": json.dumps(labels, ensure_ascii=False)},
-        ],
+        messages=messages,
         purpose="match-sameday",
+        prompt_version=CONSOLIDATE_PROMPT_VERSION,
         response_format={"type": "json_object"},
     )
     payload = parse_json_object(response)
@@ -205,6 +215,8 @@ def consolidate_today(story_groups, get_client, model):
     if not isinstance(groups, list):
         mark_schema_failure('Model response must contain a "groups" list', response=response)
         raise ValueError('Model response must contain a "groups" list')
+    if not cache_hit:
+        save_cached_chat_completion(cache_metadata, response)
 
     from collections import defaultdict
     consolidated = defaultdict(list)
@@ -463,16 +475,16 @@ def verify_story_matches(label_map, recent_stories, story_groups, get_client, mo
 
     verified = dict(label_map)
     decisions = []
-    client = get_client()
     for batch in chunked(cases, VERIFY_CASES_PER_CALL):
         expected_by_key = {case_key(case): case for case in batch}
-        response = create_chat_completion(
-            client,
+        messages = [
+            {"role": "system", "content": VERIFY_PROMPT},
+            {"role": "user", "content": json.dumps({"cases": batch}, ensure_ascii=False)},
+        ]
+        response, cache_metadata, cache_hit = create_cached_chat_completion(
+            get_client,
             model=model,
-            messages=[
-                {"role": "system", "content": VERIFY_PROMPT},
-                {"role": "user", "content": json.dumps({"cases": batch}, ensure_ascii=False)},
-            ],
+            messages=messages,
             purpose="match-verify",
             prompt_version=VERIFY_PROMPT_VERSION,
             response_format={"type": "json_object"},
@@ -482,6 +494,8 @@ def verify_story_matches(label_map, recent_stories, story_groups, get_client, mo
         if not isinstance(raw_decisions, list):
             mark_schema_failure('Model response must contain a "decisions" list', response=response)
             raise ValueError('Model response must contain a "decisions" list')
+        if not cache_hit:
+            save_cached_chat_completion(cache_metadata, response)
 
         seen_keys = set()
         for raw in raw_decisions:
@@ -554,17 +568,18 @@ def match_labels(today_labels, recent_stories, get_client, model, today=None, de
     if not any(valid_candidates_by_label.values()):
         return {label: "NEW" for label in today_labels}
 
-    client = get_client()
-    response = create_chat_completion(
-        client,
+    messages = [
+        {"role": "system", "content": MATCH_PROMPT},
+        {"role": "user", "content": json.dumps({
+            "match_cases": match_cases,
+        }, ensure_ascii=False)},
+    ]
+    response, cache_metadata, cache_hit = create_cached_chat_completion(
+        get_client,
         model=model,
-        messages=[
-            {"role": "system", "content": MATCH_PROMPT},
-            {"role": "user", "content": json.dumps({
-                "match_cases": match_cases,
-            }, ensure_ascii=False)},
-        ],
+        messages=messages,
         purpose="match-crossday",
+        prompt_version=MATCH_PROMPT_VERSION,
         response_format={"type": "json_object"},
     )
     payload = parse_json_object(response)
@@ -572,6 +587,8 @@ def match_labels(today_labels, recent_stories, get_client, model, today=None, de
     if not isinstance(matches, list):
         mark_schema_failure('Model response must contain a "matches" list', response=response)
         raise ValueError('Model response must contain a "matches" list')
+    if not cache_hit:
+        save_cached_chat_completion(cache_metadata, response)
     matched = {}
     for match in matches:
         if not isinstance(match, dict) or match.get("today_label") not in today_labels:

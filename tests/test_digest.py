@@ -1,7 +1,10 @@
 import json
+import sqlite3
 
 import src.claims as claims_module
 from src.digest import build_themed_markdown
+import src.llm_response_cache as llm_response_cache
+import src.observability as observability
 import src.top10 as top10
 from src.claims import extract_and_save_claims
 from src.top10 import build_briefing_markdown, write_top10
@@ -209,6 +212,80 @@ def test_get_briefings_sends_previous_context(monkeypatch):
     }
     assert captured["items"][0]["previous_context"]["summary"] == "Earlier summary."
     assert captured["items"][0]["previous_context"]["recent_articles"][0]["title"] == "Older title"
+
+
+def test_get_briefings_uses_exact_response_cache_inside_run(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    monkeypatch.setattr(llm_response_cache, "DB_PATH", db_path)
+    monkeypatch.setattr(observability, "DB_PATH", db_path)
+    run_id = observability.start_run({"today": "2026-05-04"}, run_date="2026-05-04")
+    observability.set_current_run_id(run_id)
+
+    class Message:
+        content = (
+            '{"briefings":[{"canonical_label":"Example Story",'
+            '"delta_summary":"First detected today.",'
+            '"briefing":"Briefing text."}]}'
+        )
+
+    class Choice:
+        message = Message()
+
+    class Response:
+        choices = [Choice()]
+
+    class Completions:
+        def __init__(self):
+            self.calls = 0
+
+        def create(self, **kwargs):
+            self.calls += 1
+            return Response()
+
+    class Chat:
+        def __init__(self):
+            self.completions = Completions()
+
+    class Client:
+        def __init__(self):
+            self.chat = Chat()
+
+    client = Client()
+    monkeypatch.setattr(top10, "get_openai_client", lambda: client)
+    stories = [{
+        "canonical_label": "Example Story",
+        "source_count": 1,
+        "trend": "new",
+        "articles": [{
+            "source": "Example News",
+            "title": "Current title",
+            "description": "Current description",
+            "published_at": "Sat, 18 Apr 2026 12:30:00 GMT",
+            "url": "https://example.com/current",
+        }],
+    }]
+
+    try:
+        first = top10._get_briefings(stories)
+        second = top10._get_briefings(stories)
+        observability.finish_run(run_id, status="ok")
+    finally:
+        observability.clear_current_run_id()
+
+    assert first == second
+    assert first["Example Story"]["briefing"] == "Briefing text."
+    assert client.chat.completions.calls == 1
+
+    conn = sqlite3.connect(db_path)
+    try:
+        run = conn.execute(
+            "SELECT llm_calls_count, llm_cache_hits FROM runs WHERE run_id = ?",
+            (run_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+
+    assert run == (1, 1)
 
 
 def test_briefing_renders_structured_story_card_fields(monkeypatch):

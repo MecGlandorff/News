@@ -4,7 +4,7 @@ import time
 
 from openai import OpenAI
 from src.env import load_dotenv_file
-from src import observability
+from src import llm_response_cache, observability
 
 OPENAI_API_KEY_HELP = (
     "OPENAI_API_KEY is not set. Add it to .env or set it before running the pipeline, for example:\n"
@@ -74,6 +74,53 @@ def create_chat_completion(
     if call_id is not None:
         _RESPONSE_CALL_IDS[id(response)] = call_id
     return response
+
+
+def _response_content(response):
+    return response.choices[0].message.content
+
+
+def create_cached_chat_completion(
+    get_client,
+    *,
+    model,
+    messages,
+    purpose,
+    prompt_version=None,
+    response_format=None,
+    **kwargs,
+):
+    cache_metadata = None
+    if observability.current_run_id() is not None:
+        cache_metadata = llm_response_cache.cache_metadata(
+            purpose=purpose,
+            model=model,
+            prompt_version=prompt_version,
+            messages=messages,
+            response_format=response_format,
+            kwargs=kwargs,
+        )
+        cached_content = llm_response_cache.get_cached_response(cache_metadata)
+        if cached_content is not None:
+            observability.increment_cache_hits()
+            return llm_response_cache.response_from_content(cached_content), cache_metadata, True
+
+    response = create_chat_completion(
+        get_client(),
+        model=model,
+        messages=messages,
+        purpose=purpose,
+        prompt_version=prompt_version,
+        response_format=response_format,
+        **kwargs,
+    )
+    return response, cache_metadata, False
+
+
+def save_cached_chat_completion(cache_metadata, response):
+    if cache_metadata is None:
+        return
+    llm_response_cache.save_response(cache_metadata, _response_content(response))
 
 
 def mark_schema_failure(error_message=None, response=None):

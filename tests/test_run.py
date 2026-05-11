@@ -5,6 +5,7 @@ import pytest
 
 import src.article_cache as article_cache
 import src.claims as claims
+import src.llm_response_cache as llm_response_cache
 import src.observability as observability
 import src.run as run
 import src.sources as sources
@@ -40,6 +41,7 @@ def test_db_off_uses_temporary_database_paths_and_restores_originals(tmp_path, m
     real_daily = tmp_path / "real" / "daily"
     monkeypatch.setattr(article_cache, "DB_PATH", real_db)
     monkeypatch.setattr(claims, "DB_PATH", real_db)
+    monkeypatch.setattr(llm_response_cache, "DB_PATH", real_db)
     monkeypatch.setattr(observability, "DB_PATH", real_db)
     monkeypatch.setattr(sources, "DB_PATH", real_db)
     monkeypatch.setattr(tracker, "DB_PATH", real_db)
@@ -59,6 +61,7 @@ def test_db_off_uses_temporary_database_paths_and_restores_originals(tmp_path, m
         seen["tracker_db"] = tracker.DB_PATH
         seen["tracker_daily"] = tracker.DATA_DIR
         seen["claims_db"] = claims.DB_PATH
+        seen["llm_response_cache_db"] = llm_response_cache.DB_PATH
         seen["observability_db"] = observability.DB_PATH
         return []
 
@@ -70,11 +73,13 @@ def test_db_off_uses_temporary_database_paths_and_restores_originals(tmp_path, m
     assert seen["article_cache_db"] != real_db
     assert seen["tracker_db"] == seen["article_cache_db"]
     assert seen["claims_db"] == seen["article_cache_db"]
+    assert seen["llm_response_cache_db"] == seen["article_cache_db"]
     assert seen["observability_db"] == seen["article_cache_db"]
     assert seen["sources_db"] == seen["article_cache_db"]
     assert seen["tracker_daily"].parent == seen["tracker_db"].parent
     assert article_cache.DB_PATH == real_db
     assert claims.DB_PATH == real_db
+    assert llm_response_cache.DB_PATH == real_db
     assert observability.DB_PATH == real_db
     assert sources.DB_PATH == real_db
     assert tracker.DB_PATH == real_db
@@ -87,6 +92,7 @@ def test_normal_run_uses_configured_database_paths(tmp_path, monkeypatch):
     real_daily = tmp_path / "real" / "daily"
     monkeypatch.setattr(article_cache, "DB_PATH", real_db)
     monkeypatch.setattr(claims, "DB_PATH", real_db)
+    monkeypatch.setattr(llm_response_cache, "DB_PATH", real_db)
     monkeypatch.setattr(observability, "DB_PATH", real_db)
     monkeypatch.setattr(sources, "DB_PATH", real_db)
     monkeypatch.setattr(tracker, "DB_PATH", real_db)
@@ -108,6 +114,7 @@ def test_normal_run_uses_configured_database_paths(tmp_path, monkeypatch):
     def fake_track(classified, today=None):
         seen["tracker_db"] = tracker.DB_PATH
         seen["claims_db"] = claims.DB_PATH
+        seen["llm_response_cache_db"] = llm_response_cache.DB_PATH
         seen["observability_db"] = observability.DB_PATH
         return []
 
@@ -121,6 +128,7 @@ def test_normal_run_uses_configured_database_paths(tmp_path, monkeypatch):
     assert seen["sources_db"] == real_db
     assert seen["tracker_db"] == real_db
     assert seen["claims_db"] == real_db
+    assert seen["llm_response_cache_db"] == real_db
     assert seen["observability_db"] == real_db
     assert seen["scrape_kwargs"]["target_date"] == "2026-04-28"
     assert seen["scrape_kwargs"]["fetch_article_text"] is False
