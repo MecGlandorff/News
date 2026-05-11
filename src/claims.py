@@ -87,14 +87,18 @@ def _clean_article_part(text):
     return re.sub(r"\s+", " ", _strip_html(text)).strip()
 
 
-def _article_content(article):
+def article_claim_content(article, include_full_text=True):
     title = _clean_article_part(article.get("title"))
     description = _clean_article_part(article.get("description"))
-    full_text = _clean_article_part(article.get("text"))
     parts = [title, description]
-    if full_text:
+    full_text = _clean_article_part(article.get("text")) if include_full_text else ""
+    if include_full_text and full_text:
         parts.append(full_text)
     return "\n\n".join(part for part in parts if part)
+
+
+def _article_content(article):
+    return article_claim_content(article, include_full_text=True)
 
 
 def _article_content_hash(content):
@@ -157,9 +161,8 @@ def _delete_cached_claims(article_id, conn):
     )
 
 
-def _call_llm(content):
-    client = get_openai_client()
-    response = create_chat_completion(
+def _claim_completion(client, content):
+    return create_chat_completion(
         client,
         model=CLAIMS_MODEL,
         messages=[
@@ -170,12 +173,38 @@ def _call_llm(content):
         prompt_version=CLAIMS_PROMPT_VERSION,
         response_format={"type": "json_object"},
     )
+
+
+def _claims_from_response(response):
     payload = parse_json_object(response)
     claims = payload.get("claims")
     if not isinstance(claims, list):
         mark_schema_failure('Model response must contain a "claims" list', response=response)
         raise ValueError('Model response must contain a "claims" list')
     return claims
+
+
+def call_claim_extractor(content, client=None):
+    client = client or get_openai_client()
+    response = _claim_completion(client, content)
+    return _claims_from_response(response), response
+
+
+def _call_llm(content):
+    claims, _response = call_claim_extractor(content)
+    return claims
+
+
+def validate_claims_for_content(claims_data, content):
+    valid_claims = []
+    dropped = 0
+    for claim in claims_data:
+        validated = _validated_claim(claim, content)
+        if not validated:
+            dropped += 1
+            continue
+        valid_claims.append(validated)
+    return valid_claims, dropped
 
 
 def _clean_string(value):

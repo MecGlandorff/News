@@ -134,17 +134,17 @@ For the end-to-end flow where these failures can enter, read [how-it-works.md](h
 
 ---
 
-## 10. Numeric claims conflict across sources
+## 10. Numeric claims diverge across sources
 
 **Description:** Source A reports "20 casualties"; source B reports "34 casualties." The briefing may synthesize a single number or pick one arbitrarily.
 
 **Detection:** Claims with `claim_type = "number"` on the same entity across sources within a story.
 
-**Mitigation:** None currently. Claim extraction captures numbers as typed claims. Contradiction detection is planned (Phase 4).
+**Mitigation:** The briefing layer no longer accepts `confirmed conflict` as a normalized dispute flag. Claim extraction captures numbers as typed claims, but claim comparison is not implemented yet.
 
 **Current status:** Claims are extracted and typed but not compared.
 
-**Future improvement:** Compare numeric claims across sources. Surface as `contradiction` with `contradiction_type = "number"`.
+**Future improvement:** Compare numeric claims across sources as part of the claim-backed source-agreement layer. Surface clear differences as source-divergence notes, not as confirmed contradiction prose.
 
 ---
 

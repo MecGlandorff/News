@@ -109,7 +109,7 @@ The core story-memory flow exists, but several trust and observability layers ar
 - Source agreement is currently a briefing-level model label, not a claim-comparison result backed by a dedicated data model.
 - Run observability stores `runs` and real model calls in `llm_calls`, and `--pipeline-report` reports scraper counts, claim metrics, token use, latency, cache hits, retries, schema failures, story-match verifier counts, and estimated EUR cost.
 - There is no stored novelty score yet; novelty needs a clear claim-backed definition before becoming schema.
-- Contradiction detection is not implemented.
+- Claim-backed source-divergence notes are not implemented; a dedicated contradiction module/table is no longer Phase 3 scope.
 - Full-text claim extraction is enabled for evidence runs, but its cost and quality impact still need review against run telemetry.
 - Story-match verifier decisions are stored for audit but are not yet cached or evaluated against a curated fixture set.
 
@@ -125,7 +125,7 @@ The next observability refinement should compare the quality impact of full-text
 
 The next story-matching refinement should build a small reviewed fixture set from recent generated newspapers. It should include true continuations and false merges, including the 2026-05-07 Gaza detention/flotilla failure, before the verifier is enabled by default.
 
-Only after that should the project expand expensive evidence behavior further, such as claim-backed contradiction detection across broader claim sets.
+Only after that should the project expand expensive evidence behavior further, such as broader claim comparison for source-divergence notes.
 
 ## Why This Order Matters
 
@@ -133,7 +133,7 @@ Source metadata should come before claim-backed source agreement because the sys
 
 Observability should guide broader evidence behavior because full text increases token use and latency. The system should measure the cost and quality of evidence runs before making that path common.
 
-Claim comparison should come before contradiction prose because contradictions need durable records. A briefing label like `possible conflict` is useful, but it is not enough for auditability unless the system can point to the conflicting claims.
+Claim comparison should come before source-divergence prose because divergence notes need structured backing. A briefing label like `possible conflict` is useful, but it is not enough for auditability unless the system can point to the claims that differ.
 
 ## Data Model Reference
 
@@ -395,6 +395,6 @@ RSS source
   -> briefing section
 ```
 
-The next version should make that trace more inspectable by adding source metadata, run observability, and claim-backed agreement or contradiction records.
+The next version should make that trace more inspectable by adding source metadata, run observability, and claim-backed agreement/source-divergence records.
 
 See `docs/failure-modes.md`, `docs/model-behavior.md`, and `docs/adr/` for related tradeoffs.

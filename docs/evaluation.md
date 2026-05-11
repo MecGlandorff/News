@@ -1,6 +1,6 @@
 # Evaluation Plan
 
-The project should evaluate the behaviors that make it more than an article summarizer: story clustering, claim extraction, evidence grounding, temporal diffing, contradiction detection, and briefing quality.
+The project should evaluate the behaviors that make it more than an article summarizer: story clustering, claim extraction, evidence grounding, temporal diffing, claim-backed source agreement/source divergence, and briefing quality.
 
 Use [how-it-works.md](how-it-works.md) as the current behavior baseline before turning any item here into an eval.
 
@@ -46,6 +46,26 @@ Useful checks:
 - confidence is numeric and bounded
 - no duplicate claims within one article
 
+Current harness:
+
+```bash
+python -m evals.run_claim_quality_eval
+```
+
+This compares two input variants for the same configured claim prompt and model:
+
+| Variant | Input | Purpose |
+|---|---|---|
+| `rss` | title plus RSS description | Measures the cheap fallback path |
+| `full_text` | title, RSS description, and fetched body text | Measures evidence-run quality when body text is available |
+
+The important distinction is between:
+
+- available coverage: claims found out of claims visible in that input variant
+- article coverage: claims found out of all expected claims for the article
+
+RSS-only extraction can have good available coverage while still having lower article coverage because the feed summary did not contain the relevant source detail. Full-text extraction is only worth the extra cost when it improves article coverage, preserves evidence validity, and does not create many duplicates.
+
 ### 3. Citation and evidence accuracy
 
 Question: can every important generated statement be traced back to source material?
@@ -77,7 +97,7 @@ Useful rubric dimensions:
 - current development is clear
 - source support is visible
 - uncertainty is not flattened
-- conflicts are surfaced
+- source divergence is surfaced cautiously when claim comparison supports it
 - "what to watch next" does not invent unsupported predictions
 - prose remains concise
 
@@ -100,6 +120,17 @@ evals/
   README.md
 ```
 
+Implemented first:
+
+```text
+evals/
+  datasets/
+    golden_claims.jsonl
+  reports/
+  run_claim_quality_eval.py
+  README.md
+```
+
 Keep datasets small at first. Ten high-quality examples per behavior are more useful than a large noisy fixture set.
 
 ---
@@ -114,7 +145,7 @@ Keep datasets small at first. Ten high-quality examples per behavior are more us
 | Claim extraction | validity / coverage / semantic match |
 | Citation accuracy | supported / unsupported / missing |
 | Temporal diffing | new-vs-repeated accuracy |
-| Contradiction detection | precision-oriented score |
+| Source divergence | precision-oriented review of claim pairs with different numbers, statuses, or attributions |
 | Briefing quality | rubric score with cited examples |
 | Cost | cost per run / cost per 100 articles |
 | Latency | seconds per stage |
@@ -128,9 +159,9 @@ Before adding a major AI subsystem, define at least one way to evaluate it.
 Examples:
 
 - before source agreement detection, create claim-pair examples where sources agree, differ, or merely repeat the same wire copy
-- before contradiction detection, create numeric/date/status conflict examples with expected labels
+- before source-divergence notes, create numeric/date/status/attribution examples with expected labels
 - before enabling `--verify-story-matches` by default, review 5-10 accepted and rejected match cases from recent newspapers
-- before making evidence extraction part of ordinary runs or broadening it into source agreement and contradiction work, measure claim quality improvement against token and latency increase
+- before making evidence extraction part of ordinary runs or broadening it into source agreement and source-divergence work, measure claim quality improvement against token and latency increase
 
 ---
 

@@ -7,7 +7,7 @@
 
 ## Context
 
-Phase 3 requires source-aware reasoning before contradiction detection or claim-backed agreement. Before this change, sources existed only as plain strings on each article row (`articles.source`). That was enough to ingest feeds and render briefings, but it could not support:
+Phase 3 requires source-aware reasoning before claim-backed agreement or source-divergence notes. Before this change, sources existed only as plain strings on each article row (`articles.source`). That was enough to ingest feeds and render briefings, but it could not support:
 
 - distinguishing a wire copy from independent reporting
 - weighting agreement by source reliability

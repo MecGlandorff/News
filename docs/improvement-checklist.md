@@ -26,12 +26,12 @@ These pieces are already in place and should be protected as the project evolves
 
 The current prototype is directionally strong, but several important parts are still incomplete or only partially implemented.
 
-- [ ] Full-text claim extraction is enabled for evidence runs, and its cost/latency is visible; quality impact still needs review
+- [ ] Full-text claim extraction is enabled for evidence runs, and its cost/latency is visible; the repeatable quality harness exists, but real reviewed cases still need to be run
 - [x] Run observability covers token use, latency, cache hits, schema failures, retries, EUR estimates, and scraper duplicate/failure counts
 - [x] Source metadata is modeled as a first-class table, and source identity is used before source-name fallback
 - [ ] Source agreement is surfaced in the briefing, but not yet backed by a dedicated comparison layer
-- [ ] Contradiction detection is not implemented
-- [ ] Evaluation coverage is still mostly planned rather than operational
+- [ ] Source-divergence notes are not implemented; a dedicated contradiction module/table is no longer Phase 3 scope
+- [ ] Evaluation coverage is still early; claim-quality comparison is operational, while story, citation, temporal, and source-divergence evals are still planned
 
 ## Priority order
 
@@ -41,8 +41,9 @@ The order below matters. The project should measure its pipeline before making e
 - [x] 2. Add a pipeline report that shows counts, latency, and estimated cost by stage
 - [x] 3. Define and document full-text claim extraction for evidence runs
 - [x] 4. Implement full-text claim extraction behind `--show-evidence`
-- [ ] 5. Add stronger source agreement and contradiction handling
-- [ ] 6. Add evaluation coverage for quality, cost, and latency tradeoffs
+- [x] 5. Add a repeatable claim-quality comparison harness
+- [ ] 6. Run real reviewed claim-quality cases and decide whether full-text impact is worth the cost
+- [ ] 7. Add stronger source agreement and lightweight source-divergence handling
 
 ## 1. Observability
 
@@ -115,7 +116,8 @@ The richer path is gated behind `--show-evidence`; ordinary runs do not extract 
 - [x] Fetch full text when `--show-evidence` is enabled
 - [x] Only use full text when fetched article text is actually present and usable
 - [ ] Record which input source was used for each extraction: `rss` or `full_text`
-- [ ] Measure quality improvement against token and latency cost
+- [x] Add a harness that compares RSS-only and full-text claim extraction
+- [ ] Measure quality improvement against token and latency cost on real reviewed cases
 
 ### Future control policy
 
@@ -148,7 +150,7 @@ Right now sources are mostly plain strings. That is enough to ingest feeds, but 
 - [x] Add nullable `articles.source_id` while preserving raw source names for compatibility
 - [x] Use `articles.source_id` in source-support logic, with a source-name fallback for older rows
 
-## 4. Source agreement and contradiction handling
+## 4. Source agreement and source-divergence handling
 
 The briefing currently surfaces agreement-style labels, but those labels are still prompt-level signals rather than outputs of a dedicated comparison layer.
 
@@ -159,13 +161,12 @@ The briefing currently surfaces agreement-style labels, but those labels are sti
 - [ ] Mark single-source claims clearly
 - [ ] Surface source agreement using claim-level backing rather than prompt-only synthesis
 
-### Contradictions
+### Source divergence
 
-- [ ] Add a contradiction-detection module
-- [ ] Add a `contradictions` table
-- [ ] Compare claims for conflicts in number, date, status, attribution, or causality
-- [ ] Record contradiction severity
-- [ ] Surface contradictions explicitly in the briefing
+- [ ] Compare claim pairs for different numbers, dates, statuses, or attributions when the source-agreement layer already has comparable claims
+- [ ] Record lightweight source-divergence notes in the comparison output
+- [ ] Avoid a dedicated contradiction module or `contradictions` table in Phase 3
+- [ ] Surface divergence cautiously as a note, not as confirmed contradiction prose
 
 ## 5. Briefing quality
 
@@ -182,13 +183,13 @@ The end product should read like an auditable intelligence artifact rather than 
 
 The repo should be able to show that key AI behaviors are improving rather than merely changing.
 
-- [ ] Add an `evals/` directory
-- [ ] Add a small golden dataset for claim extraction
+- [x] Add an `evals/` directory
+- [x] Add a small golden dataset for claim extraction
 - [ ] Add a story-clustering evaluation set
 - [ ] Add a citation-support evaluation set
 - [ ] Add a temporal-diffing evaluation set
-- [ ] Add metrics for evidence support rate
-- [ ] Measure the quality lift from full-text claims
+- [x] Add metrics for evidence support rate
+- [ ] Measure the quality lift from full-text claims on reviewed real cases
 - [x] Measure the token-cost increase from full-text claims
 - [x] Measure the latency increase from full-text claims
 - [ ] Write an evaluation README with success criteria

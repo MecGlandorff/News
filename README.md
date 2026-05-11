@@ -10,7 +10,7 @@ It is a builder-grade prototype of an intelligence briefing system: RSS ingestio
 Source -> Article -> Claim -> Story Arc -> Story Delta -> Briefing
 ```
 
-> **Status:** Active prototype. Story memory, full-text claim grounding, source metadata, source-identity support, LLM observability, estimated run cost, and optional full-text story-match verification are implemented. Claim-backed source agreement, contradiction records, and full-text claim quality review are still in progress.
+> **Status:** Active prototype. Story memory, full-text claim grounding, source metadata, source-identity support, LLM observability, estimated run cost, optional full-text story-match verification, and a repeatable claim-quality eval harness are implemented. Claim-backed source agreement, lightweight source-divergence notes, and live full-text claim quality review are still in progress.
 
 ## Why it is great! 
 
@@ -35,7 +35,7 @@ The flagship outcome is an intelligence-style briefing with status, confidence, 
 | Match verifier | Uses full article text and `gpt-5.4-nano` to reject adjacent-topic story merges |
 | Local database | Keeps stories, articles, observations, claims, sources, runs, and LLM calls in SQLite |
 | Outputs | Publishes Markdown briefings, digest files, and newspaper-style PDFs |
-| Inspectability | Includes ADRs, failure modes, model behavior docs, database queries, and pipeline diagrams |
+| Inspectability | Includes ADRs, failure modes, model behavior docs, database queries, pipeline diagrams, and a claim-quality eval harness |
 
 ## Outputs
 
@@ -122,6 +122,14 @@ When enabled, the claim layer extracts:
 - `confidence`
 
 A claim is saved only if the `evidence_span` appears in the article input. With `--show-evidence`, the scraper fetches full article pages and claim extraction uses title, RSS description, and full article text when available. If full-text extraction fails, claims fall back to title and description.
+
+To compare RSS-only claim quality against full-text evidence-run quality:
+
+```bash
+python -m evals.run_claim_quality_eval
+```
+
+The eval records expected-claim coverage, evidence validity, duplicate claims, token usage, latency, and estimated cost. See [evals/README.md](evals/README.md).
 
 ## Setup
 
@@ -212,6 +220,7 @@ Core docs:
 - [Architecture reference](docs/architecture.md)
 - [Model behavior](docs/model-behavior.md)
 - [Evaluation plan](docs/evaluation.md)
+- [Evaluation harnesses](evals/README.md)
 - [Failure modes](docs/failure-modes.md)
 - [Architecture decision records](docs/adr/)
 
@@ -219,9 +228,9 @@ Core docs:
 
 - Article deduplication is URL-based; content fingerprinting across syndicated copies is planned.
 - Story matching can over-merge adjacent topics when the verifier is disabled, and verifier decisions are not cached yet.
-- Claim extraction is cached and evidence-validated; evidence runs now use fetched full text when available.
+- Claim extraction is cached and evidence-validated; evidence runs now use fetched full text when available, and RSS-vs-full-text quality can be compared with `evals.run_claim_quality_eval`.
 - Source metadata is seeded and attached to new articles; deterministic source support uses `source_id` first, but source agreement is not claim-backed yet.
-- Current source agreement and dispute labels are briefing-level model signals, not contradiction records.
+- Current source agreement and dispute labels are briefing-level model signals, not claim-backed source-divergence records.
 - EUR cost estimates use explicitly maintained pricing and a static USD-to-EUR rate.
 - Scraper duplicate/failure counts are surfaced in `--pipeline-report`.
 - The project has no hosted UI; the core artifact is local Markdown/PDF plus SQLite memory.
@@ -235,9 +244,9 @@ Multi-source RSS scraping, URL normalization, URL deduplication, and cached arti
 Canonical labels, same-day consolidation, recent-history matching, daily observations, delta summaries, structured claim extraction, and evidence-span validation.
 
 **Phase 3 - Source modeling and observability: in progress.**
-Source metadata, source-identity support, full-text evidence extraction, scraper observability, cost estimates, and run observability have shipped. Next work is measuring the quality impact of the new claim path and backing source agreement with claim-level comparison.
+Source metadata, source-identity support, full-text evidence extraction, scraper observability, cost estimates, run observability, and the claim-quality comparison harness have shipped. Next work is running real reviewed claim cases and backing source agreement/source-divergence notes with claim-level comparison.
 
 **Phase 4 - Evaluation and hardening: later.**
-Claim-backed agreement, contradiction records, story-matching fixtures, and regression evals should land before the system becomes more autonomous.
+Claim-backed agreement/source-divergence notes, story-matching fixtures, and regression evals should land before the system becomes more autonomous.
 
 Out of scope for now: real-time push, multi-user accounts, social signals, paid-source ingestion, cloud deployment, Kubernetes, Terraform, or a heavy frontend.

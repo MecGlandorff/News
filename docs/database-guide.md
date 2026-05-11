@@ -499,7 +499,7 @@ Older rows may not have `source_id`. New rows should get it when the raw source 
 The database is memory and audit state, not a source of truth by itself.
 
 - `source_agreement` is not claim-backed yet.
-- There is no `contradictions` table yet.
+- There is no dedicated `contradictions` table planned for Phase 3; source divergence should be backed by claim comparison instead.
 - Publication date is stored; true event date is not separately extracted yet.
 - Source support uses `source_id` where available and source-name fallback for older rows, but it still does not prove independent corroboration.
 - A stored claim means "the model extracted this from source text and validation passed", not "the real world fact is adjudicated."

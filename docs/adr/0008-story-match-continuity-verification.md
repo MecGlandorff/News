@@ -136,7 +136,7 @@ Extract claims first, then compare current article claims against recent story c
 Tradeoff:
 
 - Best aligned with the project direction: `Article -> Claim -> Story Arc`
-- Can eventually distinguish repeated, new, adjacent, and contradictory claims
+- Can eventually distinguish repeated, new, adjacent, and divergent claims
 - More expensive today
 - Depends on broader claim extraction coverage and claim-level comparison, which is still Phase 3 work
 
@@ -175,5 +175,5 @@ Revisit this ADR when:
 
 - cross-day story matching is changed
 - claim-extraction input strategy changes again
-- claim-backed source agreement or contradiction detection creates reusable claim comparison logic
+- claim-backed source agreement or source-divergence notes create reusable claim comparison logic
 - briefing output again contains prose that admits a story is adjacent rather than a continuation

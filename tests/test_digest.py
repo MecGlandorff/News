@@ -348,6 +348,30 @@ def test_briefing_bounds_invalid_structured_story_card_fields(monkeypatch):
     assert "**Dispute:** None" in markdown
 
 
+def test_briefing_downgrades_confirmed_conflict_without_claim_backing(monkeypatch):
+    monkeypatch.setattr(
+        top10,
+        "_get_briefings",
+        lambda stories: {
+            "Example Story": {
+                "briefing": "Briefing text.",
+                "delta_summary": "First detected today.",
+                "status": "disputed",
+                "confidence": "medium",
+                "source_agreement": "mixed",
+                "dispute_flag": "confirmed conflict",
+            }
+        },
+    )
+
+    markdown = build_briefing_markdown([
+        _briefing_article(1, "Economy", "Example Story", 4),
+    ])
+
+    assert "**Dispute:** Possible Conflict" in markdown
+    assert "**Dispute:** Confirmed Conflict" not in markdown
+
+
 def test_briefing_default_source_agreement_uses_source_id(monkeypatch):
     monkeypatch.setattr(top10, "_get_briefings", lambda stories: {})
 

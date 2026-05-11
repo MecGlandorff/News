@@ -14,7 +14,7 @@ from src.source_agreement import source_agreement_label
 STATUS_VALUES = {"new", "developing", "escalating", "cooling", "disputed", "unresolved"}
 CONFIDENCE_VALUES = {"high", "medium", "low"}
 SOURCE_AGREEMENT_VALUES = {"broad", "partial", "mixed", "single-source", "disputed"}
-DISPUTE_FLAG_VALUES = {"none", "possible conflict", "confirmed conflict"}
+DISPUTE_FLAG_VALUES = {"none", "possible conflict"}
 BRIEFING_PROMPT_VERSION = "2026-05-11-v1"
 
 BRIEFING_PROMPT = """You are writing a daily news intelligence briefing for an informed reader.
@@ -25,7 +25,7 @@ For each story, return structured story-card fields:
 - status: one of new | developing | escalating | cooling | disputed | unresolved
 - confidence: one of high | medium | low
 - source_agreement: one of broad | partial | mixed | single-source | disputed
-- dispute_flag: one of none | possible conflict | confirmed conflict
+- dispute_flag: one of none | possible conflict
 - delta_summary: one sentence answering what materially changed today
 - briefing: 120-190 words explaining what happened, why it matters, and the stakes
 - open_questions: 0-3 concrete things to watch next
@@ -35,8 +35,8 @@ Rules:
 - If structured claims are supplied, use them as the primary factual grounding. Do not assert factual details unsupported by either claims or today's article metadata.
 - Use previous_context only for continuity and comparison. Do not present old context as fresh reporting.
 - If previous_context is absent, delta_summary must be exactly: First detected today.
-- Surface disagreement, allegations, uncertainty, or conflicting numbers instead of smoothing them into confident prose.
-- Mark dispute_flag as confirmed conflict only when the supplied material clearly supports a contradiction.
+- Surface disagreement, allegations, uncertainty, or divergent numbers/status claims instead of smoothing them into confident prose.
+- Use possible conflict for source divergence; do not claim a confirmed contradiction.
 - Do not invent source URLs; URLs are supplied separately in the output.
 - Avoid filler phrases and generic endings.
 
@@ -67,8 +67,9 @@ def choice(value, allowed, default):
         "single_source": "single-source",
         "possible-conflict": "possible conflict",
         "possible_conflict": "possible conflict",
-        "confirmed-conflict": "confirmed conflict",
-        "confirmed_conflict": "confirmed conflict",
+        "confirmed-conflict": "possible conflict",
+        "confirmed_conflict": "possible conflict",
+        "confirmed conflict": "possible conflict",
         "no conflict": "none",
         "none detected": "none",
     }
