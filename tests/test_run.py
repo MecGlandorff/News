@@ -1,6 +1,8 @@
 import sqlite3
 from types import SimpleNamespace
 
+import pytest
+
 import src.article_cache as article_cache
 import src.claims as claims
 import src.observability as observability
@@ -26,6 +28,11 @@ def _args(**overrides):
     }
     values.update(overrides)
     return SimpleNamespace(**values)
+
+
+@pytest.fixture(autouse=True)
+def isolate_run_artifacts(tmp_path, monkeypatch):
+    monkeypatch.setattr(observability, "RUN_ARTIFACTS_DIR", tmp_path / "run_artifacts")
 
 
 def test_db_off_uses_temporary_database_paths_and_restores_originals(tmp_path, monkeypatch):
@@ -181,6 +188,35 @@ def test_pipeline_report_prints_run_totals(tmp_path, monkeypatch, capsys):
         conn.close()
 
     assert row == ("ok", 2, 1)
+
+
+def test_main_writes_run_artifact_markdown(tmp_path, monkeypatch):
+    real_db = tmp_path / "real" / "stories.db"
+    real_daily = tmp_path / "real" / "daily"
+    monkeypatch.setattr(article_cache, "DB_PATH", real_db)
+    monkeypatch.setattr(claims, "DB_PATH", real_db)
+    monkeypatch.setattr(observability, "DB_PATH", real_db)
+    monkeypatch.setattr(sources, "DB_PATH", real_db)
+    monkeypatch.setattr(tracker, "DB_PATH", real_db)
+    monkeypatch.setattr(tracker, "DATA_DIR", real_daily)
+    monkeypatch.setattr(run, "parse_args", lambda: _args())
+    monkeypatch.setattr(run, "require_openai_api_key", lambda: None)
+    monkeypatch.setattr(run, "scrape_all", lambda **kwargs: [{"id": "article-1"}])
+    monkeypatch.setattr(run, "classify_articles", lambda articles: articles)
+    monkeypatch.setattr(
+        run,
+        "track",
+        lambda classified, today=None: [{"id": "article-1", "story_id": 7}],
+    )
+
+    assert run.main() == []
+
+    artifact = observability.RUN_ARTIFACTS_DIR / "run_2026-04-28.md"
+    assert artifact.exists()
+    markdown = artifact.read_text(encoding="utf-8")
+    assert "# Run Report: 2026-04-28" in markdown
+    assert "| Articles returned | 1 |" in markdown
+    assert "| Stories touched | 1 |" in markdown
 
 
 def test_verify_story_matches_flag_is_passed_to_tracker(tmp_path, monkeypatch):

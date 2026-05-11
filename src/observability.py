@@ -9,6 +9,7 @@ from src import pricing
 
 
 DB_PATH = Path("data/stories.db")
+RUN_ARTIFACTS_DIR = Path("run_artifacts")
 
 _CURRENT_RUN_ID = ContextVar("current_run_id", default=None)
 _LAST_LLM_CALL_ID = ContextVar("last_llm_call_id", default=None)
@@ -526,3 +527,118 @@ def pipeline_report(run_id):
     if row["error_message"]:
         lines.append(f"Error:                  {row['error_message']}")
     return "\n".join(lines)
+
+
+def _markdown_number(value):
+    return f"{int(value or 0):,}"
+
+
+def _markdown_cost(value):
+    return pricing.format_eur(value)
+
+
+def _run_artifact_name(row):
+    run_date = row["run_date"] or "unknown-date"
+    return f"run_{run_date}.md"
+
+
+def run_report_markdown(run_id):
+    row = get_run_report_data(run_id)
+    if row is None:
+        return f"# Run Report\n\nRun #{run_id} was not found.\n"
+
+    seconds = (row["total_latency_ms"] or 0) / 1000
+    cost = llm_cost_summary(run_id)
+    lines = [
+        f"# Run Report: {row['run_date'] or 'unknown date'}",
+        "",
+        "| Field | Value |",
+        "|---|---:|",
+        f"| Run | #{row['run_id']} |",
+        f"| Date | {row['run_date'] or 'unknown date'} |",
+        f"| Status | {row['status']} |",
+        f"| Duration | {seconds:.1f}s |",
+        "",
+        "## Pipeline Totals",
+        "",
+        "| Metric | Count |",
+        "|---|---:|",
+        f"| Articles returned | {_markdown_number(row['articles_returned'])} |",
+        f"| Duplicate URLs skipped | {_markdown_number(row['duplicate_url_skips'])} |",
+        f"| Feed fetch failures | {_markdown_number(row['feed_fetch_failures'])} |",
+        f"| Article text fetched | {_markdown_number(row['article_text_fetch_successes'])} |",
+        f"| Article text failures | {_markdown_number(row['article_text_fetch_failures'])} |",
+        f"| Claims saved | {_markdown_number(row['claims_saved'])} |",
+        f"| Claims extracted | {_markdown_number(row['claim_articles_extracted'])} |",
+        f"| Claims cached | {_markdown_number(row['claim_articles_cached'])} |",
+        f"| Claims invalid | {_markdown_number(row['claim_invalid_dropped'])} |",
+        f"| Claim failures | {_markdown_number(row['claim_extraction_failures'])} |",
+        f"| Zero-claim results | {_markdown_number(row['claim_zero_results'])} |",
+        f"| Stories touched | {_markdown_number(row['stories_touched'])} |",
+        f"| Story match checks | {_markdown_number(row['story_match_verifications'])} |",
+        f"| Story match accepted | {_markdown_number(row['story_match_accepts'])} |",
+        f"| Story match rejected | {_markdown_number(row['story_match_rejections'])} |",
+        "",
+        "## LLM Totals",
+        "",
+        "| Metric | Value |",
+        "|---|---:|",
+        f"| LLM calls | {_markdown_number(row['llm_calls_count'])} |",
+        f"| LLM errors | {_markdown_number(row['llm_errors_count'])} |",
+        f"| LLM cache hits | {_markdown_number(row['llm_cache_hits'])} |",
+        f"| Schema failures | {_markdown_number(row['schema_failures'])} |",
+        f"| Retries | {_markdown_number(row['retry_count'])} |",
+        f"| Prompt tokens | {_markdown_number(row['prompt_tokens'])} |",
+        f"| Completion tokens | {_markdown_number(row['completion_tokens'])} |",
+    ]
+    if cost["unpriced_models"]:
+        lines.append(
+            "| Estimated cost | "
+            f"{_markdown_cost(cost['priced_cost_eur'])} priced; "
+            f"unpriced models: {', '.join(cost['unpriced_models'])} |"
+        )
+    else:
+        lines.append(f"| Estimated cost | {_markdown_cost(cost['total_cost_eur'])} |")
+
+    lines.extend([
+        "",
+        "## LLM Calls By Purpose",
+        "",
+        "| Purpose | Calls | Prompt Tokens | Completion Tokens | Latency | Estimated Cost |",
+        "|---|---:|---:|---:|---:|---:|",
+    ])
+    for item in cost["by_purpose"]:
+        suffix = ""
+        if item["unpriced_models"]:
+            suffix = f" (unpriced: {', '.join(item['unpriced_models'])})"
+        lines.append(
+            f"| {item['purpose']} | "
+            f"{_markdown_number(item['calls'])} | "
+            f"{_markdown_number(item['prompt_tokens'])} | "
+            f"{_markdown_number(item['completion_tokens'])} | "
+            f"{(item['latency_ms'] or 0) / 1000:.1f}s | "
+            f"{_markdown_cost(item['cost_eur'])}{suffix} |"
+        )
+    if not cost["by_purpose"]:
+        lines.append("| None | 0 | 0 | 0 | 0.0s | EUR 0.0000 |")
+
+    if row["error_message"]:
+        lines.extend([
+            "",
+            "## Error",
+            "",
+            str(row["error_message"]),
+        ])
+
+    return "\n".join(lines) + "\n"
+
+
+def write_run_report_artifact(run_id, output_dir=None):
+    row = get_run_report_data(run_id)
+    if row is None:
+        return None
+    output_dir = RUN_ARTIFACTS_DIR if output_dir is None else Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / _run_artifact_name(row)
+    output_path.write_text(run_report_markdown(run_id), encoding="utf-8")
+    return output_path

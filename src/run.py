@@ -204,11 +204,13 @@ def main():
         try:
             outputs = run_pipeline(args, run_date=run_date)
             observability.finish_run(run_id, status="ok")
+            observability.write_run_report_artifact(run_id)
             if getattr(args, "pipeline_report", False):
                 print(observability.pipeline_report(run_id))
             return outputs
         except Exception as exc:
             observability.finish_run(run_id, status="error", error_message=str(exc))
+            observability.write_run_report_artifact(run_id)
             if getattr(args, "pipeline_report", False):
                 print(observability.pipeline_report(run_id))
             raise
