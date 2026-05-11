@@ -2,7 +2,12 @@ import json
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 
-from src.llm import create_chat_completion, mark_schema_failure, parse_json_object
+from src.llm import (
+    create_cached_chat_completion,
+    mark_schema_failure,
+    parse_json_object,
+    save_cached_chat_completion,
+)
 from src.source_agreement import source_agreement_label
 
 
@@ -10,6 +15,7 @@ STATUS_VALUES = {"new", "developing", "escalating", "cooling", "disputed", "unre
 CONFIDENCE_VALUES = {"high", "medium", "low"}
 SOURCE_AGREEMENT_VALUES = {"broad", "partial", "mixed", "single-source", "disputed"}
 DISPUTE_FLAG_VALUES = {"none", "possible conflict", "confirmed conflict"}
+BRIEFING_PROMPT_VERSION = "2026-05-11-v1"
 
 BRIEFING_PROMPT = """You are writing a daily news intelligence briefing for an informed reader.
 
@@ -179,8 +185,6 @@ def get_briefings(stories, get_client, model, include_evidence=False):
     if not stories:
         return {}
 
-    client = get_client()
-
     items = []
     for story in stories:
         item = {
@@ -204,14 +208,16 @@ def get_briefings(stories, get_client, model, include_evidence=False):
             item["claims"] = claims_for_prompt(story)
         items.append(item)
 
-    response = create_chat_completion(
-        client,
+    messages = [
+        {"role": "system", "content": BRIEFING_PROMPT},
+        {"role": "user", "content": json.dumps(items, ensure_ascii=False)},
+    ]
+    response, cache_metadata, cache_hit = create_cached_chat_completion(
+        get_client,
         model=model,
-        messages=[
-            {"role": "system", "content": BRIEFING_PROMPT},
-            {"role": "user", "content": json.dumps(items, ensure_ascii=False)},
-        ],
+        messages=messages,
         purpose="brief",
+        prompt_version=BRIEFING_PROMPT_VERSION,
         response_format={"type": "json_object"},
     )
 
@@ -220,6 +226,8 @@ def get_briefings(stories, get_client, model, include_evidence=False):
     if not isinstance(briefings, list):
         mark_schema_failure('Model response must contain a "briefings" list', response=response)
         raise ValueError('Model response must contain a "briefings" list')
+    if not cache_hit:
+        save_cached_chat_completion(cache_metadata, response)
     return normalize_briefing_payloads({
         briefing["canonical_label"]: {
             "briefing": str(briefing.get("briefing", "")).strip(),

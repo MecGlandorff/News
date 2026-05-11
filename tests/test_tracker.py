@@ -1,6 +1,8 @@
 import json
 import sqlite3
 
+import src.llm_response_cache as llm_response_cache
+import src.observability as observability
 import src.tracker as tracker
 import src.sources as sources_module
 
@@ -513,6 +515,86 @@ def test_match_labels_sends_per_label_candidate_memory(monkeypatch):
     assert recent["last_delta"] == "Iran sent a proposal but the US response remained unclear."
     assert recent["summary"] == "Negotiations continued under military pressure."
     assert recent["recent_titles"] == ["Iran sends new peace proposal"]
+
+
+def test_match_labels_uses_exact_response_cache_inside_run(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    monkeypatch.setattr(llm_response_cache, "DB_PATH", db_path)
+    monkeypatch.setattr(observability, "DB_PATH", db_path)
+    run_id = observability.start_run({"today": "2026-05-04"}, run_date="2026-05-04")
+    observability.set_current_run_id(run_id)
+
+    class Message:
+        content = json.dumps({
+            "matches": [{
+                "today_label": "Iran Peace Proposal",
+                "canonical_label": "Iran Nuclear Talks",
+            }]
+        })
+
+    class Choice:
+        message = Message()
+
+    class Response:
+        choices = [Choice()]
+
+    class Completions:
+        def __init__(self):
+            self.calls = 0
+
+        def create(self, **kwargs):
+            self.calls += 1
+            return Response()
+
+    class Chat:
+        def __init__(self):
+            self.completions = Completions()
+
+    class Client:
+        def __init__(self):
+            self.chat = Chat()
+
+    client = Client()
+    monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
+    recent = {
+        "Iran Nuclear Talks": {
+            "story_id": 2,
+            "canonical_label": "Iran Nuclear Talks",
+            "last_seen": "2026-05-03",
+            "summary": "US-Iran nuclear negotiations continued through mediators.",
+            "recent_articles": [{
+                "date": "2026-05-03",
+                "source": "Example News",
+                "title": "Iran sends new peace proposal through mediators",
+            }],
+        }
+    }
+
+    try:
+        first = tracker._match_labels({"Iran Peace Proposal"}, recent, today="2026-05-04")
+        second = tracker._match_labels({"Iran Peace Proposal"}, recent, today="2026-05-04")
+        observability.finish_run(run_id, status="ok")
+    finally:
+        observability.clear_current_run_id()
+
+    assert first == second == {"Iran Peace Proposal": "Iran Nuclear Talks"}
+    assert client.chat.completions.calls == 1
+
+    conn = sqlite3.connect(db_path)
+    try:
+        run = conn.execute(
+            "SELECT llm_calls_count, llm_cache_hits FROM runs WHERE run_id = ?",
+            (run_id,),
+        ).fetchone()
+        call_count = conn.execute(
+            "SELECT COUNT(*) FROM llm_calls WHERE run_id = ?",
+            (run_id,),
+        ).fetchone()[0]
+    finally:
+        conn.close()
+
+    assert run == (1, 1)
+    assert call_count == 1
 
 
 def test_match_labels_rejects_model_match_outside_label_candidates(monkeypatch):
