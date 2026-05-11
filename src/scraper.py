@@ -49,7 +49,7 @@ SKIP_TAGS = {"nav", "footer", "header", "aside", "script", "style", "noscript", 
 LOGGER = logging.getLogger(__name__)
 TRACKING_QUERY_PREFIXES = ("utm_",)
 TRACKING_QUERY_PARAMS = {"fbclid", "gclid", "mc_cid", "mc_eid"}
-_LAST_SCRAPE_STATS = {}
+_LAST_SCRAPE_STATS: dict[str, int] = {}
 
 
 def _new_scrape_stats():

@@ -3,6 +3,8 @@
 test_output/
 mlruns/
 mlflow.db
+newspapers/*.pdf
+run_artifacts/*.md
 __pycache__/
 *.pyc
 .pytest_cache/

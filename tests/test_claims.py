@@ -1,6 +1,5 @@
 import json
 import sqlite3
-import pytest
 
 import src.claims as claims_module
 from src.claims import extract_and_save_claims, get_claims_for_story
