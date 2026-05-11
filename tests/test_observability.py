@@ -106,6 +106,42 @@ def test_pipeline_report_includes_scraper_claim_and_cost_totals(tmp_path, monkey
     assert "claim: 1 calls, tokens 1000/500, latency 1.2s, EUR 0.0007" in report
 
 
+def test_write_run_report_artifact_outputs_markdown_overview(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    monkeypatch.setattr(observability, "DB_PATH", db_path)
+
+    run_id = observability.start_run(_run_args(), run_date="2026-05-10")
+    observability.update_run_totals(
+        run_id,
+        articles_returned=345,
+        feed_fetch_failures=1,
+        stories_touched=164,
+        llm_cache_hits=4,
+    )
+    observability.record_llm_call(
+        run_id=run_id,
+        model="gpt-5.5",
+        purpose="brief",
+        usage={"prompt_tokens": 33200, "completion_tokens": 7365},
+        latency_ms=145000,
+    )
+    observability.finish_run(run_id, status="ok")
+
+    artifact = observability.write_run_report_artifact(
+        run_id,
+        output_dir=tmp_path / "run_artifacts",
+    )
+
+    assert artifact == tmp_path / "run_artifacts" / "run_2026-05-10.md"
+    markdown = artifact.read_text(encoding="utf-8")
+    assert "# Run Report: 2026-05-10" in markdown
+    assert "| Articles returned | 345 |" in markdown
+    assert "| Feed fetch failures | 1 |" in markdown
+    assert "| Stories touched | 164 |" in markdown
+    assert "| LLM cache hits | 4 |" in markdown
+    assert "| brief | 1 | 33,200 | 7,365 | 145.0s |" in markdown
+
+
 def test_run_lifecycle_records_error_status(tmp_path, monkeypatch):
     db_path = tmp_path / "stories.db"
     monkeypatch.setattr(observability, "DB_PATH", db_path)
