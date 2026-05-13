@@ -16,6 +16,6 @@ The current sample, [intelligence_brief.md](intelligence_brief.md), demonstrates
 - evidence spans with source/article attribution
 - source links
 
-This curated sample is not a live run report. Current generated runs can emit token, latency, cache, and schema-failure totals through `--pipeline-report`; EUR cost estimates are still intentionally omitted until model pricing is represented explicitly.
+This curated sample is not a live run report. Current generated runs can emit scraper counts, claim metrics, token totals, latency, cache hits, schema failures, and estimated EUR cost through `--pipeline-report`.
 
 One excellent sample output is more valuable than many generated artifacts.

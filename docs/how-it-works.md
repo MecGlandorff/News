@@ -181,7 +181,7 @@ Audit trail:
 
 - every verifier decision is stored in `story_match_decisions`
 - run totals include accepted and rejected match checks
-- decisions are not cached yet
+- exact verifier model responses can be reused for identical prompts through `llm_response_cache`, but stored decision rows are audit records, not a semantic match cache
 
 ## Stage 4: Claims And Evidence
 
@@ -254,8 +254,8 @@ flowchart TD
 Important boundary:
 
 - Claim extraction is extraction, not interpretation.
-- Source agreement and source-divergence notes are downstream work.
-- The briefing may receive claims as grounding, but the claims table does not yet prove agreement or source divergence.
+- Evidence-mode source agreement uses saved claims only for a narrow deterministic comparison step: exact repeated non-background claims and comparable numeric divergence.
+- The claims table does not prove truth, source independence, or confirmed contradiction.
 - Full text can be empty when scraping fails; in that case the claim extractor falls back to title and RSS description.
 
 ## Stage 5: Briefing Package And Outputs
@@ -324,7 +324,7 @@ Owned by:
 runs.status = running
 ```
 
-Every real LLM call records one `llm_calls` row when a current run ID exists. Cache hits update the `runs` row instead of inserting fake call rows.
+Every real LLM call records one `llm_calls` row when a current run ID exists. Cache hits update the `runs` row instead of inserting fake call rows. Cache hits can come from article classification, claim extraction, or exact LLM response reuse for matching and briefing calls.
 
 At the end, `finish_run()` aggregates LLM rows into the run:
 
@@ -345,7 +345,7 @@ flowchart TD
     B --> C[set current run_id]
     C --> D[model call through create_chat_completion]
     D --> E[llm_calls row]
-    C --> F[classification or claim cache hit]
+    C --> F[classification, claim, or exact response cache hit]
     F --> G[increment runs.llm_cache_hits]
     E --> H[finish_run]
     G --> H
@@ -401,6 +401,7 @@ Cost controls today:
 - classification cache
 - claim extraction cache
 - zero-claim cache
+- exact LLM response cache for matching, verification, and briefing prompts
 - batched briefing generation
 - `--max-per-source` for smaller runs
 - `--db-off` for isolated experiments
@@ -412,12 +413,12 @@ The most expensive failure mode is not just token spend. A false story merge can
 
 The current system is useful, but several important trust layers are incomplete:
 
-- Source metadata is stored and deterministic source support uses `source_id` with a source-name fallback, but agreement is not yet claim-backed.
-- Source agreement is a briefing-level label, not a claim-comparison result.
-- Contradiction detection is not implemented.
+- Source metadata is stored and deterministic source support uses `source_id` with a source-name fallback.
+- Evidence-mode source agreement is claim-backed only for exact repeated non-background claims and conservative numeric divergence.
+- There is no dedicated contradiction module/table. Numeric divergence is surfaced as `possible conflict`, not confirmed contradiction.
 - Evidence runs use full article text for claim extraction when body text is available.
-- Story-match verifier decisions are stored but not cached.
+- Exact LLM responses for matching and briefing can be cached, but there is no semantic story-match decision cache.
 - Article deduplication is URL-based, not content-fingerprint-based.
-- Source agreement is still not backed by claim-level comparison.
+- Date, status, and attribution divergence are not compared yet.
 
 These are the right next improvements because they make the system more inspectable, grounded, and hard to fool.

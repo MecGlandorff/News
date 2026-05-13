@@ -14,12 +14,14 @@ The guiding rule is: LLMs produce structured intermediate artifacts where possib
 |---|---|---|---|---|
 | Article classification | `gpt-5.4-mini` | JSON | Cached by `content_hash + model + prompt_version` | Assign theme, story label, and importance |
 | Claim extraction | `gpt-5.4-nano` | JSON | Cached by `article_id + prompt_version + content_hash` | Extract atomic claims and evidence spans from full text when available |
-| Same-day consolidation | `gpt-5.5` | JSON | Not cached | Merge same-day labels that refer to the same event |
-| Cross-day matching | `gpt-5.5` | JSON | Not cached | Match today's labels to recent canonical stories |
-| Story-match verification | `gpt-5.4-nano` | JSON | Not cached | Verify candidate cross-day matches with full article text before reusing story memory |
-| Briefing generation | `gpt-5.5` | JSON story-card fields plus prose | Not cached | Produce status, confidence, source agreement, dispute flag, `delta_summary`, briefing text, and open questions |
+| Same-day consolidation | `gpt-5.5` | JSON | Exact response cache by request shape | Merge same-day labels that refer to the same event |
+| Cross-day matching | `gpt-5.5` | JSON | Exact response cache by request shape | Match today's labels to recent canonical stories |
+| Story-match verification | `gpt-5.4-nano` | JSON | Exact response cache by request shape | Verify candidate cross-day matches with full article text before reusing story memory |
+| Briefing generation | `gpt-5.5` | JSON story-card fields plus prose | Exact response cache by request shape | Produce status, confidence, source agreement, dispute flag, `delta_summary`, briefing text, and open questions |
 
 Classification uses `gpt-5.4-mini`. Claim extraction uses `gpt-5.4-nano` behind `--show-evidence`, with full article text when available. Cross-story reasoning and final prose use `gpt-5.5`.
+
+The exact response cache key includes purpose, model, prompt version, messages, response format, and API kwargs. Cache hits skip the model call and increment `runs.llm_cache_hits`; they do not create `llm_calls` rows.
 
 ---
 
@@ -96,7 +98,7 @@ It returns story-card metadata as bounded labels:
 - `dispute_flag`: `none` or `possible conflict`
 - `open_questions`: short watch items grounded in the supplied articles and claims
 
-These labels are briefing-level signals. They make uncertainty visible in the artifact, but they are not yet a replacement for the planned claim-backed source-agreement and source-divergence layer. `confirmed conflict` is intentionally not an allowed briefing value until there is structured claim backing for it.
+Without evidence mode, these labels are briefing-level signals backed by source identity defaults and prompt constraints. `confirmed conflict` is intentionally not an allowed briefing value; even claim-backed divergence is surfaced as `possible conflict`.
 
 When `--show-evidence` supplies saved claims, the briefing input includes a deterministic `claim_source_agreement` summary. This first pass is intentionally conservative:
 
@@ -139,7 +141,7 @@ Current cache behavior:
 python -m evals.run_claim_quality_eval
 ```
 
-Use that report to decide whether the full-text quality lift is worth the extra cost before broadening claim extraction or using it for source agreement and source-divergence notes.
+Use that report to decide whether the full-text quality lift is worth the extra cost before broadening claim extraction, expanding claim-backed agreement beyond exact repeats, or adding non-numeric source-divergence notes.
 
 ---
 
@@ -153,8 +155,8 @@ The most important current risks are:
 - claim extraction can still treat allegations as confirmed facts; the
   `2026-05-13-v1` prompt reduces this risk but needs a live current-prompt eval
 - full-text extraction can increase latency and token use when `--show-evidence` is enabled
-- numeric/status/attribution claims can diverge across sources but are not yet compared
-- stored story-match verifier decisions are not reused as a cache yet
+- date/status/attribution claims can diverge across sources but are not yet compared
+- exact response caching only reuses identical prompts; it is not a semantic story-match cache
 
 See [failure-modes.md](failure-modes.md) for the broader list.
 

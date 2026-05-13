@@ -57,11 +57,13 @@ The most important tables are:
 | `claim_extractions` | claim extraction cache metadata |
 | `runs` | one row per pipeline execution |
 | `llm_calls` | one row per real model call |
+| `llm_response_cache` | exact response cache for matching, verification, and briefing calls |
 | `story_match_decisions` | optional verifier audit rows |
 
 Conditional tables:
 
 - `claims` and `claim_extractions` are created when `--show-evidence` is used.
+- `llm_response_cache` is created when exact cached matching, verification, or briefing calls run in an observed pipeline context.
 - `story_match_decisions` exists in current tracker schema, but rows are only written when `--verify-story-matches` checks candidates.
 - Older databases may lack newer nullable columns until a run touches the relevant schema helper.
 
@@ -190,6 +192,21 @@ SELECT
 FROM llm_calls
 WHERE schema_failure = 1
 ORDER BY call_id DESC;
+```
+
+Inspect exact LLM response cache reuse:
+
+```sql
+SELECT
+  purpose,
+  model,
+  prompt_version,
+  hit_count,
+  created_at,
+  last_used_at
+FROM llm_response_cache
+ORDER BY last_used_at DESC, created_at DESC
+LIMIT 30;
 ```
 
 ## Stories

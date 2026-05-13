@@ -31,7 +31,9 @@ Schema:
 
 Defaults for new sources are `type='publication'`, `reliability='unknown'`, `bias_notes=''`.
 
-2026-05-09 follow-up: ADR 0010 adds deterministic source support that consumes `articles.source_id` first and falls back to normalized source names for older rows. Claim-backed source agreement remains a separate Phase 3 deliverable.
+2026-05-09 follow-up: ADR 0010 adds deterministic source support that consumes `articles.source_id` first and falls back to normalized source names for older rows.
+
+2026-05-14 follow-up: evidence-mode claim-backed source agreement now consumes these source identities for exact repeated claims and conservative numeric divergence. Broader reliability weighting and independent-corroboration logic remain future work.
 
 ---
 

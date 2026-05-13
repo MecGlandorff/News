@@ -110,7 +110,7 @@ Bad full-text impact looks like:
 
 The first dataset is intentionally small and fixture-style. It proves the harness and documents the scoring contract, but it is not yet enough to decide policy for all sources.
 
-Next, add 5-10 real reviewed cases from recent evidence runs, with full source text stored only where licensing and local use are acceptable. That should happen before using extracted claims for claim-backed source agreement or source-divergence notes.
+Next, add 5-10 real reviewed cases from recent evidence runs, with full source text stored only where licensing and local use are acceptable. That should happen before broadening claim-backed source agreement beyond exact repeated claims, adding date/status/attribution divergence, or making evidence extraction more automatic.
 
 ## Prompt Regression Cases
 
