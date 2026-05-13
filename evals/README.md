@@ -110,7 +110,9 @@ Bad full-text impact looks like:
 
 The first dataset is intentionally small and fixture-style. It proves the harness and documents the scoring contract, but it is not yet enough to decide policy for all sources.
 
-Next, add 5-10 real reviewed cases from recent evidence runs, with full source text stored only where licensing and local use are acceptable. That should happen before broadening claim-backed source agreement beyond exact repeated claims, adding date/status/attribution divergence, or making evidence extraction more automatic.
+The biggest open gap is **verifier accuracy**. The claim/evidence derivability gate (ADR 0013) routes paraphrase-style claims through a `gpt-5.4-nano` verifier. The harness covers extraction quality but does not yet measure how often the verifier accepts unsupported paraphrases or rejects faithful ones. Add reviewed paraphrase cases — claims where the deterministic gate cannot decide and the verifier's accept/reject is the only signal — before trusting the verifier for source-agreement or contradiction decisions.
+
+Next, also add 5-10 real reviewed cases from recent evidence runs, with full source text stored only where licensing and local use are acceptable. That should happen before broadening claim-backed source agreement beyond exact repeated claims, adding date/status/attribution divergence, or making evidence extraction more automatic.
 
 ## Prompt Regression Cases
 

@@ -128,14 +128,7 @@ def track_stories(classified, run_date, verify_story_matches=False):
 def maybe_extract_claims(args, tracked):
     if args.show_evidence:
         return extract_and_save_claims(tracked)
-    return {
-        "articles_extracted": 0,
-        "claims_saved": 0,
-        "cached": 0,
-        "invalid": 0,
-        "failed": 0,
-        "zero_claim_results": 0,
-    }
+    return claims._empty_claim_stats()
 
 
 def write_pipeline_outputs(args, tracked):
@@ -191,6 +184,10 @@ def run_pipeline(args, run_date=None):
         claim_invalid_dropped=claim_stats.get("invalid", 0),
         claim_extraction_failures=claim_stats.get("failed", 0),
         claim_zero_results=claim_stats.get("zero_claim_results", 0),
+        claim_derivable_accepts=claim_stats.get("claim_derivable_accepts", 0),
+        claim_verifier_calls=claim_stats.get("claim_verifier_calls", 0),
+        claim_verifier_accepts=claim_stats.get("claim_verifier_accepts", 0),
+        claim_verifier_rejects=claim_stats.get("claim_verifier_rejects", 0),
     )
     return write_pipeline_outputs(args, tracked)
 

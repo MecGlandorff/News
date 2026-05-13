@@ -10,14 +10,14 @@ It is a builder-grade prototype of an intelligence briefing system: RSS ingestio
 Source -> Article -> Claim -> Story Arc -> Story Delta -> Briefing
 ```
 
-> **Status:** Active prototype. Story memory, full-text claim grounding, source metadata, source-identity support, LLM observability, estimated run cost, exact LLM response caching, optional full-text story-match verification, and a repeatable claim-quality eval harness are implemented. Evidence-mode claim-backed source agreement now has a conservative first pass for exact repeated claims and numeric divergence; live full-text claim quality review and broader date/status/attribution divergence are still in progress.
+> **Status:** Active prototype. Story memory, full-text claim grounding, claim/span derivability gate (deterministic + cheap LLM verifier), source metadata, source-identity support, LLM observability, estimated run cost, exact LLM response caching, optional full-text story-match verification, and a repeatable claim-quality eval harness are implemented. Evidence-mode claim-backed source agreement now has a conservative first pass for exact repeated claims and numeric divergence; reviewed paraphrase verifier cases and broader date/status/attribution divergence are still in progress.
 
 ## Why it is great! 
 
 - **Product idea:** source-grounded event memory, not another RSS summary feed.
 - **System design:** explicit pipeline from source to article to claim to story delta to briefing.
 - **AI discipline:** structured model outputs, prompt versions, schema validation, cache keys, and fallbacks.
-- **Trust layer:** claims require evidence spans that appear in source text before they are stored.
+- **Trust layer:** claims are kept only when an evidence span appears in the article **and** either (1) all numbers and a listed entity from the claim appear in the span, or (2) a cheap `gpt-5.4-nano` verifier confirms the span supports the claim.
 - **Temporal memory:** story observations preserve what the system knew yesterday so today's briefing can explain movement.
 - **Observability:** `runs` and `llm_calls` record model usage, cache hits, schema failures, scraper counts, claim metrics, latency, tokens, and estimated cost.
 - **Regression posture:** the pytest suite covers scraper behavior, source seeding, caching, tracking, claims, observability, CLI behavior, and PDF output.
@@ -30,7 +30,7 @@ The flagship outcome is an intelligence-style briefing with status, confidence, 
 |---|---|
 | Story memory | Groups articles into continuing event arcs and compares against recent history |
 | Daily delta | Writes "what changed today" instead of repeating generic summaries |
-| Claim grounding | Uses `gpt-5.4-nano` with full article text when available and only saves evidence spans found in source input |
+| Claim grounding | Uses `gpt-5.4-nano` with full article text when available; saves claims only when the evidence span is in the article and a hybrid deterministic + LLM-verifier gate decides the span supports the claim |
 | Source support | Counts distinct source identities with `source_id` first and source-name fallback |
 | Claim-backed agreement | In evidence mode, exact repeated claims can back `partial`/`broad`, and comparable numeric divergence can force `mixed` / `possible conflict` |
 | Match verifier | Uses full article text and `gpt-5.4-nano` to reject adjacent-topic story merges |
@@ -121,7 +121,15 @@ When enabled, the claim layer extracts:
 - `evidence_span`
 - `confidence`
 
-A claim is saved only if the `evidence_span` appears in the article input. With `--show-evidence`, the scraper fetches full article pages and claim extraction uses title, RSS description, and full article text when available. If full-text extraction fails, claims fall back to title and description.
+A claim is saved only if its `evidence_span` appears in the article input **and** the claim passes a derivability gate against that span:
+
+1. If any number in `claim_text` is missing from `evidence_span`, the claim is dropped immediately (no LLM call).
+2. If `claim_text` (normalized) appears in `evidence_span`, or if at least one listed entity from the claim appears in `evidence_span`, the claim is accepted deterministically.
+3. Otherwise, a cheap `gpt-5.4-nano` verifier (`CLAIMS_VERIFIER_PROMPT_VERSION = "2026-05-14-v1"`, cached via `llm_response_cache`) decides whether the span supports the claim. Verifier failures default-reject.
+
+Run totals are exposed in `--pipeline-report` as `Claim cheap accepts`, `Claim verifier calls`, `Claim verifier accepts`, and `Claim verifier rejects`. See [docs/adr/0013-claim-evidence-derivability.md](docs/adr/0013-claim-evidence-derivability.md).
+
+With `--show-evidence`, the scraper fetches full article pages and claim extraction uses title, RSS description, and full article text when available. If full-text extraction fails, claims fall back to title and description.
 
 To compare RSS-only claim quality against full-text evidence-run quality:
 
@@ -229,7 +237,7 @@ Core docs:
 
 - Article deduplication is URL-based; content fingerprinting across syndicated copies is planned.
 - Story matching can over-merge adjacent topics when the verifier is disabled. Exact verifier responses can be reused for identical prompts, but there is no semantic verifier-decision cache.
-- Claim extraction is cached and evidence-validated; evidence runs now use fetched full text when available, and RSS-vs-full-text quality can be compared with `evals.run_claim_quality_eval`.
+- Claim extraction is cached and evidence-validated; the derivability gate is deterministic-first and falls back to a `gpt-5.4-nano` verifier for paraphrase-style claims. Evidence runs use fetched full text when available, and RSS-vs-full-text quality can be compared with `evals.run_claim_quality_eval`.
 - Source metadata is seeded and attached to new articles; deterministic source support uses `source_id` first.
 - Evidence-mode source agreement is claim-backed for exact repeated non-background claims and conservative numeric divergence. It does not infer source independence, and ordinary runs still use source identity plus briefing defaults.
 - EUR cost estimates use explicitly maintained pricing and a static USD-to-EUR rate.

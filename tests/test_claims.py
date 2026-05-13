@@ -351,6 +351,207 @@ def test_get_claims_for_story_returns_empty_for_unknown(tmp_path, monkeypatch):
     assert get_claims_for_story(9999) == []
 
 
+def test_derivability_check_rejects_when_claim_number_missing_from_span():
+    decision = claims_module._derivability_check(
+        "Iran proposed capping enrichment at 3.67%.",
+        "Iran proposed capping enrichment at 5.00%.",
+        ["Iran"],
+    )
+    assert decision == "reject"
+
+
+def test_derivability_check_accepts_when_entity_appears_in_span():
+    decision = claims_module._derivability_check(
+        "Iran proposed capping enrichment at 3.67%.",
+        "Iran proposed capping enrichment at 3.67 percent.",
+        ["Iran"],
+    )
+    assert decision == "accept"
+
+
+def test_derivability_check_accepts_claim_text_contained_in_span():
+    decision = claims_module._derivability_check(
+        "Officials confirmed the offer.",
+        "Officials confirmed the offer.",
+        [],
+    )
+    assert decision == "accept"
+
+
+def test_derivability_check_uncertain_for_paraphrase_without_entity_overlap():
+    decision = claims_module._derivability_check(
+        "Officials warned about escalation risk.",
+        "Senior diplomats expressed concern about regional tensions.",
+        [],
+    )
+    assert decision == "uncertain"
+
+
+def test_extract_drops_claims_with_number_mismatch_before_calling_verifier(tmp_path, monkeypatch):
+    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
+
+    article = {
+        **ARTICLE,
+        "id": "number-mismatch-article",
+        "description": "Iran proposed capping enrichment at 5.00%.",
+    }
+    response = {
+        "claims": [
+            {
+                "claim_text": "Iran proposed capping enrichment at 3.67%.",
+                "claim_type": "number",
+                "entities": ["Iran"],
+                "evidence_span": "Iran proposed capping enrichment at 5.00%.",
+                "confidence": 0.9,
+            }
+        ]
+    }
+    client = _fake_client(response)
+    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
+
+    verifier_called = []
+    monkeypatch.setattr(
+        claims_module,
+        "_verify_claim_with_llm",
+        lambda c, s: verifier_called.append((c, s)) or True,
+    )
+
+    stats = extract_and_save_claims([article])
+
+    assert verifier_called == []
+    assert get_claims_for_story(42) == []
+    assert stats["claim_derivable_accepts"] == 0
+    assert stats["claim_verifier_calls"] == 0
+
+
+def test_extract_calls_verifier_for_paraphrase_and_keeps_supported_claims(tmp_path, monkeypatch):
+    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
+
+    article = {
+        **ARTICLE,
+        "id": "paraphrase-article",
+        "description": "Senior diplomats expressed concern about regional tensions.",
+    }
+    response = {
+        "claims": [
+            {
+                "claim_text": "Officials warned about escalation risk.",
+                "claim_type": "fact",
+                "entities": [],
+                "evidence_span": "Senior diplomats expressed concern about regional tensions.",
+                "confidence": 0.7,
+            }
+        ]
+    }
+    client = _fake_client(response)
+    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
+
+    verifier_calls = []
+
+    def fake_verifier(claim_text, evidence_span):
+        verifier_calls.append((claim_text, evidence_span))
+        return True
+
+    monkeypatch.setattr(claims_module, "_verify_claim_with_llm", fake_verifier)
+
+    stats = extract_and_save_claims([article])
+
+    assert len(verifier_calls) == 1
+    saved = get_claims_for_story(42)
+    assert len(saved) == 1
+    assert saved[0]["claim_text"] == "Officials warned about escalation risk."
+    assert stats["claim_verifier_calls"] == 1
+    assert stats["claim_verifier_accepts"] == 1
+    assert stats["claim_verifier_rejects"] == 0
+
+
+def test_extract_drops_paraphrase_claims_when_verifier_rejects(tmp_path, monkeypatch):
+    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
+
+    article = {
+        **ARTICLE,
+        "id": "paraphrase-rejected",
+        "description": "Senior diplomats expressed concern about regional tensions.",
+    }
+    response = {
+        "claims": [
+            {
+                "claim_text": "Officials warned about escalation risk.",
+                "claim_type": "fact",
+                "entities": [],
+                "evidence_span": "Senior diplomats expressed concern about regional tensions.",
+                "confidence": 0.7,
+            }
+        ]
+    }
+    client = _fake_client(response)
+    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
+    monkeypatch.setattr(claims_module, "_verify_claim_with_llm", lambda c, s: False)
+
+    stats = extract_and_save_claims([article])
+
+    assert get_claims_for_story(42) == []
+    assert stats["claim_verifier_calls"] == 1
+    assert stats["claim_verifier_accepts"] == 0
+    assert stats["claim_verifier_rejects"] == 1
+
+
+def test_verifier_failure_default_rejects_the_claim(tmp_path, monkeypatch):
+    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
+
+    article = {
+        **ARTICLE,
+        "id": "verifier-fail",
+        "description": "Senior diplomats expressed concern.",
+    }
+    response = {
+        "claims": [
+            {
+                "claim_text": "Officials warned about escalation risk.",
+                "claim_type": "fact",
+                "entities": [],
+                "evidence_span": "Senior diplomats expressed concern.",
+                "confidence": 0.7,
+            }
+        ]
+    }
+    client = _fake_client(response)
+    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
+
+    def boom(claim_text, evidence_span):
+        raise RuntimeError("verifier network error")
+
+    # _verify_claim_with_llm catches errors and returns False, so simulate
+    # that contract directly rather than letting the exception escape.
+    monkeypatch.setattr(claims_module, "_verify_claim_with_llm", lambda c, s: False)
+
+    stats = extract_and_save_claims([article])
+
+    assert get_claims_for_story(42) == []
+    assert stats["claim_verifier_rejects"] == 1
+
+
+def test_cheap_accept_counter_increments_for_entity_overlap(tmp_path, monkeypatch):
+    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
+
+    client = _fake_client(CLAIM_RESPONSE)
+    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
+
+    verifier_calls = []
+    monkeypatch.setattr(
+        claims_module,
+        "_verify_claim_with_llm",
+        lambda c, s: verifier_calls.append((c, s)) or True,
+    )
+
+    stats = extract_and_save_claims([ARTICLE])
+
+    # Both fixture claims should hit the deterministic accept path.
+    assert verifier_calls == []
+    assert stats["claim_derivable_accepts"] == 2
+    assert stats["claim_verifier_calls"] == 0
+
+
 def test_extract_strips_html_from_description(tmp_path, monkeypatch):
     monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
 

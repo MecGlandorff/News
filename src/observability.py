@@ -31,6 +31,10 @@ RUN_TOTAL_COLUMNS = {
     "claim_invalid_dropped",
     "claim_extraction_failures",
     "claim_zero_results",
+    "claim_derivable_accepts",
+    "claim_verifier_calls",
+    "claim_verifier_accepts",
+    "claim_verifier_rejects",
 }
 
 
@@ -71,6 +75,10 @@ def _create_schema(conn):
             claim_invalid_dropped INTEGER DEFAULT 0,
             claim_extraction_failures INTEGER DEFAULT 0,
             claim_zero_results INTEGER DEFAULT 0,
+            claim_derivable_accepts INTEGER DEFAULT 0,
+            claim_verifier_calls INTEGER DEFAULT 0,
+            claim_verifier_accepts INTEGER DEFAULT 0,
+            claim_verifier_rejects INTEGER DEFAULT 0,
             llm_calls_count     INTEGER DEFAULT 0,
             llm_errors_count    INTEGER DEFAULT 0,
             llm_cache_hits      INTEGER DEFAULT 0,
@@ -114,6 +122,10 @@ def _create_schema(conn):
     _ensure_column(conn, "runs", "claim_invalid_dropped", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "claim_extraction_failures", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "claim_zero_results", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "claim_derivable_accepts", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "claim_verifier_calls", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "claim_verifier_accepts", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "claim_verifier_rejects", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "llm_errors_count", "INTEGER DEFAULT 0")
 
 
@@ -394,6 +406,8 @@ def get_run_report_data(run_id):
                    claim_articles_extracted, claim_articles_cached,
                    claim_invalid_dropped, claim_extraction_failures,
                    claim_zero_results,
+                   claim_derivable_accepts, claim_verifier_calls,
+                   claim_verifier_accepts, claim_verifier_rejects,
                    llm_calls_count, llm_cache_hits,
                    llm_errors_count, schema_failures, retry_count, prompt_tokens,
                    completion_tokens, error_message
@@ -491,6 +505,10 @@ def pipeline_report(run_id):
         f"Claims invalid:         {row['claim_invalid_dropped'] or 0}",
         f"Claim failures:         {row['claim_extraction_failures'] or 0}",
         f"Zero-claim results:     {row['claim_zero_results'] or 0}",
+        f"Claim cheap accepts:    {row['claim_derivable_accepts'] or 0}",
+        f"Claim verifier calls:   {row['claim_verifier_calls'] or 0}",
+        f"Claim verifier accepts: {row['claim_verifier_accepts'] or 0}",
+        f"Claim verifier rejects: {row['claim_verifier_rejects'] or 0}",
         f"Stories touched:        {row['stories_touched'] or 0}",
         f"Story match checks:     {row['story_match_verifications'] or 0}",
         f"Story match accepted:   {row['story_match_accepts'] or 0}",
@@ -574,6 +592,10 @@ def run_report_markdown(run_id):
         f"| Claims invalid | {_markdown_number(row['claim_invalid_dropped'])} |",
         f"| Claim failures | {_markdown_number(row['claim_extraction_failures'])} |",
         f"| Zero-claim results | {_markdown_number(row['claim_zero_results'])} |",
+        f"| Claim cheap accepts | {_markdown_number(row['claim_derivable_accepts'])} |",
+        f"| Claim verifier calls | {_markdown_number(row['claim_verifier_calls'])} |",
+        f"| Claim verifier accepts | {_markdown_number(row['claim_verifier_accepts'])} |",
+        f"| Claim verifier rejects | {_markdown_number(row['claim_verifier_rejects'])} |",
         f"| Stories touched | {_markdown_number(row['stories_touched'])} |",
         f"| Story match checks | {_markdown_number(row['story_match_verifications'])} |",
         f"| Story match accepted | {_markdown_number(row['story_match_accepts'])} |",

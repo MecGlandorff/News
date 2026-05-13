@@ -6,11 +6,20 @@ from pathlib import Path
 
 from src import observability
 from src.config import CLAIMS_MODEL
-from src.llm import create_chat_completion, get_openai_client, mark_schema_failure, parse_json_object
+from src.llm import (
+    create_cached_chat_completion,
+    create_chat_completion,
+    get_openai_client,
+    mark_schema_failure,
+    parse_json_object,
+    save_cached_chat_completion,
+)
 
 DB_PATH = Path("data/stories.db")
 
 CLAIMS_PROMPT_VERSION = "2026-05-13-v1"
+CLAIMS_VERIFIER_MODEL = CLAIMS_MODEL
+CLAIMS_VERIFIER_PROMPT_VERSION = "2026-05-14-v1"
 CLAIM_TYPES = {"fact", "number", "quote", "prediction", "allegation", "background"}
 
 CLAIMS_PROMPT = """You are extracting atomic claims from a news article.
@@ -57,6 +66,28 @@ Atomicity and support rules:
 
 Return a JSON object with key "claims": array of {claim_text, claim_type, entities, evidence_span, confidence}.
 If the article contains no extractable claims, return {"claims": []}."""
+
+
+CLAIMS_VERIFIER_PROMPT = """You verify whether a single news evidence span supports a single claim.
+
+Inputs:
+- claim_text: one factual sentence the claim asserts
+- evidence_span: a sentence or short passage taken from a news article
+
+Decide whether the evidence_span supports claim_text.
+
+Mark supported=true only when:
+- evidence_span states what claim_text asserts, or
+- evidence_span attributes it via "said", "told", "announced", "reported", or
+- claim_text is a faithful paraphrase that adds no facts, named roles, numbers, dates, or actors beyond the evidence_span.
+
+Mark supported=false when:
+- claim_text adds any fact, named role, number, date, or actor that does not appear in evidence_span, or
+- claim_text changes the strength, direction, or attribution of what evidence_span says, or
+- you are unsure.
+
+Return a JSON object: {"supported": true | false, "reason": "<one short sentence>"}.
+"""
 
 
 def _get_db():
@@ -129,6 +160,77 @@ def _evidence_in_content(evidence_span, content):
     if not normalized_span:
         return False
     return normalized_span in _normalize_for_span_match(content)
+
+
+_NUMBER_PATTERN = re.compile(r"\d+(?:[.,]\d+)*")
+
+
+def _number_tokens(text):
+    return {match.replace(",", "") for match in _NUMBER_PATTERN.findall(text or "")}
+
+
+def _derivability_check(claim_text, evidence_span, entities):
+    """Decide whether evidence_span deterministically supports claim_text.
+
+    Returns one of:
+      "reject"    — a number in claim_text is missing from evidence_span.
+      "accept"    — evidence_span contains claim_text verbatim, or a listed
+                    entity appears in evidence_span and all claim numbers do too.
+      "uncertain" — neither rule applies; needs the LLM verifier.
+    """
+    claim_numbers = _number_tokens(claim_text)
+    span_numbers = _number_tokens(evidence_span)
+    if claim_numbers - span_numbers:
+        return "reject"
+
+    normalized_claim = _normalize_for_span_match(claim_text)
+    normalized_span = _normalize_for_span_match(evidence_span)
+    if normalized_claim and normalized_claim in normalized_span:
+        return "accept"
+
+    for entity in entities or []:
+        normalized_entity = _normalize_for_span_match(entity)
+        if normalized_entity and normalized_entity in normalized_span:
+            return "accept"
+
+    return "uncertain"
+
+
+def _verifier_completion(claim_text, evidence_span):
+    user_content = json.dumps(
+        {"claim_text": claim_text, "evidence_span": evidence_span},
+        ensure_ascii=False,
+    )
+    response, cache_metadata, was_cached = create_cached_chat_completion(
+        get_openai_client,
+        model=CLAIMS_VERIFIER_MODEL,
+        messages=[
+            {"role": "system", "content": CLAIMS_VERIFIER_PROMPT},
+            {"role": "user", "content": user_content},
+        ],
+        purpose="claim_verifier",
+        prompt_version=CLAIMS_VERIFIER_PROMPT_VERSION,
+        response_format={"type": "json_object"},
+    )
+    return response, cache_metadata, was_cached
+
+
+def _verify_claim_with_llm(claim_text, evidence_span):
+    """Ask gpt-5.4-nano whether the span supports the claim. Default-reject on any error."""
+    try:
+        response, cache_metadata, was_cached = _verifier_completion(claim_text, evidence_span)
+    except Exception:
+        return False
+    if not was_cached:
+        try:
+            save_cached_chat_completion(cache_metadata, response)
+        except Exception:
+            pass
+    try:
+        parsed = parse_json_object(response)
+    except ValueError:
+        return False
+    return parsed.get("supported") is True
 
 
 def _has_cached_claims(article_id, story_id, content_hash, conn):
@@ -214,12 +316,22 @@ def validate_claims_for_content(claims_data, content):
     valid_claims = []
     dropped = 0
     for claim in claims_data:
-        validated = _validated_claim(claim, content)
+        validated, _decision = _validated_claim(claim, content)
         if not validated:
             dropped += 1
             continue
         valid_claims.append(validated)
     return valid_claims, dropped
+
+
+def _classify_claims(claims_data, content):
+    """Validate every claim and return [(validated_or_None, decision), ...].
+
+    Runs the LLM verifier for uncertain claims. Must be called outside any
+    open SQLite transaction so the verifier's network call does not hold a
+    write lock.
+    """
+    return [_validated_claim(claim, content) for claim in claims_data]
 
 
 def _clean_string(value):
@@ -236,8 +348,17 @@ def _validated_confidence(value):
 
 
 def _validated_claim(claim, content):
+    """Return (validated_dict_or_None, decision).
+
+    decision is one of:
+      "invalid"             — failed schema / field / span-in-article checks.
+      "derivability_reject" — a number in claim_text is missing from evidence_span.
+      "cheap_accept"        — deterministic accept (entity or verbatim overlap).
+      "verifier_accept"     — LLM verifier confirmed support.
+      "verifier_reject"     — LLM verifier rejected support or failed.
+    """
     if not isinstance(claim, dict):
-        return None
+        return None, "invalid"
 
     claim_text = _clean_string(claim.get("claim_text"))
     claim_type = _clean_string(claim.get("claim_type"))
@@ -246,33 +367,44 @@ def _validated_claim(claim, content):
     confidence = _validated_confidence(claim.get("confidence"))
 
     if not claim_text or claim_type not in CLAIM_TYPES:
-        return None
+        return None, "invalid"
     if not isinstance(entities, list):
-        return None
+        return None, "invalid"
     if not all(isinstance(entity, str) and entity.strip() for entity in entities):
-        return None
+        return None, "invalid"
     if not evidence_span or not _evidence_in_content(evidence_span, content):
-        return None
+        return None, "invalid"
     if confidence is None:
-        return None
+        return None, "invalid"
+
+    cleaned_entities = [entity.strip() for entity in entities]
+    derivability = _derivability_check(claim_text, evidence_span, cleaned_entities)
+    if derivability == "reject":
+        return None, "derivability_reject"
+    if derivability == "uncertain":
+        if not _verify_claim_with_llm(claim_text, evidence_span):
+            return None, "verifier_reject"
+        decision = "verifier_accept"
+    else:
+        decision = "cheap_accept"
 
     return {
         "claim_text": claim_text,
         "claim_type": claim_type,
-        "entities": [entity.strip() for entity in entities],
+        "entities": cleaned_entities,
         "evidence_span": evidence_span,
         "confidence": confidence,
-    }
+    }, decision
 
 
-def _replace_claims(article_id, story_id, content_hash, claims_data, content, conn):
+def _write_classified_claims(article_id, story_id, content_hash, classified, conn):
+    """Persist already-validated claims. Must be called inside `with conn:`."""
     conn.execute(
         "DELETE FROM claims WHERE article_id = ? AND prompt_version = ?",
         (article_id, CLAIMS_PROMPT_VERSION),
     )
     saved = dropped = 0
-    for claim in claims_data:
-        validated = _validated_claim(claim, content)
+    for validated, _decision in classified:
         if not validated:
             dropped += 1
             continue
@@ -311,6 +443,21 @@ def _replace_claims(article_id, story_id, content_hash, claims_data, content, co
     return saved, dropped
 
 
+def _empty_claim_stats():
+    return {
+        "articles_extracted": 0,
+        "claims_saved": 0,
+        "cached": 0,
+        "invalid": 0,
+        "failed": 0,
+        "zero_claim_results": 0,
+        "claim_derivable_accepts": 0,
+        "claim_verifier_calls": 0,
+        "claim_verifier_accepts": 0,
+        "claim_verifier_rejects": 0,
+    }
+
+
 def extract_and_save_claims(tracked):
     """Extract claims for all tracked articles and save to DB.
 
@@ -320,17 +467,11 @@ def extract_and_save_claims(tracked):
     are skipped entirely.
     """
     if not tracked:
-        return {
-            "articles_extracted": 0,
-            "claims_saved": 0,
-            "cached": 0,
-            "invalid": 0,
-            "failed": 0,
-            "zero_claim_results": 0,
-        }
+        return _empty_claim_stats()
 
     conn = _get_db()
     extracted = skipped = failed = invalid = saved_claims = zero_claim_results = 0
+    cheap_accepts = verifier_calls = verifier_accepts = verifier_rejects = 0
     try:
         for article in tracked:
             article_id = str(article["id"])
@@ -355,13 +496,25 @@ def extract_and_save_claims(tracked):
                 failed += 1
                 continue
 
+            # Classify outside the SQLite transaction so the verifier's
+            # network call does not hold a write lock.
+            classified = _classify_claims(claims_data, content)
+            for _validated, decision in classified:
+                if decision == "cheap_accept":
+                    cheap_accepts += 1
+                elif decision == "verifier_accept":
+                    verifier_calls += 1
+                    verifier_accepts += 1
+                elif decision == "verifier_reject":
+                    verifier_calls += 1
+                    verifier_rejects += 1
+
             with conn:
-                saved, dropped = _replace_claims(
+                saved, dropped = _write_classified_claims(
                     article_id,
                     story_id,
                     content_hash,
-                    claims_data,
-                    content,
+                    classified,
                     conn,
                 )
                 saved_claims += saved
@@ -385,6 +538,10 @@ def extract_and_save_claims(tracked):
         "invalid": invalid,
         "failed": failed,
         "zero_claim_results": zero_claim_results,
+        "claim_derivable_accepts": cheap_accepts,
+        "claim_verifier_calls": verifier_calls,
+        "claim_verifier_accepts": verifier_accepts,
+        "claim_verifier_rejects": verifier_rejects,
     }
 
 
