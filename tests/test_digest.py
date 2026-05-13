@@ -420,6 +420,7 @@ def test_get_briefings_sends_claims_when_evidence_enabled(tmp_path, monkeypatch)
         chat = ClaimChat()
 
     monkeypatch.setattr(claims_module, "get_openai_client", lambda: ClaimClient())
+    monkeypatch.setattr(claims_module, "_verify_claim_with_llm", lambda c, s: True)
     extract_and_save_claims([article])
 
     captured = {}
