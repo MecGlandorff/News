@@ -139,6 +139,16 @@ def test_extract_uses_full_article_text_and_nano_model(tmp_path, monkeypatch):
     assert saved[0]["evidence_span"] == full_text
 
 
+def test_claim_prompt_targets_reviewed_quality_failures():
+    prompt = claims_module.CLAIMS_PROMPT
+
+    assert claims_module.CLAIMS_PROMPT_VERSION == "2026-05-13-v1"
+    assert "preserve the attribution" in prompt
+    assert "Background identity labels" in prompt
+    assert "must not add facts beyond the evidence_span" in prompt
+    assert "Split long sentences" in prompt
+
+
 def test_extract_skips_already_cached(tmp_path, monkeypatch):
     monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
 

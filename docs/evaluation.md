@@ -103,20 +103,36 @@ Useful rubric dimensions:
 
 ---
 
-## Planned eval directory
+## Eval directory
+
+The first checked-in harness is the RSS-vs-full-text claim-quality eval:
+
+```bash
+python -m evals.run_claim_quality_eval
+```
+
+It reruns the configured claim prompt on small golden cases and compares RSS-only
+input against RSS plus full article text. It records coverage, evidence validity,
+duplicates, token use, latency, and estimated cost.
+
+`evals/datasets/claim_prompt_regressions_2026-05-13.jsonl` records targeted
+cases from the first reviewed failures. Those cases should be used when rerunning
+the current claim prompt against live or mocked LLM output.
+
+Planned broader shape:
 
 ```text
 evals/
   datasets/
+    claim_prompt_regressions_2026-05-13.jsonl
+    golden_claims.jsonl
     article_pairs.jsonl
     story_match_cases.jsonl
     golden_story_clusters.jsonl
-    golden_claims.jsonl
     golden_citations.jsonl
     temporal_diff_cases.jsonl
   reports/
-  run_eval.py
-  metrics.py
+  run_claim_quality_eval.py
   README.md
 ```
 
