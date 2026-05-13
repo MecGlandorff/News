@@ -3,6 +3,8 @@
 **Date:** 2026-05-09  
 **Status:** Accepted
 
+2026-05-14 follow-up: the first evidence-mode claim comparison slice now uses saved claims for exact repeated-claim agreement and conservative numeric divergence. The claim model and full-text evidence-run gate remain unchanged.
+
 ---
 
 ## Context
@@ -82,6 +84,6 @@ Negative:
 Revisit this decision when:
 
 - measured evidence-run cost or latency exceeds the project's tolerance
-- source agreement uses claim-level comparison
-- source-divergence notes compare extracted claims
+- broader source agreement needs claim-level comparison beyond exact repeated claims
+- source-divergence notes compare extracted claims beyond numeric claims
 - evals show that `gpt-5.4-nano` materially reduces claim quality compared with `gpt-5.4-mini`

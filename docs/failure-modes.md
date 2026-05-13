@@ -70,7 +70,7 @@ For the end-to-end flow where these failures can enter, read [how-it-works.md](h
 
 **Mitigation:** `CONSOLIDATE_PROMPT` is explicit about only merging "clearly the same event." `MATCH_PROMPT` says broad topic similarity is not enough. The tracker also applies a deterministic guard for generic incident/category labels: labels such as accidents, crashes, shootings, and lawsuits may not merge unless they share a distinctive token beyond the generic category. With `--verify-story-matches`, candidate cross-day matches are checked using full article text and `gpt-5.4-nano`; weak, uncertain, adjacent-topic, or malformed verifier decisions default to a new story.
 
-**Current status:** Partially mitigated by prompt design, deterministic false-merge guards, and optional story-match verification. The verifier is not enabled by default and decisions are not cached.
+**Current status:** Partially mitigated by prompt design, deterministic false-merge guards, and optional story-match verification. The verifier is not enabled by default. Exact verifier model responses can be cached for identical prompts, but there is no semantic decision cache.
 
 **Future improvement:** Add a story clustering eval dataset and a `story_match_cases.jsonl` fixture set. Track false-merge rate over time and decide when the verifier is safe to enable by default.
 
@@ -84,7 +84,7 @@ For the end-to-end flow where these failures can enter, read [how-it-works.md](h
 
 **Detection:** Claim type tagging (`allegation` vs `fact`). Source agreement check.
 
-**Mitigation:** `CLAIMS_PROMPT` distinguishes `allegation` from `fact` in claim_type. Briefing prompt instructs neutral tone.
+**Mitigation:** `CLAIMS_PROMPT` distinguishes `allegation` from `fact` in `claim_type`. `BRIEFING_PROMPT` requires neutral prose and tells the model to surface allegations, uncertainty, and divergent claims instead of smoothing them away.
 
 **Current status:** Partially mitigated by claim typing. Not yet surfaced in briefings.
 
@@ -98,7 +98,7 @@ For the end-to-end flow where these failures can enter, read [how-it-works.md](h
 
 **Detection:** Track source distribution per story. Flag stories dominated by a single source or source type.
 
-**Mitigation:** Briefing prompt asks to "synthesize across all sources provided, surfacing different angles where they exist." The `sources` table stores reliability and bias notes per feed; new article rows record `source_id` when a seeded source matches.
+**Mitigation:** `BRIEFING_PROMPT` asks the model to surface disagreement, allegations, uncertainty, and divergent numbers/status claims. The `sources` table stores reliability and bias notes per feed; new article rows record `source_id` when a seeded source matches.
 
 **Current status:** Partially mitigated by prompt design and seeded source metadata. No automated bias flagging or source-distribution warnings yet.
 
@@ -140,11 +140,11 @@ For the end-to-end flow where these failures can enter, read [how-it-works.md](h
 
 **Detection:** Claims with `claim_type = "number"` on the same entity across sources within a story.
 
-**Mitigation:** The briefing layer no longer accepts `confirmed conflict` as a normalized dispute flag. Claim extraction captures numbers as typed claims, but claim comparison is not implemented yet.
+**Mitigation:** Evidence-mode source agreement compares saved numeric claims with similar context across distinct source identities. When numbers differ, the briefing output is forced to `source_agreement = mixed` and `dispute_flag = possible conflict`. The briefing layer still does not accept `confirmed conflict`.
 
-**Current status:** Claims are extracted and typed but not compared.
+**Current status:** Partially mitigated for conservative numeric divergence in evidence mode. Date, status, and attribution divergence are not compared yet.
 
-**Future improvement:** Compare numeric claims across sources as part of the claim-backed source-agreement layer. Surface clear differences as source-divergence notes, not as confirmed contradiction prose.
+**Future improvement:** Review numeric divergence cases from real runs, then add date/status/attribution comparison only where matching can stay precise. Keep surfaced differences as source-divergence notes, not confirmed contradiction prose.
 
 ---
 
@@ -154,7 +154,7 @@ For the end-to-end flow where these failures can enter, read [how-it-works.md](h
 
 **Detection:** Compare causal phrases in briefing against causal language in source descriptions. No automated check currently.
 
-**Mitigation:** Briefing prompt: "Base current developments on today's article titles and descriptions." Claim extraction separates source-supported claims from prose synthesis.
+**Mitigation:** `BRIEFING_PROMPT` tells the model to base current developments on today's article titles, descriptions, reported timestamps, and supplied structured claims. Claim extraction separates source-supported claims from prose synthesis.
 
 **Current status:** Partially mitigated by prompt design. No automated detection.
 
@@ -168,7 +168,7 @@ For the end-to-end flow where these failures can enter, read [how-it-works.md](h
 
 **Detection:** Compare hedge words in sources vs. hedge words in briefing.
 
-**Mitigation:** `BRIEFING_PROMPT` instructs "factual, neutral" tone and to use delta_summary for uncertainty. Claim types (`prediction`, `allegation`) capture hedging in structured form.
+**Mitigation:** `BRIEFING_PROMPT` requires neutral prose, bounded confidence labels, and explicit surfacing of allegations, uncertainty, and divergent claims. Claim types (`prediction`, `allegation`) capture hedging in structured form.
 
 **Current status:** Partially mitigated by prompt design.
 

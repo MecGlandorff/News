@@ -32,6 +32,7 @@ In code, the run looks like this:
 
 ```text
 Configured RSS feeds
+  -> src/sources.py       seed source metadata and attach source_id where possible
   -> src/scraper.py       fetch feeds, normalize URLs, filter dates, deduplicate URLs
   -> src/classifier.py    classify theme, story label, and importance
   -> src/tracker.py       consolidate labels, match recent stories, write story memory
@@ -83,6 +84,8 @@ The `claims` and `claim_extractions` tables are created lazily by `src/claims.py
 
 When `--show-evidence` is enabled, scraping fetches full article text and claim extraction uses title, RSS description, and full article text when available. If body extraction fails or a source blocks scraping, the claim extractor falls back to title and RSS description. The claim model is `gpt-5.4-nano`; classification remains on RSS title/description with `gpt-5.4-mini`.
 
+Evidence-mode briefings also receive a deterministic `claim_source_agreement` summary. The current first pass is deliberately narrow: exact repeated non-background claims across distinct source identities can back `partial` or `broad`, and comparable numeric claims with different values can force `mixed` plus `possible conflict`. This uses saved claims and source identity only; it does not infer independent corroboration or confirmed contradiction.
+
 ## How Briefings Are Built
 
 `src/top10.py` aggregates tracked articles by canonical story and selects briefing-worthy stories. It prioritizes importance, source count, and movement signal while filtering out low-value sports, entertainment, and weak low-interest stories.
@@ -99,6 +102,8 @@ For selected stories, the briefing model returns structured story-card fields:
 
 The final Markdown renders those fields with source links, reported timestamps, and optional evidence spans. The generated summary and delta are written back to `story_observations`, so future runs can compare against previous context.
 
+When evidence-mode claim comparison produces a source-agreement label, `src/briefing_generation.py` overrides the model's `source_agreement` with the deterministic label. Numeric divergence also overrides `dispute_flag` to `possible conflict`.
+
 The PDF output uses the same briefing package. `src/newspaper.py` is a renderer, not a separate intelligence pipeline.
 
 ## What Is Weak Or Missing Today
@@ -106,12 +111,12 @@ The PDF output uses the same briefing package. `src/newspaper.py` is a renderer,
 The core story-memory flow exists, but several trust and observability layers are still incomplete.
 
 - Source metadata is seeded into a `sources` table, and new article rows can store `source_id` alongside the source name. Deterministic source support uses `source_id` first and falls back to source names for older rows.
-- Source agreement is currently a briefing-level model label, not a claim-comparison result backed by a dedicated data model.
-- Run observability stores `runs` and real model calls in `llm_calls`, and `--pipeline-report` reports scraper counts, claim metrics, token use, latency, cache hits, retries, schema failures, story-match verifier counts, and estimated EUR cost.
+- Evidence-mode source agreement is claim-backed for exact repeated claims and conservative numeric divergence, but it is not a general agreement model and does not infer independent source corroboration.
+- Run observability stores `runs` and real model calls in `llm_calls`, exact response reuse in `llm_response_cache`, and `--pipeline-report` reports scraper counts, claim metrics, token use, latency, cache hits, retries, schema failures, story-match verifier counts, and estimated EUR cost.
 - There is no stored novelty score yet; novelty needs a clear claim-backed definition before becoming schema.
-- Claim-backed source-divergence notes are not implemented; a dedicated contradiction module/table is no longer Phase 3 scope.
+- Source-divergence notes currently cover numeric divergence only; date, status, and attribution comparison are still missing. A dedicated contradiction module/table is no longer Phase 3 scope.
 - Full-text claim extraction is enabled for evidence runs, but its cost and quality impact still need review against run telemetry.
-- Story-match verifier decisions are stored for audit but are not yet cached or evaluated against a curated fixture set.
+- Story-match verifier decisions are stored for audit, exact verifier responses can be cached for identical prompts, and verifier behavior still needs evaluation against a curated fixture set.
 
 These gaps matter because the project aims to produce auditable intelligence artifacts, not just summaries.
 
@@ -119,13 +124,13 @@ These gaps matter because the project aims to produce auditable intelligence art
 
 The next architecture work is closing out Phase 3 by making source metadata and observability load-bearing rather than just present.
 
-The next source-model step should make source agreement consume claim-level support, not just story-level source identity.
+The next source-model step should review the first claim-backed agreement slice on real evidence runs and then decide whether to compare dates, statuses, and attributions.
 
 The next observability refinement should compare the quality impact of full-text `gpt-5.4-nano` claim extraction against its measured token and latency cost.
 
 The next story-matching refinement should build a small reviewed fixture set from recent generated newspapers. It should include true continuations and false merges, including the 2026-05-07 Gaza detention/flotilla failure, before the verifier is enabled by default.
 
-Only after that should the project expand expensive evidence behavior further, such as broader claim comparison for source-divergence notes.
+Only after that should the project expand expensive evidence behavior further, such as broader claim comparison for non-numeric source-divergence notes.
 
 ## Why This Order Matters
 
@@ -133,7 +138,7 @@ Source metadata should come before claim-backed source agreement because the sys
 
 Observability should guide broader evidence behavior because full text increases token use and latency. The system should measure the cost and quality of evidence runs before making that path common.
 
-Claim comparison should come before source-divergence prose because divergence notes need structured backing. A briefing label like `possible conflict` is useful, but it is not enough for auditability unless the system can point to the claims that differ.
+Claim comparison should come before source-divergence prose because divergence notes need structured backing. A briefing label like `possible conflict` is useful, but it is not enough for auditability unless the system can point to the claims that differ. The current numeric first pass follows that rule but does not yet cover dates, statuses, or attributions.
 
 ## Data Model Reference
 
@@ -356,16 +361,34 @@ error_message       TEXT
 created_at          TEXT NOT NULL
 ```
 
+### `llm_response_cache`
+
+Exact response cache for same-day matching, cross-day matching, optional story-match verification, and briefing generation. The cache key is the full request shape, not a semantic similarity key.
+
+```sql
+cache_id         INTEGER PRIMARY KEY AUTOINCREMENT
+purpose          TEXT NOT NULL
+model            TEXT NOT NULL
+prompt_version   TEXT NOT NULL
+request_hash     TEXT NOT NULL
+request_json     TEXT NOT NULL
+response_content TEXT NOT NULL
+hit_count        INTEGER NOT NULL DEFAULT 0
+created_at       TEXT DEFAULT CURRENT_TIMESTAMP
+last_used_at     TEXT
+UNIQUE (purpose, model, prompt_version, request_hash)
+```
+
 ## LLM Call Reference
 
 | Stage | Model | Output | Cached |
 |---|---|---|---|
 | Classification | `gpt-5.4-mini` | theme, story label, importance | Yes |
 | Claim extraction | `gpt-5.4-nano` | structured claims | Yes |
-| Same-day consolidation | `gpt-5.5` | label groups | No |
-| Cross-day matching | `gpt-5.5` | label matches | No |
-| Story-match verification | `gpt-5.4-nano` | continuity decisions | No |
-| Briefing generation | `gpt-5.5` | story-card fields and prose | No |
+| Same-day consolidation | `gpt-5.5` | label groups | Exact response cache |
+| Cross-day matching | `gpt-5.5` | label matches | Exact response cache |
+| Story-match verification | `gpt-5.4-nano` | continuity decisions | Exact response cache |
+| Briefing generation | `gpt-5.5` | story-card fields and prose | Exact response cache |
 
 All LLM stages should return JSON objects and pass through `parse_json_object()` before downstream code uses the response.
 Fresh calls go through the observed chat helper in `src.llm`, which records token and latency metadata when a run context is active.
@@ -374,11 +397,12 @@ Fresh calls go through the observed chat helper in `src.llm`, which records toke
 
 | Path | Purpose | Git status |
 |---|---|---|
-| `briefings/` | Public Markdown briefings | Committed |
-| `newspapers/` | Public newspaper PDFs | Committed |
+| `briefings/` | Public Markdown briefing archive | Committed unless left as local generated output |
+| `newspapers/` | Newspaper-style PDFs | Ignored by default |
 | `output/` | Local digest Markdown | Ignored |
 | `data/stories.db` | Local SQLite database | Ignored |
 | `data/daily/` | Daily article snapshots | Ignored |
+| `run_artifacts/` | Markdown run reports from observability rows | Ignored |
 | `logs/` | Scheduler logs | Ignored |
 
 ## What Done Looks Like
@@ -395,6 +419,6 @@ RSS source
   -> briefing section
 ```
 
-The next version should make that trace more inspectable by adding source metadata, run observability, and claim-backed agreement/source-divergence records.
+The next version should make that trace more inspectable by reviewing evidence-mode claim-backed agreement on real cases and expanding source-divergence comparison beyond numeric claims when it can stay precise.
 
 See `docs/failure-modes.md`, `docs/model-behavior.md`, and `docs/adr/` for related tradeoffs.

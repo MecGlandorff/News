@@ -3,6 +3,8 @@
 **Date:** 2026-05-10  
 **Status:** Accepted
 
+2026-05-14 follow-up: the first implementation exists for conservative numeric divergence in evidence mode. It records lightweight comparison output in the briefing input and forces `mixed` / `possible conflict`; it does not add a `contradictions` table or confirmed-conflict prose.
+
 ---
 
 ## Context
@@ -25,7 +27,7 @@ Phase 3 should now focus on:
 
 Do not add a dedicated contradiction module or `contradictions` table in Phase 3.
 
-Briefing generation should not emit `confirmed conflict`. Until there is structured claim-backed divergence, source disagreement may only be surfaced as `possible conflict` or cautious prose.
+Briefing generation should not emit `confirmed conflict`. Even when structured claim-backed divergence exists, source disagreement may only be surfaced as `possible conflict` or cautious prose.
 
 ---
 

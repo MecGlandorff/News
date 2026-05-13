@@ -175,9 +175,9 @@ Before adding a major AI subsystem, define at least one way to evaluate it.
 Examples:
 
 - before source agreement detection, create claim-pair examples where sources agree, differ, or merely repeat the same wire copy
-- before source-divergence notes, create numeric/date/status/attribution examples with expected labels
+- before broadening source-divergence notes beyond the current numeric first pass, create date/status/attribution examples with expected labels
 - before enabling `--verify-story-matches` by default, review 5-10 accepted and rejected match cases from recent newspapers
-- before making evidence extraction part of ordinary runs or broadening it into source agreement and source-divergence work, measure claim quality improvement against token and latency increase
+- before making evidence extraction part of ordinary runs or making claim-backed agreement more authoritative, measure claim quality improvement against token and latency increase
 
 ---
 

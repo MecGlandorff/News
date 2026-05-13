@@ -3,6 +3,8 @@
 **Date:** 2026-05-09
 **Status:** Accepted
 
+2026-05-14 follow-up: evidence-mode source agreement now has a deterministic first pass in `src/source_agreement.py`. Exact repeated non-background claims can back `partial` or `broad`, and comparable numeric divergence can force `mixed` / `possible conflict`. This does not change the source-support decision here: source identity is still not proof of independent corroboration.
+
 ---
 
 ## Context
@@ -50,7 +52,7 @@ Add explicit model pricing in `src/config.py` and estimate EUR cost from rows in
 
 **Run reports should measure the expensive path.** Full-text evidence runs add network work and token load. Scraper counts, claim counters, token totals, latency, and estimated cost together make that tradeoff visible.
 
-**This is not claim-backed agreement.** Two articles from different source identities do not prove independent corroboration, and two articles from the same source do not prove a claim is false or unsupported. Claim comparison and source-divergence notes remain separate work.
+**Source support is not proof.** Two articles from different source identities do not prove independent corroboration, and two articles from the same source do not prove a claim is false or unsupported. The current claim-backed layer remains conservative and evidence-mode only.
 
 ---
 
@@ -66,7 +68,7 @@ Add explicit model pricing in `src/config.py` and estimate EUR cost from rows in
 - EUR estimates can drift when model pricing or exchange rates change
 - The report is an estimate, not a billing ledger
 - Source support can still be inflated by syndication across distinct source IDs
-- Claim-backed source agreement and source-divergence notes are still missing
+- Broader claim-backed agreement is still missing for dates, statuses, attributions, and independent-corroboration weighting
 
 ---
 
@@ -76,6 +78,6 @@ Revisit this decision when:
 
 - OpenAI model pricing changes
 - provider-side cached-input token counts are recorded
-- claim-backed source agreement lands
-- source-divergence notes are backed by claim comparison
+- broader claim-backed source agreement lands beyond exact repeated claims
+- source-divergence notes are backed by claim comparison beyond numeric claims
 - source reliability or syndication metadata starts weighting agreement
