@@ -26,7 +26,7 @@ These pieces are already in place and should be protected as the project evolves
 
 The current prototype is directionally strong, but several important parts are still incomplete or only partially implemented.
 
-- [ ] Full-text claim extraction is enabled for evidence runs, and its cost/latency is visible; the repeatable quality harness exists, but real reviewed cases still need to be run
+- [ ] Full-text claim extraction is enabled for evidence runs, and its cost/latency is visible; the repeatable quality harness and prompt-regression cases exist, but real reviewed current-prompt cases still need to be run
 - [x] Run observability covers token use, latency, cache hits, schema failures, retries, EUR estimates, and scraper duplicate/failure counts
 - [x] Source metadata is modeled as a first-class table, and source identity is used before source-name fallback
 - [ ] Source agreement is surfaced in the briefing, but not yet backed by a dedicated comparison layer
@@ -190,9 +190,10 @@ The repo should be able to show that key AI behaviors are improving rather than 
 - [ ] Add a temporal-diffing evaluation set
 - [x] Add metrics for evidence support rate
 - [ ] Measure the quality lift from full-text claims on reviewed real cases
+- [ ] Measure missed-claim recall from full-text claims
 - [x] Measure the token-cost increase from full-text claims
 - [x] Measure the latency increase from full-text claims
-- [ ] Write an evaluation README with success criteria
+- [x] Write an evaluation README with success criteria
 
 ## 7. Documentation alignment
 

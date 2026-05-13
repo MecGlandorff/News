@@ -111,3 +111,14 @@ Bad full-text impact looks like:
 The first dataset is intentionally small and fixture-style. It proves the harness and documents the scoring contract, but it is not yet enough to decide policy for all sources.
 
 Next, add 5-10 real reviewed cases from recent evidence runs, with full source text stored only where licensing and local use are acceptable. That should happen before using extracted claims for claim-backed source agreement or source-divergence notes.
+
+## Prompt Regression Cases
+
+`evals/datasets/claim_prompt_regressions_2026-05-13.jsonl` records targeted cases from reviewed claim failures. Use it when rerunning the current claim prompt against live or mocked LLM output.
+
+Those cases cover:
+
+- attribution-sensitive reporting that should not be flattened into confirmed fact
+- identity background that should not gain unsupported roles
+- multi-development sentences that should be split into atomic claims
+- broad analysis theses that should not become event facts

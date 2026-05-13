@@ -154,3 +154,19 @@ def test_claim_eval_writes_report(tmp_path):
 
     assert output_path.exists()
     assert json.loads(output_path.read_text(encoding="utf-8"))["model"] == "gpt-5.4-nano"
+
+
+def test_prompt_regression_dataset_loads():
+    path = "evals/datasets/claim_prompt_regressions_2026-05-13.jsonl"
+
+    with open(path, encoding="utf-8") as handle:
+        cases = [json.loads(line) for line in handle if line.strip()]
+
+    assert len(cases) == 4
+    assert {case["case_id"] for case in cases} == {
+        "attribution-sensitive-battlefield-report",
+        "identity-background-overreach",
+        "multi-development-sentence",
+        "analysis-thesis-background",
+    }
+    assert all(case["expected_behavior"] for case in cases)

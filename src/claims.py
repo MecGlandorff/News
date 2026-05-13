@@ -10,12 +10,12 @@ from src.llm import create_chat_completion, get_openai_client, mark_schema_failu
 
 DB_PATH = Path("data/stories.db")
 
-CLAIMS_PROMPT_VERSION = "2026-05-09-v1"
+CLAIMS_PROMPT_VERSION = "2026-05-13-v1"
 CLAIM_TYPES = {"fact", "number", "quote", "prediction", "allegation", "background"}
 
 CLAIMS_PROMPT = """You are extracting atomic claims from a news article.
 
-For each significant factual statement, extract:
+For each significant factual statement that helps track a real news event, extract:
 - claim_text: the claim restated as one clear English sentence
 - claim_type: one of: fact | number | quote | prediction | allegation | background
 - entities: list of named entities involved (person name, organization, country, etc.)
@@ -27,18 +27,33 @@ Claim type guidance:
 - number: a specific quantity, percentage, date, or monetary amount
 - quote: a direct quote attributed to a named person
 - prediction: something stated as likely to happen
-- allegation: disputed, unconfirmed, or attributed to one side only
-- background: context that is not a new development in today's reporting
+- allegation: disputed, unconfirmed, contested, reported by one side, sourced to
+  unnamed officials, or phrased with says/claims/alleges/according to/reports
+- background: context that is not a new development in today's reporting and is
+  needed to understand the event
 
 Focus on:
 - Specific named decisions, facts, and events
 - Quoted statements from identified people
-- Disputed or contested claims (mark as allegation)
+- Disputed, contested, or one-sided claims (mark as allegation and preserve the attribution)
 - Significant numbers or dates
 
 Skip:
 - Vague background sentences with no specific claim
+- Background identity labels unless they are necessary to understand the event
 - Claims already fully covered by another claim in your list
+- Claims that require adding facts not present in the evidence_span
+
+Atomicity and support rules:
+- Extract one claim per event development. Split long sentences that combine
+  separate actions, dates, charges, outcomes, or actors.
+- The claim_text must not add facts beyond the evidence_span. If the evidence says
+  "top Democrat Hakeem Jeffries", do not add "House minority leader" unless that
+  exact role appears in the evidence_span.
+- If a claim is based on a source's assertion, keep that source in claim_text and
+  use claim_type "allegation" unless the article independently confirms it.
+- Do not convert article theses, analysis headlines, or broad interpretations into
+  fact claims unless the article states a concrete development.
 
 Return a JSON object with key "claims": array of {claim_text, claim_type, entities, evidence_span, confidence}.
 If the article contains no extractable claims, return {"claims": []}."""

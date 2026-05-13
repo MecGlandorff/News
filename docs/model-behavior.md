@@ -110,6 +110,9 @@ Default behavior:
 - build claim input from title, RSS description, and full article text when available
 - fall back to title and RSS description when full text is empty or unavailable
 - use `gpt-5.4-nano`
+- use claim prompt version `2026-05-13-v1`, which tightens atomicity,
+  attribution, and low-value background rules after the first reviewed
+  claim-quality eval
 - cache aggressively
 
 Current cache behavior:
@@ -137,7 +140,8 @@ The most important current risks are:
 - story consolidation over-merges distinct events with similar keywords
 - cross-day matching attaches fresh reporting to an old canonical label when the verifier is disabled or when the verifier lacks enough context
 - briefing prose overstates certainty compared with source claims
-- claim extraction treats allegations as confirmed facts
+- claim extraction can still treat allegations as confirmed facts; the
+  `2026-05-13-v1` prompt reduces this risk but needs a live current-prompt eval
 - full-text extraction can increase latency and token use when `--show-evidence` is enabled
 - numeric/status/attribution claims can diverge across sources but are not yet compared
 - stored story-match verifier decisions are not reused as a cache yet
