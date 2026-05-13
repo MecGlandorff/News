@@ -460,6 +460,142 @@ def test_get_briefings_sends_claims_when_evidence_enabled(tmp_path, monkeypatch)
     assert captured["items"][0]["claims"][0]["evidence_span"] == "Concrete supported claim."
 
 
+def test_get_briefings_uses_claim_backed_source_agreement(monkeypatch):
+    monkeypatch.setattr(
+        claims_module,
+        "get_claims_for_story",
+        lambda story_id: [
+            {
+                "article_id": 1,
+                "claim_text": "The government approved the budget.",
+                "claim_type": "fact",
+                "evidence_span": "approved the budget",
+                "confidence": 0.9,
+            },
+            {
+                "article_id": 2,
+                "claim_text": "The government approved the budget.",
+                "claim_type": "fact",
+                "evidence_span": "approved the budget",
+                "confidence": 0.85,
+            },
+        ],
+    )
+    captured = {}
+
+    class BriefingMessage:
+        content = (
+            '{"briefings":[{"canonical_label":"Example Story",'
+            '"delta_summary":"First detected today.",'
+            '"briefing":"Briefing text.",'
+            '"source_agreement":"broad"}]}'
+        )
+
+    class BriefingChoice:
+        message = BriefingMessage()
+
+    class BriefingResponse:
+        choices = [BriefingChoice()]
+
+    class BriefingCompletions:
+        def create(self, **kwargs):
+            captured["items"] = json.loads(kwargs["messages"][1]["content"])
+            return BriefingResponse()
+
+    class BriefingChat:
+        completions = BriefingCompletions()
+
+    class BriefingClient:
+        chat = BriefingChat()
+
+    monkeypatch.setattr(top10, "get_openai_client", lambda: BriefingClient())
+
+    first = _briefing_article(1, "Economy", "Example Story", 4, source="Source A")
+    first["source_id"] = 101
+    second = _briefing_article(2, "Economy", "Example Story", 4, source="Source B")
+    second["source_id"] = 202
+
+    result = top10._get_briefings([{
+        "canonical_label": "Example Story",
+        "story_id": 42,
+        "articles": [first, second],
+    }], include_evidence=True)
+
+    item = captured["items"][0]
+    assert item["claims"][0]["source_id"] == 101
+    assert item["claims"][1]["source_id"] == 202
+    assert item["claim_source_agreement"]["label"] == "partial"
+    assert item["claim_source_agreement"]["basis"] == "repeated-claim-partial"
+    assert result["Example Story"]["source_agreement"] == "partial"
+
+
+def test_get_briefings_forces_possible_conflict_for_claim_number_divergence(monkeypatch):
+    monkeypatch.setattr(
+        claims_module,
+        "get_claims_for_story",
+        lambda story_id: [
+            {
+                "article_id": 1,
+                "claim_text": "Police said 10 people were killed in the blast.",
+                "claim_type": "number",
+                "evidence_span": "10 people were killed in the blast",
+                "confidence": 0.9,
+            },
+            {
+                "article_id": 2,
+                "claim_text": "Officials said 12 people were killed in the blast.",
+                "claim_type": "number",
+                "evidence_span": "12 people were killed in the blast",
+                "confidence": 0.8,
+            },
+        ],
+    )
+    captured = {}
+
+    class BriefingMessage:
+        content = (
+            '{"briefings":[{"canonical_label":"Example Story",'
+            '"delta_summary":"First detected today.",'
+            '"briefing":"Briefing text.",'
+            '"source_agreement":"single-source",'
+            '"dispute_flag":"none"}]}'
+        )
+
+    class BriefingChoice:
+        message = BriefingMessage()
+
+    class BriefingResponse:
+        choices = [BriefingChoice()]
+
+    class BriefingCompletions:
+        def create(self, **kwargs):
+            captured["items"] = json.loads(kwargs["messages"][1]["content"])
+            return BriefingResponse()
+
+    class BriefingChat:
+        completions = BriefingCompletions()
+
+    class BriefingClient:
+        chat = BriefingChat()
+
+    monkeypatch.setattr(top10, "get_openai_client", lambda: BriefingClient())
+
+    first = _briefing_article(1, "Other", "Example Story", 4, source="Source A")
+    first["source_id"] = 101
+    second = _briefing_article(2, "Other", "Example Story", 4, source="Source B")
+    second["source_id"] = 202
+
+    result = top10._get_briefings([{
+        "canonical_label": "Example Story",
+        "story_id": 42,
+        "articles": [first, second],
+    }], include_evidence=True)
+
+    assert captured["items"][0]["claim_source_agreement"]["source_divergence_notes"]
+    assert result["Example Story"]["source_agreement"] == "mixed"
+    assert result["Example Story"]["dispute_flag"] == "possible conflict"
+
+
 def test_evidence_lines_do_not_fallback_to_claim_text(monkeypatch):
     monkeypatch.setattr(
         claims_module,

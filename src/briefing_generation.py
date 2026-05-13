@@ -8,7 +8,7 @@ from src.llm import (
     parse_json_object,
     save_cached_chat_completion,
 )
-from src.source_agreement import source_agreement_label
+from src.source_agreement import claim_source_agreement, source_agreement_label
 
 
 STATUS_VALUES = {"new", "developing", "escalating", "cooling", "disputed", "unresolved"}
@@ -98,6 +98,9 @@ def clean_open_questions(value):
 
 
 def local_dispute_flag(story):
+    claim_agreement = story.get("claim_source_agreement") or {}
+    if claim_agreement.get("source_divergence_notes"):
+        return "possible conflict"
     text = " ".join(
         [story.get("canonical_label", "")]
         + [article.get("title", "") for article in story.get("articles", [])]
@@ -137,6 +140,9 @@ def default_confidence(story):
 
 
 def default_source_agreement(story):
+    claim_agreement = story.get("claim_source_agreement") or {}
+    if claim_agreement.get("label"):
+        return claim_agreement["label"]
     return source_agreement_label(
         story.get("articles", []),
         has_dispute=local_dispute_flag(story) != "none",
@@ -164,12 +170,16 @@ def defaults_by_label(stories):
 
 
 def claims_for_prompt(story):
+    if story.get("claims_for_prompt") is not None:
+        return story["claims_for_prompt"]
     from src.claims import get_claims_for_story
     article_by_id = {str(article.get("id")): article for article in story.get("articles", [])}
     claims = []
     for claim in get_claims_for_story(story.get("story_id"))[:12]:
         article = article_by_id.get(str(claim.get("article_id")), {})
         claims.append({
+            "article_id": claim.get("article_id"),
+            "source_id": article.get("source_id"),
             "claim_text": claim.get("claim_text", ""),
             "claim_type": claim.get("claim_type", ""),
             "evidence_span": claim.get("evidence_span", ""),
@@ -179,6 +189,28 @@ def claims_for_prompt(story):
             "url": claim.get("url") or article.get("url", ""),
         })
     return claims
+
+
+def attach_claim_source_agreement(story):
+    claims = claims_for_prompt(story)
+    agreement = claim_source_agreement(claims, story.get("articles", []))
+    story["claims_for_prompt"] = claims
+    story["claim_source_agreement"] = agreement
+    return agreement
+
+
+def apply_claim_backed_agreement(payloads, stories):
+    for story in stories:
+        label = story.get("canonical_label")
+        agreement = story.get("claim_source_agreement") or {}
+        agreement_label = agreement.get("label")
+        if not label or not agreement_label:
+            continue
+        payload = payloads.setdefault(label, default_briefing_payload(story))
+        payload["source_agreement"] = agreement_label
+        if agreement.get("source_divergence_notes"):
+            payload["dispute_flag"] = "possible conflict"
+    return payloads
 
 
 def get_briefings(stories, get_client, model, include_evidence=False):
@@ -206,7 +238,10 @@ def get_briefings(stories, get_client, model, include_evidence=False):
         if story.get("previous_context"):
             item["previous_context"] = story["previous_context"]
         if include_evidence:
-            item["claims"] = claims_for_prompt(story)
+            agreement = attach_claim_source_agreement(story)
+            item["claims"] = story["claims_for_prompt"]
+            if agreement.get("label"):
+                item["claim_source_agreement"] = agreement
         items.append(item)
 
     messages = [
@@ -229,7 +264,7 @@ def get_briefings(stories, get_client, model, include_evidence=False):
         raise ValueError('Model response must contain a "briefings" list')
     if not cache_hit:
         save_cached_chat_completion(cache_metadata, response)
-    return normalize_briefing_payloads({
+    normalized = normalize_briefing_payloads({
         briefing["canonical_label"]: {
             "briefing": str(briefing.get("briefing", "")).strip(),
             "delta_summary": str(briefing.get("delta_summary") or briefing.get("delta") or "").strip(),
@@ -242,6 +277,9 @@ def get_briefings(stories, get_client, model, include_evidence=False):
         for briefing in briefings
         if isinstance(briefing, dict) and "canonical_label" in briefing
     }, defaults_by_label(stories))
+    if include_evidence:
+        apply_claim_backed_agreement(normalized, stories)
+    return normalized
 
 
 def normalize_briefing_payloads(payloads, defaults_by_label=None):

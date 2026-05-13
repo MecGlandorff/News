@@ -98,6 +98,16 @@ It returns story-card metadata as bounded labels:
 
 These labels are briefing-level signals. They make uncertainty visible in the artifact, but they are not yet a replacement for the planned claim-backed source-agreement and source-divergence layer. `confirmed conflict` is intentionally not an allowed briefing value until there is structured claim backing for it.
 
+When `--show-evidence` supplies saved claims, the briefing input includes a deterministic `claim_source_agreement` summary. This first pass is intentionally conservative:
+
+- background claims are ignored
+- exact repeated non-background claims across distinct source identities count as claim-backed support
+- four or more distinct source identities repeating the same claim can produce `broad`; two or three can produce `partial`
+- multiple claim-bearing source identities without exact repeats remain `partial`, not `broad`
+- numeric claims with similar context but different numbers produce lightweight source-divergence notes and force `mixed` plus `possible conflict`
+
+The summary uses `source_id` where available and falls back to normalized source names for older rows. It does not adjudicate truth, infer independence, or create confirmed contradiction prose.
+
 ---
 
 ## Claim extraction cost policy

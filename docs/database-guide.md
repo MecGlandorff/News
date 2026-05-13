@@ -498,7 +498,7 @@ Older rows may not have `source_id`. New rows should get it when the raw source 
 
 The database is memory and audit state, not a source of truth by itself.
 
-- `source_agreement` is not claim-backed yet.
+- Evidence-mode `source_agreement` can be backed by saved claim comparison, but ordinary runs still use source identity and briefing-level defaults.
 - There is no dedicated `contradictions` table planned for Phase 3; source divergence should be backed by claim comparison instead.
 - Publication date is stored; true event date is not separately extracted yet.
 - Source support uses `source_id` where available and source-name fallback for older rows, but it still does not prove independent corroboration.
