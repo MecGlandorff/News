@@ -29,8 +29,8 @@ The current prototype is directionally strong, but several important parts are s
 - [ ] Full-text claim extraction is enabled for evidence runs, and its cost/latency is visible; the repeatable quality harness exists, but real reviewed cases still need to be run
 - [x] Run observability covers token use, latency, cache hits, schema failures, retries, EUR estimates, and scraper duplicate/failure counts
 - [x] Source metadata is modeled as a first-class table, and source identity is used before source-name fallback
-- [ ] Source agreement is surfaced in the briefing, but not yet backed by a dedicated comparison layer
-- [ ] Source-divergence notes are not implemented; a dedicated contradiction module/table is no longer Phase 3 scope
+- [ ] Source agreement is now claim-backed in evidence mode for exact repeated claims, but still does not infer independent corroboration
+- [ ] Source-divergence notes exist for conservative numeric divergence in evidence mode; dates, statuses, and attributions are still not compared
 - [ ] Evaluation coverage is still early; claim-quality comparison is operational, while story, citation, temporal, and source-divergence evals are still planned
 
 ## Priority order
@@ -152,21 +152,22 @@ Right now sources are mostly plain strings. That is enough to ingest feeds, but 
 
 ## 4. Source agreement and source-divergence handling
 
-The briefing currently surfaces agreement-style labels, but those labels are still prompt-level signals rather than outputs of a dedicated comparison layer.
+The briefing surfaces agreement-style labels. In evidence mode, a deterministic claim comparison summary now overrides the model's label for exact repeated non-background claims and conservative numeric divergence. Outside evidence mode, labels still fall back to source identity and prompt-level signals.
 
 ### Source agreement
 
-- [ ] Compare claims within a story across multiple sources
+- [x] Compare exact repeated claims within a story across multiple sources
 - [ ] Distinguish repeated reporting from independent corroboration
-- [ ] Mark single-source claims clearly
-- [ ] Surface source agreement using claim-level backing rather than prompt-only synthesis
+- [x] Mark single-source claim sets clearly when evidence mode has saved claims
+- [x] Surface source agreement using claim-level backing in evidence mode
 
 ### Source divergence
 
-- [ ] Compare claim pairs for different numbers, dates, statuses, or attributions when the source-agreement layer already has comparable claims
-- [ ] Record lightweight source-divergence notes in the comparison output
+- [x] Compare claim pairs for different numbers when the source-agreement layer already has comparable claims
+- [ ] Compare claim pairs for different dates, statuses, or attributions when comparable claims exist
+- [x] Record lightweight source-divergence notes in the comparison output
 - [ ] Avoid a dedicated contradiction module or `contradictions` table in Phase 3
-- [ ] Surface divergence cautiously as a note, not as confirmed contradiction prose
+- [x] Surface divergence cautiously as a note, not as confirmed contradiction prose
 
 ## 5. Briefing quality
 
@@ -177,7 +178,7 @@ The end product should read like an auditable intelligence artifact rather than 
 - [ ] Make uncertainty visible rather than smoothing it away
 - [ ] Distinguish reported claims from confirmed facts
 - [ ] Surface open questions consistently
-- [ ] Improve source agreement labels so they are backed by the underlying data model
+- [x] Improve source agreement labels so evidence-mode labels are backed by saved claims
 
 ## 6. Evaluation
 
@@ -211,5 +212,5 @@ If only a few improvements happen next, they should be these:
 - [x] Add run-level observability
 - [x] Add `--pipeline-report`
 - [x] Implement full-text claim extraction for evidence runs
-- [ ] Back source agreement with claim-level comparison
+- [x] Back evidence-mode source agreement with claim-level comparison
 - [ ] Add evals that measure quality against cost and latency

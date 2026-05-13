@@ -293,13 +293,22 @@ delta_summary, briefing, open_questions
 
 The allowed labels are normalized and defaults are supplied when the model omits or malforms a field. If a displayed story comes back without briefing text, the system retries missing stories and then falls back to deterministic text if needed.
 
+When evidence mode is enabled, saved claims are also summarized before the briefing call. The first claim-backed source-agreement pass is deterministic and narrow:
+
+- exact repeated non-background claims across distinct source identities can move agreement to `partial` or `broad`
+- multiple claim-bearing source identities without exact repeats stay conservative at `partial`
+- numeric claims with otherwise similar wording but different numbers create lightweight source-divergence notes and force `mixed`
+- claim-backed labels override the model's briefing-level `source_agreement`; numeric divergence forces `possible conflict`
+- this adds no new LLM call and no new database table
+
 After briefing generation, `save_observation_memory()` writes the generated summary and `delta_summary` back to `story_observations`. That is what lets the next run compare today's reporting against previous context.
 
 Trust boundary:
 
 - The briefing is the final prose layer.
 - It may synthesize across articles and claims, but it should not invent unsupported facts.
-- Current `source_agreement` and `dispute_flag` are briefing-level signals, not claim-backed source-agreement or source-divergence records.
+- Without evidence mode, `source_agreement` and `dispute_flag` remain briefing-level signals backed by source identity and prompt constraints.
+- With evidence mode, the deterministic claim-backed summary can override these labels when comparable saved claims exist.
 
 ## Stage 6: Observability
 
