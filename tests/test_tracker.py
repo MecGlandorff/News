@@ -87,8 +87,8 @@ def test_track_is_idempotent_for_same_day(tmp_path, monkeypatch):
 
     articles = [_article(1, "First title"), _article(2, "Second title")]
 
-    first = tracker.track(articles, today="2026-04-18")
-    second = tracker.track(articles, today="2026-04-18")
+    first = tracker.track(articles, today="2026-04-18", verify_story_matches=False)
+    second = tracker.track(articles, today="2026-04-18", verify_story_matches=False)
 
     assert len(first) == 2
     assert len(second) == 2
@@ -116,7 +116,7 @@ def test_track_populates_source_id_when_source_metadata_exists(tmp_path, monkeyp
     monkeypatch.setattr(sources_module, "DB_PATH", db_path)
     sources_module.seed_sources([("Test Source", "en", "https://example.com/rss")])
 
-    tracker.track([_article(1, "First title")], today="2026-04-18")
+    tracker.track([_article(1, "First title")], today="2026-04-18", verify_story_matches=False)
 
     conn = sqlite3.connect(db_path)
     row = conn.execute("""
@@ -135,8 +135,16 @@ def test_track_replaces_same_day_article_story_assignment(tmp_path, monkeypatch)
     monkeypatch.setattr(tracker, "DB_PATH", db_path)
     monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
 
-    tracker.track([_article(1, "First title", story_label="Old Story")], today="2026-04-18")
-    tracker.track([_article(1, "First title", story_label="New Story")], today="2026-04-18")
+    tracker.track(
+        [_article(1, "First title", story_label="Old Story")],
+        today="2026-04-18",
+        verify_story_matches=False,
+    )
+    tracker.track(
+        [_article(1, "First title", story_label="New Story")],
+        today="2026-04-18",
+        verify_story_matches=False,
+    )
 
     conn = sqlite3.connect(db_path)
     labels = conn.execute("""
@@ -171,14 +179,22 @@ def test_track_attaches_previous_story_context(tmp_path, monkeypatch):
         lambda labels, recent, today=None: {label: label if label in recent else "NEW" for label in labels},
     )
 
-    first = tracker.track([_article(1, "First title")], today="2026-04-18")
+    first = tracker.track(
+        [_article(1, "First title")],
+        today="2026-04-18",
+        verify_story_matches=False,
+    )
     tracker.save_observation_memory([{
         "observation_id": first[0]["observation_id"],
         "summary": "Earlier summary.",
         "delta_summary": "Earlier change.",
     }])
 
-    second = tracker.track([_article(2, "Second title")], today="2026-04-19")
+    second = tracker.track(
+        [_article(2, "Second title")],
+        today="2026-04-19",
+        verify_story_matches=False,
+    )
 
     context = second[0]["previous_context"]
     assert context["last_observed"] == "2026-04-18"

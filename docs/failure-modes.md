@@ -66,13 +66,13 @@ For the end-to-end flow where these failures can enter, read [how-it-works.md](h
 
 **Description:** The consolidation or matching LLM merges two distinct stories that share keywords, actors, geography, or broad context (e.g. "Iran nuclear deal" and "Iran ceasefire talks" treated as one story).
 
-**Detection:** Manual review of canonical labels. Eval: story clustering pairwise F1 against a golden set. When `--verify-story-matches` is enabled, inspect `story_match_decisions` for rejected/accepted candidate matches.
+**Detection:** Manual review of canonical labels. Eval: story clustering pairwise F1 against a golden set. Inspect `story_match_decisions` for rejected/accepted candidate matches when a candidate crossed the verifier gate.
 
-**Mitigation:** `CONSOLIDATE_PROMPT` is explicit about only merging "clearly the same event." `MATCH_PROMPT` says broad topic similarity is not enough. The tracker also applies a deterministic guard for generic incident/category labels: labels such as accidents, crashes, shootings, and lawsuits may not merge unless they share a distinctive token beyond the generic category. With `--verify-story-matches`, candidate cross-day matches are checked using full article text and `gpt-5.4-nano`; weak, uncertain, adjacent-topic, or malformed verifier decisions default to a new story.
+**Mitigation:** `CONSOLIDATE_PROMPT` is explicit about only merging "clearly the same event." `MATCH_PROMPT` says broad topic similarity is not enough. The tracker also applies a deterministic guard for generic incident/category labels: labels such as accidents, crashes, shootings, and lawsuits may not merge unless they share a distinctive token beyond the generic category. Candidate cross-day matches are checked by default using full article text and `gpt-5.4-nano`; weak, uncertain, adjacent-topic, or malformed verifier decisions default to a new story. Use `--no-verify-story-matches` only for comparison runs.
 
-**Current status:** Partially mitigated by prompt design, deterministic false-merge guards, and optional story-match verification. The verifier is not enabled by default. Exact verifier model responses can be cached for identical prompts, but there is no semantic decision cache.
+**Current status:** Partially mitigated by prompt design, deterministic false-merge guards, and default-on story-match verification. Exact verifier model responses can be cached for identical prompts, but there is no semantic decision cache.
 
-**Future improvement:** Add a story clustering eval dataset and a `story_match_cases.jsonl` fixture set. Track false-merge rate over time and decide when the verifier is safe to enable by default.
+**Future improvement:** Add a story clustering eval dataset and a `story_match_cases.jsonl` fixture set. Track false-merge and false-split rates over time before making the verifier more permissive.
 
 **Motivating example:** Run #2 on 2026-05-07 attached Al Jazeera's `Palestinians expose torture and sexual violence in Israeli detention` to `Gaza flotilla raid`. The correct behavior is to reject that as an adjacent topic and keep it as a separate story.
 

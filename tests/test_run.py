@@ -25,7 +25,7 @@ def _args(**overrides):
         "fetch_article_text": False,
         "include_undated": False,
         "show_evidence": False,
-        "verify_story_matches": False,
+        "verify_story_matches": True,
         "pipeline_report": False,
         "log_level": "INFO",
     }
@@ -59,7 +59,7 @@ def test_db_off_uses_temporary_database_paths_and_restores_originals(tmp_path, m
         seen["sources_db"] = sources.DB_PATH
         return [{"id": "article-1"}]
 
-    def fake_track(classified, today=None):
+    def fake_track(classified, today=None, verify_story_matches=True):
         seen["tracker_db"] = tracker.DB_PATH
         seen["tracker_daily"] = tracker.DATA_DIR
         seen["claims_db"] = claims.DB_PATH
@@ -113,7 +113,7 @@ def test_normal_run_uses_configured_database_paths(tmp_path, monkeypatch):
         seen["sources_db"] = sources.DB_PATH
         return []
 
-    def fake_track(classified, today=None):
+    def fake_track(classified, today=None, verify_story_matches=True):
         seen["tracker_db"] = tracker.DB_PATH
         seen["claims_db"] = claims.DB_PATH
         seen["llm_response_cache_db"] = llm_response_cache.DB_PATH
@@ -181,6 +181,22 @@ def test_parse_args_allows_include_undated(monkeypatch):
     assert args.include_undated is True
 
 
+def test_parse_args_defaults_story_match_verifier_on(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["run.py"])
+
+    args = run.parse_args()
+
+    assert args.verify_story_matches is True
+
+
+def test_parse_args_allows_story_match_verifier_opt_out(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["run.py", "--no-verify-story-matches"])
+
+    args = run.parse_args()
+
+    assert args.verify_story_matches is False
+
+
 def test_pipeline_report_prints_run_totals(tmp_path, monkeypatch, capsys):
     real_db = tmp_path / "real" / "stories.db"
     real_daily = tmp_path / "real" / "daily"
@@ -202,7 +218,7 @@ def test_pipeline_report_prints_run_totals(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(
         run,
         "track",
-        lambda classified, today=None: [
+        lambda classified, today=None, verify_story_matches=True: [
             {"id": "article-1", "story_id": 7},
             {"id": "article-2", "story_id": 7},
         ],
@@ -247,7 +263,9 @@ def test_main_writes_run_artifact_markdown(tmp_path, monkeypatch):
     monkeypatch.setattr(
         run,
         "track",
-        lambda classified, today=None: [{"id": "article-1", "story_id": 7}],
+        lambda classified, today=None, verify_story_matches=True: [
+            {"id": "article-1", "story_id": 7}
+        ],
     )
 
     assert run.main() == []
@@ -260,7 +278,7 @@ def test_main_writes_run_artifact_markdown(tmp_path, monkeypatch):
     assert "| Stories touched | 1 |" in markdown
 
 
-def test_verify_story_matches_flag_is_passed_to_tracker(tmp_path, monkeypatch):
+def test_verify_story_matches_default_is_passed_to_tracker(tmp_path, monkeypatch):
     real_db = tmp_path / "real" / "stories.db"
     real_daily = tmp_path / "real" / "daily"
     monkeypatch.setattr(article_cache, "DB_PATH", real_db)
@@ -269,7 +287,7 @@ def test_verify_story_matches_flag_is_passed_to_tracker(tmp_path, monkeypatch):
     monkeypatch.setattr(sources, "DB_PATH", real_db)
     monkeypatch.setattr(tracker, "DB_PATH", real_db)
     monkeypatch.setattr(tracker, "DATA_DIR", real_daily)
-    monkeypatch.setattr(run, "parse_args", lambda: _args(verify_story_matches=True))
+    monkeypatch.setattr(run, "parse_args", lambda: _args())
     monkeypatch.setattr(run, "require_openai_api_key", lambda: None)
 
     seen = {}
@@ -277,7 +295,7 @@ def test_verify_story_matches_flag_is_passed_to_tracker(tmp_path, monkeypatch):
     monkeypatch.setattr(run, "scrape_all", lambda **kwargs: [{"id": "article-1"}])
     monkeypatch.setattr(run, "classify_articles", lambda articles: articles)
 
-    def fake_track(classified, today=None, verify_story_matches=False):
+    def fake_track(classified, today=None, verify_story_matches=True):
         seen["verify_story_matches"] = verify_story_matches
         return []
 
@@ -285,6 +303,33 @@ def test_verify_story_matches_flag_is_passed_to_tracker(tmp_path, monkeypatch):
 
     assert run.main() == []
     assert seen["verify_story_matches"] is True
+
+
+def test_verify_story_matches_opt_out_is_passed_to_tracker(tmp_path, monkeypatch):
+    real_db = tmp_path / "real" / "stories.db"
+    real_daily = tmp_path / "real" / "daily"
+    monkeypatch.setattr(article_cache, "DB_PATH", real_db)
+    monkeypatch.setattr(claims, "DB_PATH", real_db)
+    monkeypatch.setattr(observability, "DB_PATH", real_db)
+    monkeypatch.setattr(sources, "DB_PATH", real_db)
+    monkeypatch.setattr(tracker, "DB_PATH", real_db)
+    monkeypatch.setattr(tracker, "DATA_DIR", real_daily)
+    monkeypatch.setattr(run, "parse_args", lambda: _args(verify_story_matches=False))
+    monkeypatch.setattr(run, "require_openai_api_key", lambda: None)
+
+    seen = {}
+
+    monkeypatch.setattr(run, "scrape_all", lambda **kwargs: [{"id": "article-1"}])
+    monkeypatch.setattr(run, "classify_articles", lambda articles: articles)
+
+    def fake_track(classified, today=None, verify_story_matches=True):
+        seen["verify_story_matches"] = verify_story_matches
+        return []
+
+    monkeypatch.setattr(run, "track", fake_track)
+
+    assert run.main() == []
+    assert seen["verify_story_matches"] is False
 
 
 def test_main_finalizes_run_as_error_when_pipeline_fails(tmp_path, monkeypatch):

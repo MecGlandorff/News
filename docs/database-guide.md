@@ -64,7 +64,7 @@ Conditional tables:
 
 - `claims` and `claim_extractions` are created when `--show-evidence` is used.
 - `llm_response_cache` is created when exact cached matching, verification, or briefing calls run in an observed pipeline context.
-- `story_match_decisions` exists in current tracker schema, but rows are only written when `--verify-story-matches` checks candidates.
+- `story_match_decisions` exists in current tracker schema, but rows are only written when the verifier checks candidate cross-day matches. Verification is on by default and can be disabled with `--no-verify-story-matches`.
 - Older databases may lack newer nullable columns until a run touches the relevant schema helper.
 
 ## Latest Runs
@@ -493,15 +493,15 @@ Older rows may not have `source_id`. New rows should get it when the raw source 
 1. Search `stories.canonical_label`.
 2. Inspect `story_daily.labels_seen` across dates.
 3. Inspect `articles` for each date.
-4. If `--verify-story-matches` was enabled, inspect `story_match_decisions`.
-5. If there is no verifier row, the merge came from same-day consolidation or cross-day matching without the verifier gate.
+4. Inspect `story_match_decisions` for the run.
+5. If there is no verifier row, the merge came from same-day consolidation, a no-candidate cross-day path, or a run where `--no-verify-story-matches` disabled the verifier.
 
 ### Why did LLM calls spike?
 
 1. Check `runs.llm_calls_count` and token totals.
 2. Group `llm_calls` by `purpose`.
 3. Check `runs.llm_cache_hits`.
-4. Confirm whether `--show-evidence`, `--verify-story-matches`, or `--fetch-article-text` was enabled.
+4. Confirm whether `--show-evidence`, `--no-verify-story-matches`, or `--fetch-article-text` changed the expected call shape.
 5. Check whether classification or claim content hashes changed, invalidating caches.
 
 ### Why are there no claims?

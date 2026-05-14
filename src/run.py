@@ -55,7 +55,8 @@ def parse_args():
     )
     parser.add_argument(
         "--verify-story-matches",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
+        default=True,
         help="Verify candidate story matches with full article text and gpt-5.4-nano before reusing story memory",
     )
     parser.add_argument("--pipeline-report", action="store_true", help="Print run totals, LLM calls, latency, token usage, and estimated cost")
@@ -125,10 +126,8 @@ def classify_scraped_articles(articles):
     return classify_articles(articles)
 
 
-def track_stories(classified, run_date, verify_story_matches=False):
-    if verify_story_matches:
-        return track(classified, today=run_date, verify_story_matches=True)
-    return track(classified, today=run_date)
+def track_stories(classified, run_date, verify_story_matches=True):
+    return track(classified, today=run_date, verify_story_matches=verify_story_matches)
 
 
 def maybe_extract_claims(args, tracked):
@@ -174,7 +173,7 @@ def run_pipeline(args, run_date=None):
     tracked = track_stories(
         classified,
         run_date,
-        verify_story_matches=getattr(args, "verify_story_matches", False),
+        verify_story_matches=getattr(args, "verify_story_matches", True),
     )
     stories_touched = len({
         article.get("story_id")

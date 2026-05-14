@@ -10,7 +10,7 @@ It is a builder-grade prototype of an intelligence briefing system: RSS ingestio
 Source -> Article -> Claim -> Story Arc -> Story Delta -> Briefing
 ```
 
-> **Status:** Active prototype. Story memory, full-text claim grounding, claim/span derivability gate (deterministic + cheap LLM verifier), source metadata, source-identity support, LLM observability, estimated run cost, exact LLM response caching, optional full-text story-match verification, and a repeatable claim-quality eval harness are implemented. Evidence-mode claim-backed source agreement now has a conservative first pass for exact repeated claims and numeric divergence; reviewed paraphrase verifier cases and broader date/status/attribution divergence are still in progress.
+> **Status:** Active prototype. Story memory, full-text claim grounding, claim/span derivability gate (deterministic + cheap LLM verifier), source metadata, source-identity support, LLM observability, estimated run cost, exact LLM response caching, default-on full-text story-match verification, and a repeatable claim-quality eval harness are implemented. Evidence-mode claim-backed source agreement now has a conservative first pass for exact repeated claims and numeric divergence; reviewed paraphrase verifier cases and broader date/status/attribution divergence are still in progress.
 
 ## Why it is great! 
 
@@ -97,13 +97,13 @@ The tracker keeps a compact local memory of each event:
 - linked articles and observations per day
 - generated summary and `delta_summary` for the next run
 
-Candidate cross-day matches can be verified before memory is reused:
+Candidate cross-day matches are verified by default before memory is reused:
 
 ```bash
-python -m src.run --verify-story-matches
+python -m src.run
 ```
 
-That verifier uses `gpt-5.4-nano` and full article text for candidate matches. It asks whether today's article group continues the same real-world event, stores rows in `story_match_decisions`, and defaults to a new story when continuity evidence is weak.
+That verifier uses `gpt-5.4-nano` and full article text for candidate matches. It asks whether today's article group continues the same real-world event, stores rows in `story_match_decisions`, and defaults to a new story when continuity evidence is weak. Use `--no-verify-story-matches` only when comparing against the older label-only match path.
 
 ## Source Grounding
 
@@ -183,7 +183,7 @@ python -m src.run --date 2026-05-07 --include-undated
 python -m src.run --top-developments 5
 python -m src.run --show-evidence
 python -m src.run --fetch-article-text
-python -m src.run --verify-story-matches
+python -m src.run --no-verify-story-matches
 python -m src.run --pipeline-report
 python -m src.run --db-off
 python -m src.run --skip-digest
@@ -198,13 +198,13 @@ Notes:
 - `--db-off` uses a temporary SQLite database/cache and leaves `data/stories.db` untouched.
 - `--show-evidence` fetches article bodies for claim extraction and falls back to RSS title/description when body text is unavailable.
 - `--fetch-article-text` fetches article bodies even when evidence extraction is disabled.
-- `--verify-story-matches` does not require `--show-evidence`.
+- Story-match verification is on by default and does not require `--show-evidence`; `--no-verify-story-matches` disables it for comparison runs.
 - `--pipeline-report` prints run totals, scraper counts, claim metrics, model tokens, latency, and estimated EUR cost after success or failure.
 
 Example audit run:
 
 ```bash
-python -m src.run --date 2026-05-07 --fetch-article-text --verify-story-matches --show-evidence --pipeline-report
+python -m src.run --date 2026-05-07 --fetch-article-text --show-evidence --pipeline-report
 ```
 
 ## Local Data
