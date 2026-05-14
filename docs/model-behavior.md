@@ -72,7 +72,7 @@ The claim layer validates each returned claim before storage. A claim must have 
 
 Tracking decides whether labels refer to the same ongoing story. It should preserve temporal continuity and avoid merging stories merely because they share broad topics.
 
-When `--verify-story-matches` is enabled, candidate cross-day matches are checked by a separate verifier before the tracker reuses a story ID. The verifier receives today's title, RSS description, normalized article date, full article text when available, and compact recent story memory. It returns structured fields including:
+Candidate cross-day matches are checked by a separate verifier before the tracker reuses a story ID. This is enabled by default and can be disabled with `--no-verify-story-matches` for comparison runs. The verifier receives today's title, RSS description, normalized article date, full article text when available, and compact recent story memory. It returns structured fields including:
 
 - `same_event`
 - `relationship`

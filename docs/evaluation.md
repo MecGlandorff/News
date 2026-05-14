@@ -24,7 +24,7 @@ Current motivating failure: a sample output grouped an "OpenAI Shooter Lawsuit" 
 
 Second motivating failure: Run #2 on 2026-05-07 attached Al Jazeera's `Palestinians expose torture and sexual violence in Israeli detention` to `Gaza flotilla raid`. The correct behavior is not to reuse the flotilla story, because the article is adjacent Gaza/Israel detention context rather than the same flotilla event.
 
-For `--verify-story-matches`, evaluate both the final match result and the stored verifier decision:
+For story-match verification, evaluate both the final match result and the stored verifier decision:
 
 - accepted vs rejected candidate
 - `relationship`
@@ -176,7 +176,7 @@ Examples:
 
 - before source agreement detection, create claim-pair examples where sources agree, differ, or merely repeat the same wire copy
 - before broadening source-divergence notes beyond the current numeric first pass, create date/status/attribution examples with expected labels
-- before enabling `--verify-story-matches` by default, review 5-10 accepted and rejected match cases from recent newspapers
+- after enabling story-match verification by default, keep reviewing accepted and rejected match cases from recent newspapers before making the verifier more permissive
 - before making evidence extraction part of ordinary runs or making claim-backed agreement more authoritative, measure claim quality improvement against token and latency increase
 
 ---

@@ -196,7 +196,7 @@ def _trend(story_id, today_count, conn, today):
     return tracker_store.trend(story_id, today_count, conn, today)
 
 
-def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_story_matches=False):
+def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_story_matches=True):
     if not classified:
         return []
 

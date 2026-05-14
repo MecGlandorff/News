@@ -53,7 +53,7 @@ Story memory is built in two layers.
 
 First, `src/tracker.py` groups today's classified articles by story label. It asks the tracking model to consolidate same-day label variants, then asks whether today's labels continue recent canonical stories. The tracker is conservative about generic incident labels such as crashes, shootings, lawsuits, and attacks because false merges corrupt memory more severely than false splits.
 
-When `--verify-story-matches` is enabled, the tracker verifies candidate cross-day matches before it reuses an existing story ID. The verifier uses `gpt-5.4-nano`, the current article title, RSS description, normalized article date, full article text when available, and compact recent story memory. If full text is missing, the tracker fetches it only for candidate matches. Accepted matches require structured same-event evidence; adjacent, broad-context, uncertain, malformed, or weak decisions become new stories instead of corrupting existing memory.
+The tracker verifies candidate cross-day matches before it reuses an existing story ID by default. The verifier uses `gpt-5.4-nano`, the current article title, RSS description, normalized article date, full article text when available, and compact recent story memory. If full text is missing, the tracker fetches it only for candidate matches. Accepted matches require structured same-event evidence; adjacent, broad-context, uncertain, malformed, or weak decisions become new stories instead of corrupting existing memory. Use `--no-verify-story-matches` only for comparison runs against the older label-only match path.
 
 Second, the tracker writes a daily observation for each story. This observation records the label seen today, source count, article count, average importance, and later the generated summary and `delta_summary`. The next run can use that saved memory to answer: what changed since the last observation?
 
@@ -64,7 +64,7 @@ The key tables are:
 - `story_observations`: the memory layer used for summaries and deltas.
 - `articles`: fetched articles linked to stories for the run date.
 - `article_story_links`: junction rows from article to story observation.
-- `story_match_decisions`: optional verifier audit rows for accepted and rejected candidate story matches.
+- `story_match_decisions`: verifier audit rows for accepted and rejected candidate story matches.
 
 ## How Source Grounding Works
 
@@ -232,7 +232,7 @@ PRIMARY KEY (article_id, story_id, observation_id)
 
 ### `story_match_decisions`
 
-Audit rows written when `--verify-story-matches` checks candidate cross-day matches.
+Audit rows written when the verifier checks candidate cross-day matches. Verification is on by default and can be disabled with `--no-verify-story-matches`.
 
 ```sql
 decision_id          INTEGER PRIMARY KEY AUTOINCREMENT
@@ -363,7 +363,7 @@ created_at          TEXT NOT NULL
 
 ### `llm_response_cache`
 
-Exact response cache for same-day matching, cross-day matching, optional story-match verification, and briefing generation. The cache key is the full request shape, not a semantic similarity key.
+Exact response cache for same-day matching, cross-day matching, story-match verification, and briefing generation. The cache key is the full request shape, not a semantic similarity key.
 
 ```sql
 cache_id         INTEGER PRIMARY KEY AUTOINCREMENT

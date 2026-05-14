@@ -146,7 +146,7 @@ Tradeoff:
 
 Do not implement a keyword patch.
 
-Implement Option 2 plus a narrow form of Option 3 behind `--verify-story-matches`:
+Implement Option 2 plus a narrow form of Option 3. This shipped behind `--verify-story-matches`; a 2026-05-14 follow-up made verification default-on with `--no-verify-story-matches` available for comparison runs.
 
 - require structured continuity decisions for cross-day matches
 - include today's title, RSS description, reported date, and full article text in the verifier input when available
