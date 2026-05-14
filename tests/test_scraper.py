@@ -169,6 +169,55 @@ def test_scrape_all_filters_to_target_date(monkeypatch):
     assert [article["title"] for article in articles] == ["Today"]
 
 
+def test_scrape_all_can_include_undated_items_with_target_date(monkeypatch, capsys):
+    def fake_parse_rss(url, session=None):
+        return [
+            {
+                "title": "Today",
+                "url": "https://example.com/today",
+                "description": "Description",
+                "published_at": "Sat, 18 Apr 2026 10:00:00 GMT",
+            },
+            {
+                "title": "Yesterday",
+                "url": "https://example.com/yesterday",
+                "description": "Description",
+                "published_at": "Fri, 17 Apr 2026 10:00:00 GMT",
+            },
+            {
+                "title": "Missing",
+                "url": "https://example.com/missing",
+                "description": "Description",
+                "published_at": "",
+            },
+            {
+                "title": "Bad date",
+                "url": "https://example.com/bad-date",
+                "description": "Description",
+                "published_at": "not a date",
+            },
+        ]
+
+    monkeypatch.setattr(scraper, "_parse_rss", fake_parse_rss)
+    monkeypatch.setattr(scraper.time, "sleep", lambda delay: None)
+
+    articles = scraper.scrape_all(
+        sources=[("Example", "en", "https://example.com/rss")],
+        target_date="2026-04-18",
+        include_undated=True,
+    )
+
+    output = capsys.readouterr().out
+    stats = scraper.last_scrape_stats()
+    assert [article["title"] for article in articles] == ["Today", "Missing", "Bad date"]
+    assert stats["feed_items_outside_date_skipped"] == 1
+    assert stats["feed_items_missing_timestamp_included"] == 1
+    assert stats["feed_items_unparseable_timestamp_included"] == 1
+    assert stats["feed_items_missing_timestamp_skipped"] == 0
+    assert stats["feed_items_unparseable_timestamp_skipped"] == 0
+    assert "Included 2 feed items without a usable timestamp because --include-undated is enabled" in output
+
+
 def test_scrape_all_reports_timestamp_skip_reasons(monkeypatch, capsys):
     def fake_parse_rss(url, session=None):
         if url.endswith("/a"):
@@ -218,6 +267,10 @@ def test_scrape_all_reports_timestamp_skip_reasons(monkeypatch, capsys):
 
     output = capsys.readouterr().out
     assert [article["title"] for article in articles] == ["Today"]
+    stats = scraper.last_scrape_stats()
+    assert stats["feed_items_outside_date_skipped"] == 1
+    assert stats["feed_items_missing_timestamp_skipped"] == 2
+    assert stats["feed_items_unparseable_timestamp_skipped"] == 1
     assert "Skipped 1 feed items outside 2026-04-18" in output
     assert "Skipped 3 feed items without a usable timestamp (2 missing, 1 unparseable)" in output
     assert "Example A: 2 (1 missing, 1 unparseable)" in output

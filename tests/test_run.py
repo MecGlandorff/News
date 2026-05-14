@@ -1,4 +1,5 @@
 import sqlite3
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -22,6 +23,7 @@ def _args(**overrides):
         "db_off": False,
         "top_developments": 5,
         "fetch_article_text": False,
+        "include_undated": False,
         "show_evidence": False,
         "verify_story_matches": False,
         "pipeline_report": False,
@@ -132,6 +134,7 @@ def test_normal_run_uses_configured_database_paths(tmp_path, monkeypatch):
     assert seen["observability_db"] == real_db
     assert seen["scrape_kwargs"]["target_date"] == "2026-04-28"
     assert seen["scrape_kwargs"]["fetch_article_text"] is False
+    assert seen["scrape_kwargs"]["include_undated"] is False
 
 
 def test_show_evidence_requests_article_text(monkeypatch):
@@ -146,6 +149,36 @@ def test_show_evidence_requests_article_text(monkeypatch):
     run.scrape_articles(_args(show_evidence=True), "2026-04-28")
 
     assert seen["fetch_article_text"] is True
+
+
+def test_include_undated_flag_is_passed_to_scraper(monkeypatch):
+    seen = {}
+
+    def fake_scrape(**kwargs):
+        seen.update(kwargs)
+        return []
+
+    monkeypatch.setattr(run, "scrape_all", fake_scrape)
+
+    run.scrape_articles(_args(include_undated=True), "2026-04-28")
+
+    assert seen["include_undated"] is True
+
+
+def test_parse_args_defaults_include_undated_off(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["run.py"])
+
+    args = run.parse_args()
+
+    assert args.include_undated is False
+
+
+def test_parse_args_allows_include_undated(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["run.py", "--include-undated"])
+
+    args = run.parse_args()
+
+    assert args.include_undated is True
 
 
 def test_pipeline_report_prints_run_totals(tmp_path, monkeypatch, capsys):

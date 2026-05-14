@@ -179,6 +179,7 @@ Useful options:
 ```bash
 python -m src.run --max-per-source 5
 python -m src.run --date 2026-05-07
+python -m src.run --date 2026-05-07 --include-undated
 python -m src.run --top-developments 5
 python -m src.run --show-evidence
 python -m src.run --fetch-article-text
@@ -193,6 +194,7 @@ python -m src.run --skip-pdf
 Notes:
 
 - `--today` is a backwards-compatible alias for `--date`.
+- `--include-undated` only affects date-filtered runs; it keeps feed items with missing or unparseable published dates under the selected run date.
 - `--db-off` uses a temporary SQLite database/cache and leaves `data/stories.db` untouched.
 - `--show-evidence` fetches article bodies for claim extraction and falls back to RSS title/description when body text is unavailable.
 - `--fetch-article-text` fetches article bodies even when evidence extraction is disabled.

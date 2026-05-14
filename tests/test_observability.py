@@ -74,6 +74,11 @@ def test_pipeline_report_includes_scraper_claim_and_cost_totals(tmp_path, monkey
         run_id,
         duplicate_url_skips=2,
         feed_fetch_failures=1,
+        feed_items_outside_date_skipped=9,
+        feed_items_missing_timestamp_skipped=3,
+        feed_items_unparseable_timestamp_skipped=2,
+        feed_items_missing_timestamp_included=4,
+        feed_items_unparseable_timestamp_included=1,
         article_text_fetch_successes=7,
         article_text_fetch_failures=3,
         claim_articles_extracted=4,
@@ -95,6 +100,9 @@ def test_pipeline_report_includes_scraper_claim_and_cost_totals(tmp_path, monkey
 
     assert "Duplicate URLs skipped: 2" in report
     assert "Feed fetch failures:    1" in report
+    assert "Outside date skipped:   9" in report
+    assert "Undated included:      5 (4 missing, 1 unparseable)" in report
+    assert "Undated skipped:       5 (3 missing, 2 unparseable)" in report
     assert "Article text fetched:   7" in report
     assert "Article text failures:  3" in report
     assert "Claims extracted:       4" in report
@@ -115,6 +123,9 @@ def test_write_run_report_artifact_outputs_markdown_overview(tmp_path, monkeypat
         run_id,
         articles_returned=345,
         feed_fetch_failures=1,
+        feed_items_outside_date_skipped=12,
+        feed_items_missing_timestamp_included=2,
+        feed_items_unparseable_timestamp_included=1,
         stories_touched=164,
         llm_cache_hits=4,
     )
@@ -137,6 +148,8 @@ def test_write_run_report_artifact_outputs_markdown_overview(tmp_path, monkeypat
     assert "# Run Report: 2026-05-10" in markdown
     assert "| Articles returned | 345 |" in markdown
     assert "| Feed fetch failures | 1 |" in markdown
+    assert "| Feed items outside date skipped | 12 |" in markdown
+    assert "| Undated feed items included | 3 |" in markdown
     assert "| Stories touched | 164 |" in markdown
     assert "| LLM cache hits | 4 |" in markdown
     assert "| brief | 1 | 33,200 | 7,365 | 145.0s |" in markdown

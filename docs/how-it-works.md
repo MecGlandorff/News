@@ -60,7 +60,7 @@ Then `scraper.scrape_all()` fetches feed items. For each source it:
 
 - fetches the RSS feed with retry-enabled `requests`
 - parses title, link, description, and `pubDate`
-- filters by `--date` / `--today` when supplied
+- filters by `--date` / `--today` when supplied; `--include-undated` keeps feed items with missing or unparseable timestamps in that date-filtered batch
 - normalizes URLs by removing tracking parameters
 - deduplicates exact normalized URL repeats
 - creates a stable article ID from the normalized URL hash
@@ -361,6 +361,9 @@ Run #42 (2026-05-07, ok, 74.2s)
 Articles returned:      231
 Duplicate URLs skipped: 12
 Feed fetch failures:    1
+Outside date skipped:   44
+Undated included:      0 (0 missing, 0 unparseable)
+Undated skipped:       5 (4 missing, 1 unparseable)
 Article text fetched:   90
 Article text failures:  18
 Claims saved:           612
