@@ -1,6 +1,7 @@
 CLASSIFIER_MODEL = "gpt-5.4-mini"
 CLAIMS_MODEL     = "gpt-5.4-nano"
 TRACKER_MODEL    = "gpt-5.5"
+CROSSDAY_MATCH_MODEL = "gpt-5.4-mini"
 STORY_MATCH_VERIFIER_MODEL = "gpt-5.4-nano"
 BRIEFING_MODEL   = "gpt-5.5"
 

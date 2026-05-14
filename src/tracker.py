@@ -1,7 +1,12 @@
 import json
 from datetime import date
 from pathlib import Path
-from src.config import DEFAULT_LOOKBACK_DAYS, STORY_MATCH_VERIFIER_MODEL, TRACKER_MODEL
+from src.config import (
+    CROSSDAY_MATCH_MODEL,
+    DEFAULT_LOOKBACK_DAYS,
+    STORY_MATCH_VERIFIER_MODEL,
+    TRACKER_MODEL,
+)
 from src.llm import get_openai_client
 from src import observability, story_matching, tracker_store
 
@@ -175,7 +180,7 @@ def _match_labels(today_labels, recent_stories, today=None):
         today_labels,
         recent_stories,
         get_client=get_openai_client,
-        model=TRACKER_MODEL,
+        model=CROSSDAY_MATCH_MODEL,
         today=today,
         default_days=DEFAULT_LOOKBACK_DAYS,
     )

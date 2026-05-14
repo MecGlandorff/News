@@ -495,6 +495,7 @@ def test_match_labels_sends_per_label_candidate_memory(monkeypatch):
 
     class Completions:
         def create(self, **kwargs):
+            captured["model"] = kwargs["model"]
             captured["payload"] = json.loads(kwargs["messages"][1]["content"])
             return Response()
 
@@ -524,6 +525,7 @@ def test_match_labels_sends_per_label_candidate_memory(monkeypatch):
         },
     )
 
+    assert captured["model"] == "gpt-5.4-mini"
     match_case = captured["payload"]["match_cases"][0]
     assert match_case["today_label"] == "Iran Peace Proposal"
     recent = match_case["candidates"][0]
@@ -531,6 +533,71 @@ def test_match_labels_sends_per_label_candidate_memory(monkeypatch):
     assert recent["last_delta"] == "Iran sent a proposal but the US response remained unclear."
     assert recent["summary"] == "Negotiations continued under military pressure."
     assert recent["recent_titles"] == ["Iran sends new peace proposal"]
+
+
+def test_match_labels_batches_crossday_cases(monkeypatch):
+    monkeypatch.setattr(tracker.story_matching, "MATCH_CASES_PER_CALL", 2)
+    captured_batches = []
+
+    class Message:
+        def __init__(self, content):
+            self.content = content
+
+    class Choice:
+        def __init__(self, content):
+            self.message = Message(content)
+
+    class Response:
+        def __init__(self, payload):
+            self.choices = [Choice(json.dumps(payload))]
+
+    class Completions:
+        def create(self, **kwargs):
+            payload = json.loads(kwargs["messages"][1]["content"])
+            batch = payload["match_cases"]
+            captured_batches.append([case["today_label"] for case in batch])
+            return Response({
+                "matches": [
+                    {
+                        "today_label": case["today_label"],
+                        "canonical_label": case["candidates"][0]["canonical_label"],
+                    }
+                    for case in batch
+                ]
+            })
+
+    class Chat:
+        completions = Completions()
+
+    class Client:
+        chat = Chat()
+
+    monkeypatch.setattr(tracker, "get_openai_client", lambda: Client())
+    labels = {
+        "Alpha Event",
+        "Bravo Event",
+        "Charlie Event",
+        "Delta Event",
+        "Echo Event",
+    }
+    recent = {
+        label: {
+            "story_id": index,
+            "canonical_label": label,
+            "last_seen": "2026-05-01",
+            "summary": f"{label} continued yesterday.",
+        }
+        for index, label in enumerate(sorted(labels), start=1)
+    }
+
+    matches = tracker._match_labels(labels, recent, today="2026-05-02")
+
+    assert captured_batches == [
+        ["Alpha Event", "Bravo Event"],
+        ["Charlie Event", "Delta Event"],
+        ["Echo Event"],
+    ]
+    assert matches == {label: label for label in labels}
 
 
 def test_match_labels_uses_exact_response_cache_inside_run(tmp_path, monkeypatch):
