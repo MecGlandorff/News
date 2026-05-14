@@ -83,6 +83,7 @@ GENERIC_EVENT_TOKENS = {
     "stabbing", "strike", "trial", "unrest", "violence", "wounded",
 }
 CANDIDATES_PER_LABEL = 10
+MATCH_CASES_PER_CALL = 50
 SUMMARY_CHAR_LIMIT = 400
 DELTA_CHAR_LIMIT = 240
 TITLE_CHAR_LIMIT = 160
@@ -568,38 +569,41 @@ def match_labels(today_labels, recent_stories, get_client, model, today=None, de
     if not any(valid_candidates_by_label.values()):
         return {label: "NEW" for label in today_labels}
 
-    messages = [
-        {"role": "system", "content": MATCH_PROMPT},
-        {"role": "user", "content": json.dumps({
-            "match_cases": match_cases,
-        }, ensure_ascii=False)},
-    ]
-    response, cache_metadata, cache_hit = create_cached_chat_completion(
-        get_client,
-        model=model,
-        messages=messages,
-        purpose="match-crossday",
-        prompt_version=MATCH_PROMPT_VERSION,
-        response_format={"type": "json_object"},
-    )
-    payload = parse_json_object(response)
-    matches = payload.get("matches")
-    if not isinstance(matches, list):
-        mark_schema_failure('Model response must contain a "matches" list', response=response)
-        raise ValueError('Model response must contain a "matches" list')
-    if not cache_hit:
-        save_cached_chat_completion(cache_metadata, response)
     matched = {}
-    for match in matches:
-        if not isinstance(match, dict) or match.get("today_label") not in today_labels:
-            continue
-        today_label = match["today_label"]
-        canonical = match.get("canonical_label")
-        valid_candidates = valid_candidates_by_label.get(today_label, set())
-        if canonical in valid_candidates and labels_can_refer_to_same_story(today_label, canonical):
-            matched[today_label] = canonical
-        else:
-            matched[today_label] = "NEW"
+    cases_with_candidates = [case for case in match_cases if case["candidates"]]
+    for batch in chunked(cases_with_candidates, MATCH_CASES_PER_CALL):
+        batch_labels = {case["today_label"] for case in batch}
+        messages = [
+            {"role": "system", "content": MATCH_PROMPT},
+            {"role": "user", "content": json.dumps({
+                "match_cases": batch,
+            }, ensure_ascii=False)},
+        ]
+        response, cache_metadata, cache_hit = create_cached_chat_completion(
+            get_client,
+            model=model,
+            messages=messages,
+            purpose="match-crossday",
+            prompt_version=MATCH_PROMPT_VERSION,
+            response_format={"type": "json_object"},
+        )
+        payload = parse_json_object(response)
+        matches = payload.get("matches")
+        if not isinstance(matches, list):
+            mark_schema_failure('Model response must contain a "matches" list', response=response)
+            raise ValueError('Model response must contain a "matches" list')
+        if not cache_hit:
+            save_cached_chat_completion(cache_metadata, response)
+        for match in matches:
+            if not isinstance(match, dict) or match.get("today_label") not in batch_labels:
+                continue
+            today_label = match["today_label"]
+            canonical = match.get("canonical_label")
+            valid_candidates = valid_candidates_by_label.get(today_label, set())
+            if canonical in valid_candidates and labels_can_refer_to_same_story(today_label, canonical):
+                matched[today_label] = canonical
+            else:
+                matched[today_label] = "NEW"
     for label in today_labels:
         matched.setdefault(label, "NEW")
     return matched
