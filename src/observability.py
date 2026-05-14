@@ -24,6 +24,11 @@ RUN_TOTAL_COLUMNS = {
     "story_match_rejections",
     "duplicate_url_skips",
     "feed_fetch_failures",
+    "feed_items_outside_date_skipped",
+    "feed_items_missing_timestamp_skipped",
+    "feed_items_unparseable_timestamp_skipped",
+    "feed_items_missing_timestamp_included",
+    "feed_items_unparseable_timestamp_included",
     "article_text_fetch_successes",
     "article_text_fetch_failures",
     "claim_articles_extracted",
@@ -64,6 +69,11 @@ def _create_schema(conn):
             story_match_rejections INTEGER DEFAULT 0,
             duplicate_url_skips INTEGER DEFAULT 0,
             feed_fetch_failures INTEGER DEFAULT 0,
+            feed_items_outside_date_skipped INTEGER DEFAULT 0,
+            feed_items_missing_timestamp_skipped INTEGER DEFAULT 0,
+            feed_items_unparseable_timestamp_skipped INTEGER DEFAULT 0,
+            feed_items_missing_timestamp_included INTEGER DEFAULT 0,
+            feed_items_unparseable_timestamp_included INTEGER DEFAULT 0,
             article_text_fetch_successes INTEGER DEFAULT 0,
             article_text_fetch_failures INTEGER DEFAULT 0,
             claim_articles_extracted INTEGER DEFAULT 0,
@@ -107,6 +117,11 @@ def _create_schema(conn):
     _ensure_column(conn, "runs", "story_match_rejections", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "duplicate_url_skips", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "feed_fetch_failures", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "feed_items_outside_date_skipped", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "feed_items_missing_timestamp_skipped", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "feed_items_unparseable_timestamp_skipped", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "feed_items_missing_timestamp_included", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "feed_items_unparseable_timestamp_included", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "article_text_fetch_successes", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "article_text_fetch_failures", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "claim_articles_extracted", "INTEGER DEFAULT 0")
@@ -390,6 +405,11 @@ def get_run_report_data(run_id):
                    stories_touched, story_match_verifications,
                    story_match_accepts, story_match_rejections,
                    duplicate_url_skips, feed_fetch_failures,
+                   feed_items_outside_date_skipped,
+                   feed_items_missing_timestamp_skipped,
+                   feed_items_unparseable_timestamp_skipped,
+                   feed_items_missing_timestamp_included,
+                   feed_items_unparseable_timestamp_included,
                    article_text_fetch_successes, article_text_fetch_failures,
                    claim_articles_extracted, claim_articles_cached,
                    claim_invalid_dropped, claim_extraction_failures,
@@ -478,11 +498,32 @@ def pipeline_report(run_id):
 
     seconds = (row["total_latency_ms"] or 0) / 1000
     cost = llm_cost_summary(run_id)
+    undated_included = (
+        (row["feed_items_missing_timestamp_included"] or 0)
+        + (row["feed_items_unparseable_timestamp_included"] or 0)
+    )
+    undated_skipped = (
+        (row["feed_items_missing_timestamp_skipped"] or 0)
+        + (row["feed_items_unparseable_timestamp_skipped"] or 0)
+    )
     lines = [
         f"Run #{row['run_id']} ({row['run_date'] or 'unknown date'}, {row['status']}, {seconds:.1f}s)",
         f"Articles returned:      {row['articles_returned'] or 0}",
         f"Duplicate URLs skipped: {row['duplicate_url_skips'] or 0}",
         f"Feed fetch failures:    {row['feed_fetch_failures'] or 0}",
+        f"Outside date skipped:   {row['feed_items_outside_date_skipped'] or 0}",
+        (
+            "Undated included:      "
+            f"{undated_included} "
+            f"({row['feed_items_missing_timestamp_included'] or 0} missing, "
+            f"{row['feed_items_unparseable_timestamp_included'] or 0} unparseable)"
+        ),
+        (
+            "Undated skipped:       "
+            f"{undated_skipped} "
+            f"({row['feed_items_missing_timestamp_skipped'] or 0} missing, "
+            f"{row['feed_items_unparseable_timestamp_skipped'] or 0} unparseable)"
+        ),
         f"Article text fetched:   {row['article_text_fetch_successes'] or 0}",
         f"Article text failures:  {row['article_text_fetch_failures'] or 0}",
         f"Claims saved:           {row['claims_saved'] or 0}",
@@ -549,6 +590,14 @@ def run_report_markdown(run_id):
 
     seconds = (row["total_latency_ms"] or 0) / 1000
     cost = llm_cost_summary(run_id)
+    undated_included = (
+        (row["feed_items_missing_timestamp_included"] or 0)
+        + (row["feed_items_unparseable_timestamp_included"] or 0)
+    )
+    undated_skipped = (
+        (row["feed_items_missing_timestamp_skipped"] or 0)
+        + (row["feed_items_unparseable_timestamp_skipped"] or 0)
+    )
     lines = [
         f"# Run Report: {row['run_date'] or 'unknown date'}",
         "",
@@ -566,6 +615,13 @@ def run_report_markdown(run_id):
         f"| Articles returned | {_markdown_number(row['articles_returned'])} |",
         f"| Duplicate URLs skipped | {_markdown_number(row['duplicate_url_skips'])} |",
         f"| Feed fetch failures | {_markdown_number(row['feed_fetch_failures'])} |",
+        f"| Feed items outside date skipped | {_markdown_number(row['feed_items_outside_date_skipped'])} |",
+        f"| Undated feed items included | {_markdown_number(undated_included)} |",
+        f"| Undated feed items skipped | {_markdown_number(undated_skipped)} |",
+        f"| Missing-timestamp feed items included | {_markdown_number(row['feed_items_missing_timestamp_included'])} |",
+        f"| Unparseable-timestamp feed items included | {_markdown_number(row['feed_items_unparseable_timestamp_included'])} |",
+        f"| Missing-timestamp feed items skipped | {_markdown_number(row['feed_items_missing_timestamp_skipped'])} |",
+        f"| Unparseable-timestamp feed items skipped | {_markdown_number(row['feed_items_unparseable_timestamp_skipped'])} |",
         f"| Article text fetched | {_markdown_number(row['article_text_fetch_successes'])} |",
         f"| Article text failures | {_markdown_number(row['article_text_fetch_failures'])} |",
         f"| Claims saved | {_markdown_number(row['claims_saved'])} |",

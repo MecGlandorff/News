@@ -26,6 +26,11 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run the news intelligence pipeline.")
     parser.add_argument("--max-per-source", type=int, default=None)
     parser.add_argument("--today", "--date", dest="today", default=None, help="Override tracking date as YYYY-MM-DD")
+    parser.add_argument(
+        "--include-undated",
+        action="store_true",
+        help="Include feed items with missing or unparseable published dates in the selected run date",
+    )
     parser.add_argument("--skip-digest", action="store_true")
     parser.add_argument("--skip-briefing", action="store_true")
     parser.add_argument("--skip-pdf", action="store_true")
@@ -106,6 +111,7 @@ def scrape_articles(args, run_date):
         max_per_source=args.max_per_source,
         fetch_article_text=args.fetch_article_text or args.show_evidence,
         target_date=run_date,
+        include_undated=getattr(args, "include_undated", False),
     )
     observability.update_run_totals(**scraper.last_scrape_stats())
     return articles
