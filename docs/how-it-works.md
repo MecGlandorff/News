@@ -8,6 +8,48 @@ The project is not a generic article summarizer. It builds local memory of real-
 Source -> Article -> Claim -> Story Arc -> Story Delta -> Briefing
 ```
 
+## In A Nutshell
+
+One run answers a practical question: what changed in the news today, and what source-backed story memory should be updated?
+
+This view is for non-technical readers. It shows the product behavior before the code-level path.
+
+```mermaid
+flowchart TD
+    A[Start today's run] --> B[Read configured news sources]
+    B --> C[Collect today's articles]
+    C --> D[Save source names and article links]
+    D --> E[Clean URLs and remove duplicates]
+    E --> F[Fetch full article text when needed]
+    F --> G[Classify what each article is about]
+    G --> H[Group related articles into likely news events]
+    H --> I[Compare events with recent story memory]
+
+    I --> J{Looks like a continuing event?}
+    J -- yes --> K[Update the existing story arc]
+    J -- no --> L[Create a new story arc]
+
+    K --> M[Record today's observations]
+    L --> M
+    M --> N[Work out what changed since the previous run]
+
+    N --> O{Evidence mode on?}
+    O -- no --> P[Keep article links and source signals]
+    O -- yes --> Q[Extract specific claims from the article text]
+    Q --> R[Require each claim to point to evidence text]
+    R --> S[Drop claims that are not supported by their evidence]
+    S --> T[Compare claim support across sources]
+    T --> U[Flag repeated, divergent, or unresolved claims]
+
+    P --> V[Choose the most useful stories for the briefing]
+    U --> V
+    V --> W[Build an auditable briefing]
+    W --> X[Show status, confidence, source agreement, open questions, links, and evidence]
+    X --> Y[Write Markdown briefing and newspaper PDF]
+    Y --> Z[Record run totals for review]
+    Z --> AA[Show pipeline report when requested]
+```
+
 ## One Run At A Glance
 
 `src/run.py` is the entrypoint. `main()` parses CLI flags, starts an observability run, executes the pipeline, writes outputs, finishes the run, and optionally prints `--pipeline-report`.
