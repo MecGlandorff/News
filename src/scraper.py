@@ -56,6 +56,11 @@ def _new_scrape_stats():
     return {
         "duplicate_url_skips": 0,
         "feed_fetch_failures": 0,
+        "feed_items_outside_date_skipped": 0,
+        "feed_items_missing_timestamp_skipped": 0,
+        "feed_items_unparseable_timestamp_skipped": 0,
+        "feed_items_missing_timestamp_included": 0,
+        "feed_items_unparseable_timestamp_included": 0,
         "article_text_fetch_successes": 0,
         "article_text_fetch_failures": 0,
     }
@@ -170,7 +175,13 @@ def fetch_article_text(url, session=None):
     return _extract_text(url, session=session)
 
 
-def scrape_all(sources=None, max_per_source=None, fetch_article_text=FETCH_ARTICLE_TEXT, target_date=None):
+def scrape_all(
+    sources=None,
+    max_per_source=None,
+    fetch_article_text=FETCH_ARTICLE_TEXT,
+    target_date=None,
+    include_undated=False,
+):
     global _LAST_SCRAPE_STATS
     sources = sources or SOURCES
     if max_per_source is None:
@@ -209,11 +220,26 @@ def scrape_all(sources=None, max_per_source=None, fetch_article_text=FETCH_ARTIC
             )
             if filter_reason:
                 if filter_reason == "outside_date":
+                    stats["feed_items_outside_date_skipped"] += 1
                     skipped_outside_date += 1
                 elif filter_reason == "missing_timestamp":
+                    if include_undated:
+                        stats["feed_items_missing_timestamp_included"] += 1
+                        items.append(item)
+                        if max_per_source is not None and len(items) >= max_per_source:
+                            break
+                        continue
+                    stats["feed_items_missing_timestamp_skipped"] += 1
                     skipped_missing_timestamp += 1
                     timestamp_skips_by_source[source_name]["missing_timestamp"] += 1
                 elif filter_reason == "unparseable_timestamp":
+                    if include_undated:
+                        stats["feed_items_unparseable_timestamp_included"] += 1
+                        items.append(item)
+                        if max_per_source is not None and len(items) >= max_per_source:
+                            break
+                        continue
+                    stats["feed_items_unparseable_timestamp_skipped"] += 1
                     skipped_unparseable_timestamp += 1
                     timestamp_skips_by_source[source_name]["unparseable_timestamp"] += 1
                 continue
@@ -261,6 +287,19 @@ def scrape_all(sources=None, max_per_source=None, fetch_article_text=FETCH_ARTIC
             f"({skipped_missing_timestamp} missing, {skipped_unparseable_timestamp} unparseable)",
             flush=True,
         )
+        timestamp_includes = (
+            stats["feed_items_missing_timestamp_included"]
+            + stats["feed_items_unparseable_timestamp_included"]
+        )
+        if timestamp_includes:
+            print(
+                "Included "
+                f"{timestamp_includes} feed items without a usable timestamp "
+                "because --include-undated is enabled "
+                f"({stats['feed_items_missing_timestamp_included']} missing, "
+                f"{stats['feed_items_unparseable_timestamp_included']} unparseable)",
+                flush=True,
+            )
         if timestamp_skips_by_source:
             parts = []
             for source, counts in sorted(timestamp_skips_by_source.items()):
