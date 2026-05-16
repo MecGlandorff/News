@@ -679,6 +679,27 @@ def test_briefing_uses_editorial_sections_and_scraps_sports(monkeypatch):
     assert "Kinahan Arrest" in markdown
 
 
+def test_briefing_does_not_suppress_hard_news_for_video_format(monkeypatch):
+    monkeypatch.setattr(
+        top10,
+        "_get_briefings",
+        lambda stories: {story["canonical_label"]: "Briefing text." for story in stories},
+    )
+
+    articles = [
+        _briefing_article(1, "Other", "Modena Car Attack", 4, source="NOS"),
+        _briefing_article(2, "Other", "Modena Car Attack", 4, source="BBC News"),
+        _briefing_article(3, "Other", "Modena Car Attack", 4, source="The Guardian"),
+        _briefing_article(4, "Other", "Modena Car Attack", 4, source="NYT"),
+    ]
+    articles[0]["title"] = "Video | Beveiligingscamera filmt hoe auto inrijdt op mensen in Modena"
+
+    markdown = build_briefing_markdown(articles, n=3)
+
+    assert "Modena Car Attack" in markdown
+    assert "Beveiligingscamera filmt hoe auto inrijdt op mensen in Modena" in markdown
+
+
 def test_briefing_deduplicates_story_across_themes(monkeypatch):
     monkeypatch.setattr(
         top10,
@@ -694,3 +715,23 @@ def test_briefing_deduplicates_story_across_themes(monkeypatch):
 
     assert markdown.count("## 1. NEW STORY Iran War") == 1
     assert "Geopolitics & War / USA Politics / Economy" in markdown
+
+
+def test_briefing_marks_new_child_development_under_parent_arc(monkeypatch):
+    monkeypatch.setattr(
+        top10,
+        "_get_briefings",
+        lambda stories: {story["canonical_label"]: "Briefing text." for story in stories},
+    )
+
+    article = _briefing_article(1, "Geopolitics & War", "Iran conflict", 5)
+    article["canonical_label"] = "Iran war crisis"
+    article["development_label"] = "Iran conflict"
+    article["development_status"] = "new_child"
+    article["previous_context"] = {"summary": "Earlier Iran war context."}
+    article["trend"] = "steady"
+
+    markdown = build_briefing_markdown([article], n=3)
+
+    assert "## 1. NEW DEVELOPMENT Iran war crisis" in markdown
+    assert "**Parent arc:** Iran war crisis | **Today's development:** Iran conflict" in markdown

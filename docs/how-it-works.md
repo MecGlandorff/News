@@ -119,7 +119,7 @@ Important boundary:
 - RSS title and description are always available inputs when the feed provides them.
 - Full article text is optional and may be empty because extraction can fail, a source can block scraping, or a page may not expose a usable `<article>` or `<main>` body.
 - Claim extraction uses full article text when `--show-evidence` is enabled and body extraction succeeds.
-- Full article text is also used by the optional story-match verifier for candidate matches.
+- Full article text is also used by the default-on story-match verifier for candidate matches.
 
 ## Stage 2: Classification
 
@@ -170,7 +170,7 @@ flowchart TD
     C --> D[consolidate same-day labels]
     D --> E[load recent stories from lookback window]
     E --> F[match today's labels to recent canonical stories]
-    F --> G{"--verify-story-matches?"}
+    F --> G{"verifier enabled?"}
     G -- no --> H[persist story assignments]
     G -- yes --> I[ensure full article text for candidates]
     I --> J[verify candidate continuity with gpt-5.4-nano]
@@ -196,9 +196,9 @@ Next it loads recent story options from SQLite. The lookback window comes from `
 
 The cross-day matcher decides whether today's labels continue recent canonical stories or should become new stories.
 
-### Optional Story-Match Verification
+### Default Story-Match Verification
 
-`--verify-story-matches` adds a second check before a candidate match can reuse old memory.
+Story-match verification is enabled by default. It adds a second check before a candidate match can reuse old memory. Use `--no-verify-story-matches` only for comparison runs against the older label-only match path.
 
 The verifier receives:
 
@@ -276,6 +276,17 @@ Validation is strict. A claim is dropped unless:
 - `confidence` is numeric and in `[0.0, 1.0]`
 - `evidence_span` is non-empty
 - `evidence_span` appears in the extraction input
+- `claim_text` is *derivable* from `evidence_span` under the hybrid gate below
+
+### Derivability Gate
+
+Span containment is necessary but not sufficient: a model could pair any article sentence with any claim and pass substring validation. The derivability gate in `_derivability_check()` and `_classify_claim()` decides whether the span actually supports the claim. See [docs/adr/0013-claim-evidence-derivability.md](adr/0013-claim-evidence-derivability.md).
+
+1. **Deterministic reject** — if any number in `claim_text` (integer, decimal, percentage, comma-separated, normalized by stripping commas) does not appear in `evidence_span`, drop the claim immediately. No LLM call.
+2. **Deterministic accept** — if `claim_text` (normalized) is contained in `evidence_span`, or if entity overlap is backed by enough non-entity lexical overlap, accept immediately ("cheap_accept").
+3. **LLM verifier** — for the ambiguous middle, including weak entity-only or anaphoric spans, call `gpt-5.4-nano` with `CLAIMS_VERIFIER_PROMPT_VERSION = "2026-05-14-v1"` through `create_cached_chat_completion`, asking whether the span supports the claim. Verifier failures (network, parse, unexpected payload) default to reject.
+
+The verifier runs **outside** the SQLite transaction so its network call does not hold a write lock. Run totals expose `claim_derivable_accepts`, `claim_verifier_calls`, `claim_verifier_accepts`, and `claim_verifier_rejects`.
 
 ```mermaid
 flowchart TD
@@ -287,9 +298,16 @@ flowchart TD
     F --> G[parse JSON]
     G --> H[validate fields]
     H --> I{evidence span in input?}
-    I -- yes --> J[save claim]
     I -- no --> K[drop claim]
+    I -- yes --> M{number in claim missing from span?}
+    M -- yes --> K
+    M -- no --> N{verbatim or strong entity overlap?}
+    N -- yes --> J[save claim: cheap_accept]
+    N -- no --> O[gpt-5.4-nano verifier]
+    O -- supported --> J2[save claim: verifier_accept]
+    O -- not supported / error --> K
     J --> L[save claim_extractions row]
+    J2 --> L
     K --> L
 ```
 
@@ -414,6 +432,10 @@ Claims cached:          35
 Claims invalid:         24
 Claim failures:         2
 Zero-claim results:     19
+Claim cheap accepts:    584
+Claim verifier calls:   42
+Claim verifier accepts: 28
+Claim verifier rejects: 14
 Stories touched:        38
 Story match checks:     14
 Story match accepted:   10
@@ -437,7 +459,7 @@ Potentially expensive paths:
 - article classification for uncached articles
 - same-day consolidation
 - cross-day story matching
-- optional story-match verification
+- default-on story-match verification
 - optional claim extraction
 - briefing generation
 
@@ -462,7 +484,8 @@ The current system is useful, but several important trust layers are incomplete:
 - Evidence-mode source agreement is claim-backed only for exact repeated non-background claims and conservative numeric divergence.
 - There is no dedicated contradiction module/table. Numeric divergence is surfaced as `possible conflict`, not confirmed contradiction.
 - Evidence runs use full article text for claim extraction when body text is available.
-- Exact LLM responses for matching and briefing can be cached, but there is no semantic story-match decision cache.
+- The derivability gate is in place, but the verifier's paraphrase decisions are asserted by tests with mocks, not measured against reviewed paraphrase cases in `evals/datasets/golden_claims.jsonl`. There is also no per-claim audit row recording which path (cheap accept, verifier accept, verifier reject) decided a saved claim.
+- Exact LLM responses for matching, briefing, and the claim verifier can be cached, but there is no semantic story-match decision cache.
 - Article deduplication is URL-based, not content-fingerprint-based.
 - Date, status, and attribution divergence are not compared yet.
 

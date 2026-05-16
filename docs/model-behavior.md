@@ -82,7 +82,7 @@ Candidate cross-day matches are checked by a separate verifier before the tracke
 - `continuity_evidence`
 - `reject_reason`
 
-Only `same_event`, `same_story_arc`, and `direct_follow_up` relationships can be accepted, and only when confidence is at least medium and continuity evidence is present. `adjacent_topic`, `broader_context`, `unrelated`, `uncertain`, malformed, or missing verifier decisions default to a new story. Decisions are stored in `story_match_decisions` for review.
+Only `same_event`, `same_story_arc`, and `direct_follow_up` relationships can be accepted as the same story, and only when confidence is at least medium and continuity evidence is present. `unrelated`, `uncertain`, malformed, or missing verifier decisions default to a new story. Some rejected `adjacent_topic`, `broader_context`, or medium-confidence follow-up decisions can still attach as `new_child` developments inside a broad parent arc when they include concrete parent-continuity evidence. Decisions are stored in `story_match_decisions` for review.
 
 The verifier is deliberately separate from claim extraction. It asks whether an article group continues an existing story; it does not extract factual claims for evidence rendering.
 

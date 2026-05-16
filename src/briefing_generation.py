@@ -15,7 +15,7 @@ STATUS_VALUES = {"new", "developing", "escalating", "cooling", "disputed", "unre
 CONFIDENCE_VALUES = {"high", "medium", "low"}
 SOURCE_AGREEMENT_VALUES = {"broad", "partial", "mixed", "single-source", "disputed"}
 DISPUTE_FLAG_VALUES = {"none", "possible conflict"}
-BRIEFING_PROMPT_VERSION = "2026-05-11-v1"
+BRIEFING_PROMPT_VERSION = "2026-05-15-v1"
 
 BRIEFING_PROMPT = """You are writing a daily news intelligence briefing for an informed reader.
 
@@ -35,6 +35,7 @@ Rules:
 - If structured claims are supplied, use them as the primary factual grounding. Do not assert factual details unsupported by either claims or today's article metadata.
 - Use previous_context only for continuity and comparison. Do not present old context as fresh reporting.
 - If previous_context is absent, delta_summary must be exactly: First detected today.
+- If current_developments contains a new_child item, write delta_summary as a new development inside the parent arc, not as a first-detected story.
 - Surface disagreement, allegations, uncertainty, or divergent numbers/status claims instead of smoothing them into confident prose.
 - Use possible conflict for source divergence; do not claim a confirmed contradiction.
 - Do not invent source URLs; URLs are supplied separately in the output.
@@ -118,6 +119,8 @@ def default_status(story):
     dispute_flag = local_dispute_flag(story)
     if dispute_flag != "none":
         return "disputed"
+    if any(development.get("status") == "new_child" for development in story.get("developments", [])):
+        return "developing"
     trend = story.get("trend", "steady")
     if trend == "new":
         return "new"
@@ -223,6 +226,17 @@ def get_briefings(stories, get_client, model, include_evidence=False):
         item = {
             "canonical_label": story["canonical_label"],
             "source_support": story.get("source_support", {}),
+            "current_developments": [
+                {
+                    "label": development.get("label", ""),
+                    "status": development.get("status", ""),
+                    "article_count": development.get("article_count", 0),
+                    "source_count": development.get("source_count", 0),
+                    "parent_relationship": development.get("parent_relationship", ""),
+                    "parent_confidence": development.get("parent_confidence", ""),
+                }
+                for development in story.get("developments", [])
+            ],
             "articles": [
                 {
                     "source_id": article.get("source_id"),
@@ -346,6 +360,14 @@ def payload_briefing(payloads, label):
 
 def fallback_delta_summary(story):
     previous_context = story.get("previous_context") or {}
+    new_children = [
+        development.get("label", "")
+        for development in story.get("developments", [])
+        if development.get("status") == "new_child" and development.get("label")
+    ]
+    if new_children:
+        labels = "; ".join(new_children[:3])
+        return f"New development inside the existing arc: {labels}."
     if not previous_context:
         return "First detected today."
 

@@ -45,6 +45,21 @@ def get_db(db_path):
             created_at     TEXT DEFAULT CURRENT_TIMESTAMP,
             UNIQUE (story_id, date)
         );
+        CREATE TABLE IF NOT EXISTS story_developments (
+            development_id      INTEGER PRIMARY KEY AUTOINCREMENT,
+            story_id            INTEGER NOT NULL,
+            observation_id      INTEGER,
+            date                DATE NOT NULL,
+            development_label   TEXT NOT NULL,
+            development_status  TEXT NOT NULL,
+            source_count        INTEGER,
+            article_count       INTEGER,
+            importance_avg      REAL,
+            parent_relationship TEXT,
+            parent_confidence   TEXT,
+            created_at          TEXT DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (story_id, date, development_label)
+        );
         CREATE TABLE IF NOT EXISTS articles (
             id             TEXT,
             story_id       INTEGER,
@@ -87,6 +102,10 @@ def get_db(db_path):
             ON story_match_decisions (run_id);
         CREATE INDEX IF NOT EXISTS idx_story_match_decisions_run_date
             ON story_match_decisions (run_date);
+        CREATE INDEX IF NOT EXISTS idx_story_developments_story_date
+            ON story_developments (story_id, date);
+        CREATE INDEX IF NOT EXISTS idx_story_developments_date
+            ON story_developments (date);
     """)
     ensure_column(conn, "articles", "description", "TEXT")
     ensure_column(conn, "articles", "source_id", "INTEGER REFERENCES sources(source_id)")
@@ -97,11 +116,13 @@ def get_db(db_path):
 def get_recent_stories(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
     start = str(date.fromisoformat(str(today)) - timedelta(days=lookback_days))
     rows = conn.execute("""
-        SELECT s.story_id, s.canonical_label, MAX(sd.date) AS last_daily
+        SELECT s.story_id, s.canonical_label, s.first_seen,
+               MAX(sd.date) AS last_daily,
+               COUNT(DISTINCT sd.date) AS active_days
         FROM stories s
         JOIN story_daily sd ON s.story_id = sd.story_id
         WHERE sd.date >= ? AND sd.date < ?
-        GROUP BY s.story_id, s.canonical_label
+        GROUP BY s.story_id, s.canonical_label, s.first_seen
         ORDER BY last_daily DESC, s.story_id DESC
     """, (start, today)).fetchall()
     recent = {}
@@ -114,11 +135,13 @@ def get_recent_story_options(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
     """Return recent stories with compact memory for cross-day matching."""
     start = str(date.fromisoformat(str(today)) - timedelta(days=lookback_days))
     rows = conn.execute("""
-        SELECT s.story_id, s.canonical_label, MAX(sd.date) AS last_daily
+        SELECT s.story_id, s.canonical_label, s.first_seen,
+               MAX(sd.date) AS last_daily,
+               COUNT(DISTINCT sd.date) AS active_days
         FROM stories s
         JOIN story_daily sd ON s.story_id = sd.story_id
         WHERE sd.date >= ? AND sd.date < ?
-        GROUP BY s.story_id, s.canonical_label
+        GROUP BY s.story_id, s.canonical_label, s.first_seen
         ORDER BY last_daily DESC, s.story_id DESC
     """, (start, today)).fetchall()
 
@@ -131,7 +154,9 @@ def get_recent_story_options(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
         recent[label] = {
             "story_id": row["story_id"],
             "canonical_label": label,
+            "first_seen": row["first_seen"],
             "last_seen": row["last_daily"],
+            "active_days": row["active_days"],
             "summary": context.get("summary", ""),
             "delta_summary": context.get("delta_summary", ""),
             "recent_articles": [
@@ -142,6 +167,7 @@ def get_recent_story_options(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
                 }
                 for article in context.get("recent_articles", [])[:3]
             ],
+            "recent_developments": context.get("recent_developments", [])[:5],
         }
     return recent
 
@@ -190,6 +216,23 @@ def get_previous_story_context(conn, story_id, today, article_limit=3):
                 "reported_at": r["published_at"] or "",
             }
             for r in rows
+        ]
+    development_rows = conn.execute("""
+        SELECT date, development_label, development_status
+        FROM story_developments
+        WHERE story_id = ?
+          AND date < ?
+        ORDER BY date DESC, development_id DESC
+        LIMIT 5
+    """, (story_id, today)).fetchall()
+    if development_rows:
+        context["recent_developments"] = [
+            {
+                "date": row["date"],
+                "label": row["development_label"],
+                "status": row["development_status"],
+            }
+            for row in development_rows
         ]
     return context
 
@@ -257,6 +300,7 @@ def reset_tracking_date(conn, today):
         )
     """, (today,))
     conn.execute("DELETE FROM articles WHERE date = ?", (today,))
+    conn.execute("DELETE FROM story_developments WHERE date = ?", (today,))
     conn.execute("DELETE FROM story_observations WHERE date = ?", (today,))
     conn.execute("DELETE FROM story_daily WHERE date = ?", (today,))
 

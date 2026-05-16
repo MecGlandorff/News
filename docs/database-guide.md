@@ -35,8 +35,10 @@ erDiagram
     sources ||--o{ articles : "source_id"
     stories ||--o{ story_daily : "story_id"
     stories ||--o{ story_observations : "story_id"
+    stories ||--o{ story_developments : "story_id"
     stories ||--o{ articles : "story_id"
     story_observations ||--o{ article_story_links : "observation_id"
+    story_observations ||--o{ story_developments : "observation_id"
     articles ||--o{ claims : "article_id + story_id"
     runs ||--o{ llm_calls : "run_id"
     runs ||--o{ story_match_decisions : "run_id"
@@ -50,6 +52,7 @@ The most important tables are:
 | `stories` | one row per tracked story arc |
 | `story_daily` | per-story daily source/importance aggregates |
 | `story_observations` | daily memory, including generated summary and delta |
+| `story_developments` | specific daily developments stored inside a parent story arc |
 | `articles` | fetched articles linked to a story/date |
 | `article_story_links` | article-to-observation links |
 | `article_classifications` | cached article theme/story/importance classifications |
@@ -65,6 +68,7 @@ Conditional tables:
 - `claims` and `claim_extractions` are created when `--show-evidence` is used.
 - `llm_response_cache` is created when exact cached matching, verification, or briefing calls run in an observed pipeline context.
 - `story_match_decisions` exists in current tracker schema, but rows are only written when the verifier checks candidate cross-day matches. Verification is on by default and can be disabled with `--no-verify-story-matches`.
+- `story_developments` records future child developments under parent arcs; older runs are not backfilled.
 - Older databases may lack newer nullable columns until a run touches the relevant schema helper.
 
 ## Latest Runs

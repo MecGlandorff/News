@@ -387,6 +387,85 @@ def test_story_match_verifier_rejects_gaza_detention_false_merge(tmp_path, monke
     assert [row["canonical_label"] for row in story_rows] == ["Israel Detention Abuse"]
 
 
+def test_rejected_parent_arc_match_saves_new_child_development(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    data_dir = tmp_path / "daily"
+    client = _fake_tracker_client_sequence([
+        {
+            "matches": [{
+                "today_label": "Mali rebel offensive",
+                "canonical_label": "Mali attacks",
+            }]
+        },
+        {
+            "decisions": [{
+                "today_label": "Mali rebel offensive",
+                "canonical_label": "Mali attacks",
+                "same_event": False,
+                "relationship": "adjacent_topic",
+                "confidence": "medium",
+                "article_dates": ["2026-05-15"],
+                "candidate_last_seen": "2026-05-13",
+                "continuity_evidence": [
+                    "Shared country/context: Mali security crisis and rebel violence"
+                ],
+                "reject_reason": (
+                    "The airstrikes are a distinct development from the earlier "
+                    "mass-casualty attacks."
+                ),
+            }]
+        },
+    ])
+    monkeypatch.setattr(tracker, "DB_PATH", db_path)
+    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
+    monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
+
+    first = tracker.track(
+        [_article(1, "Militants attack towns in Mali", "Mali attacks")],
+        today="2026-05-13",
+    )
+    tracker.save_observation_memory([{
+        "observation_id": first[0]["observation_id"],
+        "summary": "Mali's junta faced rebel and jihadist attacks with Russian backing under strain.",
+        "delta_summary": "Rebel pressure on Mali's junta continued.",
+    }])
+
+    article = _article(
+        2,
+        "Mali forces launch airstrikes against rebel alliance",
+        "Mali rebel offensive",
+    )
+    article["published_at"] = "Fri, 15 May 2026 12:00:00 GMT"
+    tracked = tracker.track([article], today="2026-05-15", verify_story_matches=True)
+
+    assert tracked[0]["canonical_label"] == "Mali attacks"
+    assert tracked[0]["development_label"] == "Mali rebel offensive"
+    assert tracked[0]["development_status"] == "new_child"
+
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    try:
+        story_count = conn.execute("SELECT COUNT(*) FROM stories").fetchone()[0]
+        development = dict(conn.execute("""
+            SELECT s.canonical_label, d.development_label, d.development_status,
+                   d.parent_relationship, d.parent_confidence
+            FROM story_developments d
+            JOIN stories s ON s.story_id = d.story_id
+            WHERE d.date = ?
+        """, ("2026-05-15",)).fetchone())
+    finally:
+        conn.close()
+
+    assert story_count == 1
+    assert development == {
+        "canonical_label": "Mali attacks",
+        "development_label": "Mali rebel offensive",
+        "development_status": "new_child",
+        "parent_relationship": "adjacent_topic",
+        "parent_confidence": "medium",
+    }
+
+
 def test_story_match_verifier_fetches_full_text_for_candidate_match(tmp_path, monkeypatch):
     db_path = tmp_path / "stories.db"
     data_dir = tmp_path / "daily"
@@ -442,6 +521,67 @@ def test_story_match_verifier_fetches_full_text_for_candidate_match(tmp_path, mo
     current_article = verifier_payload["cases"][0]["current_articles"][0]
     assert current_article["article_date"] == "2026-05-02"
     assert current_article["article_text"] == "Full article text about the latest Iran nuclear talks proposal."
+
+
+def test_multiple_today_labels_under_one_parent_do_not_overwrite_articles(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    data_dir = tmp_path / "daily"
+    monkeypatch.setattr(tracker, "DB_PATH", db_path)
+    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
+    monkeypatch.setattr(
+        tracker,
+        "_match_labels",
+        lambda labels, recent, today=None: {
+            label: "Iran conflict" if "Iran conflict" in recent else "NEW"
+            for label in labels
+        },
+    )
+    monkeypatch.setattr(
+        tracker,
+        "_consolidate_today",
+        lambda groups: groups,
+    )
+
+    tracker.track(
+        [_article(1, "Iran conflict continues", "Iran conflict")],
+        today="2026-05-14",
+        verify_story_matches=False,
+    )
+    articles = [
+        _article(2, "Iran talks stall", "Iran talks"),
+        _article(3, "Hormuz costs hit trade", "Iran trade fallout"),
+    ]
+    articles[1]["source"] = "Second Source"
+
+    tracked = tracker.track(articles, today="2026-05-15", verify_story_matches=False)
+
+    assert {article["canonical_label"] for article in tracked} == {"Iran conflict"}
+    assert {article["development_label"] for article in tracked} == {
+        "Iran talks",
+        "Iran trade fallout",
+    }
+
+    conn = sqlite3.connect(db_path)
+    try:
+        article_count = conn.execute(
+            "SELECT COUNT(*) FROM articles WHERE date = ?",
+            ("2026-05-15",),
+        ).fetchone()[0]
+        development_count = conn.execute(
+            "SELECT COUNT(*) FROM story_developments WHERE date = ?",
+            ("2026-05-15",),
+        ).fetchone()[0]
+        daily = conn.execute(
+            "SELECT source_count, labels_seen FROM story_daily WHERE date = ?",
+            ("2026-05-15",),
+        ).fetchone()
+    finally:
+        conn.close()
+
+    assert article_count == 2
+    assert development_count == 2
+    assert daily[0] == 2
+    assert set(json.loads(daily[1])) == {"Iran talks", "Iran trade fallout"}
 
 
 def test_match_labels_allows_ongoing_story_rewording(monkeypatch):

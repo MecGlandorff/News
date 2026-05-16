@@ -1,5 +1,7 @@
 # ADR 0012: Exact LLM response cache for matching and briefing
 
+**Date:** 2026-05-11
+
 ## Status
 
 Accepted.
@@ -16,7 +18,7 @@ Add a durable SQLite `llm_response_cache` table for exact response reuse on:
 
 - same-day story consolidation
 - cross-day story matching
-- optional story-match verification
+- story-match verification
 - briefing generation
 
 The cache key includes purpose, model, prompt version, messages, response format, and API kwargs. A response is saved only after the caller parses the JSON object and validates the expected top-level list. Cache hits increment `runs.llm_cache_hits` and do not insert fake `llm_calls` rows.

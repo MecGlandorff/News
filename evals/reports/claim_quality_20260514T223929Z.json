@@ -1,0 +1,294 @@
+{
+  "case_count": 2,
+  "created_at": "2026-05-14T22:39:29+00:00",
+  "dataset": "/Users/mrgreen/Desktop/AI/News/evals/datasets/golden_claims.jsonl",
+  "model": "gpt-5.4-nano",
+  "prompt_version": "2026-05-13-v1",
+  "results": [
+    {
+      "article_coverage": 0.3333333333333333,
+      "available_coverage": 1.0,
+      "available_expected_claims_count": 1,
+      "case_id": "riverbend_dam_evacuation",
+      "completion_tokens": 66,
+      "cost_eur": 0.00016171925,
+      "duplicate_claims_count": 0,
+      "error": null,
+      "evidence_valid_rate": 1.0,
+      "expected_claims_count": 3,
+      "expected_match_rate": 1.0,
+      "expected_matching_claims_count": 1,
+      "has_full_text": true,
+      "input_chars": 110,
+      "input_source": "rss",
+      "invalid_claims_count": 0,
+      "latency_ms": 1783,
+      "matched_available_expected_claim_ids": [
+        "evacuation_order"
+      ],
+      "matched_expected_claim_ids": [
+        "evacuation_order"
+      ],
+      "prompt_tokens": 536,
+      "raw_claims_count": 1,
+      "valid_claims": [
+        {
+          "claim_text": "Riverbend officials ordered evacuations after cracks were found at North Dam.",
+          "claim_type": "fact",
+          "confidence": 0.9,
+          "entities": [
+            "Riverbend",
+            "North Dam"
+          ],
+          "evidence_span": "Riverbend officials ordered evacuations after cracks were found at North Dam."
+        }
+      ],
+      "valid_claims_count": 1,
+      "variant": "rss"
+    },
+    {
+      "article_coverage": 1.0,
+      "available_coverage": 1.0,
+      "available_expected_claims_count": 3,
+      "case_id": "riverbend_dam_evacuation",
+      "completion_tokens": 312,
+      "cost_eur": 0.00043153550000000004,
+      "duplicate_claims_count": 0,
+      "error": null,
+      "evidence_valid_rate": 1.0,
+      "expected_claims_count": 3,
+      "expected_match_rate": 0.75,
+      "expected_matching_claims_count": 3,
+      "has_full_text": true,
+      "input_chars": 377,
+      "input_source": "full_text",
+      "invalid_claims_count": 0,
+      "latency_ms": 2856,
+      "matched_available_expected_claim_ids": [
+        "evacuation_order",
+        "spillway_closed_until_monday",
+        "reservoir_rise_forecast"
+      ],
+      "matched_expected_claim_ids": [
+        "evacuation_order",
+        "spillway_closed_until_monday",
+        "reservoir_rise_forecast"
+      ],
+      "prompt_tokens": 581,
+      "raw_claims_count": 4,
+      "valid_claims": [
+        {
+          "claim_text": "Riverbend officials ordered evacuations after cracks were found at North Dam.",
+          "claim_type": "fact",
+          "confidence": 0.9,
+          "entities": [
+            "Riverbend",
+            "North Dam"
+          ],
+          "evidence_span": "Riverbend officials ordered evacuations after cracks were found at North Dam."
+        },
+        {
+          "claim_text": "Riverbend officials ordered evacuations for three neighborhoods after engineers found cracks at North Dam.",
+          "claim_type": "fact",
+          "confidence": 0.9,
+          "entities": [
+            "Riverbend",
+            "North Dam"
+          ],
+          "evidence_span": "Riverbend officials ordered evacuations for three neighborhoods after engineers found cracks at North Dam."
+        },
+        {
+          "claim_text": "Mayor Elena Cruz said the spillway would stay closed until Monday.",
+          "claim_type": "quote",
+          "confidence": 0.85,
+          "entities": [
+            "Elena Cruz"
+          ],
+          "evidence_span": "Mayor Elena Cruz said the spillway would stay closed until Monday."
+        },
+        {
+          "claim_text": "The water authority said rainfall could raise reservoir levels by 30 centimeters overnight.",
+          "claim_type": "allegation",
+          "confidence": 0.75,
+          "entities": [
+            "water authority"
+          ],
+          "evidence_span": "The water authority said rainfall could raise reservoir levels by 30 centimeters overnight."
+        }
+      ],
+      "valid_claims_count": 4,
+      "variant": "full_text"
+    },
+    {
+      "article_coverage": 0.3333333333333333,
+      "available_coverage": 1.0,
+      "available_expected_claims_count": 1,
+      "case_id": "geneva_ceasefire_talks",
+      "completion_tokens": 64,
+      "cost_eur": 0.0001597585,
+      "duplicate_claims_count": 0,
+      "error": null,
+      "evidence_valid_rate": 1.0,
+      "expected_claims_count": 3,
+      "expected_match_rate": 1.0,
+      "expected_matching_claims_count": 1,
+      "has_full_text": true,
+      "input_chars": 94,
+      "input_source": "rss",
+      "invalid_claims_count": 0,
+      "latency_ms": 1433,
+      "matched_available_expected_claim_ids": [
+        "delegations_meet_geneva"
+      ],
+      "matched_expected_claim_ids": [
+        "delegations_meet_geneva"
+      ],
+      "prompt_tokens": 537,
+      "raw_claims_count": 1,
+      "valid_claims": [
+        {
+          "claim_text": "Mediators said the delegations agreed to meet again in Geneva.",
+          "claim_type": "allegation",
+          "confidence": 0.74,
+          "entities": [
+            "Geneva"
+          ],
+          "evidence_span": "Mediators said delegations agreed to meet again in Geneva."
+        }
+      ],
+      "valid_claims_count": 1,
+      "variant": "rss"
+    },
+    {
+      "article_coverage": 0.6666666666666666,
+      "available_coverage": 0.6666666666666666,
+      "available_expected_claims_count": 3,
+      "case_id": "geneva_ceasefire_talks",
+      "completion_tokens": 281,
+      "cost_eur": 0.00040208162500000004,
+      "duplicate_claims_count": 0,
+      "error": null,
+      "evidence_valid_rate": 1.0,
+      "expected_claims_count": 3,
+      "expected_match_rate": 0.5,
+      "expected_matching_claims_count": 2,
+      "has_full_text": true,
+      "input_chars": 364,
+      "input_source": "full_text",
+      "invalid_claims_count": 0,
+      "latency_ms": 2424,
+      "matched_available_expected_claim_ids": [
+        "delegations_meet_geneva",
+        "no_shelling_after_0600"
+      ],
+      "matched_expected_claim_ids": [
+        "delegations_meet_geneva",
+        "no_shelling_after_0600"
+      ],
+      "prompt_tokens": 602,
+      "raw_claims_count": 4,
+      "valid_claims": [
+        {
+          "claim_text": "Mediators said delegations from Lydora and Marek agreed to meet again in Geneva.",
+          "claim_type": "fact",
+          "confidence": 0.88,
+          "entities": [
+            "Lydora",
+            "Marek",
+            "Geneva"
+          ],
+          "evidence_span": "Mediators said delegations from Lydora and Marek agreed to meet again in Geneva."
+        },
+        {
+          "claim_text": "The Marek foreign ministry alleged that Lydora had moved artillery near the Kars crossing.",
+          "claim_type": "allegation",
+          "confidence": 0.86,
+          "entities": [
+            "Marek",
+            "Lydora",
+            "Kars"
+          ],
+          "evidence_span": "The Marek foreign ministry alleged Lydora had moved artillery near the Kars crossing,"
+        },
+        {
+          "claim_text": "Lydora denied the Marek foreign ministry's allegation about moving artillery near the Kars crossing.",
+          "claim_type": "allegation",
+          "confidence": 0.84,
+          "entities": [
+            "Lydora",
+            "Marek",
+            "Kars"
+          ],
+          "evidence_span": "a claim Lydora denied."
+        },
+        {
+          "claim_text": "UN envoy Priya Nair said monitors recorded no shelling after 06:00 local time.",
+          "claim_type": "quote",
+          "confidence": 0.78,
+          "entities": [
+            "Priya Nair",
+            "UN"
+          ],
+          "evidence_span": "UN envoy Priya Nair said monitors recorded no shelling after 06:00 local time."
+        }
+      ],
+      "valid_claims_count": 4,
+      "variant": "full_text"
+    }
+  ],
+  "summary": {
+    "comparison": {
+      "article_coverage_delta": 0.5,
+      "available_coverage_delta": -0.16666666666666663,
+      "completion_tokens_delta": 463,
+      "cost_eur_delta": 0.000512139375,
+      "duplicate_claims_delta": 0,
+      "evidence_valid_rate_delta": 0.0,
+      "latency_ms_delta": 2064,
+      "prompt_tokens_delta": 110,
+      "valid_claims_delta": 6
+    },
+    "variants": {
+      "full_text": {
+        "article_coverage": 0.8333333333333334,
+        "available_coverage": 0.8333333333333334,
+        "available_expected_claims": 6,
+        "cases": 2,
+        "completion_tokens": 593,
+        "cost_eur": 0.0008336171250000001,
+        "duplicate_claims": 0,
+        "errors": 0,
+        "evidence_valid_rate": 1.0,
+        "expected_claims": 6,
+        "expected_match_rate": 0.625,
+        "invalid_claims": 0,
+        "latency_ms": 5280,
+        "matched_available_expected_claims": 5,
+        "matched_expected_claims": 5,
+        "prompt_tokens": 1183,
+        "raw_claims": 8,
+        "valid_claims": 8
+      },
+      "rss": {
+        "article_coverage": 0.3333333333333333,
+        "available_coverage": 1.0,
+        "available_expected_claims": 2,
+        "cases": 2,
+        "completion_tokens": 130,
+        "cost_eur": 0.00032147775,
+        "duplicate_claims": 0,
+        "errors": 0,
+        "evidence_valid_rate": 1.0,
+        "expected_claims": 6,
+        "expected_match_rate": 1.0,
+        "invalid_claims": 0,
+        "latency_ms": 3216,
+        "matched_available_expected_claims": 2,
+        "matched_expected_claims": 2,
+        "prompt_tokens": 1073,
+        "raw_claims": 2,
+        "valid_claims": 2
+      }
+    }
+  }
+}
