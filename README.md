@@ -124,8 +124,8 @@ When enabled, the claim layer extracts:
 A claim is saved only if its `evidence_span` appears in the article input **and** the claim passes a derivability gate against that span:
 
 1. If any number in `claim_text` is missing from `evidence_span`, the claim is dropped immediately (no LLM call).
-2. If `claim_text` (normalized) appears in `evidence_span`, or if at least one listed entity from the claim appears in `evidence_span`, the claim is accepted deterministically.
-3. Otherwise, a cheap `gpt-5.4-nano` verifier (`CLAIMS_VERIFIER_PROMPT_VERSION = "2026-05-14-v1"`, cached via `llm_response_cache`) decides whether the span supports the claim. Verifier failures default-reject.
+2. If `claim_text` (normalized) appears in `evidence_span`, or if entity overlap is backed by enough non-entity lexical overlap, the claim is accepted deterministically.
+3. Otherwise, including weak entity-only or anaphoric spans, a cheap `gpt-5.4-nano` verifier (`CLAIMS_VERIFIER_PROMPT_VERSION = "2026-05-14-v1"`, cached via `llm_response_cache`) decides whether the span supports the claim. Verifier failures default-reject.
 
 Run totals are exposed in `--pipeline-report` as `Claim cheap accepts`, `Claim verifier calls`, `Claim verifier accepts`, and `Claim verifier rejects`. See [docs/adr/0013-claim-evidence-derivability.md](docs/adr/0013-claim-evidence-derivability.md).
 

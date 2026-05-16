@@ -1,4 +1,5 @@
 from collections import defaultdict
+import re
 
 from src.source_agreement import source_identity, source_support
 
@@ -17,7 +18,6 @@ LOW_INTEREST_KEYWORDS = {
     "music",
     "showbiz",
     "tv",
-    "video",
 }
 TREND_SCORE = {"up": 2, "new": 1, "steady": 0, "down": -1}
 
@@ -36,6 +36,8 @@ def aggregate(tracked):
         "theme_counts": defaultdict(int),
         "previous_context": None,
         "observation_ids": set(),
+        "development_ids": set(),
+        "developments": {},
     })
 
     for article in tracked:
@@ -49,6 +51,19 @@ def aggregate(tracked):
             stories[label]["previous_context"] = article["previous_context"]
         if article.get("observation_id"):
             stories[label]["observation_ids"].add(article["observation_id"])
+        if article.get("development_id"):
+            stories[label]["development_ids"].add(article["development_id"])
+        development_label = article.get("development_label") or article.get("story_label") or label
+        development = stories[label]["developments"].setdefault(development_label, {
+            "label": development_label,
+            "status": article.get("development_status", "continuing"),
+            "parent_relationship": article.get("parent_relationship", ""),
+            "parent_confidence": article.get("parent_confidence", ""),
+            "articles": [],
+        })
+        development["articles"].append(article)
+        if article.get("development_status") == "new_child":
+            development["status"] = "new_child"
 
     result = []
     for label, data in stories.items():
@@ -71,6 +86,18 @@ def aggregate(tracked):
             "importance_avg": data["importance_sum"] / len(articles),
             "previous_context": data["previous_context"] or {},
             "observation_ids": sorted(data["observation_ids"]),
+            "development_ids": sorted(data["development_ids"]),
+            "developments": [
+                {
+                    "label": value["label"],
+                    "status": value["status"],
+                    "parent_relationship": value["parent_relationship"],
+                    "parent_confidence": value["parent_confidence"],
+                    "article_count": len(value["articles"]),
+                    "source_count": len({source_identity(article) for article in value["articles"]}),
+                }
+                for value in data["developments"].values()
+            ],
             "story_id": articles[0].get("story_id"),
             "articles": articles,
         })
@@ -88,7 +115,10 @@ def has_low_interest_keywords(story):
         + [article.get("title", "") for article in story["articles"]]
         + [article.get("description", "") for article in story["articles"]]
     ).lower()
-    return any(keyword in text for keyword in LOW_INTEREST_KEYWORDS)
+    return any(
+        re.search(rf"(?<![a-z0-9]){re.escape(keyword)}(?![a-z0-9])", text)
+        for keyword in LOW_INTEREST_KEYWORDS
+    )
 
 
 def is_lead_candidate(story):

@@ -65,6 +65,28 @@ def test_pipeline_report_includes_story_match_verifier_totals(tmp_path, monkeypa
     assert "Story match rejected:   2" in report
 
 
+def test_pipeline_report_includes_story_development_totals(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    monkeypatch.setattr(observability, "DB_PATH", db_path)
+
+    run_id = observability.start_run(_run_args(), run_date="2026-05-07")
+    observability.update_run_totals(
+        run_id,
+        story_developments_saved=8,
+        story_parent_attachments=3,
+        story_new_parent_arcs=2,
+        story_unmatched_new_stories=2,
+    )
+    observability.finish_run(run_id, status="ok")
+
+    report = observability.pipeline_report(run_id)
+
+    assert "Developments saved:     8" in report
+    assert "Parent attachments:     3" in report
+    assert "New parent arcs:        2" in report
+    assert "Unmatched new stories:  2" in report
+
+
 def test_pipeline_report_includes_scraper_claim_and_cost_totals(tmp_path, monkeypatch):
     db_path = tmp_path / "stories.db"
     monkeypatch.setattr(observability, "DB_PATH", db_path)

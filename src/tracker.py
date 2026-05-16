@@ -197,6 +197,22 @@ def _verify_story_matches(label_map, recent_stories, story_groups, today=None):
     )
 
 
+def _parent_arc_attachments(match_decisions, recent_story_options):
+    attachments = {}
+    for decision in match_decisions:
+        candidate_label = decision.get("candidate_label")
+        candidate = recent_story_options.get(candidate_label)
+        if not candidate:
+            continue
+        if story_matching.should_attach_to_parent_arc(decision, candidate):
+            attachments[decision["today_label"]] = {
+                "canonical_label": candidate_label,
+                "relationship": decision.get("relationship", ""),
+                "confidence": decision.get("confidence", ""),
+            }
+    return attachments
+
+
 def _trend(story_id, today_count, conn, today):
     return tracker_store.trend(story_id, today_count, conn, today)
 
@@ -248,6 +264,7 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
             story_groups,
             today=today,
         )
+    parent_attachments = _parent_arc_attachments(match_decisions, recent_story_options)
 
     conn = _get_db()
     try:
@@ -255,13 +272,24 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
             _save_story_match_decisions(conn, match_decisions, today)
             _reset_tracking_date(conn, today)
 
-            # Upsert stories and story_daily
-            tracked = []
+            # Resolve today's specific labels to parent stories first, then
+            # persist one daily observation per parent arc.
+            assignments = []
+            new_parent_count = 0
+            new_child_count = 0
             for story_label, articles in story_groups.items():
-                canonical = label_map.get(story_label, "NEW")
+                parent_attachment = parent_attachments.get(story_label)
+                canonical = (
+                    parent_attachment["canonical_label"]
+                    if parent_attachment
+                    else label_map.get(story_label, "NEW")
+                )
+                development_status = "continuing"
+                parent_relationship = ""
+                parent_confidence = ""
+                created_new_parent = False
 
                 if canonical == "NEW" or canonical not in recent_stories:
-                    # New story
                     story_id = _find_story_by_label(conn, story_label, today, lookback_days)
                     if story_id:
                         conn.execute(
@@ -274,14 +302,51 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
                             (story_label, articles[0]["theme"], today, today)
                         )
                         story_id = cur.lastrowid
+                        created_new_parent = True
+                    canonical_label = story_label
+                    development_status = "new_parent"
+                    new_parent_count += 1 if created_new_parent else 0
                 else:
                     story_id = recent_stories[canonical]
-                    canonical = canonical  # keep canonical label
+                    canonical_label = canonical
                     conn.execute(
                         "UPDATE stories SET last_seen = ? WHERE story_id = ?",
                         (today, story_id)
                     )
+                    if parent_attachment:
+                        development_status = "new_child"
+                        parent_relationship = parent_attachment.get("relationship", "")
+                        parent_confidence = parent_attachment.get("confidence", "")
+                        new_child_count += 1
 
+                assignments.append({
+                    "story_label": story_label,
+                    "canonical_label": canonical_label,
+                    "story_id": story_id,
+                    "articles": articles,
+                    "development_status": development_status,
+                    "parent_relationship": parent_relationship,
+                    "parent_confidence": parent_confidence,
+                })
+
+            from collections import defaultdict
+            parent_groups = defaultdict(lambda: {
+                "canonical_label": "",
+                "articles": [],
+                "assignments": [],
+                "labels": [],
+            })
+            for assignment in assignments:
+                parent = parent_groups[assignment["story_id"]]
+                parent["canonical_label"] = assignment["canonical_label"]
+                parent["articles"].extend(assignment["articles"])
+                parent["assignments"].append(assignment)
+                parent["labels"].append(assignment["story_label"])
+
+            tracked = []
+            for story_id, parent in parent_groups.items():
+                articles = parent["articles"]
+                labels = parent["labels"]
                 previous_context = _get_previous_story_context(conn, story_id, today)
                 source_count   = len(set(a["source"] for a in articles))
                 importance_avg = sum(a["importance"] for a in articles) / len(articles)
@@ -292,9 +357,10 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
                     INSERT OR REPLACE INTO story_daily (story_id, date, source_count, importance_avg, labels_seen)
                     VALUES (?, ?, ?, ?, ?)
                     """,
-                    (story_id, today, source_count, importance_avg, json.dumps([story_label]))
+                    (story_id, today, source_count, importance_avg, json.dumps(labels, ensure_ascii=False))
                 )
 
+                label_seen = labels[0] if len(labels) == 1 else json.dumps(labels, ensure_ascii=False)
                 conn.execute("""
                     INSERT INTO story_observations (
                         story_id, date, label_seen, source_count, article_count, importance_avg
@@ -306,7 +372,7 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
                         article_count = excluded.article_count,
                         importance_avg = excluded.importance_avg,
                         created_at = CURRENT_TIMESTAMP
-                """, (story_id, today, story_label, source_count, len(articles), importance_avg))
+                """, (story_id, today, label_seen, source_count, len(articles), importance_avg))
                 observation_id = conn.execute(
                     "SELECT observation_id FROM story_observations WHERE story_id = ? AND date = ?",
                     (story_id, today)
@@ -320,43 +386,101 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
                     "DELETE FROM article_story_links WHERE story_id = ? AND observation_id = ?",
                     (story_id, observation_id)
                 )
-                for a in articles:
-                    source_id = _source_id_for_name(conn, a.get("source"))
+                for assignment in parent["assignments"]:
+                    development_articles = assignment["articles"]
+                    development_source_count = len(set(a["source"] for a in development_articles))
+                    development_importance = (
+                        sum(a["importance"] for a in development_articles) / len(development_articles)
+                    )
                     conn.execute("""
-                        INSERT INTO articles (
-                            id, story_id, date, source_id, source, title, description, url, published_at, importance
+                        INSERT INTO story_developments (
+                            story_id, observation_id, date, development_label,
+                            development_status, source_count, article_count, importance_avg,
+                            parent_relationship, parent_confidence
                         )
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(story_id, date, development_label) DO UPDATE SET
+                            observation_id = excluded.observation_id,
+                            development_status = excluded.development_status,
+                            source_count = excluded.source_count,
+                            article_count = excluded.article_count,
+                            importance_avg = excluded.importance_avg,
+                            parent_relationship = excluded.parent_relationship,
+                            parent_confidence = excluded.parent_confidence,
+                            created_at = CURRENT_TIMESTAMP
                     """, (
-                        a["id"],
+                        story_id,
+                        observation_id,
+                        today,
+                        assignment["story_label"],
+                        assignment["development_status"],
+                        development_source_count,
+                        len(development_articles),
+                        development_importance,
+                        assignment["parent_relationship"],
+                        assignment["parent_confidence"],
+                    ))
+                    development_id = conn.execute("""
+                        SELECT development_id
+                        FROM story_developments
+                        WHERE story_id = ? AND date = ? AND development_label = ?
+                    """, (
                         story_id,
                         today,
-                        source_id,
-                        a["source"],
-                        a["title"],
-                        a.get("description", ""),
-                        a["url"],
-                        a["published_at"],
-                        a["importance"],
-                    ))
-                    conn.execute("""
-                        INSERT OR REPLACE INTO article_story_links (article_id, story_id, observation_id, relevance)
-                        VALUES (?, ?, ?, ?)
-                    """, (str(a["id"]), story_id, observation_id, 1.0))
-                    tracked.append({
-                        **a,
-                        "source_id": source_id,
-                        "story_id": story_id,
-                        "observation_id": observation_id,
-                        "canonical_label": canonical if canonical != "NEW" else story_label,
-                        "trend": trend,
-                        "previous_context": previous_context,
-                    })
+                        assignment["story_label"],
+                    )).fetchone()["development_id"]
+
+                    for a in development_articles:
+                        source_id = _source_id_for_name(conn, a.get("source"))
+                        conn.execute("""
+                            INSERT INTO articles (
+                                id, story_id, date, source_id, source, title, description, url, published_at, importance
+                            )
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            a["id"],
+                            story_id,
+                            today,
+                            source_id,
+                            a["source"],
+                            a["title"],
+                            a.get("description", ""),
+                            a["url"],
+                            a["published_at"],
+                            a["importance"],
+                        ))
+                        conn.execute("""
+                            INSERT OR REPLACE INTO article_story_links (article_id, story_id, observation_id, relevance)
+                            VALUES (?, ?, ?, ?)
+                        """, (str(a["id"]), story_id, observation_id, 1.0))
+                        tracked.append({
+                            **a,
+                            "source_id": source_id,
+                            "story_id": story_id,
+                            "observation_id": observation_id,
+                            "development_id": development_id,
+                            "canonical_label": assignment["canonical_label"],
+                            "development_label": assignment["story_label"],
+                            "development_status": assignment["development_status"],
+                            "parent_relationship": assignment["parent_relationship"],
+                            "parent_confidence": assignment["parent_confidence"],
+                            "trend": trend,
+                            "previous_context": previous_context,
+                        })
 
             _sync_story_dates(conn)
     finally:
         conn.close()
 
     _record_story_match_verification_totals(match_decisions)
-    print(f"Tracked {len(story_groups)} stories ({sum(1 for v in label_map.values() if v == 'NEW')} new)")
+    observability.update_run_totals(
+        story_developments_saved=len(story_groups),
+        story_parent_attachments=sum(1 for item in parent_attachments if item in story_groups),
+        story_new_parent_arcs=new_parent_count,
+        story_unmatched_new_stories=new_parent_count,
+    )
+    print(
+        f"Tracked {len(parent_groups)} parent stories "
+        f"({new_parent_count} new parent arcs, {new_child_count} new developments)"
+    )
     return tracked

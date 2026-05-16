@@ -53,15 +53,18 @@ Story memory is built in two layers.
 
 First, `src/tracker.py` groups today's classified articles by story label. It asks the tracking model to consolidate same-day label variants, then asks whether today's labels continue recent canonical stories. The tracker is conservative about generic incident labels such as crashes, shootings, lawsuits, and attacks because false merges corrupt memory more severely than false splits.
 
-The tracker verifies candidate cross-day matches before it reuses an existing story ID by default. The verifier uses `gpt-5.4-nano`, the current article title, RSS description, normalized article date, full article text when available, and compact recent story memory. If full text is missing, the tracker fetches it only for candidate matches. Accepted matches require structured same-event evidence; adjacent, broad-context, uncertain, malformed, or weak decisions become new stories instead of corrupting existing memory. Use `--no-verify-story-matches` only for comparison runs against the older label-only match path.
+The tracker verifies candidate cross-day matches before it reuses an existing story ID by default. The verifier uses `gpt-5.4-nano`, the current article title, RSS description, normalized article date, full article text when available, and compact recent story memory. If full text is missing, the tracker fetches it only for candidate matches. Accepted matches require structured same-event evidence. Rejected matches can still become `new_child` developments inside a broad parent arc when the verifier supplies useful medium-or-high-confidence parent continuity evidence; this preserves memory without claiming the child is the same concrete event. Use `--no-verify-story-matches` only for comparison runs against the older label-only match path.
 
 Second, the tracker writes a daily observation for each story. This observation records the label seen today, source count, article count, average importance, and later the generated summary and `delta_summary`. The next run can use that saved memory to answer: what changed since the last observation?
+
+When multiple specific labels belong under one parent arc, the tracker stores one parent daily observation and one `story_developments` row per specific development.
 
 The key tables are:
 
 - `stories`: one row per ongoing story arc.
 - `story_daily`: daily aggregate counts for each story.
 - `story_observations`: the memory layer used for summaries and deltas.
+- `story_developments`: child developments recorded inside a parent story arc.
 - `articles`: fetched articles linked to stories for the run date.
 - `article_story_links`: junction rows from article to story observation.
 - `story_match_decisions`: verifier audit rows for accepted and rejected candidate story matches.
@@ -199,6 +202,26 @@ summary         TEXT
 delta_summary   TEXT
 created_at      TEXT DEFAULT CURRENT_TIMESTAMP
 UNIQUE (story_id, date)
+```
+
+### `story_developments`
+
+Specific daily developments inside a parent story arc.
+
+```sql
+development_id       INTEGER PRIMARY KEY AUTOINCREMENT
+story_id             INTEGER NOT NULL
+observation_id       INTEGER
+date                 DATE NOT NULL
+development_label    TEXT NOT NULL
+development_status   TEXT NOT NULL
+source_count         INTEGER
+article_count        INTEGER
+importance_avg       REAL
+parent_relationship  TEXT
+parent_confidence    TEXT
+created_at           TEXT DEFAULT CURRENT_TIMESTAMP
+UNIQUE (story_id, date, development_label)
 ```
 
 ### `articles`

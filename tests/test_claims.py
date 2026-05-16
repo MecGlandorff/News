@@ -360,13 +360,22 @@ def test_derivability_check_rejects_when_claim_number_missing_from_span():
     assert decision == "reject"
 
 
-def test_derivability_check_accepts_when_entity_appears_in_span():
+def test_derivability_check_accepts_entity_overlap_with_strong_lexical_support():
     decision = claims_module._derivability_check(
         "Iran proposed capping enrichment at 3.67%.",
         "Iran proposed capping enrichment at 3.67 percent.",
         ["Iran"],
     )
     assert decision == "accept"
+
+
+def test_derivability_check_routes_weak_entity_overlap_to_verifier():
+    decision = claims_module._derivability_check(
+        "Lydora denied the Marek foreign ministry's allegation about moving artillery near the Kars crossing.",
+        "a claim Lydora denied.",
+        ["Lydora", "Marek", "Kars"],
+    )
+    assert decision == "uncertain"
 
 
 def test_derivability_check_accepts_claim_text_contained_in_span():
@@ -493,6 +502,51 @@ def test_extract_drops_paraphrase_claims_when_verifier_rejects(tmp_path, monkeyp
     assert get_claims_for_story(42) == []
     assert stats["claim_verifier_calls"] == 1
     assert stats["claim_verifier_accepts"] == 0
+    assert stats["claim_verifier_rejects"] == 1
+
+
+def test_extract_routes_weak_entity_overlap_to_verifier(tmp_path, monkeypatch):
+    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
+
+    article = {
+        **ARTICLE,
+        "id": "anaphoric-span",
+        "description": (
+            "The Marek foreign ministry alleged Lydora had moved artillery near "
+            "the Kars crossing, a claim Lydora denied."
+        ),
+    }
+    response = {
+        "claims": [
+            {
+                "claim_text": (
+                    "Lydora denied the Marek foreign ministry's allegation about "
+                    "moving artillery near the Kars crossing."
+                ),
+                "claim_type": "allegation",
+                "entities": ["Lydora", "Marek", "Kars"],
+                "evidence_span": "a claim Lydora denied.",
+                "confidence": 0.84,
+            }
+        ]
+    }
+    client = _fake_client(response)
+    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
+
+    verifier_calls = []
+
+    def fake_verifier(claim_text, evidence_span):
+        verifier_calls.append((claim_text, evidence_span))
+        return False
+
+    monkeypatch.setattr(claims_module, "_verify_claim_with_llm", fake_verifier)
+
+    stats = extract_and_save_claims([article])
+
+    assert len(verifier_calls) == 1
+    assert get_claims_for_story(42) == []
+    assert stats["claim_derivable_accepts"] == 0
+    assert stats["claim_verifier_calls"] == 1
     assert stats["claim_verifier_rejects"] == 1
 
 

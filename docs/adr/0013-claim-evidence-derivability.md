@@ -1,5 +1,7 @@
 # ADR 0013: Claim evidence derivability gate
 
+**Date:** 2026-05-13
+
 ## Status
 
 Accepted.
@@ -15,8 +17,8 @@ The flagship pitch of this repo is *source-grounded event memory*. A claim that 
 Add a hybrid derivability gate between `claim_text` and `evidence_span` in `src/claims.py`:
 
 1. **Deterministic reject** — if any number in `claim_text` (integer, decimal, percentage, comma-separated number, normalized by stripping commas) does not appear in `evidence_span`, reject immediately. No verifier call.
-2. **Deterministic accept** — if `claim_text` (normalized) is contained in `evidence_span`, or if any listed entity from the claim's `entities` list appears in `evidence_span` and rule 1 did not reject, accept immediately.
-3. **LLM verifier** for the ambiguous middle — call `gpt-5.4-nano` with a small prompt that asks whether the span supports the claim and returns `{"supported": true | false, "reason": "..."}`. The verifier uses its own prompt version `CLAIMS_VERIFIER_PROMPT_VERSION = "2026-05-14-v1"` and reuses the existing `llm_response_cache` table via the standard `create_cached_chat_completion` path.
+2. **Deterministic accept** — if `claim_text` (normalized) is contained in `evidence_span`, or if entity overlap is backed by enough non-entity lexical overlap, accept immediately.
+3. **LLM verifier** for the ambiguous middle — call `gpt-5.4-nano` with a small prompt that asks whether the span supports the claim and returns `{"supported": true | false, "reason": "..."}`. Weak entity-only or anaphoric spans are routed here instead of being accepted deterministically. The verifier uses its own prompt version `CLAIMS_VERIFIER_PROMPT_VERSION = "2026-05-14-v1"` and reuses the existing `llm_response_cache` table via the standard `create_cached_chat_completion` path.
 
 Verifier failures (network error, JSON parse error, unexpected payload) default to **reject**. The verifier prompt instructs the model to mark `false` when unsure, so failures and uncertainty both drop the claim.
 
@@ -34,7 +36,7 @@ Validation runs **outside** the SQLite transaction so the verifier's network cal
 ## Consequences
 
 - Closes the gap between the README's trust-layer claim and what the code enforces.
-- Most claims are decided for free (deterministic gate). Only the paraphrase-without-overlap middle pays for the verifier call.
+- Most claims are decided for free (deterministic gate). Paraphrases without strong overlap and weak anaphoric spans pay for the verifier call.
 - Verifier cost is bounded by `gpt-5.4-nano` pricing on short prompts; cache reuse keeps reruns cheap.
 - Tests can monkeypatch `_verify_claim_with_llm` to keep unit tests offline.
 

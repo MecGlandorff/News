@@ -163,10 +163,61 @@ def _evidence_in_content(evidence_span, content):
 
 
 _NUMBER_PATTERN = re.compile(r"\d+(?:[.,]\d+)*")
+_WORD_PATTERN = re.compile(r"[a-z0-9]+(?:'[a-z0-9]+)?")
+_DERIVABILITY_STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "be",
+    "by",
+    "for",
+    "from",
+    "had",
+    "has",
+    "have",
+    "in",
+    "is",
+    "it",
+    "its",
+    "near",
+    "of",
+    "on",
+    "or",
+    "said",
+    "says",
+    "that",
+    "the",
+    "their",
+    "to",
+    "was",
+    "were",
+    "with",
+}
 
 
 def _number_tokens(text):
     return {match.replace(",", "") for match in _NUMBER_PATTERN.findall(text or "")}
+
+
+def _word_tokens(text):
+    return set(_WORD_PATTERN.findall(_normalize_for_span_match(text)))
+
+
+def _entity_tokens(entities):
+    tokens = set()
+    for entity in entities or []:
+        tokens.update(_word_tokens(entity))
+    return tokens
+
+
+def _has_strong_non_entity_overlap(claim_text, evidence_span, entities):
+    entity_tokens = _entity_tokens(entities)
+    claim_tokens = _word_tokens(claim_text) - entity_tokens - _DERIVABILITY_STOPWORDS
+    span_tokens = _word_tokens(evidence_span) - entity_tokens - _DERIVABILITY_STOPWORDS
+    return len(claim_tokens & span_tokens) >= 2
 
 
 def _derivability_check(claim_text, evidence_span, entities):
@@ -175,7 +226,8 @@ def _derivability_check(claim_text, evidence_span, entities):
     Returns one of:
       "reject"    — a number in claim_text is missing from evidence_span.
       "accept"    — evidence_span contains claim_text verbatim, or a listed
-                    entity appears in evidence_span and all claim numbers do too.
+                    entity appears in evidence_span with enough non-entity
+                    lexical overlap to avoid weak anaphoric spans.
       "uncertain" — neither rule applies; needs the LLM verifier.
     """
     claim_numbers = _number_tokens(claim_text)
@@ -190,7 +242,11 @@ def _derivability_check(claim_text, evidence_span, entities):
 
     for entity in entities or []:
         normalized_entity = _normalize_for_span_match(entity)
-        if normalized_entity and normalized_entity in normalized_span:
+        if (
+            normalized_entity
+            and normalized_entity in normalized_span
+            and _has_strong_non_entity_overlap(claim_text, evidence_span, entities)
+        ):
             return "accept"
 
     return "uncertain"

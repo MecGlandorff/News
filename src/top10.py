@@ -67,6 +67,31 @@ def _source_lines(articles):
     return lines
 
 
+def _has_new_child_development(story):
+    return any(
+        development.get("status") == "new_child"
+        for development in story.get("developments", [])
+    )
+
+
+def _trend_label(story):
+    if story.get("trend") != "new" and _has_new_child_development(story):
+        return "NEW DEVELOPMENT"
+    return TREND_ICON.get(story.get("trend"), "")
+
+
+def _development_summary_line(story):
+    developments = story.get("developments") or []
+    if not developments:
+        return ""
+    labels = [development.get("label", "") for development in developments if development.get("label")]
+    labels = [label for label in labels if label and label != story.get("canonical_label")]
+    if not labels:
+        return ""
+    label_text = "; ".join(labels[:4])
+    return f"**Parent arc:** {story['canonical_label']} | **Today's development:** {label_text}"
+
+
 def _evidence_lines(story_id):
     """Return formatted evidence lines for a story, or [] if none."""
     if story_id is None:
@@ -299,7 +324,7 @@ def build_briefing_markdown(tracked, n=3, global_n=10, package=None, show_eviden
             lines += ["---", "", f"# {section_title}", ""]
         for i, s in enumerate(section_stories, 1):
             label      = s["canonical_label"]
-            icon       = TREND_ICON.get(s["trend"], "")
+            icon       = _trend_label(s)
             importance = round(s["importance_avg"], 1)
             sources    = s["source_count"]
             reported   = _latest_reported_at(s["articles"])
@@ -323,6 +348,9 @@ def build_briefing_markdown(tracked, n=3, global_n=10, package=None, show_eviden
                 briefings.get(label, ""),
                 "",
             ]
+            development_line = _development_summary_line(s)
+            if development_line:
+                story_lines += [development_line, ""]
             if open_questions:
                 story_lines += [
                     "### What to watch",

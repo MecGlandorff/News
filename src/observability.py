@@ -22,6 +22,10 @@ RUN_TOTAL_COLUMNS = {
     "story_match_verifications",
     "story_match_accepts",
     "story_match_rejections",
+    "story_developments_saved",
+    "story_parent_attachments",
+    "story_new_parent_arcs",
+    "story_unmatched_new_stories",
     "duplicate_url_skips",
     "feed_fetch_failures",
     "feed_items_outside_date_skipped",
@@ -71,6 +75,10 @@ def _create_schema(conn):
             story_match_verifications INTEGER DEFAULT 0,
             story_match_accepts INTEGER DEFAULT 0,
             story_match_rejections INTEGER DEFAULT 0,
+            story_developments_saved INTEGER DEFAULT 0,
+            story_parent_attachments INTEGER DEFAULT 0,
+            story_new_parent_arcs INTEGER DEFAULT 0,
+            story_unmatched_new_stories INTEGER DEFAULT 0,
             duplicate_url_skips INTEGER DEFAULT 0,
             feed_fetch_failures INTEGER DEFAULT 0,
             feed_items_outside_date_skipped INTEGER DEFAULT 0,
@@ -123,6 +131,10 @@ def _create_schema(conn):
     _ensure_column(conn, "runs", "story_match_verifications", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "story_match_accepts", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "story_match_rejections", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "story_developments_saved", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "story_parent_attachments", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "story_new_parent_arcs", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "story_unmatched_new_stories", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "duplicate_url_skips", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "feed_fetch_failures", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "feed_items_outside_date_skipped", "INTEGER DEFAULT 0")
@@ -416,6 +428,8 @@ def get_run_report_data(run_id):
                    articles_returned, claims_saved,
                    stories_touched, story_match_verifications,
                    story_match_accepts, story_match_rejections,
+                   story_developments_saved, story_parent_attachments,
+                   story_new_parent_arcs, story_unmatched_new_stories,
                    duplicate_url_skips, feed_fetch_failures,
                    feed_items_outside_date_skipped,
                    feed_items_missing_timestamp_skipped,
@@ -551,6 +565,10 @@ def pipeline_report(run_id):
         f"Claim verifier accepts: {row['claim_verifier_accepts'] or 0}",
         f"Claim verifier rejects: {row['claim_verifier_rejects'] or 0}",
         f"Stories touched:        {row['stories_touched'] or 0}",
+        f"Developments saved:     {row['story_developments_saved'] or 0}",
+        f"Parent attachments:     {row['story_parent_attachments'] or 0}",
+        f"New parent arcs:        {row['story_new_parent_arcs'] or 0}",
+        f"Unmatched new stories:  {row['story_unmatched_new_stories'] or 0}",
         f"Story match checks:     {row['story_match_verifications'] or 0}",
         f"Story match accepted:   {row['story_match_accepts'] or 0}",
         f"Story match rejected:   {row['story_match_rejections'] or 0}",
@@ -653,6 +671,10 @@ def run_report_markdown(run_id):
         f"| Claim verifier accepts | {_markdown_number(row['claim_verifier_accepts'])} |",
         f"| Claim verifier rejects | {_markdown_number(row['claim_verifier_rejects'])} |",
         f"| Stories touched | {_markdown_number(row['stories_touched'])} |",
+        f"| Developments saved | {_markdown_number(row['story_developments_saved'])} |",
+        f"| Parent attachments | {_markdown_number(row['story_parent_attachments'])} |",
+        f"| New parent arcs | {_markdown_number(row['story_new_parent_arcs'])} |",
+        f"| Unmatched new stories | {_markdown_number(row['story_unmatched_new_stories'])} |",
         f"| Story match checks | {_markdown_number(row['story_match_verifications'])} |",
         f"| Story match accepted | {_markdown_number(row['story_match_accepts'])} |",
         f"| Story match rejected | {_markdown_number(row['story_match_rejections'])} |",
