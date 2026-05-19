@@ -144,7 +144,7 @@ The eval records expected-claim coverage, evidence validity, duplicate claims, t
 Create a virtual environment and install dependencies:
 
 ```bash
-python -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```

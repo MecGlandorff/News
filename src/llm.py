@@ -12,7 +12,7 @@ OPENAI_API_KEY_HELP = (
     "  python -m src.run"
 )
 
-_RESPONSE_CALL_IDS = {}
+_RESPONSE_CALL_IDS: dict[int, int] = {}
 
 
 def has_openai_api_key():
