@@ -1,10 +1,11 @@
 # Briefing Selection And Memory Continuity Audit
 
-## Status
-
+## Status 
+SOLVED, but keep an eye on. This is the main moat of this project; a good trust layer. The previous arcing just didnt work well. 
+ 
 Addressed pending real-run review.
 
-This issue documents run-quality concerns from the May 18 and May 19 pipeline reports. The code now implements the selected fix; the remaining work is to validate it on fresh real pipeline reports.
+This issue documents run-quality concerns from the May 18 and May 19 pipeline reports. The code now implements the selected fix; the remaining work is to validate it on fresh real pipeline reports. --> This seems okay (latest run from 20th of may)
 
 ## Resolution
 
