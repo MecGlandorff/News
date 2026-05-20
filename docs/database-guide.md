@@ -33,6 +33,8 @@ sqlite3 data/stories.db "SELECT run_id, run_date, status FROM runs ORDER BY run_
 ```mermaid
 erDiagram
     sources ||--o{ articles : "source_id"
+    story_arcs ||--o{ stories : "arc_id"
+    stories ||--o{ stories : "parent_story_id"
     stories ||--o{ story_daily : "story_id"
     stories ||--o{ story_observations : "story_id"
     stories ||--o{ story_developments : "story_id"
@@ -49,10 +51,11 @@ The most important tables are:
 | Table | Meaning |
 |---|---|
 | `sources` | RSS feed metadata seeded from `src/scraper.py` |
-| `stories` | one row per tracked story arc |
+| `story_arcs` | broader ongoing news arcs |
+| `stories` | concrete tracked stories, optionally linked to an arc and parent story |
 | `story_daily` | per-story daily source/importance aggregates |
 | `story_observations` | daily memory, including generated summary and delta |
-| `story_developments` | specific daily developments stored inside a parent story arc |
+| `story_developments` | daily development labels for a concrete story |
 | `articles` | fetched articles linked to a story/date |
 | `article_story_links` | article-to-observation links |
 | `article_classifications` | cached article theme/story/importance classifications |
@@ -68,7 +71,8 @@ Conditional tables:
 - `claims` and `claim_extractions` are created when `--show-evidence` is used.
 - `llm_response_cache` is created when exact cached matching, verification, or briefing calls run in an observed pipeline context.
 - `story_match_decisions` exists in current tracker schema, but rows are only written when the verifier checks candidate cross-day matches. Verification is on by default and can be disabled with `--no-verify-story-matches`.
-- `story_developments` records future child developments under parent arcs; older runs are not backfilled.
+- `story_arcs` and nullable `stories.arc_id` / `stories.parent_story_id` are added idempotently; legacy flat stories receive one compatibility arc each.
+- `story_developments` records daily development labels; older runs are not backfilled with child labels.
 - Older databases may lack newer nullable columns until a run touches the relevant schema helper.
 
 ## Latest Runs
@@ -132,6 +136,10 @@ SELECT
   feed_fetch_failures,
   article_text_fetch_successes,
   article_text_fetch_failures,
+  story_developments_saved,
+  story_parent_attachments,
+  story_new_parent_arcs,
+  story_unmatched_new_stories,
   story_match_verifications,
   story_match_accepts,
   story_match_rejections,
@@ -144,6 +152,26 @@ SELECT
   completion_tokens
 FROM runs
 WHERE run_id = 42;
+```
+
+Review related story-match rejections for the latest run:
+
+```sql
+WITH latest AS (
+  SELECT run_id, run_date FROM runs ORDER BY run_id DESC LIMIT 1
+)
+SELECT
+  today_label,
+  candidate_label,
+  relationship,
+  confidence,
+  reject_reason
+FROM story_match_decisions
+WHERE run_date = (SELECT run_date FROM latest)
+  AND accepted = 0
+  AND relationship IN ('same_story_arc', 'direct_follow_up', 'adjacent_topic', 'broader_context')
+  AND confidence IN ('medium', 'high')
+ORDER BY confidence DESC, today_label;
 ```
 
 ## LLM Calls And Token Use

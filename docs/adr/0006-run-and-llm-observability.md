@@ -28,6 +28,8 @@ Track prompt and completion tokens now. EUR cost estimates require explicit pric
 
 2026-05-09 follow-up: ADR 0010 adds scraper counters, claim counters, and estimated EUR cost to `--pipeline-report` using explicit model pricing in code.
 
+2026-05-17 follow-up: `--pipeline-report` also includes a novelty audit section. It surfaces high-signal stories not selected for briefing, high-signal new parent arcs, new parent arcs with related rejected candidates, and rejected medium/high related story-match decisions.
+
 ---
 
 ## Rationale
@@ -38,7 +40,7 @@ Track prompt and completion tokens now. EUR cost estimates require explicit pric
 
 **Token totals are stable enough for v1.** Token usage is returned by model responses and can be recorded without maintaining a separate pricing table.
 
-**The report is operational, not editorial.** `--pipeline-report` explains what the pipeline did. It does not change story selection, briefing claims, confidence, or source agreement.
+**The report is operational, not editorial.** `--pipeline-report` explains what the pipeline did. It does not change story selection, briefing claims, confidence, source agreement, or parent/child assignment.
 
 ---
 

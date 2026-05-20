@@ -129,6 +129,45 @@ def test_track_populates_source_id_when_source_metadata_exists(tmp_path, monkeyp
     assert row == (1, "Test Source")
 
 
+def test_story_arc_schema_backfills_legacy_stories(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    monkeypatch.setattr(tracker, "DB_PATH", db_path)
+
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.executescript("""
+            CREATE TABLE stories (
+                story_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                canonical_label TEXT NOT NULL,
+                theme TEXT,
+                first_seen DATE NOT NULL,
+                last_seen DATE NOT NULL
+            );
+            INSERT INTO stories (canonical_label, theme, first_seen, last_seen)
+            VALUES ('Legacy Story', 'Tech', '2026-05-01', '2026-05-02');
+        """)
+        conn.commit()
+    finally:
+        conn.close()
+
+    conn = tracker._get_db()
+    try:
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(stories)").fetchall()}
+        row = conn.execute("""
+            SELECT s.arc_id, a.canonical_label, a.first_seen, a.last_seen
+            FROM stories s
+            JOIN story_arcs a ON a.arc_id = s.arc_id
+            WHERE s.canonical_label = 'Legacy Story'
+        """).fetchone()
+        arc_count = conn.execute("SELECT COUNT(*) FROM story_arcs").fetchone()[0]
+    finally:
+        conn.close()
+
+    assert {"arc_id", "parent_story_id"} <= columns
+    assert tuple(row) == (1, "Legacy Story", "2026-05-01", "2026-05-02")
+    assert arc_count == 1
+
+
 def test_track_replaces_same_day_article_story_assignment(tmp_path, monkeypatch):
     db_path = tmp_path / "stories.db"
     data_dir = tmp_path / "daily"
@@ -325,6 +364,17 @@ def test_story_match_verifier_rejects_gaza_detention_false_merge(tmp_path, monke
                 ),
             }]
         },
+        {
+            "assignments": [{
+                "today_label": "Israel Detention Abuse",
+                "arc_id": "NEW_ARC",
+                "parent_story_id": None,
+                "relationship": "uncertain",
+                "confidence": "low",
+                "continuity_evidence": [],
+                "reject_reason": "The detention abuse coverage is not part of the flotilla arc.",
+            }]
+        },
     ])
     monkeypatch.setattr(tracker, "DB_PATH", db_path)
     monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
@@ -415,6 +465,19 @@ def test_rejected_parent_arc_match_saves_new_child_development(tmp_path, monkeyp
                 ),
             }]
         },
+        {
+            "assignments": [{
+                "today_label": "Mali rebel offensive",
+                "arc_id": 1,
+                "parent_story_id": 1,
+                "relationship": "same_arc",
+                "confidence": "medium",
+                "continuity_evidence": [
+                    "Both stories concern Mali's security crisis and rebel violence."
+                ],
+                "reject_reason": "",
+            }]
+        },
     ])
     monkeypatch.setattr(tracker, "DB_PATH", db_path)
     monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
@@ -438,7 +501,9 @@ def test_rejected_parent_arc_match_saves_new_child_development(tmp_path, monkeyp
     article["published_at"] = "Fri, 15 May 2026 12:00:00 GMT"
     tracked = tracker.track([article], today="2026-05-15", verify_story_matches=True)
 
-    assert tracked[0]["canonical_label"] == "Mali attacks"
+    assert tracked[0]["canonical_label"] == "Mali rebel offensive"
+    assert tracked[0]["arc_label"] == "Mali attacks"
+    assert tracked[0]["parent_label"] == "Mali attacks"
     assert tracked[0]["development_label"] == "Mali rebel offensive"
     assert tracked[0]["development_status"] == "new_child"
 
@@ -446,22 +511,30 @@ def test_rejected_parent_arc_match_saves_new_child_development(tmp_path, monkeyp
     conn.row_factory = sqlite3.Row
     try:
         story_count = conn.execute("SELECT COUNT(*) FROM stories").fetchone()[0]
+        arc_count = conn.execute("SELECT COUNT(*) FROM story_arcs").fetchone()[0]
         development = dict(conn.execute("""
-            SELECT s.canonical_label, d.development_label, d.development_status,
-                   d.parent_relationship, d.parent_confidence
+            SELECT s.canonical_label, a.canonical_label AS arc_label,
+                   p.canonical_label AS parent_label, d.development_label,
+                   d.development_status, d.parent_relationship,
+                   d.parent_confidence
             FROM story_developments d
             JOIN stories s ON s.story_id = d.story_id
+            JOIN story_arcs a ON a.arc_id = s.arc_id
+            LEFT JOIN stories p ON p.story_id = s.parent_story_id
             WHERE d.date = ?
         """, ("2026-05-15",)).fetchone())
     finally:
         conn.close()
 
-    assert story_count == 1
+    assert story_count == 2
+    assert arc_count == 1
     assert development == {
-        "canonical_label": "Mali attacks",
+        "canonical_label": "Mali rebel offensive",
+        "arc_label": "Mali attacks",
+        "parent_label": "Mali attacks",
         "development_label": "Mali rebel offensive",
         "development_status": "new_child",
-        "parent_relationship": "adjacent_topic",
+        "parent_relationship": "same_arc",
         "parent_confidence": "medium",
     }
 
@@ -521,6 +594,52 @@ def test_story_match_verifier_fetches_full_text_for_candidate_match(tmp_path, mo
     current_article = verifier_payload["cases"][0]["current_articles"][0]
     assert current_article["article_date"] == "2026-05-02"
     assert current_article["article_text"] == "Full article text about the latest Iran nuclear talks proposal."
+
+
+def test_arc_assignment_uses_mini_model_and_supplied_arc_candidates(monkeypatch):
+    captured = []
+    client = _fake_tracker_client_sequence([
+        {
+            "assignments": [{
+                "today_label": "Mali rebel offensive",
+                "arc_id": 7,
+                "parent_story_id": 3,
+                "relationship": "same_arc",
+                "confidence": "high",
+                "continuity_evidence": ["Mali rebel violence continues inside the same security arc."],
+                "reject_reason": "",
+            }]
+        }
+    ], captured=captured)
+    monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
+
+    assignments = tracker._assign_story_arcs(
+        {"Mali rebel offensive"},
+        {
+            7: {
+                "arc_id": 7,
+                "canonical_label": "Mali attacks",
+                "theme": "Geopolitics & War",
+                "last_seen": "2026-05-13",
+                "active_days": 2,
+                "recent_stories": [{
+                    "story_id": 3,
+                    "canonical_label": "Mali attacks",
+                    "last_seen": "2026-05-13",
+                    "summary": "Mali rebel violence continued.",
+                }],
+            }
+        },
+        {"Mali rebel offensive": [_article(2, "Mali rebels launch offensive", "Mali rebel offensive")]},
+        today="2026-05-15",
+    )
+
+    assert captured[0]["model"] == "gpt-5.4-mini"
+    payload = json.loads(captured[0]["messages"][1]["content"])
+    assert payload["cases"][0]["candidate_arcs"][0]["arc_id"] == 7
+    assert assignments["Mali rebel offensive"]["accepted"] is True
+    assert assignments["Mali rebel offensive"]["arc_id"] == 7
+    assert assignments["Mali rebel offensive"]["parent_story_id"] == 3
 
 
 def test_multiple_today_labels_under_one_parent_do_not_overwrite_articles(tmp_path, monkeypatch):

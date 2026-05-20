@@ -2,6 +2,7 @@ import json
 from datetime import date
 from pathlib import Path
 from src.config import (
+    ARC_ASSIGNMENT_MODEL,
     CROSSDAY_MATCH_MODEL,
     DEFAULT_LOOKBACK_DAYS,
     STORY_MATCH_VERIFIER_MODEL,
@@ -36,6 +37,10 @@ def _get_recent_story_options(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
     return tracker_store.get_recent_story_options(conn, today, lookback_days)
 
 
+def _get_recent_arc_options(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
+    return tracker_store.get_recent_arc_options(conn, today, lookback_days)
+
+
 def _get_previous_story_context(conn, story_id, today, article_limit=3):
     return tracker_store.get_previous_story_context(conn, story_id, today, article_limit)
 
@@ -62,6 +67,14 @@ def _sync_story_dates(conn):
 
 def _source_id_for_name(conn, source_name):
     return tracker_store.source_id_for_name(conn, source_name)
+
+
+def _create_story_arc(conn, canonical_label, theme, first_seen, last_seen):
+    return tracker_store.create_story_arc(conn, canonical_label, theme, first_seen, last_seen)
+
+
+def _get_story_hierarchy(conn, story_id):
+    return tracker_store.get_story_hierarchy(conn, story_id)
 
 
 def _save_story_match_decisions(conn, decisions, run_date):
@@ -197,6 +210,18 @@ def _verify_story_matches(label_map, recent_stories, story_groups, today=None):
     )
 
 
+def _assign_story_arcs(today_labels, recent_arcs, story_groups, today=None):
+    return story_matching.assign_story_arcs(
+        today_labels,
+        recent_arcs,
+        story_groups,
+        get_client=get_openai_client,
+        model=ARC_ASSIGNMENT_MODEL,
+        today=today,
+        default_days=DEFAULT_LOOKBACK_DAYS,
+    )
+
+
 def _parent_arc_attachments(match_decisions, recent_story_options):
     attachments = {}
     for decision in match_decisions:
@@ -241,6 +266,7 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
     conn = _get_db()
     try:
         recent_story_options = _get_recent_story_options(conn, today, lookback_days)
+        recent_arc_options = _get_recent_arc_options(conn, today, lookback_days)
         recent_stories = {
             label: option["story_id"]
             for label, option in recent_story_options.items()
@@ -264,7 +290,17 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
             story_groups,
             today=today,
         )
-    parent_attachments = _parent_arc_attachments(match_decisions, recent_story_options)
+    unmatched_labels = {
+        label
+        for label, canonical in label_map.items()
+        if canonical == "NEW" or canonical not in recent_stories
+    }
+    arc_assignments = _assign_story_arcs(
+        unmatched_labels,
+        recent_arc_options,
+        story_groups,
+        today=today,
+    )
 
     conn = _get_db()
     try:
@@ -272,22 +308,21 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
             _save_story_match_decisions(conn, match_decisions, today)
             _reset_tracking_date(conn, today)
 
-            # Resolve today's specific labels to parent stories first, then
-            # persist one daily observation per parent arc.
+            # Resolve today's labels to concrete stories. Same-story matches
+            # reuse story rows; arc matches create child story rows under the
+            # broader arc without merging the concrete events.
             assignments = []
             new_parent_count = 0
             new_child_count = 0
+            new_arc_count = 0
+            arc_attachment_count = 0
             for story_label, articles in story_groups.items():
-                parent_attachment = parent_attachments.get(story_label)
-                canonical = (
-                    parent_attachment["canonical_label"]
-                    if parent_attachment
-                    else label_map.get(story_label, "NEW")
-                )
+                canonical = label_map.get(story_label, "NEW")
+                arc_assignment = arc_assignments.get(story_label) or {}
                 development_status = "continuing"
                 parent_relationship = ""
                 parent_confidence = ""
-                created_new_parent = False
+                created_new_story = False
 
                 if canonical == "NEW" or canonical not in recent_stories:
                     story_id = _find_story_by_label(conn, story_label, today, lookback_days)
@@ -296,16 +331,59 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
                             "UPDATE stories SET last_seen = ? WHERE story_id = ?",
                             (today, story_id)
                         )
+                        if arc_assignment.get("accepted"):
+                            development_status = "new_child"
+                            parent_relationship = arc_assignment.get("relationship", "")
+                            parent_confidence = arc_assignment.get("confidence", "")
+                            new_child_count += 1
+                            arc_attachment_count += 1
+                        else:
+                            development_status = "new_parent"
                     else:
+                        parent_story_id = None
+                        if arc_assignment.get("accepted"):
+                            arc_id = arc_assignment["arc_id"]
+                            parent_story_id = arc_assignment.get("parent_story_id")
+                            development_status = "new_child"
+                            parent_relationship = arc_assignment.get("relationship", "")
+                            parent_confidence = arc_assignment.get("confidence", "")
+                            new_child_count += 1
+                            arc_attachment_count += 1
+                        else:
+                            arc_id = _create_story_arc(
+                                conn,
+                                story_label,
+                                articles[0]["theme"],
+                                today,
+                                today,
+                            )
+                            development_status = "new_parent"
+                            new_arc_count += 1
                         cur = conn.execute(
-                            "INSERT INTO stories (canonical_label, theme, first_seen, last_seen) VALUES (?, ?, ?, ?)",
-                            (story_label, articles[0]["theme"], today, today)
+                            """
+                            INSERT INTO stories (
+                                arc_id, parent_story_id, canonical_label,
+                                theme, first_seen, last_seen
+                            )
+                            VALUES (?, ?, ?, ?, ?, ?)
+                            """,
+                            (
+                                arc_id,
+                                parent_story_id,
+                                story_label,
+                                articles[0]["theme"],
+                                today,
+                                today,
+                            )
                         )
                         story_id = cur.lastrowid
-                        created_new_parent = True
+                        created_new_story = True
                     canonical_label = story_label
-                    development_status = "new_parent"
-                    new_parent_count += 1 if created_new_parent else 0
+                    new_parent_count += (
+                        1
+                        if created_new_story and development_status == "new_parent"
+                        else 0
+                    )
                 else:
                     story_id = recent_stories[canonical]
                     canonical_label = canonical
@@ -313,16 +391,16 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
                         "UPDATE stories SET last_seen = ? WHERE story_id = ?",
                         (today, story_id)
                     )
-                    if parent_attachment:
-                        development_status = "new_child"
-                        parent_relationship = parent_attachment.get("relationship", "")
-                        parent_confidence = parent_attachment.get("confidence", "")
-                        new_child_count += 1
+                hierarchy = _get_story_hierarchy(conn, story_id)
 
                 assignments.append({
                     "story_label": story_label,
                     "canonical_label": canonical_label,
                     "story_id": story_id,
+                    "arc_id": hierarchy["arc_id"],
+                    "arc_label": hierarchy["arc_label"],
+                    "parent_story_id": hierarchy["parent_story_id"],
+                    "parent_label": hierarchy["parent_label"],
                     "articles": articles,
                     "development_status": development_status,
                     "parent_relationship": parent_relationship,
@@ -332,6 +410,10 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
             from collections import defaultdict
             parent_groups = defaultdict(lambda: {
                 "canonical_label": "",
+                "arc_id": None,
+                "arc_label": "",
+                "parent_story_id": None,
+                "parent_label": "",
                 "articles": [],
                 "assignments": [],
                 "labels": [],
@@ -339,6 +421,10 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
             for assignment in assignments:
                 parent = parent_groups[assignment["story_id"]]
                 parent["canonical_label"] = assignment["canonical_label"]
+                parent["arc_id"] = assignment["arc_id"]
+                parent["arc_label"] = assignment["arc_label"]
+                parent["parent_story_id"] = assignment["parent_story_id"]
+                parent["parent_label"] = assignment["parent_label"]
                 parent["articles"].extend(assignment["articles"])
                 parent["assignments"].append(assignment)
                 parent["labels"].append(assignment["story_label"])
@@ -457,6 +543,10 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
                             **a,
                             "source_id": source_id,
                             "story_id": story_id,
+                            "arc_id": assignment["arc_id"],
+                            "arc_label": assignment["arc_label"],
+                            "parent_story_id": assignment["parent_story_id"],
+                            "parent_label": assignment["parent_label"],
                             "observation_id": observation_id,
                             "development_id": development_id,
                             "canonical_label": assignment["canonical_label"],
@@ -475,12 +565,15 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
     _record_story_match_verification_totals(match_decisions)
     observability.update_run_totals(
         story_developments_saved=len(story_groups),
-        story_parent_attachments=sum(1 for item in parent_attachments if item in story_groups),
+        story_parent_attachments=arc_attachment_count,
+        story_arc_assignments=len(arc_assignments),
+        story_arc_attachments=arc_attachment_count,
+        story_new_arcs=new_arc_count,
         story_new_parent_arcs=new_parent_count,
         story_unmatched_new_stories=new_parent_count,
     )
     print(
-        f"Tracked {len(parent_groups)} parent stories "
-        f"({new_parent_count} new parent arcs, {new_child_count} new developments)"
+        f"Tracked {len(parent_groups)} stories "
+        f"({new_arc_count} new arcs, {new_child_count} new arc attachments)"
     )
     return tracked

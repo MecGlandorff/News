@@ -75,21 +75,31 @@ def _has_new_child_development(story):
 
 
 def _trend_label(story):
-    if story.get("trend") != "new" and _has_new_child_development(story):
+    if _has_new_child_development(story):
         return "NEW DEVELOPMENT"
     return TREND_ICON.get(story.get("trend"), "")
 
 
 def _development_summary_line(story):
+    context_parts = []
+    arc_label = str(story.get("arc_label") or "").strip()
+    parent_label = str(story.get("parent_label") or "").strip()
+    if arc_label and arc_label != story.get("canonical_label"):
+        context_parts.append(f"**Arc:** {arc_label}")
+    if parent_label and parent_label != story.get("canonical_label"):
+        context_parts.append(f"**Parent story:** {parent_label}")
+
     developments = story.get("developments") or []
-    if not developments:
-        return ""
     labels = [development.get("label", "") for development in developments if development.get("label")]
     labels = [label for label in labels if label and label != story.get("canonical_label")]
-    if not labels:
-        return ""
-    label_text = "; ".join(labels[:4])
-    return f"**Parent arc:** {story['canonical_label']} | **Today's development:** {label_text}"
+    if labels:
+        label_text = "; ".join(labels[:4])
+        if not context_parts:
+            context_parts.append(f"**Parent arc:** {story['canonical_label']}")
+        context_parts.append(f"**Today's development:** {label_text}")
+    if context_parts:
+        return " | ".join(context_parts)
+    return ""
 
 
 def _evidence_lines(story_id):

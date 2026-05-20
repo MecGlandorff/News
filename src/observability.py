@@ -10,6 +10,15 @@ from src import pricing
 
 DB_PATH = Path("data/stories.db")
 RUN_ARTIFACTS_DIR = Path("run_artifacts")
+AUDIT_SCORE_THRESHOLD = 450.0
+AUDIT_SOURCE_THRESHOLD = 6
+AUDIT_IMPORTANCE_THRESHOLD = 3.0
+AUDIT_REVIEW_RELATIONSHIPS = {
+    "same_story_arc",
+    "direct_follow_up",
+    "adjacent_topic",
+    "broader_context",
+}
 
 _CURRENT_RUN_ID = ContextVar("current_run_id", default=None)
 _LAST_LLM_CALL_ID = ContextVar("last_llm_call_id", default=None)
@@ -24,6 +33,9 @@ RUN_TOTAL_COLUMNS = {
     "story_match_rejections",
     "story_developments_saved",
     "story_parent_attachments",
+    "story_arc_assignments",
+    "story_arc_attachments",
+    "story_new_arcs",
     "story_new_parent_arcs",
     "story_unmatched_new_stories",
     "duplicate_url_skips",
@@ -77,6 +89,9 @@ def _create_schema(conn):
             story_match_rejections INTEGER DEFAULT 0,
             story_developments_saved INTEGER DEFAULT 0,
             story_parent_attachments INTEGER DEFAULT 0,
+            story_arc_assignments INTEGER DEFAULT 0,
+            story_arc_attachments INTEGER DEFAULT 0,
+            story_new_arcs INTEGER DEFAULT 0,
             story_new_parent_arcs INTEGER DEFAULT 0,
             story_unmatched_new_stories INTEGER DEFAULT 0,
             duplicate_url_skips INTEGER DEFAULT 0,
@@ -133,6 +148,9 @@ def _create_schema(conn):
     _ensure_column(conn, "runs", "story_match_rejections", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "story_developments_saved", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "story_parent_attachments", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "story_arc_assignments", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "story_arc_attachments", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "story_new_arcs", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "story_new_parent_arcs", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "story_unmatched_new_stories", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "duplicate_url_skips", "INTEGER DEFAULT 0")
@@ -429,6 +447,8 @@ def get_run_report_data(run_id):
                    stories_touched, story_match_verifications,
                    story_match_accepts, story_match_rejections,
                    story_developments_saved, story_parent_attachments,
+                   story_arc_assignments, story_arc_attachments,
+                   story_new_arcs,
                    story_new_parent_arcs, story_unmatched_new_stories,
                    duplicate_url_skips, feed_fetch_failures,
                    feed_items_outside_date_skipped,
@@ -450,6 +470,305 @@ def get_run_report_data(run_id):
             """,
             (run_id,),
         ).fetchone()
+    finally:
+        conn.close()
+
+
+def _table_exists(conn, table):
+    row = conn.execute(
+        """
+        SELECT 1
+        FROM sqlite_master
+        WHERE type = 'table' AND name = ?
+        """,
+        (table,),
+    ).fetchone()
+    return row is not None
+
+
+def _run_cli_args(conn, run_id):
+    row = conn.execute(
+        "SELECT cli_args FROM runs WHERE run_id = ?",
+        (run_id,),
+    ).fetchone()
+    if not row:
+        return {}
+    try:
+        value = json.loads(row["cli_args"] or "{}")
+    except json.JSONDecodeError:
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
+def _top_developments_from_args(cli_args):
+    try:
+        return int(cli_args.get("top_developments") or 3)
+    except (TypeError, ValueError):
+        return 3
+
+
+def _tracked_articles_for_audit(conn, run_date):
+    required = {"articles", "stories"}
+    if not all(_table_exists(conn, table) for table in required):
+        return []
+
+    has_classifications = _table_exists(conn, "article_classifications")
+    classification_theme = "c.theme" if has_classifications else "NULL"
+    classification_label = "c.story_label" if has_classifications else "NULL"
+    classification_join = (
+        "LEFT JOIN article_classifications c ON c.article_id = a.id"
+        if has_classifications else ""
+    )
+    rows = conn.execute(
+        f"""
+        SELECT a.id, a.source, a.title, a.url, a.published_at,
+               a.importance, a.description, a.story_id,
+               s.canonical_label, s.theme AS story_theme, s.first_seen,
+               {classification_theme} AS classification_theme,
+               {classification_label} AS classification_label
+        FROM articles a
+        JOIN stories s ON s.story_id = a.story_id
+        {classification_join}
+        WHERE a.date = ?
+        """,
+        (run_date,),
+    ).fetchall()
+
+    tracked = []
+    for row in rows:
+        label = row["classification_label"] or row["canonical_label"]
+        theme = row["classification_theme"] or row["story_theme"] or "Other"
+        tracked.append({
+            "id": row["id"],
+            "source": row["source"],
+            "title": row["title"] or "Untitled",
+            "description": row["description"] or "",
+            "url": row["url"],
+            "published_at": row["published_at"],
+            "importance": int(row["importance"] or 0),
+            "story_id": row["story_id"],
+            "canonical_label": row["canonical_label"],
+            "story_label": label,
+            "theme": theme,
+            "trend": "new" if row["first_seen"] == run_date else "steady",
+        })
+    return tracked
+
+
+def _audit_story_item(story, score_value):
+    from src import briefing_selection
+
+    return {
+        "story_id": story.get("story_id"),
+        "label": story["canonical_label"],
+        "theme": story["theme"],
+        "source_count": story["source_count"],
+        "importance_avg": round(float(story["importance_avg"] or 0), 2),
+        "score": round(float(score_value or 0), 1),
+        "selection_score": round(float(briefing_selection.selection_score(story) or 0), 1),
+        "selection_penalty": round(float(briefing_selection.selection_penalty(story) or 0), 1),
+        "penalty_reasons": briefing_selection.penalty_reasons(story),
+    }
+
+
+def _high_signal_not_displayed(conn, run_date, top_developments, limit):
+    tracked = _tracked_articles_for_audit(conn, run_date)
+    if not tracked:
+        return []
+
+    from src import briefing_selection
+
+    selected = briefing_selection.select_story_sections(tracked, n=top_developments)
+    displayed = {
+        story["canonical_label"]
+        for story in selected.get("display_stories", [])
+    }
+    candidates = []
+    for story in selected.get("stories", []):
+        score_value = briefing_selection.score(story)
+        is_high_score = score_value >= AUDIT_SCORE_THRESHOLD
+        is_broad_pickup = (
+            story["source_count"] >= AUDIT_SOURCE_THRESHOLD
+            and story["importance_avg"] >= AUDIT_IMPORTANCE_THRESHOLD
+        )
+        if story["canonical_label"] not in displayed and (is_high_score or is_broad_pickup):
+            candidates.append(_audit_story_item(story, score_value))
+    return candidates[:limit]
+
+
+def _high_signal_new_parent_arcs(conn, run_date, limit):
+    if not all(_table_exists(conn, table) for table in {"story_developments", "stories"}):
+        return []
+    rows = conn.execute(
+        """
+        SELECT d.story_id, s.canonical_label, s.theme, d.development_label,
+               d.source_count, d.article_count, d.importance_avg,
+               ((COALESCE(d.importance_avg, 0) * 100.0) + (COALESCE(d.source_count, 0) * 12.0)) AS score
+        FROM story_developments d
+        JOIN stories s ON s.story_id = d.story_id
+        WHERE d.date = ? AND d.development_status = 'new_parent'
+          AND (
+              ((COALESCE(d.importance_avg, 0) * 100.0) + (COALESCE(d.source_count, 0) * 12.0)) >= ?
+              OR (COALESCE(d.source_count, 0) >= ? AND COALESCE(d.importance_avg, 0) >= ?)
+          )
+        ORDER BY score DESC, d.source_count DESC, d.development_label
+        LIMIT ?
+        """,
+        (
+            run_date,
+            AUDIT_SCORE_THRESHOLD,
+            AUDIT_SOURCE_THRESHOLD,
+            AUDIT_IMPORTANCE_THRESHOLD,
+            limit,
+        ),
+    ).fetchall()
+    return [
+        {
+            "story_id": row["story_id"],
+            "label": row["canonical_label"],
+            "development_label": row["development_label"],
+            "theme": row["theme"] or "Other",
+            "source_count": int(row["source_count"] or 0),
+            "article_count": int(row["article_count"] or 0),
+            "importance_avg": round(float(row["importance_avg"] or 0), 2),
+            "score": round(float(row["score"] or 0), 1),
+        }
+        for row in rows
+    ]
+
+
+def _new_parent_arcs_with_candidates(conn, run_date, limit):
+    if not all(_table_exists(conn, table) for table in {"story_developments", "story_match_decisions"}):
+        return []
+    placeholders = ", ".join("?" for _ in AUDIT_REVIEW_RELATIONSHIPS)
+    rows = conn.execute(
+        f"""
+        SELECT d.story_id, d.development_label, d.source_count,
+               d.importance_avg, m.candidate_label, m.relationship,
+               m.confidence, m.reject_reason
+        FROM story_developments d
+        JOIN story_match_decisions m
+          ON m.run_date = d.date
+         AND lower(m.today_label) = lower(d.development_label)
+        WHERE d.date = ?
+          AND d.development_status = 'new_parent'
+          AND m.accepted = 0
+          AND lower(COALESCE(m.relationship, '')) IN ({placeholders})
+          AND lower(COALESCE(m.confidence, '')) IN ('medium', 'high')
+        ORDER BY
+          CASE lower(COALESCE(m.confidence, ''))
+            WHEN 'high' THEN 0
+            WHEN 'medium' THEN 1
+            ELSE 2
+          END,
+          d.source_count DESC,
+          d.importance_avg DESC,
+          d.development_label
+        LIMIT ?
+        """,
+        [run_date, *sorted(AUDIT_REVIEW_RELATIONSHIPS), limit],
+    ).fetchall()
+    return [
+        {
+            "story_id": row["story_id"],
+            "label": row["development_label"],
+            "candidate_label": row["candidate_label"],
+            "relationship": row["relationship"],
+            "confidence": row["confidence"],
+            "source_count": int(row["source_count"] or 0),
+            "importance_avg": round(float(row["importance_avg"] or 0), 2),
+            "reject_reason": row["reject_reason"] or "",
+        }
+        for row in rows
+    ]
+
+
+def _rejected_related_matches(conn, run_date, limit):
+    if not _table_exists(conn, "story_match_decisions"):
+        return []
+    placeholders = ", ".join("?" for _ in AUDIT_REVIEW_RELATIONSHIPS)
+    rows = conn.execute(
+        f"""
+        SELECT today_label, candidate_label, relationship, confidence,
+               reject_reason, continuity_evidence
+        FROM story_match_decisions
+        WHERE run_date = ?
+          AND accepted = 0
+          AND lower(COALESCE(relationship, '')) IN ({placeholders})
+          AND lower(COALESCE(confidence, '')) IN ('medium', 'high')
+        ORDER BY
+          CASE lower(COALESCE(confidence, ''))
+            WHEN 'high' THEN 0
+            WHEN 'medium' THEN 1
+            ELSE 2
+          END,
+          today_label,
+          candidate_label
+        LIMIT ?
+        """,
+        [run_date, *sorted(AUDIT_REVIEW_RELATIONSHIPS), limit],
+    ).fetchall()
+    return [
+        {
+            "today_label": row["today_label"],
+            "candidate_label": row["candidate_label"],
+            "relationship": row["relationship"],
+            "confidence": row["confidence"],
+            "reject_reason": row["reject_reason"] or "",
+            "continuity_evidence": row["continuity_evidence"] or "",
+        }
+        for row in rows
+    ]
+
+
+def novelty_audit(run_id, limit=5):
+    row = get_run_report_data(run_id)
+    if row is None or not row["run_date"]:
+        return {
+            "run_date": None,
+            "new_parent_ratio": None,
+            "high_signal_not_displayed": [],
+            "high_signal_new_parent_arcs": [],
+            "new_parent_arcs_with_candidates": [],
+            "rejected_related_matches": [],
+        }
+
+    conn = _get_db()
+    try:
+        cli_args = _run_cli_args(conn, run_id)
+        top_developments = _top_developments_from_args(cli_args)
+        developments = int(row["story_developments_saved"] or 0)
+        new_parent_arcs = int(row["story_new_parent_arcs"] or 0)
+        ratio = None
+        if developments:
+            ratio = new_parent_arcs / developments
+        return {
+            "run_date": row["run_date"],
+            "new_parent_ratio": ratio,
+            "new_parent_arcs": new_parent_arcs,
+            "developments": developments,
+            "high_signal_not_displayed": _high_signal_not_displayed(
+                conn,
+                row["run_date"],
+                top_developments,
+                limit,
+            ),
+            "high_signal_new_parent_arcs": _high_signal_new_parent_arcs(
+                conn,
+                row["run_date"],
+                limit,
+            ),
+            "new_parent_arcs_with_candidates": _new_parent_arcs_with_candidates(
+                conn,
+                row["run_date"],
+                limit,
+            ),
+            "rejected_related_matches": _rejected_related_matches(
+                conn,
+                row["run_date"],
+                limit,
+            ),
+        }
     finally:
         conn.close()
 
@@ -519,6 +838,77 @@ def llm_cost_summary(run_id):
     }
 
 
+def _audit_ratio_line(audit):
+    ratio = audit.get("new_parent_ratio")
+    if ratio is None:
+        return "New parent ratio:      n/a"
+    return (
+        "New parent ratio:      "
+        f"{audit.get('new_parent_arcs', 0)}/{audit.get('developments', 0)} "
+        f"({ratio * 100:.1f}%)"
+    )
+
+
+def _audit_story_line(item):
+    penalty = ""
+    if item.get("selection_penalty"):
+        reasons = ", ".join(item.get("penalty_reasons") or ["selection penalty"])
+        penalty = (
+            f", adjusted {item['selection_score']:.1f}, "
+            f"penalty {item['selection_penalty']:.1f} ({reasons})"
+        )
+    return (
+        f"    - {item['label']} "
+        f"({item['theme']}, score {item['score']:.1f}, "
+        f"{item['source_count']} sources, importance {item['importance_avg']:.1f}"
+        f"{penalty})"
+    )
+
+
+def _audit_new_parent_line(item):
+    development = item.get("development_label") or item["label"]
+    label = item["label"]
+    if development != label:
+        label = f"{label} / {development}"
+    return (
+        f"    - {label} "
+        f"({item['theme']}, score {item['score']:.1f}, "
+        f"{item['source_count']} sources, {item['article_count']} articles, "
+        f"importance {item['importance_avg']:.1f})"
+    )
+
+
+def _audit_candidate_line(item):
+    return (
+        f"    - {item['label']} -> {item['candidate_label']} "
+        f"({item['relationship']}, {item['confidence']})"
+    )
+
+
+def _audit_rejected_line(item):
+    return (
+        f"    - {item['today_label']} -> {item['candidate_label']} "
+        f"({item['relationship']}, {item['confidence']})"
+    )
+
+
+def novelty_audit_lines(run_id, limit=5):
+    audit = novelty_audit(run_id, limit=limit)
+    sections = [
+        ("High-signal not displayed", audit["high_signal_not_displayed"], _audit_story_line),
+        ("High-signal new parent arcs", audit["high_signal_new_parent_arcs"], _audit_new_parent_line),
+        ("New parent arcs with prior candidates", audit["new_parent_arcs_with_candidates"], _audit_candidate_line),
+        ("Rejected related matches", audit["rejected_related_matches"], _audit_rejected_line),
+    ]
+
+    lines = ["Novelty audit:", _audit_ratio_line(audit)]
+    for title, items, formatter in sections:
+        lines.append(f"{title}: {len(items)}")
+        for item in items:
+            lines.append(formatter(item))
+    return lines
+
+
 def pipeline_report(run_id):
     row = get_run_report_data(run_id)
     if row is None:
@@ -567,6 +957,9 @@ def pipeline_report(run_id):
         f"Stories touched:        {row['stories_touched'] or 0}",
         f"Developments saved:     {row['story_developments_saved'] or 0}",
         f"Parent attachments:     {row['story_parent_attachments'] or 0}",
+        f"Arc assignments:        {row['story_arc_assignments'] or 0}",
+        f"Arc attachments:        {row['story_arc_attachments'] or 0}",
+        f"New arcs:               {row['story_new_arcs'] or 0}",
         f"New parent arcs:        {row['story_new_parent_arcs'] or 0}",
         f"Unmatched new stories:  {row['story_unmatched_new_stories'] or 0}",
         f"Story match checks:     {row['story_match_verifications'] or 0}",
@@ -601,6 +994,7 @@ def pipeline_report(run_id):
             f"latency {(item['latency_ms'] or 0) / 1000:.1f}s, "
             f"{pricing.format_eur(item['cost_eur'])}{suffix}"
         )
+    lines.extend(novelty_audit_lines(run_id))
     if row["error_message"]:
         lines.append(f"Error:                  {row['error_message']}")
     return "\n".join(lines)
@@ -612,6 +1006,40 @@ def _markdown_number(value):
 
 def _markdown_cost(value):
     return pricing.format_eur(value)
+
+
+def _markdown_audit_story(item):
+    reasons = ", ".join(item.get("penalty_reasons") or [])
+    return (
+        f"| {item['label']} | {item['theme']} | "
+        f"{item['source_count']} | {item['importance_avg']:.1f} | "
+        f"{item['score']:.1f} | {item.get('selection_score', item['score']):.1f} | "
+        f"{item.get('selection_penalty', 0):.1f} | {reasons} |"
+    )
+
+
+def _markdown_audit_new_parent(item):
+    development = item.get("development_label") or item["label"]
+    return (
+        f"| {item['label']} | {development} | {item['theme']} | "
+        f"{item['source_count']} | {item['article_count']} | "
+        f"{item['importance_avg']:.1f} | {item['score']:.1f} |"
+    )
+
+
+def _markdown_audit_candidate(item):
+    return (
+        f"| {item['label']} | {item['candidate_label']} | "
+        f"{item['relationship']} | {item['confidence']} | "
+        f"{item['source_count']} | {item['importance_avg']:.1f} |"
+    )
+
+
+def _markdown_audit_rejected(item):
+    return (
+        f"| {item['today_label']} | {item['candidate_label']} | "
+        f"{item['relationship']} | {item['confidence']} |"
+    )
 
 
 def _run_artifact_name(row):
@@ -673,6 +1101,9 @@ def run_report_markdown(run_id):
         f"| Stories touched | {_markdown_number(row['stories_touched'])} |",
         f"| Developments saved | {_markdown_number(row['story_developments_saved'])} |",
         f"| Parent attachments | {_markdown_number(row['story_parent_attachments'])} |",
+        f"| Arc assignments | {_markdown_number(row['story_arc_assignments'])} |",
+        f"| Arc attachments | {_markdown_number(row['story_arc_attachments'])} |",
+        f"| New arcs | {_markdown_number(row['story_new_arcs'])} |",
         f"| New parent arcs | {_markdown_number(row['story_new_parent_arcs'])} |",
         f"| Unmatched new stories | {_markdown_number(row['story_unmatched_new_stories'])} |",
         f"| Story match checks | {_markdown_number(row['story_match_verifications'])} |",
@@ -721,6 +1152,65 @@ def run_report_markdown(run_id):
         )
     if not cost["by_purpose"]:
         lines.append("| None | 0 | 0 | 0 | 0.0s | EUR 0.0000 |")
+
+    audit = novelty_audit(run_id)
+    ratio = audit.get("new_parent_ratio")
+    ratio_text = "n/a" if ratio is None else f"{ratio * 100:.1f}%"
+    lines.extend([
+        "",
+        "## Novelty Audit",
+        "",
+        "| Metric | Value |",
+        "|---|---:|",
+        f"| New parent arcs | {_markdown_number(audit.get('new_parent_arcs'))} |",
+        f"| Developments | {_markdown_number(audit.get('developments'))} |",
+        f"| New parent ratio | {ratio_text} |",
+        "",
+        "### High-Signal Not Displayed",
+        "",
+        "| Story | Theme | Sources | Importance | Base Score | Selection Score | Penalty | Penalty Reason |",
+        "|---|---|---:|---:|---:|---:|---:|---|",
+    ])
+    if audit["high_signal_not_displayed"]:
+        lines.extend(_markdown_audit_story(item) for item in audit["high_signal_not_displayed"])
+    else:
+        lines.append("| None |  | 0 | 0.0 | 0.0 | 0.0 | 0.0 |  |")
+
+    lines.extend([
+        "",
+        "### High-Signal New Parent Arcs",
+        "",
+        "| Parent | Development | Theme | Sources | Articles | Importance | Score |",
+        "|---|---|---|---:|---:|---:|---:|",
+    ])
+    if audit["high_signal_new_parent_arcs"]:
+        lines.extend(_markdown_audit_new_parent(item) for item in audit["high_signal_new_parent_arcs"])
+    else:
+        lines.append("| None |  |  | 0 | 0 | 0.0 | 0.0 |")
+
+    lines.extend([
+        "",
+        "### New Parent Arcs With Prior Candidates",
+        "",
+        "| New Parent | Prior Candidate | Relationship | Confidence | Sources | Importance |",
+        "|---|---|---|---|---:|---:|",
+    ])
+    if audit["new_parent_arcs_with_candidates"]:
+        lines.extend(_markdown_audit_candidate(item) for item in audit["new_parent_arcs_with_candidates"])
+    else:
+        lines.append("| None |  |  |  | 0 | 0.0 |")
+
+    lines.extend([
+        "",
+        "### Rejected Related Matches",
+        "",
+        "| Today Label | Candidate | Relationship | Confidence |",
+        "|---|---|---|---|",
+    ])
+    if audit["rejected_related_matches"]:
+        lines.extend(_markdown_audit_rejected(item) for item in audit["rejected_related_matches"])
+    else:
+        lines.append("| None |  |  |  |")
 
     if row["error_message"]:
         lines.extend([

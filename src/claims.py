@@ -164,6 +164,8 @@ def _evidence_in_content(evidence_span, content):
 
 _NUMBER_PATTERN = re.compile(r"\d+(?:[.,]\d+)*")
 _WORD_PATTERN = re.compile(r"[a-z0-9]+(?:'[a-z0-9]+)?")
+
+# English-only for now; move this to configuration before broadening multilingual derivability.
 _DERIVABILITY_STOPWORDS = {
     "a",
     "an",

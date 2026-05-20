@@ -448,9 +448,15 @@ Retries:                0
 Tokens:                 prompt 18420 / completion 3910
 Estimated cost:         EUR 0.21
   claim: 7 calls, tokens 7200/1300, latency 9.4s, EUR 0.01
+Novelty audit:
+New parent ratio:      2/8 (25.0%)
+High-signal not displayed: 1
+High-signal new parent arcs: 2
+New parent arcs with prior candidates: 1
+Rejected related matches: 3
 ```
 
-Cost estimates use explicitly maintained model pricing in `src/config.py` and the token totals stored in `llm_calls`.
+Cost estimates use explicitly maintained model pricing in `src/config.py` and the token totals stored in `llm_calls`. The novelty audit is review telemetry only: it surfaces suspicious selection and parent/child cases without changing story memory or briefing output.
 
 ## What Costs Money
 
@@ -472,7 +478,7 @@ Cost controls today:
 - batched briefing generation
 - `--max-per-source` for smaller runs
 - `--db-off` for isolated experiments
-- `--pipeline-report` for scraper counts, claim metrics, token, latency, and cost inspection
+- `--pipeline-report` for scraper counts, claim metrics, token, latency, cost, and novelty-audit inspection
 
 The most expensive failure mode is not just token spend. A false story merge can corrupt memory across future runs, which is why conservative matching and verifier audit rows matter.
 

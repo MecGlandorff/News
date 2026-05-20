@@ -679,6 +679,43 @@ def test_briefing_uses_editorial_sections_and_scraps_sports(monkeypatch):
     assert "Kinahan Arrest" in markdown
 
 
+def test_briefing_can_show_high_signal_penalized_themes(monkeypatch):
+    monkeypatch.setattr(
+        top10,
+        "_get_briefings",
+        lambda stories: {story["canonical_label"]: "Briefing text." for story in stories},
+    )
+
+    articles = [_briefing_article(1, "USA Politics", "US Budget Vote", 4)]
+    for index in range(4):
+        articles.append(_briefing_article(10 + index, "Tech", "AI Safety Lawsuit", 4, source=f"Tech Source {index}"))
+        articles.append(_briefing_article(20 + index, "Science", "Ebola Outbreak", 4, source=f"Science Source {index}"))
+    for index in range(10):
+        articles.append(_briefing_article(30 + index, "Sports", "Olympic Corruption Probe", 5, source=f"Sports Source {index}"))
+
+    markdown = build_briefing_markdown(articles, n=3)
+
+    assert "AI Safety Lawsuit" in markdown
+    assert "Ebola Outbreak" in markdown
+    assert "Olympic Corruption Probe" in markdown
+
+
+def test_briefing_does_not_show_ordinary_sports_even_when_slate_is_thin(monkeypatch):
+    monkeypatch.setattr(
+        top10,
+        "_get_briefings",
+        lambda stories: {story["canonical_label"]: "Briefing text." for story in stories},
+    )
+
+    markdown = build_briefing_markdown([
+        _briefing_article(1, "Sports", "Regular League Result", 5),
+    ], n=3)
+
+    assert "No tracked stories found." not in markdown
+    assert "Regular League Result" not in markdown
+    assert "# Top Developments" in markdown
+
+
 def test_briefing_does_not_suppress_hard_news_for_video_format(monkeypatch):
     monkeypatch.setattr(
         top10,
@@ -698,6 +735,26 @@ def test_briefing_does_not_suppress_hard_news_for_video_format(monkeypatch):
 
     assert "Modena Car Attack" in markdown
     assert "Beveiligingscamera filmt hoe auto inrijdt op mensen in Modena" in markdown
+
+
+def test_briefing_does_not_suppress_hard_news_for_tv_channel_reference(monkeypatch):
+    monkeypatch.setattr(
+        top10,
+        "_get_briefings",
+        lambda stories: {story["canonical_label"]: "Briefing text." for story in stories},
+    )
+
+    articles = [
+        _briefing_article(1, "Other", "San Diego Mosque Shooting", 5, source="NOS"),
+        _briefing_article(2, "Other", "San Diego Mosque Shooting", 5, source="The Guardian"),
+        _briefing_article(3, "Other", "San Diego Mosque Shooting", 5, source="Al Jazeera"),
+    ]
+    articles[0]["description"] = "According to the imam, witnesses told a TV channel what happened."
+
+    markdown = build_briefing_markdown(articles, n=3)
+
+    assert "San Diego Mosque Shooting" in markdown
+    assert "Briefing text." in markdown
 
 
 def test_briefing_deduplicates_story_across_themes(monkeypatch):

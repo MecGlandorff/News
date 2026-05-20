@@ -8,6 +8,8 @@ Accepted with staged implementation.
 
 This ADR records the target parent/child story design. The first PR only ships the lightweight `story_developments` step on top of the existing `stories` table. The full `story_arcs`, `stories.arc_id`, and `stories.parent_story_id` schema is a target design, not part of the first PR unless that schema is added later.
 
+2026-05-20 follow-up: ADR 0016 promotes the target `story_arcs`, `stories.arc_id`, and `stories.parent_story_id` shape into the current implementation while keeping the lightweight `story_developments` rows for daily observability.
+
 ## Context
 
 The tracker originally stored story memory as a flat set of `stories` rows with daily observations. That works for narrow event continuity, but reviewed briefings showed a recurring structural problem: some developments are not the same concrete event, yet they clearly belong inside the same larger news arc.
