@@ -3,14 +3,14 @@ testpaths = ["tests"]
 pythonpath = ["."]
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py312"
 line-length = 100
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.12"
 files = ["src"]
 ignore_missing_imports = true
 disable_error_code = ["import-untyped"]
