@@ -59,6 +59,8 @@ coverage/
 docs/coding-standard.md
 docs/communication.md
 docs/game.md
+docs/session-log.md
+docs/session-log-*.md
 notes/
 
 # Local AI assistant artifacts
