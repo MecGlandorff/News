@@ -12,17 +12,53 @@ def ensure_column(conn, table, column, definition):
         conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
 
 
+def backfill_story_arcs(conn):
+    """Give legacy flat story rows a one-story compatibility arc."""
+    rows = conn.execute("""
+        SELECT story_id, canonical_label, theme, first_seen, last_seen
+        FROM stories
+        WHERE arc_id IS NULL
+        ORDER BY story_id
+    """).fetchall()
+    for row in rows:
+        cur = conn.execute(
+            """
+            INSERT INTO story_arcs (canonical_label, theme, first_seen, last_seen)
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                row["canonical_label"],
+                row["theme"],
+                row["first_seen"],
+                row["last_seen"],
+            ),
+        )
+        conn.execute(
+            "UPDATE stories SET arc_id = ?, parent_story_id = NULL WHERE story_id = ?",
+            (cur.lastrowid, row["story_id"]),
+        )
+
+
 def get_db(db_path):
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     conn.executescript("""
-        CREATE TABLE IF NOT EXISTS stories (
-            story_id       INTEGER PRIMARY KEY AUTOINCREMENT,
+        CREATE TABLE IF NOT EXISTS story_arcs (
+            arc_id          INTEGER PRIMARY KEY AUTOINCREMENT,
             canonical_label TEXT NOT NULL,
-            theme          TEXT,
-            first_seen     DATE NOT NULL,
-            last_seen      DATE NOT NULL
+            theme           TEXT,
+            first_seen      DATE NOT NULL,
+            last_seen       DATE NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS stories (
+            story_id        INTEGER PRIMARY KEY AUTOINCREMENT,
+            arc_id          INTEGER REFERENCES story_arcs(arc_id),
+            parent_story_id INTEGER REFERENCES stories(story_id),
+            canonical_label TEXT NOT NULL,
+            theme           TEXT,
+            first_seen      DATE NOT NULL,
+            last_seen       DATE NOT NULL
         );
         CREATE TABLE IF NOT EXISTS story_daily (
             story_id       INTEGER NOT NULL,
@@ -106,9 +142,20 @@ def get_db(db_path):
             ON story_developments (story_id, date);
         CREATE INDEX IF NOT EXISTS idx_story_developments_date
             ON story_developments (date);
+        CREATE INDEX IF NOT EXISTS idx_story_arcs_last_seen
+            ON story_arcs (last_seen);
+    """)
+    ensure_column(conn, "stories", "arc_id", "INTEGER REFERENCES story_arcs(arc_id)")
+    ensure_column(conn, "stories", "parent_story_id", "INTEGER REFERENCES stories(story_id)")
+    conn.executescript("""
+        CREATE INDEX IF NOT EXISTS idx_stories_arc_id
+            ON stories (arc_id);
+        CREATE INDEX IF NOT EXISTS idx_stories_parent_story_id
+            ON stories (parent_story_id);
     """)
     ensure_column(conn, "articles", "description", "TEXT")
     ensure_column(conn, "articles", "source_id", "INTEGER REFERENCES sources(source_id)")
+    backfill_story_arcs(conn)
     conn.commit()
     return conn
 
@@ -136,12 +183,18 @@ def get_recent_story_options(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
     start = str(date.fromisoformat(str(today)) - timedelta(days=lookback_days))
     rows = conn.execute("""
         SELECT s.story_id, s.canonical_label, s.first_seen,
+               s.arc_id, s.parent_story_id,
+               a.canonical_label AS arc_label,
+               p.canonical_label AS parent_label,
                MAX(sd.date) AS last_daily,
                COUNT(DISTINCT sd.date) AS active_days
         FROM stories s
         JOIN story_daily sd ON s.story_id = sd.story_id
+        LEFT JOIN story_arcs a ON a.arc_id = s.arc_id
+        LEFT JOIN stories p ON p.story_id = s.parent_story_id
         WHERE sd.date >= ? AND sd.date < ?
-        GROUP BY s.story_id, s.canonical_label, s.first_seen
+        GROUP BY s.story_id, s.canonical_label, s.first_seen,
+                 s.arc_id, s.parent_story_id, a.canonical_label, p.canonical_label
         ORDER BY last_daily DESC, s.story_id DESC
     """, (start, today)).fetchall()
 
@@ -154,6 +207,10 @@ def get_recent_story_options(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
         recent[label] = {
             "story_id": row["story_id"],
             "canonical_label": label,
+            "arc_id": row["arc_id"],
+            "arc_label": row["arc_label"] or label,
+            "parent_story_id": row["parent_story_id"],
+            "parent_label": row["parent_label"] or "",
             "first_seen": row["first_seen"],
             "last_seen": row["last_daily"],
             "active_days": row["active_days"],
@@ -170,6 +227,97 @@ def get_recent_story_options(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
             "recent_developments": context.get("recent_developments", [])[:5],
         }
     return recent
+
+
+def get_recent_arc_options(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
+    """Return recent arcs with compact child-story memory for arc assignment."""
+    start = str(date.fromisoformat(str(today)) - timedelta(days=lookback_days))
+    rows = conn.execute("""
+        SELECT a.arc_id, a.canonical_label, a.theme, a.first_seen,
+               MAX(sd.date) AS last_daily,
+               COUNT(DISTINCT sd.date) AS active_days
+        FROM story_arcs a
+        JOIN stories s ON s.arc_id = a.arc_id
+        JOIN story_daily sd ON sd.story_id = s.story_id
+        WHERE sd.date >= ? AND sd.date < ?
+        GROUP BY a.arc_id, a.canonical_label, a.theme, a.first_seen
+        ORDER BY last_daily DESC, a.arc_id DESC
+    """, (start, today)).fetchall()
+
+    recent = {}
+    for row in rows:
+        story_rows = conn.execute("""
+            SELECT s.story_id, s.canonical_label, s.parent_story_id,
+                   p.canonical_label AS parent_label,
+                   MAX(sd.date) AS last_daily
+            FROM stories s
+            JOIN story_daily sd ON sd.story_id = s.story_id
+            LEFT JOIN stories p ON p.story_id = s.parent_story_id
+            WHERE s.arc_id = ?
+              AND sd.date >= ?
+              AND sd.date < ?
+            GROUP BY s.story_id, s.canonical_label, s.parent_story_id, p.canonical_label
+            ORDER BY last_daily DESC, s.story_id DESC
+            LIMIT 6
+        """, (row["arc_id"], start, today)).fetchall()
+        stories = []
+        for story in story_rows:
+            context = get_previous_story_context(conn, story["story_id"], today)
+            stories.append({
+                "story_id": story["story_id"],
+                "canonical_label": story["canonical_label"],
+                "parent_story_id": story["parent_story_id"],
+                "parent_label": story["parent_label"] or "",
+                "last_seen": story["last_daily"],
+                "summary": context.get("summary", ""),
+                "delta_summary": context.get("delta_summary", ""),
+            })
+        recent[row["arc_id"]] = {
+            "arc_id": row["arc_id"],
+            "canonical_label": row["canonical_label"],
+            "theme": row["theme"],
+            "first_seen": row["first_seen"],
+            "last_seen": row["last_daily"],
+            "active_days": row["active_days"],
+            "recent_stories": stories,
+        }
+    return recent
+
+
+def create_story_arc(conn, canonical_label, theme, first_seen, last_seen):
+    cur = conn.execute(
+        """
+        INSERT INTO story_arcs (canonical_label, theme, first_seen, last_seen)
+        VALUES (?, ?, ?, ?)
+        """,
+        (canonical_label, theme, first_seen, last_seen),
+    )
+    return cur.lastrowid
+
+
+def get_story_hierarchy(conn, story_id):
+    row = conn.execute("""
+        SELECT s.story_id, s.arc_id, s.parent_story_id,
+               a.canonical_label AS arc_label,
+               p.canonical_label AS parent_label
+        FROM stories s
+        LEFT JOIN story_arcs a ON a.arc_id = s.arc_id
+        LEFT JOIN stories p ON p.story_id = s.parent_story_id
+        WHERE s.story_id = ?
+    """, (story_id,)).fetchone()
+    if not row:
+        return {
+            "arc_id": None,
+            "arc_label": "",
+            "parent_story_id": None,
+            "parent_label": "",
+        }
+    return {
+        "arc_id": row["arc_id"],
+        "arc_label": row["arc_label"] or "",
+        "parent_story_id": row["parent_story_id"],
+        "parent_label": row["parent_label"] or "",
+    }
 
 
 def get_previous_story_context(conn, story_id, today, article_limit=3):
@@ -329,6 +477,32 @@ def sync_story_dates(conn):
         WHERE story_id IN (
             SELECT DISTINCT story_id
             FROM story_daily
+        )
+    """)
+    conn.execute("""
+        DELETE FROM story_arcs
+        WHERE arc_id NOT IN (
+            SELECT DISTINCT arc_id
+            FROM stories
+            WHERE arc_id IS NOT NULL
+        )
+    """)
+    conn.execute("""
+        UPDATE story_arcs
+        SET first_seen = (
+                SELECT MIN(stories.first_seen)
+                FROM stories
+                WHERE stories.arc_id = story_arcs.arc_id
+            ),
+            last_seen = (
+                SELECT MAX(stories.last_seen)
+                FROM stories
+                WHERE stories.arc_id = story_arcs.arc_id
+            )
+        WHERE arc_id IN (
+            SELECT DISTINCT arc_id
+            FROM stories
+            WHERE arc_id IS NOT NULL
         )
     """)
 

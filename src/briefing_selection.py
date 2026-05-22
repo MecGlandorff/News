@@ -6,9 +6,15 @@ from src.source_agreement import source_identity, source_support
 
 THEME_ORDER = ["Geopolitics & War", "USA Politics", "Dutch Politics", "Economy", "Tech", "Climate", "Science", "Sports", "Other"]
 POLITICS_THEMES = {"Geopolitics & War", "USA Politics", "Dutch Politics"}
-SECTION_EXCLUDED_THEMES = {"Sports", "Tech", "Science"}
-LEAD_EXCLUDED_THEMES = {"Sports"}
-LOW_INTEREST_LEAD_THEMES = {"Tech", "Science"}
+SECTION_EXCLUDED_THEMES: set[str] = set()
+LEAD_EXCLUDED_THEMES: set[str] = set()
+LOW_INTEREST_LEAD_THEMES: set[str] = set()
+THEME_SELECTION_PENALTIES = {
+    "Tech": 60,
+    "Science": 60,
+    "Sports": 260,
+}
+LOW_INTEREST_KEYWORD_PENALTY = 120
 LOW_INTEREST_KEYWORDS = {
     "celebrity",
     "entertainment",
@@ -17,7 +23,6 @@ LOW_INTEREST_KEYWORDS = {
     "mcdonald",
     "music",
     "showbiz",
-    "tv",
 }
 TREND_SCORE = {"up": 2, "new": 1, "steady": 0, "down": -1}
 
@@ -25,6 +30,28 @@ TREND_SCORE = {"up": 2, "new": 1, "steady": 0, "down": -1}
 def score(story):
     # Importance leads, but broad pickup should beat one-source opinion pieces.
     return story["importance_avg"] * 100 + story["source_count"] * 12 + TREND_SCORE.get(story["trend"], 0)
+
+
+def selection_penalty(story):
+    penalty = sum(THEME_SELECTION_PENALTIES.get(theme, 0) for theme in story["themes"])
+    if has_low_interest_keywords(story):
+        penalty += LOW_INTEREST_KEYWORD_PENALTY
+    return penalty
+
+
+def penalty_reasons(story):
+    reasons = [
+        f"{theme.lower()} theme"
+        for theme in THEME_ORDER
+        if theme in story["themes"] and THEME_SELECTION_PENALTIES.get(theme, 0)
+    ]
+    if has_low_interest_keywords(story):
+        reasons.append("low-interest keyword")
+    return reasons
+
+
+def selection_score(story):
+    return score(story) - selection_penalty(story)
 
 
 def aggregate(tracked):
@@ -35,6 +62,10 @@ def aggregate(tracked):
         "importance_sum": 0,
         "theme_counts": defaultdict(int),
         "previous_context": None,
+        "arc_id": None,
+        "arc_label": "",
+        "parent_story_id": None,
+        "parent_label": "",
         "observation_ids": set(),
         "development_ids": set(),
         "developments": {},
@@ -49,6 +80,14 @@ def aggregate(tracked):
         stories[label]["theme_counts"][theme] += 1
         if article.get("previous_context") and not stories[label]["previous_context"]:
             stories[label]["previous_context"] = article["previous_context"]
+        if article.get("arc_id") and not stories[label]["arc_id"]:
+            stories[label]["arc_id"] = article["arc_id"]
+        if article.get("arc_label") and not stories[label]["arc_label"]:
+            stories[label]["arc_label"] = article["arc_label"]
+        if article.get("parent_story_id") and not stories[label]["parent_story_id"]:
+            stories[label]["parent_story_id"] = article["parent_story_id"]
+        if article.get("parent_label") and not stories[label]["parent_label"]:
+            stories[label]["parent_label"] = article["parent_label"]
         if article.get("observation_id"):
             stories[label]["observation_ids"].add(article["observation_id"])
         if article.get("development_id"):
@@ -85,6 +124,10 @@ def aggregate(tracked):
             "source_support": source_support(articles),
             "importance_avg": data["importance_sum"] / len(articles),
             "previous_context": data["previous_context"] or {},
+            "arc_id": data["arc_id"],
+            "arc_label": data["arc_label"],
+            "parent_story_id": data["parent_story_id"],
+            "parent_label": data["parent_label"],
             "observation_ids": sorted(data["observation_ids"]),
             "development_ids": sorted(data["development_ids"]),
             "developments": [
@@ -122,18 +165,26 @@ def has_low_interest_keywords(story):
 
 
 def is_lead_candidate(story):
-    if story["themes"] & LEAD_EXCLUDED_THEMES:
-        return False
-    if has_low_interest_keywords(story):
-        return False
-    if story["themes"] & LOW_INTEREST_LEAD_THEMES:
-        return story["importance_avg"] >= 4.5 and story["source_count"] >= 3
-    return True
+    if "Sports" in story["themes"]:
+        return is_exceptional_sports_story(story)
+    return selection_score(story) > 0
+
+
+def is_exceptional_sports_story(story):
+    return selection_score(story) >= 450 or (
+        story["importance_avg"] >= 4.5 and story["source_count"] >= 8
+    )
 
 
 def is_other_important(story):
-    if "Other" not in story["themes"] or has_low_interest_keywords(story):
+    if story["themes"] & POLITICS_THEMES or "Economy" in story["themes"]:
         return False
+    if has_low_interest_keywords(story) and selection_score(story) < 450:
+        return False
+    if "Sports" in story["themes"]:
+        return is_exceptional_sports_story(story)
+    if story["themes"] & {"Tech", "Science"}:
+        return story["source_count"] >= 2 and selection_score(story) >= 300
     return story["importance_avg"] >= 2.5 or story["source_count"] >= 2
 
 
@@ -141,14 +192,13 @@ def section_candidates(stories, predicate, used_labels, limit):
     candidates = [
         story for story in stories
         if story["canonical_label"] not in used_labels
-        and not (story["themes"] & SECTION_EXCLUDED_THEMES)
         and predicate(story)
     ]
-    return sorted(candidates, key=score, reverse=True)[:limit]
+    return sorted(candidates, key=selection_score, reverse=True)[:limit]
 
 
 def select_story_sections(tracked, n=3, global_n=10):
-    stories = sorted(aggregate(tracked), key=score, reverse=True)
+    stories = sorted(aggregate(tracked), key=selection_score, reverse=True)
 
     lead_count = min(max(n, 3), 8)
     lead_stories = [story for story in stories if is_lead_candidate(story)][:lead_count]

@@ -53,18 +53,19 @@ Story memory is built in two layers.
 
 First, `src/tracker.py` groups today's classified articles by story label. It asks the tracking model to consolidate same-day label variants, then asks whether today's labels continue recent canonical stories. The tracker is conservative about generic incident labels such as crashes, shootings, lawsuits, and attacks because false merges corrupt memory more severely than false splits.
 
-The tracker verifies candidate cross-day matches before it reuses an existing story ID by default. The verifier uses `gpt-5.4-nano`, the current article title, RSS description, normalized article date, full article text when available, and compact recent story memory. If full text is missing, the tracker fetches it only for candidate matches. Accepted matches require structured same-event evidence. Rejected matches can still become `new_child` developments inside a broad parent arc when the verifier supplies useful medium-or-high-confidence parent continuity evidence; this preserves memory without claiming the child is the same concrete event. Use `--no-verify-story-matches` only for comparison runs against the older label-only match path.
+The tracker verifies candidate cross-day matches before it reuses an existing story ID by default. The verifier uses `gpt-5.4-nano`, the current article title, RSS description, normalized article date, full article text when available, and compact recent story memory. If full text is missing, the tracker fetches it only for candidate matches. Accepted matches require structured same-event evidence. Labels that are not accepted as the same story can then be assigned to an existing `story_arcs` row by the cached `gpt-5.4-mini` arc-assignment step. This preserves broader memory continuity without claiming the child is the same concrete event. Use `--no-verify-story-matches` only for comparison runs against the older label-only match path.
 
 Second, the tracker writes a daily observation for each story. This observation records the label seen today, source count, article count, average importance, and later the generated summary and `delta_summary`. The next run can use that saved memory to answer: what changed since the last observation?
 
-When multiple specific labels belong under one parent arc, the tracker stores one parent daily observation and one `story_developments` row per specific development.
+When multiple specific labels belong under one arc, the tracker stores concrete story rows under the shared `story_arcs` row. `story_developments` records the daily development labels for observability and briefing context.
 
 The key tables are:
 
-- `stories`: one row per ongoing story arc.
+- `story_arcs`: one row per broader ongoing news arc.
+- `stories`: one row per tracked concrete story, optionally linked to an arc and parent story.
 - `story_daily`: daily aggregate counts for each story.
 - `story_observations`: the memory layer used for summaries and deltas.
-- `story_developments`: child developments recorded inside a parent story arc.
+- `story_developments`: daily development labels recorded for a concrete story.
 - `articles`: fetched articles linked to stories for the run date.
 - `article_story_links`: junction rows from article to story observation.
 - `story_match_decisions`: verifier audit rows for accepted and rejected candidate story matches.
@@ -115,7 +116,7 @@ The core story-memory flow exists, but several trust and observability layers ar
 
 - Source metadata is seeded into a `sources` table, and new article rows can store `source_id` alongside the source name. Deterministic source support uses `source_id` first and falls back to source names for older rows.
 - Evidence-mode source agreement is claim-backed for exact repeated claims and conservative numeric divergence, but it is not a general agreement model and does not infer independent source corroboration.
-- Run observability stores `runs` and real model calls in `llm_calls`, exact response reuse in `llm_response_cache`, and `--pipeline-report` reports scraper counts, claim metrics, token use, latency, cache hits, retries, schema failures, story-match verifier counts, and estimated EUR cost.
+- Run observability stores `runs` and real model calls in `llm_calls`, exact response reuse in `llm_response_cache`, and `--pipeline-report` reports scraper counts, claim metrics, token use, latency, cache hits, retries, schema failures, story-match verifier counts, parent/development totals, novelty-audit review queues, and estimated EUR cost.
 - There is no stored novelty score yet; novelty needs a clear claim-backed definition before becoming schema.
 - Source-divergence notes currently cover numeric divergence only; date, status, and attribution comparison are still missing. A dedicated contradiction module/table is no longer Phase 3 scope.
 - Full-text claim extraction is enabled for evidence runs, but its cost and quality impact still need review against run telemetry.
@@ -206,7 +207,7 @@ UNIQUE (story_id, date)
 
 ### `story_developments`
 
-Specific daily developments inside a parent story arc.
+Specific daily development labels for a concrete story. New child stories can use `development_status = 'new_child'` when they attach to an existing arc.
 
 ```sql
 development_id       INTEGER PRIMARY KEY AUTOINCREMENT

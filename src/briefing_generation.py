@@ -15,7 +15,7 @@ STATUS_VALUES = {"new", "developing", "escalating", "cooling", "disputed", "unre
 CONFIDENCE_VALUES = {"high", "medium", "low"}
 SOURCE_AGREEMENT_VALUES = {"broad", "partial", "mixed", "single-source", "disputed"}
 DISPUTE_FLAG_VALUES = {"none", "possible conflict"}
-BRIEFING_PROMPT_VERSION = "2026-05-15-v1"
+BRIEFING_PROMPT_VERSION = "2026-05-20-v1"
 
 BRIEFING_PROMPT = """You are writing a daily news intelligence briefing for an informed reader.
 
@@ -35,7 +35,8 @@ Rules:
 - If structured claims are supplied, use them as the primary factual grounding. Do not assert factual details unsupported by either claims or today's article metadata.
 - Use previous_context only for continuity and comparison. Do not present old context as fresh reporting.
 - If previous_context is absent, delta_summary must be exactly: First detected today.
-- If current_developments contains a new_child item, write delta_summary as a new development inside the parent arc, not as a first-detected story.
+- If current_developments contains a new_child item, write delta_summary as a new development inside the existing arc or parent context, not as a first-detected story.
+- Use arc_label and parent_label as context only; do not imply the child story is the same event as its arc or parent.
 - Surface disagreement, allegations, uncertainty, or divergent numbers/status claims instead of smoothing them into confident prose.
 - Use possible conflict for source divergence; do not claim a confirmed contradiction.
 - Do not invent source URLs; URLs are supplied separately in the output.
@@ -225,6 +226,8 @@ def get_briefings(stories, get_client, model, include_evidence=False):
     for story in stories:
         item = {
             "canonical_label": story["canonical_label"],
+            "arc_label": story.get("arc_label", ""),
+            "parent_label": story.get("parent_label", ""),
             "source_support": story.get("source_support", {}),
             "current_developments": [
                 {
