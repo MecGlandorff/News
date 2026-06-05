@@ -29,6 +29,10 @@ def _get_db():
     return tracker_store.get_db(DB_PATH)
 
 
+def _quarantine_uncategorized_memory(conn):
+    return tracker_store.quarantine_uncategorized_memory(conn)
+
+
 def _get_recent_stories(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
     return tracker_store.get_recent_stories(conn, today, lookback_days)
 
@@ -276,6 +280,8 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
 
     conn = _get_db()
     try:
+        with conn:
+            _quarantine_uncategorized_memory(conn)
         recent_story_options = _get_recent_story_options(conn, today, lookback_days)
         recent_arc_options = _get_recent_arc_options(conn, today, lookback_days)
         recent_stories = {

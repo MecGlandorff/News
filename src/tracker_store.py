@@ -5,6 +5,40 @@ from datetime import date, timedelta
 from src import observability
 from src.config import DEFAULT_LOOKBACK_DAYS
 
+QUARANTINED_STORY_LABEL = "Classifier omission quarantine"
+BLOCKED_MEMORY_LABELS = {
+    "uncategorized",
+    QUARANTINED_STORY_LABEL.casefold(),
+}
+
+
+def _normalized_label(label):
+    return " ".join(str(label or "").strip().casefold().split())
+
+
+def is_blocked_memory_label(label):
+    return _normalized_label(label) in BLOCKED_MEMORY_LABELS
+
+
+def quarantine_uncategorized_memory(conn):
+    """Move legacy classifier-omission memory out of future matching surfaces."""
+    conn.execute(
+        """
+        UPDATE stories
+        SET canonical_label = ?
+        WHERE LOWER(TRIM(canonical_label)) = 'uncategorized'
+        """,
+        (QUARANTINED_STORY_LABEL,),
+    )
+    conn.execute(
+        """
+        UPDATE story_arcs
+        SET canonical_label = ?
+        WHERE LOWER(TRIM(canonical_label)) = 'uncategorized'
+        """,
+        (QUARANTINED_STORY_LABEL,),
+    )
+
 
 def ensure_column(conn, table, column, definition):
     columns = {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
@@ -174,6 +208,8 @@ def get_recent_stories(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
     """, (start, today)).fetchall()
     recent = {}
     for row in rows:
+        if is_blocked_memory_label(row["canonical_label"]):
+            continue
         recent.setdefault(row["canonical_label"], row["story_id"])
     return recent
 
@@ -201,6 +237,12 @@ def get_recent_story_options(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
     recent = {}
     for row in rows:
         label = row["canonical_label"]
+        if is_blocked_memory_label(label):
+            continue
+        if is_blocked_memory_label(row["arc_label"]):
+            continue
+        if is_blocked_memory_label(row["parent_label"]):
+            continue
         if label in recent:
             continue
         context = get_previous_story_context(conn, row["story_id"], today)
@@ -246,6 +288,8 @@ def get_recent_arc_options(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
 
     recent = {}
     for row in rows:
+        if is_blocked_memory_label(row["canonical_label"]):
+            continue
         story_rows = conn.execute("""
             SELECT s.story_id, s.canonical_label, s.parent_story_id,
                    p.canonical_label AS parent_label,
@@ -262,6 +306,10 @@ def get_recent_arc_options(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
         """, (row["arc_id"], start, today)).fetchall()
         stories = []
         for story in story_rows:
+            if is_blocked_memory_label(story["canonical_label"]):
+                continue
+            if is_blocked_memory_label(story["parent_label"]):
+                continue
             context = get_previous_story_context(conn, story["story_id"], today)
             stories.append({
                 "story_id": story["story_id"],
@@ -272,6 +320,8 @@ def get_recent_arc_options(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
                 "summary": context.get("summary", ""),
                 "delta_summary": context.get("delta_summary", ""),
             })
+        if not stories:
+            continue
         recent[row["arc_id"]] = {
             "arc_id": row["arc_id"],
             "canonical_label": row["canonical_label"],
@@ -413,6 +463,8 @@ def save_observation_memory(db_path, memories):
 
 
 def find_story_by_label(conn, canonical_label, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
+    if is_blocked_memory_label(canonical_label):
+        return None
     start = str(date.fromisoformat(str(today)) - timedelta(days=lookback_days))
     row = conn.execute("""
         SELECT story_id
@@ -434,7 +486,11 @@ def get_yesterday_stories(conn, today):
         JOIN story_daily sd ON s.story_id = sd.story_id
         WHERE sd.date = ?
     """, (yesterday,)).fetchall()
-    return {r["canonical_label"]: r["story_id"] for r in rows}
+    return {
+        r["canonical_label"]: r["story_id"]
+        for r in rows
+        if not is_blocked_memory_label(r["canonical_label"])
+    }
 
 
 def reset_tracking_date(conn, today):

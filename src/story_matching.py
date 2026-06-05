@@ -118,10 +118,10 @@ VERIFY_RELATIONSHIPS = VERIFY_ACCEPT_RELATIONSHIPS | {
     "adjacent_topic", "broader_context", "unrelated", "uncertain",
 }
 VERIFY_CONFIDENCE_VALUES = {"high", "medium", "low"}
-ARC_ACCEPT_RELATIONSHIPS = {
-    "same_arc", "parent_context", "adjacent_topic", "broader_context",
+ARC_ACCEPT_RELATIONSHIPS = {"same_arc", "parent_context"}
+ARC_RELATIONSHIPS = ARC_ACCEPT_RELATIONSHIPS | {
+    "adjacent_topic", "broader_context", "unrelated", "uncertain",
 }
-ARC_RELATIONSHIPS = ARC_ACCEPT_RELATIONSHIPS | {"unrelated", "uncertain"}
 ARC_CANDIDATES_PER_LABEL = 8
 ARC_ASSIGNMENT_CASES_PER_CALL = 12
 PARENT_ATTACH_RELATIONSHIPS = {

@@ -255,22 +255,48 @@ def _derivability_check(claim_text, evidence_span, entities):
 
 
 def _verifier_completion(claim_text, evidence_span):
-    user_content = json.dumps(
-        {"claim_text": claim_text, "evidence_span": evidence_span},
-        ensure_ascii=False,
-    )
-    response, cache_metadata, was_cached = create_cached_chat_completion(
+    return create_cached_chat_completion(
         get_openai_client,
         model=CLAIMS_VERIFIER_MODEL,
-        messages=[
-            {"role": "system", "content": CLAIMS_VERIFIER_PROMPT},
-            {"role": "user", "content": user_content},
-        ],
+        messages=_verifier_messages(claim_text, evidence_span),
         purpose="claim_verifier",
         prompt_version=CLAIMS_VERIFIER_PROMPT_VERSION,
         response_format={"type": "json_object"},
     )
-    return response, cache_metadata, was_cached
+
+
+def _uncached_verifier_completion(claim_text, evidence_span):
+    return create_chat_completion(
+        get_openai_client(),
+        model=CLAIMS_VERIFIER_MODEL,
+        messages=_verifier_messages(claim_text, evidence_span),
+        purpose="claim_verifier",
+        prompt_version=CLAIMS_VERIFIER_PROMPT_VERSION,
+        response_format={"type": "json_object"},
+    )
+
+
+def _verifier_messages(claim_text, evidence_span):
+    user_content = json.dumps(
+        {"claim_text": claim_text, "evidence_span": evidence_span},
+        ensure_ascii=False,
+    )
+    return [
+        {"role": "system", "content": CLAIMS_VERIFIER_PROMPT},
+        {"role": "user", "content": user_content},
+    ]
+
+
+def _verifier_supported(response):
+    parsed = parse_json_object(response)
+    supported = parsed.get("supported")
+    if not isinstance(supported, bool):
+        mark_schema_failure(
+            'Model response must contain boolean "supported"',
+            response=response,
+        )
+        raise ValueError('Model response must contain boolean "supported"')
+    return supported
 
 
 def _verify_claim_with_llm(claim_text, evidence_span):
@@ -279,16 +305,24 @@ def _verify_claim_with_llm(claim_text, evidence_span):
         response, cache_metadata, was_cached = _verifier_completion(claim_text, evidence_span)
     except Exception:
         return False
-    if not was_cached:
+    refreshed_bad_cache = False
+    try:
+        supported = _verifier_supported(response)
+    except ValueError:
+        if not was_cached:
+            return False
+        try:
+            response = _uncached_verifier_completion(claim_text, evidence_span)
+            supported = _verifier_supported(response)
+        except Exception:
+            return False
+        refreshed_bad_cache = True
+    if not was_cached or refreshed_bad_cache:
         try:
             save_cached_chat_completion(cache_metadata, response)
         except Exception:
             pass
-    try:
-        parsed = parse_json_object(response)
-    except ValueError:
-        return False
-    return parsed.get("supported") is True
+    return supported
 
 
 def _has_cached_claims(article_id, story_id, content_hash, conn):
