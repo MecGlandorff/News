@@ -103,6 +103,8 @@ def _fetch_article_text_for_match(url):
 
 
 def _ensure_match_article_text(story_groups, labels):
+    fetch_successes = 0
+    fetch_failures = 0
     for label in labels:
         for article in story_groups.get(label, []):
             if (article.get("text") or "").strip():
@@ -112,8 +114,17 @@ def _ensure_match_article_text(story_groups, labels):
                 continue
             try:
                 article["text"] = _fetch_article_text_for_match(url)
+                if (article.get("text") or "").strip():
+                    fetch_successes += 1
+                else:
+                    fetch_failures += 1
             except Exception:
                 article["text"] = article.get("text") or ""
+                fetch_failures += 1
+    observability.increment_run_totals(
+        article_text_fetch_successes=fetch_successes,
+        article_text_fetch_failures=fetch_failures,
+    )
 
 
 def _label_tokens(label):
