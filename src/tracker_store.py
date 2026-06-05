@@ -3,41 +3,51 @@ import sqlite3
 from datetime import date, timedelta
 
 from src import observability
-from src.config import DEFAULT_LOOKBACK_DAYS
+from src.config import (
+    DEFAULT_LOOKBACK_DAYS,
+    STORY_MEMORY_BLOCKED_LABELS,
+    STORY_MEMORY_QUARANTINE_LABEL,
+    STORY_MEMORY_QUARANTINE_SOURCE_LABELS,
+)
 
-QUARANTINED_STORY_LABEL = "Classifier omission quarantine"
-BLOCKED_MEMORY_LABELS = {
-    "uncategorized",
-    QUARANTINED_STORY_LABEL.casefold(),
-}
+QUARANTINED_STORY_LABEL = STORY_MEMORY_QUARANTINE_LABEL
+BLOCKED_MEMORY_LABELS = STORY_MEMORY_BLOCKED_LABELS
 
 
 def _normalized_label(label):
     return " ".join(str(label or "").strip().casefold().split())
 
 
+NORMALIZED_BLOCKED_MEMORY_LABELS = {
+    _normalized_label(blocked)
+    for blocked in BLOCKED_MEMORY_LABELS
+}
+
+
 def is_blocked_memory_label(label):
-    return _normalized_label(label) in BLOCKED_MEMORY_LABELS
+    return _normalized_label(label) in NORMALIZED_BLOCKED_MEMORY_LABELS
 
 
 def quarantine_uncategorized_memory(conn):
     """Move legacy classifier-omission memory out of future matching surfaces."""
-    conn.execute(
-        """
-        UPDATE stories
-        SET canonical_label = ?
-        WHERE LOWER(TRIM(canonical_label)) = 'uncategorized'
-        """,
-        (QUARANTINED_STORY_LABEL,),
-    )
-    conn.execute(
-        """
-        UPDATE story_arcs
-        SET canonical_label = ?
-        WHERE LOWER(TRIM(canonical_label)) = 'uncategorized'
-        """,
-        (QUARANTINED_STORY_LABEL,),
-    )
+    for source_label in STORY_MEMORY_QUARANTINE_SOURCE_LABELS:
+        normalized_source = _normalized_label(source_label)
+        conn.execute(
+            """
+            UPDATE stories
+            SET canonical_label = ?
+            WHERE LOWER(TRIM(canonical_label)) = ?
+            """,
+            (QUARANTINED_STORY_LABEL, normalized_source),
+        )
+        conn.execute(
+            """
+            UPDATE story_arcs
+            SET canonical_label = ?
+            WHERE LOWER(TRIM(canonical_label)) = ?
+            """,
+            (QUARANTINED_STORY_LABEL, normalized_source),
+        )
 
 
 def ensure_column(conn, table, column, definition):

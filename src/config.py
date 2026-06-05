@@ -8,6 +8,52 @@ BRIEFING_MODEL   = "gpt-5.5"
 
 DEFAULT_LOOKBACK_DAYS = 14
 
+CLASSIFIER_RETRY_BATCH_SIZE = 25
+CLASSIFIER_BLOCKED_STORY_LABELS = (
+    "uncategorized",
+)
+
+STORY_MEMORY_QUARANTINE_LABEL = "Classifier omission quarantine"
+STORY_MEMORY_QUARANTINE_SOURCE_LABELS = (
+    "uncategorized",
+)
+STORY_MEMORY_BLOCKED_LABELS = (
+    *STORY_MEMORY_QUARANTINE_SOURCE_LABELS,
+    STORY_MEMORY_QUARANTINE_LABEL,
+)
+
+STORY_VERIFY_ACCEPT_RELATIONSHIPS = (
+    "same_event",
+    "same_story_arc",
+    "direct_follow_up",
+)
+STORY_VERIFY_CONTEXT_RELATIONSHIPS = (
+    "adjacent_topic",
+    "broader_context",
+)
+STORY_VERIFY_REJECT_RELATIONSHIPS = (
+    "unrelated",
+    "uncertain",
+)
+
+ARC_ASSIGNMENT_ACCEPT_RELATIONSHIPS = (
+    "same_arc",
+    "parent_context",
+)
+ARC_ASSIGNMENT_CONTEXT_RELATIONSHIPS = (
+    "adjacent_topic",
+    "broader_context",
+)
+ARC_ASSIGNMENT_REJECT_RELATIONSHIPS = (
+    "unrelated",
+    "uncertain",
+)
+
+PARENT_ATTACH_RELATIONSHIPS = (
+    *STORY_VERIFY_ACCEPT_RELATIONSHIPS,
+    *STORY_VERIFY_CONTEXT_RELATIONSHIPS,
+)
+
 # Standard uncached API token prices from OpenAI's API pricing page, in USD
 # per 1M tokens. These estimates do not model cached-input discounts, Batch,
 # Flex, Priority, regional processing, or long-context uplifts. Update

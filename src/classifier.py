@@ -1,13 +1,15 @@
 import json
 from src import observability
 from src.article_cache import get_cached_classifications, save_classifications
-from src.config import CLASSIFIER_MODEL
+from src.config import (
+    CLASSIFIER_BLOCKED_STORY_LABELS,
+    CLASSIFIER_MODEL,
+    CLASSIFIER_RETRY_BATCH_SIZE,
+)
 from src.llm import create_chat_completion, get_openai_client, mark_schema_failure, parse_json_object
 
 THEMES = ["Geopolitics & War", "USA Politics", "Dutch Politics", "Economy", "Tech", "Climate", "Science", "Sports", "Other"]
 CLASSIFIER_PROMPT_VERSION = "2026-04-25-v1"
-CLASSIFIER_RETRY_BATCH_SIZE = 25
-BLOCKED_STORY_LABELS = {"uncategorized"}
 
 SYSTEM_PROMPT = """You are a news classifier. Given a list of articles, classify each article into exactly one theme.
 
@@ -63,6 +65,7 @@ def _parse_classification_response(response, articles):
         raise ValueError('Model response must contain a "results" list')
 
     valid_ids = {str(a["id"]) for a in articles}
+    blocked_labels = {label.casefold() for label in CLASSIFIER_BLOCKED_STORY_LABELS}
     classifications = {}
     for r in results:
         if not isinstance(r, dict):
@@ -71,7 +74,7 @@ def _parse_classification_response(response, articles):
         if result_id not in valid_ids:
             continue
         story_label = str(r.get("story_label") or "").strip()
-        if not story_label or story_label.casefold() in BLOCKED_STORY_LABELS:
+        if not story_label or story_label.casefold() in blocked_labels:
             continue
         theme = r.get("theme") if r.get("theme") in THEMES else "Other"
         try:

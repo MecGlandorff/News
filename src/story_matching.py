@@ -3,6 +3,15 @@ import re
 from datetime import date
 from email.utils import parsedate_to_datetime
 
+from src.config import (
+    ARC_ASSIGNMENT_ACCEPT_RELATIONSHIPS,
+    ARC_ASSIGNMENT_CONTEXT_RELATIONSHIPS,
+    ARC_ASSIGNMENT_REJECT_RELATIONSHIPS,
+    PARENT_ATTACH_RELATIONSHIPS as CONFIG_PARENT_ATTACH_RELATIONSHIPS,
+    STORY_VERIFY_ACCEPT_RELATIONSHIPS,
+    STORY_VERIFY_CONTEXT_RELATIONSHIPS,
+    STORY_VERIFY_REJECT_RELATIONSHIPS,
+)
 from src.llm import (
     create_cached_chat_completion,
     mark_schema_failure,
@@ -10,6 +19,18 @@ from src.llm import (
     save_cached_chat_completion,
 )
 
+VERIFY_RELATIONSHIP_VALUES = (
+    *STORY_VERIFY_ACCEPT_RELATIONSHIPS,
+    *STORY_VERIFY_CONTEXT_RELATIONSHIPS,
+    *STORY_VERIFY_REJECT_RELATIONSHIPS,
+)
+VERIFY_RELATIONSHIP_TEXT = " | ".join(VERIFY_RELATIONSHIP_VALUES)
+ARC_RELATIONSHIP_VALUES = (
+    *ARC_ASSIGNMENT_ACCEPT_RELATIONSHIPS,
+    *ARC_ASSIGNMENT_CONTEXT_RELATIONSHIPS,
+    *ARC_ASSIGNMENT_REJECT_RELATIONSHIPS,
+)
+ARC_RELATIONSHIP_TEXT = " | ".join(ARC_RELATIONSHIP_VALUES)
 
 CONSOLIDATE_PROMPT = """You are grouping today's news story labels that refer to the same ongoing story.
 
@@ -60,7 +81,7 @@ Return a JSON object with key "decisions": array of:
   "today_label": string,
   "canonical_label": string,
   "same_event": boolean,
-  "relationship": one of: same_event | same_story_arc | direct_follow_up | adjacent_topic | broader_context | unrelated | uncertain,
+  "relationship": one of: """ + VERIFY_RELATIONSHIP_TEXT + """,
   "confidence": one of: high | medium | low,
   "article_dates": array of date strings from the current articles,
   "candidate_last_seen": date string,
@@ -86,7 +107,7 @@ Return a JSON object with key "assignments": array of:
   "today_label": string,
   "arc_id": integer or "NEW_ARC",
   "parent_story_id": integer or null,
-  "relationship": one of: same_arc | parent_context | adjacent_topic | broader_context | unrelated | uncertain,
+  "relationship": one of: """ + ARC_RELATIONSHIP_TEXT + """,
   "confidence": one of: high | medium | low,
   "continuity_evidence": array of short strings naming the concrete arc evidence,
   "reject_reason": string
@@ -113,20 +134,14 @@ VERIFY_ARTICLE_TEXT_CHAR_LIMIT = 16000
 VERIFY_DESCRIPTION_CHAR_LIMIT = 1200
 VERIFY_ARTICLES_PER_CASE = 4
 VERIFY_CASES_PER_CALL = 8
-VERIFY_ACCEPT_RELATIONSHIPS = {"same_event", "same_story_arc", "direct_follow_up"}
-VERIFY_RELATIONSHIPS = VERIFY_ACCEPT_RELATIONSHIPS | {
-    "adjacent_topic", "broader_context", "unrelated", "uncertain",
-}
+VERIFY_ACCEPT_RELATIONSHIPS = set(STORY_VERIFY_ACCEPT_RELATIONSHIPS)
+VERIFY_RELATIONSHIPS = set(VERIFY_RELATIONSHIP_VALUES)
 VERIFY_CONFIDENCE_VALUES = {"high", "medium", "low"}
-ARC_ACCEPT_RELATIONSHIPS = {"same_arc", "parent_context"}
-ARC_RELATIONSHIPS = ARC_ACCEPT_RELATIONSHIPS | {
-    "adjacent_topic", "broader_context", "unrelated", "uncertain",
-}
+ARC_ACCEPT_RELATIONSHIPS = set(ARC_ASSIGNMENT_ACCEPT_RELATIONSHIPS)
+ARC_RELATIONSHIPS = set(ARC_RELATIONSHIP_VALUES)
 ARC_CANDIDATES_PER_LABEL = 8
 ARC_ASSIGNMENT_CASES_PER_CALL = 12
-PARENT_ATTACH_RELATIONSHIPS = {
-    "same_event", "same_story_arc", "direct_follow_up", "adjacent_topic", "broader_context",
-}
+PARENT_ATTACH_RELATIONSHIPS = set(CONFIG_PARENT_ATTACH_RELATIONSHIPS)
 PARENT_ARC_TOKENS = {
     "asylum", "attacks", "ceasefire", "conflict", "crisis", "debate",
     "diplomacy", "economy", "election", "fallout", "insurgency", "market",
