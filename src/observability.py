@@ -261,6 +261,32 @@ def update_run_totals(run_id=None, **totals):
         conn.close()
 
 
+def increment_run_totals(run_id=None, **totals):
+    run_id = current_run_id() if run_id is None else run_id
+    if run_id is None:
+        return
+
+    fields = {
+        key: int(value)
+        for key, value in totals.items()
+        if key in RUN_TOTAL_COLUMNS and value is not None and int(value) != 0
+    }
+    if not fields:
+        return
+
+    assignments = ", ".join(f"{key} = COALESCE({key}, 0) + ?" for key in fields)
+    params = list(fields.values()) + [run_id]
+    conn = _get_db()
+    try:
+        with conn:
+            conn.execute(
+                f"UPDATE runs SET {assignments} WHERE run_id = ?",
+                params,
+            )
+    finally:
+        conn.close()
+
+
 def increment_cache_hits(count=1, run_id=None):
     run_id = current_run_id() if run_id is None else run_id
     if run_id is None or count <= 0:

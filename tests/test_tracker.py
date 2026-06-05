@@ -566,6 +566,8 @@ def test_story_match_verifier_fetches_full_text_for_candidate_match(tmp_path, mo
     ], captured=captured)
     monkeypatch.setattr(tracker, "DB_PATH", db_path)
     monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
+    monkeypatch.setattr(observability, "DB_PATH", db_path)
+    monkeypatch.setattr(llm_response_cache, "DB_PATH", db_path)
     monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
     monkeypatch.setattr(
         tracker,
@@ -573,27 +575,43 @@ def test_story_match_verifier_fetches_full_text_for_candidate_match(tmp_path, mo
         lambda url: "Full article text about the latest Iran nuclear talks proposal.",
     )
 
-    first = tracker.track(
-        [_article(1, "Iran sends proposal through mediators", "Iran Nuclear Talks")],
-        today="2026-05-01",
-    )
-    tracker.save_observation_memory([{
-        "observation_id": first[0]["observation_id"],
-        "summary": "US-Iran nuclear negotiations continued through mediators.",
-        "delta_summary": "Iran sent a proposal but the US response remained unclear.",
-    }])
+    run_id = observability.start_run({"test": "story-match-text"}, run_date="2026-05-02")
+    observability.set_current_run_id(run_id)
+    try:
+        first = tracker.track(
+            [_article(1, "Iran sends proposal through mediators", "Iran Nuclear Talks")],
+            today="2026-05-01",
+        )
+        tracker.save_observation_memory([{
+            "observation_id": first[0]["observation_id"],
+            "summary": "US-Iran nuclear negotiations continued through mediators.",
+            "delta_summary": "Iran sent a proposal but the US response remained unclear.",
+        }])
 
-    article = _article(2, "Iran sends revised peace proposal", "Iran Peace Proposal")
-    article["published_at"] = "Sat, 02 May 2026 12:00:00 GMT"
-    article["text"] = ""
+        article = _article(2, "Iran sends revised peace proposal", "Iran Peace Proposal")
+        article["published_at"] = "Sat, 02 May 2026 12:00:00 GMT"
+        article["text"] = ""
 
-    tracked = tracker.track([article], today="2026-05-02", verify_story_matches=True)
+        tracked = tracker.track([article], today="2026-05-02", verify_story_matches=True)
 
-    assert tracked[0]["canonical_label"] == "Iran Nuclear Talks"
-    verifier_payload = json.loads(captured[1]["messages"][1]["content"])
-    current_article = verifier_payload["cases"][0]["current_articles"][0]
-    assert current_article["article_date"] == "2026-05-02"
-    assert current_article["article_text"] == "Full article text about the latest Iran nuclear talks proposal."
+        assert tracked[0]["canonical_label"] == "Iran Nuclear Talks"
+        verifier_payload = json.loads(captured[1]["messages"][1]["content"])
+        current_article = verifier_payload["cases"][0]["current_articles"][0]
+        assert current_article["article_date"] == "2026-05-02"
+        assert current_article["article_text"] == "Full article text about the latest Iran nuclear talks proposal."
+
+        conn = sqlite3.connect(db_path)
+        try:
+            row = conn.execute("""
+                SELECT article_text_fetch_successes, article_text_fetch_failures
+                FROM runs
+                WHERE run_id = ?
+            """, (run_id,)).fetchone()
+        finally:
+            conn.close()
+        assert row == (1, 0)
+    finally:
+        observability.clear_current_run_id()
 
 
 def test_arc_assignment_uses_mini_model_and_supplied_arc_candidates(monkeypatch):
