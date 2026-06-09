@@ -182,6 +182,28 @@ def get_db(db_path):
             ON story_match_decisions (run_id);
         CREATE INDEX IF NOT EXISTS idx_story_match_decisions_run_date
             ON story_match_decisions (run_date);
+        CREATE TABLE IF NOT EXISTS story_arc_decisions (
+            decision_id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id               INTEGER,
+            run_date             TEXT NOT NULL,
+            today_label          TEXT NOT NULL,
+            candidates           TEXT NOT NULL,
+            arc_id               INTEGER,
+            parent_story_id      INTEGER,
+            story_id             INTEGER,
+            accepted             INTEGER NOT NULL,
+            relationship         TEXT NOT NULL,
+            confidence           TEXT,
+            continuity_evidence  TEXT,
+            reject_reason        TEXT,
+            assignment_model     TEXT,
+            prompt_version       TEXT NOT NULL,
+            created_at           TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS idx_story_arc_decisions_run_id
+            ON story_arc_decisions (run_id);
+        CREATE INDEX IF NOT EXISTS idx_story_arc_decisions_run_date
+            ON story_arc_decisions (run_date);
         CREATE INDEX IF NOT EXISTS idx_story_developments_story_date
             ON story_developments (story_id, date);
         CREATE INDEX IF NOT EXISTS idx_story_developments_date
@@ -622,6 +644,61 @@ def save_story_match_decisions(conn, decisions, run_date, verifier_model, prompt
                 decision.get("prompt_version", prompt_version),
             ),
         )
+
+
+def save_story_arc_decisions(conn, decisions, run_date, assignment_model, prompt_version, story_ids=None):
+    if not decisions:
+        return
+    run_id = observability.current_run_id()
+    story_ids = story_ids or {}
+    for decision in decisions:
+        conn.execute(
+            """
+            INSERT INTO story_arc_decisions (
+                run_id, run_date, today_label, candidates, arc_id,
+                parent_story_id, story_id, accepted, relationship, confidence,
+                continuity_evidence, reject_reason, assignment_model, prompt_version
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                run_id,
+                run_date,
+                decision["today_label"],
+                json.dumps(decision.get("candidates", []), ensure_ascii=False),
+                decision.get("proposed_arc_id"),
+                decision.get("proposed_parent_story_id"),
+                story_ids.get(decision["today_label"]),
+                1 if decision.get("accepted") else 0,
+                decision.get("relationship", "uncertain"),
+                decision.get("confidence", "low"),
+                json.dumps(decision.get("continuity_evidence", []), ensure_ascii=False),
+                decision.get("reject_reason", ""),
+                decision.get("verifier_model", assignment_model),
+                decision.get("prompt_version", prompt_version),
+            ),
+        )
+
+
+def get_story_arc_decisions(conn, run_date=None, run_id=None):
+    query = """
+        SELECT decision_id, run_id, run_date, today_label, candidates, arc_id,
+               parent_story_id, story_id, accepted, relationship, confidence,
+               continuity_evidence, reject_reason, assignment_model, prompt_version
+        FROM story_arc_decisions
+    """
+    clauses = []
+    params = []
+    if run_date is not None:
+        clauses.append("run_date = ?")
+        params.append(str(run_date))
+    if run_id is not None:
+        clauses.append("run_id = ?")
+        params.append(run_id)
+    if clauses:
+        query += " WHERE " + " AND ".join(clauses)
+    query += " ORDER BY decision_id"
+    return [dict(row) for row in conn.execute(query, params).fetchall()]
 
 
 def trend(story_id, today_count, conn, today):

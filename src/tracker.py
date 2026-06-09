@@ -91,6 +91,17 @@ def _save_story_match_decisions(conn, decisions, run_date):
     )
 
 
+def _save_story_arc_decisions(conn, decisions, run_date, story_ids=None):
+    return tracker_store.save_story_arc_decisions(
+        conn,
+        decisions,
+        run_date,
+        ARC_ASSIGNMENT_MODEL,
+        story_matching.ARC_ASSIGNMENT_PROMPT_VERSION,
+        story_ids=story_ids,
+    )
+
+
 def _record_story_match_verification_totals(decisions):
     if not decisions:
         return
@@ -407,6 +418,18 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
                     "parent_relationship": parent_relationship,
                     "parent_confidence": parent_confidence,
                 })
+
+            # Persist arc-assignment decisions once labels have resolved to
+            # story rows, so each decision links to the story it produced.
+            _save_story_arc_decisions(
+                conn,
+                list(arc_assignments.values()),
+                today,
+                story_ids={
+                    assignment["story_label"]: assignment["story_id"]
+                    for assignment in assignments
+                },
+            )
 
             from collections import defaultdict
             parent_groups = defaultdict(lambda: {

@@ -747,6 +747,85 @@ def _rejected_related_matches(conn, run_date, limit):
     ]
 
 
+def _arc_attachments_review(conn, run_date, limit):
+    required = {"story_arc_decisions", "story_arcs", "stories"}
+    if not all(_table_exists(conn, table) for table in required):
+        return []
+    rows = conn.execute(
+        """
+        SELECT d.today_label, d.arc_id, d.candidates, d.relationship,
+               d.confidence, a.canonical_label AS arc_label,
+               (SELECT COUNT(*) FROM stories s WHERE s.arc_id = d.arc_id) AS arc_child_count
+        FROM story_arc_decisions d
+        LEFT JOIN story_arcs a ON a.arc_id = d.arc_id
+        WHERE d.run_date = ?
+          AND d.accepted = 1
+        ORDER BY arc_child_count DESC, d.today_label
+        LIMIT ?
+        """,
+        (run_date, limit),
+    ).fetchall()
+    items = []
+    for row in rows:
+        chosen_score = None
+        try:
+            for candidate in json.loads(row["candidates"] or "[]"):
+                if candidate.get("arc_id") == row["arc_id"]:
+                    chosen_score = candidate.get("score")
+                    break
+        except (TypeError, ValueError):
+            chosen_score = None
+        items.append({
+            "today_label": row["today_label"],
+            "arc_id": row["arc_id"],
+            "arc_label": row["arc_label"] or "",
+            "relationship": row["relationship"],
+            "confidence": row["confidence"],
+            "chosen_score": chosen_score,
+            "arc_child_count": int(row["arc_child_count"] or 0),
+        })
+    return items
+
+
+def _rejected_arc_decisions(conn, run_date, limit):
+    required = {"story_arc_decisions", "story_arcs"}
+    if not all(_table_exists(conn, table) for table in required):
+        return []
+    rows = conn.execute(
+        """
+        SELECT d.today_label, d.arc_id, d.relationship, d.confidence,
+               d.reject_reason, d.continuity_evidence,
+               a.canonical_label AS proposed_arc_label
+        FROM story_arc_decisions d
+        LEFT JOIN story_arcs a ON a.arc_id = d.arc_id
+        WHERE d.run_date = ?
+          AND d.accepted = 0
+          AND lower(COALESCE(d.confidence, '')) IN ('medium', 'high')
+        ORDER BY
+          CASE lower(COALESCE(d.confidence, ''))
+            WHEN 'high' THEN 0
+            WHEN 'medium' THEN 1
+            ELSE 2
+          END,
+          d.today_label
+        LIMIT ?
+        """,
+        (run_date, limit),
+    ).fetchall()
+    return [
+        {
+            "today_label": row["today_label"],
+            "arc_id": row["arc_id"],
+            "proposed_arc_label": row["proposed_arc_label"] or "",
+            "relationship": row["relationship"],
+            "confidence": row["confidence"],
+            "reject_reason": row["reject_reason"] or "",
+            "continuity_evidence": row["continuity_evidence"] or "",
+        }
+        for row in rows
+    ]
+
+
 def novelty_audit(run_id, limit=5):
     row = get_run_report_data(run_id)
     if row is None or not row["run_date"]:
@@ -757,6 +836,8 @@ def novelty_audit(run_id, limit=5):
             "high_signal_new_parent_arcs": [],
             "new_parent_arcs_with_candidates": [],
             "rejected_related_matches": [],
+            "arc_attachments_review": [],
+            "rejected_arc_decisions": [],
         }
 
     conn = _get_db()
@@ -790,6 +871,16 @@ def novelty_audit(run_id, limit=5):
                 limit,
             ),
             "rejected_related_matches": _rejected_related_matches(
+                conn,
+                row["run_date"],
+                limit,
+            ),
+            "arc_attachments_review": _arc_attachments_review(
+                conn,
+                row["run_date"],
+                limit,
+            ),
+            "rejected_arc_decisions": _rejected_arc_decisions(
                 conn,
                 row["run_date"],
                 limit,
@@ -918,6 +1009,29 @@ def _audit_rejected_line(item):
     )
 
 
+def _audit_arc_attachment_line(item):
+    score = "score n/a" if item.get("chosen_score") is None else f"score {item['chosen_score']}"
+    arc = item["arc_label"] or f"arc {item['arc_id']}"
+    return (
+        f"    - {item['today_label']} -> {arc} "
+        f"({item['relationship']}, {item['confidence']}, {score}, "
+        f"{item['arc_child_count']} stories in arc)"
+    )
+
+
+def _audit_arc_rejected_line(item):
+    if item["proposed_arc_label"]:
+        target = item["proposed_arc_label"]
+    elif item["arc_id"] is not None:
+        target = f"arc {item['arc_id']}"
+    else:
+        target = "NEW_ARC"
+    return (
+        f"    - {item['today_label']} -> {target} "
+        f"({item['relationship']}, {item['confidence']})"
+    )
+
+
 def novelty_audit_lines(run_id, limit=5):
     audit = novelty_audit(run_id, limit=limit)
     sections = [
@@ -925,6 +1039,8 @@ def novelty_audit_lines(run_id, limit=5):
         ("High-signal new parent arcs", audit["high_signal_new_parent_arcs"], _audit_new_parent_line),
         ("New parent arcs with prior candidates", audit["new_parent_arcs_with_candidates"], _audit_candidate_line),
         ("Rejected related matches", audit["rejected_related_matches"], _audit_rejected_line),
+        ("Arc attachments to review", audit["arc_attachments_review"], _audit_arc_attachment_line),
+        ("Rejected arc decisions", audit["rejected_arc_decisions"], _audit_arc_rejected_line),
     ]
 
     lines = ["Novelty audit:", _audit_ratio_line(audit)]
@@ -1064,6 +1180,28 @@ def _markdown_audit_candidate(item):
 def _markdown_audit_rejected(item):
     return (
         f"| {item['today_label']} | {item['candidate_label']} | "
+        f"{item['relationship']} | {item['confidence']} |"
+    )
+
+
+def _markdown_audit_arc_attachment(item):
+    score = "n/a" if item.get("chosen_score") is None else f"{item['chosen_score']}"
+    return (
+        f"| {item['today_label']} | {item['arc_label'] or item['arc_id']} | "
+        f"{item['relationship']} | {item['confidence']} | "
+        f"{score} | {item['arc_child_count']} |"
+    )
+
+
+def _markdown_audit_arc_rejected(item):
+    if item["proposed_arc_label"]:
+        target = item["proposed_arc_label"]
+    elif item["arc_id"] is not None:
+        target = f"arc {item['arc_id']}"
+    else:
+        target = "NEW_ARC"
+    return (
+        f"| {item['today_label']} | {target} | "
         f"{item['relationship']} | {item['confidence']} |"
     )
 
@@ -1235,6 +1373,30 @@ def run_report_markdown(run_id):
     ])
     if audit["rejected_related_matches"]:
         lines.extend(_markdown_audit_rejected(item) for item in audit["rejected_related_matches"])
+    else:
+        lines.append("| None |  |  |  |")
+
+    lines.extend([
+        "",
+        "### Arc Attachments To Review",
+        "",
+        "| Today Label | Arc | Relationship | Confidence | Chosen Score | Stories In Arc |",
+        "|---|---|---|---|---:|---:|",
+    ])
+    if audit["arc_attachments_review"]:
+        lines.extend(_markdown_audit_arc_attachment(item) for item in audit["arc_attachments_review"])
+    else:
+        lines.append("| None |  |  |  | 0 | 0 |")
+
+    lines.extend([
+        "",
+        "### Rejected Arc Decisions",
+        "",
+        "| Today Label | Proposed Arc | Relationship | Confidence |",
+        "|---|---|---|---|",
+    ])
+    if audit["rejected_arc_decisions"]:
+        lines.extend(_markdown_audit_arc_rejected(item) for item in audit["rejected_arc_decisions"])
     else:
         lines.append("| None |  |  |  |")
 

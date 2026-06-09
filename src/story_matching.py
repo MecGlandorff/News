@@ -658,6 +658,9 @@ def arc_assignment_cases_for_prompt(
     default_days=14,
 ):
     cases = []
+    # Audit copies of the supplied candidates, kept out of the prompt cases so
+    # prompt bytes (and the response cache) stay unchanged.
+    candidate_audit = {}
     arcs = list(recent_arcs.values()) if isinstance(recent_arcs, dict) else list(recent_arcs or [])
     for today_label in sorted(today_labels):
         scored = []
@@ -667,7 +670,8 @@ def arc_assignment_cases_for_prompt(
                 continue
             scored.append((score, arc))
         scored.sort(key=lambda item: (-item[0], str(item[1].get("canonical_label", ""))))
-        candidate_arcs = [compact_arc_option(arc) for _, arc in scored[:limit]]
+        supplied = scored[:limit]
+        candidate_arcs = [compact_arc_option(arc) for _, arc in supplied]
         if not candidate_arcs:
             continue
         current_articles = [
@@ -676,13 +680,21 @@ def arc_assignment_cases_for_prompt(
         ]
         if not current_articles:
             continue
+        candidate_audit[today_label] = [
+            {
+                "arc_id": arc.get("arc_id"),
+                "arc_label": arc.get("canonical_label", ""),
+                "score": score,
+            }
+            for score, arc in supplied
+        ]
         cases.append({
             "today_label": today_label,
             "run_date": today or "",
             "current_articles": current_articles,
             "candidate_arcs": candidate_arcs,
         })
-    return cases
+    return cases, candidate_audit
 
 
 def arc_case_key(case):
@@ -765,6 +777,10 @@ def arc_assignment_from_model(raw, expected_case, model):
         "today_label": today_label,
         "arc_id": arc_id if assigned else None,
         "parent_story_id": parent_story_id if assigned else None,
+        # The model's parsed picks before the accept gate, kept for the audit
+        # trail even when the decision is rejected.
+        "proposed_arc_id": arc_id,
+        "proposed_parent_story_id": parent_story_id,
         "accepted": assigned,
         "relationship": relationship,
         "confidence": confidence,
@@ -788,7 +804,7 @@ def missing_arc_assignment(expected_case, model):
 
 
 def assign_story_arcs(today_labels, recent_arcs, story_groups, get_client, model, today=None, default_days=14):
-    cases = arc_assignment_cases_for_prompt(
+    cases, candidate_audit = arc_assignment_cases_for_prompt(
         today_labels,
         recent_arcs,
         story_groups,
@@ -836,6 +852,9 @@ def assign_story_arcs(today_labels, recent_arcs, story_groups, get_client, model
         for key, expected_case in expected_by_key.items():
             if key not in seen_keys:
                 assignments[key] = missing_arc_assignment(expected_case, model)
+
+    for key, assignment in assignments.items():
+        assignment["candidates"] = candidate_audit.get(key, [])
 
     return assignments
 
