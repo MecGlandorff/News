@@ -275,6 +275,165 @@ def test_novelty_audit_surfaces_review_candidates(tmp_path, monkeypatch):
     assert "## Novelty Audit" in markdown
     assert "| None |  | 0 | 0.0 | 0.0 | 0.0 | 0.0 |  |" in markdown
     assert "| Odido data breach | Odido data breach | Tech | 6 | 6 | 4.0 | 472.0 |" in markdown
+    # No story_arc_decisions table in this database: sections degrade to empty.
+    assert audit["arc_attachments_review"] == []
+    assert audit["rejected_arc_decisions"] == []
+    assert "Arc attachments to review: 0" in report
+    assert "Rejected arc decisions: 0" in report
+
+
+def test_novelty_audit_surfaces_arc_decisions(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    monkeypatch.setattr(observability, "DB_PATH", db_path)
+
+    run_id = observability.start_run(_run_args(), run_date="2026-06-02")
+    observability.update_run_totals(
+        run_id,
+        story_developments_saved=2,
+        story_new_parent_arcs=1,
+    )
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.executescript("""
+            CREATE TABLE stories (
+                story_id INTEGER PRIMARY KEY,
+                canonical_label TEXT NOT NULL,
+                theme TEXT,
+                first_seen DATE NOT NULL,
+                last_seen DATE NOT NULL,
+                arc_id INTEGER
+            );
+            CREATE TABLE articles (
+                id TEXT,
+                story_id INTEGER,
+                date DATE,
+                source TEXT,
+                title TEXT,
+                url TEXT,
+                published_at TEXT,
+                importance INTEGER,
+                description TEXT
+            );
+            CREATE TABLE story_developments (
+                development_id INTEGER PRIMARY KEY,
+                story_id INTEGER,
+                observation_id INTEGER,
+                date DATE,
+                development_label TEXT,
+                development_status TEXT,
+                source_count INTEGER,
+                article_count INTEGER,
+                importance_avg REAL,
+                parent_relationship TEXT,
+                parent_confidence TEXT
+            );
+            CREATE TABLE story_arcs (
+                arc_id INTEGER PRIMARY KEY,
+                canonical_label TEXT NOT NULL,
+                theme TEXT,
+                first_seen DATE,
+                last_seen DATE
+            );
+            CREATE TABLE story_arc_decisions (
+                decision_id INTEGER PRIMARY KEY,
+                run_id INTEGER,
+                run_date TEXT NOT NULL,
+                today_label TEXT NOT NULL,
+                candidates TEXT NOT NULL,
+                arc_id INTEGER,
+                parent_story_id INTEGER,
+                story_id INTEGER,
+                accepted INTEGER NOT NULL,
+                relationship TEXT NOT NULL,
+                confidence TEXT,
+                continuity_evidence TEXT,
+                reject_reason TEXT,
+                assignment_model TEXT,
+                prompt_version TEXT NOT NULL
+            );
+        """)
+        conn.execute(
+            """
+            INSERT INTO story_arcs (arc_id, canonical_label, theme, first_seen, last_seen)
+            VALUES (1, 'Film festival coverage', 'Other', '2026-05-20', '2026-06-02')
+            """
+        )
+        conn.executemany(
+            """
+            INSERT INTO stories (story_id, canonical_label, theme, first_seen, last_seen, arc_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (11, "Festival opening film", "Other", "2026-05-20", "2026-05-20", 1),
+                (12, "Festival jury dispute", "Other", "2026-05-25", "2026-05-25", 1),
+                (13, "New film premiere", "Other", "2026-06-02", "2026-06-02", 1),
+            ],
+        )
+        conn.executemany(
+            """
+            INSERT INTO story_arc_decisions (
+                run_id, run_date, today_label, candidates, arc_id, parent_story_id,
+                story_id, accepted, relationship, confidence, continuity_evidence,
+                reject_reason, assignment_model, prompt_version
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    run_id, "2026-06-02", "New film premiere",
+                    '[{"arc_id": 1, "arc_label": "Film festival coverage", "score": 12}]',
+                    1, None, 13, 1, "same_arc", "medium",
+                    '["Festival coverage continues."]', "", "gpt-5.4-mini", "test",
+                ),
+                (
+                    run_id, "2026-06-02", "Dutch frigate shadowed",
+                    '[{"arc_id": 1, "arc_label": "Film festival coverage", "score": 10}]',
+                    1, None, 21, 0, "same_arc", "high",
+                    '["Weak shared context."]',
+                    "Arc assignment did not accept an existing arc.",
+                    "gpt-5.4-mini", "test",
+                ),
+                (
+                    run_id, "2026-06-02", "Minor storm",
+                    "[]",
+                    None, None, 22, 0, "uncertain", "low",
+                    "[]", "Arc assignment returned no decision for this case.",
+                    "gpt-5.4-mini", "test",
+                ),
+            ],
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    observability.finish_run(run_id, status="ok")
+
+    audit = observability.novelty_audit(run_id)
+    report = observability.pipeline_report(run_id)
+    markdown = observability.run_report_markdown(run_id)
+
+    review = audit["arc_attachments_review"]
+    assert len(review) == 1
+    assert review[0]["today_label"] == "New film premiere"
+    assert review[0]["arc_label"] == "Film festival coverage"
+    assert review[0]["chosen_score"] == 12
+    assert review[0]["arc_child_count"] == 3
+
+    rejected = audit["rejected_arc_decisions"]
+    assert [item["today_label"] for item in rejected] == ["Dutch frigate shadowed"]
+    assert rejected[0]["proposed_arc_label"] == "Film festival coverage"
+    assert rejected[0]["reject_reason"] == "Arc assignment did not accept an existing arc."
+
+    assert "Arc attachments to review: 1" in report
+    assert (
+        "New film premiere -> Film festival coverage "
+        "(same_arc, medium, score 12, 3 stories in arc)"
+    ) in report
+    assert "Rejected arc decisions: 1" in report
+    assert "Dutch frigate shadowed -> Film festival coverage (same_arc, high)" in report
+    assert "### Arc Attachments To Review" in markdown
+    assert "| New film premiere | Film festival coverage | same_arc | medium | 12 | 3 |" in markdown
+    assert "### Rejected Arc Decisions" in markdown
+    assert "| Dutch frigate shadowed | Film festival coverage | same_arc | high |" in markdown
 
 
 def test_pipeline_report_includes_scraper_claim_and_cost_totals(tmp_path, monkeypatch):

@@ -223,6 +223,7 @@ Negative:
 2. Should a parent story be allowed to own articles directly, or should all evidence-bearing articles eventually move to children?
 3. How many reviewed briefing examples are enough before automatic arc assignment becomes default-on?
 4. Should `story_match_decisions` also record proposed `arc_id` and `parent_story_id`, or should arc-assignment decisions get their own audit table?
+   **Resolved 2026-06-09 by ADR 0017:** arc-assignment decisions get their own `story_arc_decisions` table, recording proposed ids even on rejects.
 5. When should the lightweight `story_developments` step be promoted to explicit `story_arcs` and self-referential parent stories?
 
 ## Review Trigger

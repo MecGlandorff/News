@@ -44,6 +44,7 @@ erDiagram
     articles ||--o{ claims : "article_id + story_id"
     runs ||--o{ llm_calls : "run_id"
     runs ||--o{ story_match_decisions : "run_id"
+    runs ||--o{ story_arc_decisions : "run_id"
 ```
 
 The most important tables are:
@@ -65,12 +66,14 @@ The most important tables are:
 | `llm_calls` | one row per real model call |
 | `llm_response_cache` | exact response cache for matching, verification, and briefing calls |
 | `story_match_decisions` | optional verifier audit rows |
+| `story_arc_decisions` | arc-assignment audit rows with the supplied candidate arcs and their decision-time scores |
 
 Conditional tables:
 
 - `claims` and `claim_extractions` are created when `--show-evidence` is used.
 - `llm_response_cache` is created when exact cached matching, verification, or briefing calls run in an observed pipeline context.
 - `story_match_decisions` exists in current tracker schema, but rows are only written when the verifier checks candidate cross-day matches. Verification is on by default and can be disabled with `--no-verify-story-matches`.
+- `story_arc_decisions` (ADR 0017) records one row per arc-assignment case: the candidate arcs supplied to the model (with decision-time scores), the proposed arc and parent, whether the gate accepted it, and the story row the label resolved to. A new story with no row had no arc candidates that scored above zero.
 - `story_arcs` and nullable `stories.arc_id` / `stories.parent_story_id` are added idempotently; legacy flat stories receive one compatibility arc each.
 - `story_developments` records daily development labels; older runs are not backfilled with child labels.
 - Older databases may lack newer nullable columns until a run touches the relevant schema helper.
@@ -172,6 +175,27 @@ WHERE run_date = (SELECT run_date FROM latest)
   AND relationship IN ('same_story_arc', 'direct_follow_up', 'adjacent_topic', 'broader_context')
   AND confidence IN ('medium', 'high')
 ORDER BY confidence DESC, today_label;
+```
+
+Reconstruct arc-assignment decisions for the latest run (ADR 0017):
+
+```sql
+WITH latest AS (
+  SELECT run_date FROM runs ORDER BY run_id DESC LIMIT 1
+)
+SELECT
+  today_label,
+  candidates,
+  arc_id,
+  parent_story_id,
+  story_id,
+  accepted,
+  relationship,
+  confidence,
+  reject_reason
+FROM story_arc_decisions
+WHERE run_date = (SELECT run_date FROM latest)
+ORDER BY accepted DESC, today_label;
 ```
 
 ## LLM Calls And Token Use
