@@ -78,7 +78,7 @@ RSS feeds
   -> src/claims.py       optionally extract validated claims and evidence spans
   -> src/top10.py        select stories and generate briefing cards
   -> src/digest.py       write local digest Markdown
-  -> src/newspaper.py    render the PDF from the same briefing package
+  -> src/rendering/newspaper.py render the PDF from the same briefing package
   -> src/observability.py record run totals, model calls, cache hits, and tokens
 ```
 

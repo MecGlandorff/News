@@ -49,11 +49,6 @@ ARC_ASSIGNMENT_REJECT_RELATIONSHIPS = (
     "uncertain",
 )
 
-PARENT_ATTACH_RELATIONSHIPS = (
-    *STORY_VERIFY_ACCEPT_RELATIONSHIPS,
-    *STORY_VERIFY_CONTEXT_RELATIONSHIPS,
-)
-
 # Standard uncached API token prices from OpenAI's API pricing page, in USD
 # per 1M tokens. These estimates do not model cached-input discounts, Batch,
 # Flex, Priority, regional processing, or long-context uplifts. Update

@@ -2,7 +2,19 @@
 
 ## Status
 
-OPEN.
+RESOLVED 2026-06-09.
+
+Resolution:
+
+- `src/classifier.py` retries omitted article IDs in smaller batches.
+- If any requested article ID is still missing, classification raises a visible
+  `ValueError` before tracking instead of falling back to `Uncategorized`.
+- `Uncategorized` is blocked as a classifier story label.
+- Existing `Uncategorized` memory is quarantined/excluded from recent story and
+  arc candidates by tracker/store rules.
+- Local DB check on 2026-06-09:
+  `SELECT COUNT(*) FROM stories WHERE canonical_label = 'Uncategorized';`
+  returned `0`.
 
 This issue documents a run-quality finding from the May 22 audit of pipeline run `23`.
 The immediate symptom appeared in run `23`, but the root contamination was created by
@@ -165,4 +177,3 @@ Options to consider:
   `Uncategorized` story `4945`.
 - The run report or a related audit path exposes classifier omission counts, retries,
   or failures clearly enough for review.
-

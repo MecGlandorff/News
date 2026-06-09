@@ -7,7 +7,6 @@ from src.config import (
     ARC_ASSIGNMENT_ACCEPT_RELATIONSHIPS,
     ARC_ASSIGNMENT_CONTEXT_RELATIONSHIPS,
     ARC_ASSIGNMENT_REJECT_RELATIONSHIPS,
-    PARENT_ATTACH_RELATIONSHIPS as CONFIG_PARENT_ATTACH_RELATIONSHIPS,
     STORY_VERIFY_ACCEPT_RELATIONSHIPS,
     STORY_VERIFY_CONTEXT_RELATIONSHIPS,
     STORY_VERIFY_REJECT_RELATIONSHIPS,
@@ -141,18 +140,6 @@ ARC_ACCEPT_RELATIONSHIPS = set(ARC_ASSIGNMENT_ACCEPT_RELATIONSHIPS)
 ARC_RELATIONSHIPS = set(ARC_RELATIONSHIP_VALUES)
 ARC_CANDIDATES_PER_LABEL = 8
 ARC_ASSIGNMENT_CASES_PER_CALL = 12
-PARENT_ATTACH_RELATIONSHIPS = set(CONFIG_PARENT_ATTACH_RELATIONSHIPS)
-PARENT_ARC_TOKENS = {
-    "asylum", "attacks", "ceasefire", "conflict", "crisis", "debate",
-    "diplomacy", "economy", "election", "fallout", "insurgency", "market",
-    "markets", "migration", "offensive", "policy", "pressure", "sanctions",
-    "strike", "strikes", "talks", "trade", "tensions", "violence", "war",
-}
-PARENT_ARC_PAIR_TOKENS = {
-    ("drug", "strikes"),
-    ("drug", "strike"),
-    ("gang", "violence"),
-}
 
 
 def label_tokens(label):
@@ -326,45 +313,6 @@ def recent_story_text(label, value):
     for development in value.get("recent_developments", []):
         parts.append(development.get("label", ""))
     return " ".join(str(part or "") for part in parts)
-
-
-def has_parent_arc_shape(label):
-    tokens = distinctive_label_tokens(label)
-    if tokens & PARENT_ARC_TOKENS:
-        return True
-    return any(all(token in tokens for token in pair) for pair in PARENT_ARC_PAIR_TOKENS)
-
-
-def should_attach_to_parent_arc(decision, candidate):
-    """Return true when a rejected verifier match is still useful parent continuity.
-
-    This is deliberately narrower than a story match. It lets a new development
-    live inside a broad arc without claiming it is the same concrete event.
-    """
-    if decision.get("accepted"):
-        return False
-    relationship = clean_string(decision.get("relationship")).casefold()
-    confidence = clean_string(decision.get("confidence")).casefold()
-    if relationship not in PARENT_ATTACH_RELATIONSHIPS:
-        return False
-    if confidence not in {"high", "medium"}:
-        return False
-    if not clean_list(decision.get("continuity_evidence")):
-        return False
-
-    candidate_label = decision.get("candidate_label", "")
-    today_label = decision.get("today_label", "")
-    if not (has_parent_arc_shape(candidate_label) or has_parent_arc_shape(today_label)):
-        return False
-
-    if relationship == "broader_context":
-        candidate_active_days = 0
-        if isinstance(candidate, dict):
-            candidate_active_days = int(candidate.get("active_days") or 0)
-        if candidate_active_days < 2 and not has_parent_arc_shape(candidate_label):
-            return False
-
-    return True
 
 
 def candidate_score(today_label, candidate_label, candidate, today=None, default_days=14):

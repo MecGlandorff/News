@@ -15,7 +15,7 @@ from src.claims import extract_and_save_claims
 from src.classifier import classify_articles
 from src.digest import write_digest
 from src.llm import require_openai_api_key
-from src.newspaper import write_newspaper_pdf
+from src.rendering.newspaper import write_newspaper_pdf
 from src.scraper import scrape_all
 from src.top10 import build_briefing_package, write_top10
 import src.tracker as tracker

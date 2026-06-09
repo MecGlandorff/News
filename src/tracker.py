@@ -237,22 +237,6 @@ def _assign_story_arcs(today_labels, recent_arcs, story_groups, today=None):
     )
 
 
-def _parent_arc_attachments(match_decisions, recent_story_options):
-    attachments = {}
-    for decision in match_decisions:
-        candidate_label = decision.get("candidate_label")
-        candidate = recent_story_options.get(candidate_label)
-        if not candidate:
-            continue
-        if story_matching.should_attach_to_parent_arc(decision, candidate):
-            attachments[decision["today_label"]] = {
-                "canonical_label": candidate_label,
-                "relationship": decision.get("relationship", ""),
-                "confidence": decision.get("confidence", ""),
-            }
-    return attachments
-
-
 def _trend(story_id, today_count, conn, today):
     return tracker_store.trend(story_id, today_count, conn, today)
 

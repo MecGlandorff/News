@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.newspaper import build_newspaper_pdf  # noqa: E402
+from src.rendering.newspaper import build_newspaper_pdf  # noqa: E402
 
 
 def article(source, title, description, published_at, theme):

@@ -1,7 +1,7 @@
 from datetime import datetime
 
-import src.newspaper as newspaper
-from src.geo import infer_story_location
+import src.rendering.newspaper as newspaper
+from src.rendering.geo import infer_story_location
 
 
 def _story(label, trend, theme="Geopolitics & War", source="Example News"):
