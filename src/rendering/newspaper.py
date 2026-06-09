@@ -3,9 +3,9 @@ from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 
-from src import newspaper_map
-from src.geo import infer_story_location
-from src.pdf_writer import PDFDocument as _PDFDocument
+from src.rendering import newspaper_map
+from src.rendering.geo import infer_story_location
+from src.rendering.pdf_writer import PDFDocument as _PDFDocument
 from src.top10 import THEME_ORDER, build_briefing_package
 
 

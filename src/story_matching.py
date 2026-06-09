@@ -3,6 +3,14 @@ import re
 from datetime import date
 from email.utils import parsedate_to_datetime
 
+from src.config import (
+    ARC_ASSIGNMENT_ACCEPT_RELATIONSHIPS,
+    ARC_ASSIGNMENT_CONTEXT_RELATIONSHIPS,
+    ARC_ASSIGNMENT_REJECT_RELATIONSHIPS,
+    STORY_VERIFY_ACCEPT_RELATIONSHIPS,
+    STORY_VERIFY_CONTEXT_RELATIONSHIPS,
+    STORY_VERIFY_REJECT_RELATIONSHIPS,
+)
 from src.llm import (
     create_cached_chat_completion,
     mark_schema_failure,
@@ -10,6 +18,18 @@ from src.llm import (
     save_cached_chat_completion,
 )
 
+VERIFY_RELATIONSHIP_VALUES = (
+    *STORY_VERIFY_ACCEPT_RELATIONSHIPS,
+    *STORY_VERIFY_CONTEXT_RELATIONSHIPS,
+    *STORY_VERIFY_REJECT_RELATIONSHIPS,
+)
+VERIFY_RELATIONSHIP_TEXT = " | ".join(VERIFY_RELATIONSHIP_VALUES)
+ARC_RELATIONSHIP_VALUES = (
+    *ARC_ASSIGNMENT_ACCEPT_RELATIONSHIPS,
+    *ARC_ASSIGNMENT_CONTEXT_RELATIONSHIPS,
+    *ARC_ASSIGNMENT_REJECT_RELATIONSHIPS,
+)
+ARC_RELATIONSHIP_TEXT = " | ".join(ARC_RELATIONSHIP_VALUES)
 
 CONSOLIDATE_PROMPT = """You are grouping today's news story labels that refer to the same ongoing story.
 
@@ -60,7 +80,7 @@ Return a JSON object with key "decisions": array of:
   "today_label": string,
   "canonical_label": string,
   "same_event": boolean,
-  "relationship": one of: same_event | same_story_arc | direct_follow_up | adjacent_topic | broader_context | unrelated | uncertain,
+  "relationship": one of: """ + VERIFY_RELATIONSHIP_TEXT + """,
   "confidence": one of: high | medium | low,
   "article_dates": array of date strings from the current articles,
   "candidate_last_seen": date string,
@@ -86,7 +106,7 @@ Return a JSON object with key "assignments": array of:
   "today_label": string,
   "arc_id": integer or "NEW_ARC",
   "parent_story_id": integer or null,
-  "relationship": one of: same_arc | parent_context | adjacent_topic | broader_context | unrelated | uncertain,
+  "relationship": one of: """ + ARC_RELATIONSHIP_TEXT + """,
   "confidence": one of: high | medium | low,
   "continuity_evidence": array of short strings naming the concrete arc evidence,
   "reject_reason": string
@@ -113,31 +133,13 @@ VERIFY_ARTICLE_TEXT_CHAR_LIMIT = 16000
 VERIFY_DESCRIPTION_CHAR_LIMIT = 1200
 VERIFY_ARTICLES_PER_CASE = 4
 VERIFY_CASES_PER_CALL = 8
-VERIFY_ACCEPT_RELATIONSHIPS = {"same_event", "same_story_arc", "direct_follow_up"}
-VERIFY_RELATIONSHIPS = VERIFY_ACCEPT_RELATIONSHIPS | {
-    "adjacent_topic", "broader_context", "unrelated", "uncertain",
-}
+VERIFY_ACCEPT_RELATIONSHIPS = set(STORY_VERIFY_ACCEPT_RELATIONSHIPS)
+VERIFY_RELATIONSHIPS = set(VERIFY_RELATIONSHIP_VALUES)
 VERIFY_CONFIDENCE_VALUES = {"high", "medium", "low"}
-ARC_ACCEPT_RELATIONSHIPS = {
-    "same_arc", "parent_context", "adjacent_topic", "broader_context",
-}
-ARC_RELATIONSHIPS = ARC_ACCEPT_RELATIONSHIPS | {"unrelated", "uncertain"}
+ARC_ACCEPT_RELATIONSHIPS = set(ARC_ASSIGNMENT_ACCEPT_RELATIONSHIPS)
+ARC_RELATIONSHIPS = set(ARC_RELATIONSHIP_VALUES)
 ARC_CANDIDATES_PER_LABEL = 8
 ARC_ASSIGNMENT_CASES_PER_CALL = 12
-PARENT_ATTACH_RELATIONSHIPS = {
-    "same_event", "same_story_arc", "direct_follow_up", "adjacent_topic", "broader_context",
-}
-PARENT_ARC_TOKENS = {
-    "asylum", "attacks", "ceasefire", "conflict", "crisis", "debate",
-    "diplomacy", "economy", "election", "fallout", "insurgency", "market",
-    "markets", "migration", "offensive", "policy", "pressure", "sanctions",
-    "strike", "strikes", "talks", "trade", "tensions", "violence", "war",
-}
-PARENT_ARC_PAIR_TOKENS = {
-    ("drug", "strikes"),
-    ("drug", "strike"),
-    ("gang", "violence"),
-}
 
 
 def label_tokens(label):
@@ -311,45 +313,6 @@ def recent_story_text(label, value):
     for development in value.get("recent_developments", []):
         parts.append(development.get("label", ""))
     return " ".join(str(part or "") for part in parts)
-
-
-def has_parent_arc_shape(label):
-    tokens = distinctive_label_tokens(label)
-    if tokens & PARENT_ARC_TOKENS:
-        return True
-    return any(all(token in tokens for token in pair) for pair in PARENT_ARC_PAIR_TOKENS)
-
-
-def should_attach_to_parent_arc(decision, candidate):
-    """Return true when a rejected verifier match is still useful parent continuity.
-
-    This is deliberately narrower than a story match. It lets a new development
-    live inside a broad arc without claiming it is the same concrete event.
-    """
-    if decision.get("accepted"):
-        return False
-    relationship = clean_string(decision.get("relationship")).casefold()
-    confidence = clean_string(decision.get("confidence")).casefold()
-    if relationship not in PARENT_ATTACH_RELATIONSHIPS:
-        return False
-    if confidence not in {"high", "medium"}:
-        return False
-    if not clean_list(decision.get("continuity_evidence")):
-        return False
-
-    candidate_label = decision.get("candidate_label", "")
-    today_label = decision.get("today_label", "")
-    if not (has_parent_arc_shape(candidate_label) or has_parent_arc_shape(today_label)):
-        return False
-
-    if relationship == "broader_context":
-        candidate_active_days = 0
-        if isinstance(candidate, dict):
-            candidate_active_days = int(candidate.get("active_days") or 0)
-        if candidate_active_days < 2 and not has_parent_arc_shape(candidate_label):
-            return False
-
-    return True
 
 
 def candidate_score(today_label, candidate_label, candidate, today=None, default_days=14):

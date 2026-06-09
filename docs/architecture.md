@@ -40,7 +40,7 @@ Configured RSS feeds
   -> src/claims.py        optionally extract claims and evidence spans
   -> src/top10.py         select stories and generate briefing cards
   -> src/digest.py        write a lightweight local digest
-  -> src/newspaper.py     render a newspaper-style PDF
+  -> src/rendering/newspaper.py render a newspaper-style PDF
 ```
 
 `src/tracker.py` and `src/top10.py` are orchestration modules. The more specific logic lives in smaller modules: `src/story_matching.py` handles same-day and cross-day label matching, `src/briefing_selection.py` handles story scoring and section selection, and `src/briefing_generation.py` handles briefing model input, structured output normalization, and fallbacks.
@@ -108,7 +108,7 @@ The final Markdown renders those fields with source links, reported timestamps, 
 
 When evidence-mode claim comparison produces a source-agreement label, `src/briefing_generation.py` overrides the model's `source_agreement` with the deterministic label. Numeric divergence also overrides `dispute_flag` to `possible conflict`.
 
-The PDF output uses the same briefing package. `src/newspaper.py` is a renderer, not a separate intelligence pipeline.
+The PDF output uses the same briefing package. `src/rendering/newspaper.py` is a renderer, not a separate intelligence pipeline.
 
 ## What Is Weak Or Missing Today
 

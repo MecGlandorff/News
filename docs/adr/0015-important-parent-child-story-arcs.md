@@ -10,6 +10,11 @@ This ADR records the target parent/child story design. The first PR only ships t
 
 2026-05-20 follow-up: ADR 0016 promotes the target `story_arcs`, `stories.arc_id`, and `stories.parent_story_id` shape into the current implementation while keeping the lightweight `story_developments` rows for daily observability.
 
+2026-06-09 cleanup: the first-PR verifier-rejection parent-attach helper
+`should_attach_to_parent_arc` was superseded by ADR 0016's explicit
+`assign_story_arcs` stage and removed. Current runs make arc assignments only
+after same-story matching and verification leave a label unmatched.
+
 ## Context
 
 The tracker originally stored story memory as a flat set of `stories` rows with daily observations. That works for narrow event continuity, but reviewed briefings showed a recurring structural problem: some developments are not the same concrete event, yet they clearly belong inside the same larger news arc.
@@ -152,14 +157,17 @@ This separates two decisions:
 
 The first decision protects memory integrity. The second preserves narrative continuity.
 
-In the first PR, rejected verifier matches can attach as `new_child` developments only when:
+Historical first-PR behavior: rejected verifier matches could attach as `new_child` developments only when:
 
 - the relationship is useful parent continuity, such as `adjacent_topic`, `broader_context`, or `direct_follow_up`
 - confidence is medium or high
 - continuity evidence is present
 - the candidate or today label has parent-arc shape, such as war, conflict, crisis, migration, market, trade, sanctions, attacks, or violence
 
-This does not claim the child is the same event as the parent. It only records that the child belongs inside the broader parent context.
+That helper is no longer active. ADR 0016 replaced it with explicit arc
+assignment for labels that remain unmatched after same-story matching and
+verification. This still does not claim the child is the same event as the
+parent; it records broader arc context separately from story identity.
 
 ## Briefing Behavior
 

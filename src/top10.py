@@ -9,9 +9,6 @@ from src.tracker import save_observation_memory
 BRIEFINGS_DIR = Path("briefings")
 THEME_ORDER = briefing_selection.THEME_ORDER
 POLITICS_THEMES = briefing_selection.POLITICS_THEMES
-SECTION_EXCLUDED_THEMES = briefing_selection.SECTION_EXCLUDED_THEMES
-LEAD_EXCLUDED_THEMES = briefing_selection.LEAD_EXCLUDED_THEMES
-LOW_INTEREST_LEAD_THEMES = briefing_selection.LOW_INTEREST_LEAD_THEMES
 LOW_INTEREST_KEYWORDS = briefing_selection.LOW_INTEREST_KEYWORDS
 TREND_SCORE = briefing_selection.TREND_SCORE
 TREND_ICON  = {"new": "NEW STORY", "up": "COVERAGE INCREASING", "steady": "COVERAGE STEADY", "down": "COVERAGE DECREASING"}

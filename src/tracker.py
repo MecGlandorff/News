@@ -29,6 +29,10 @@ def _get_db():
     return tracker_store.get_db(DB_PATH)
 
 
+def _quarantine_uncategorized_memory(conn):
+    return tracker_store.quarantine_uncategorized_memory(conn)
+
+
 def _get_recent_stories(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
     return tracker_store.get_recent_stories(conn, today, lookback_days)
 
@@ -233,22 +237,6 @@ def _assign_story_arcs(today_labels, recent_arcs, story_groups, today=None):
     )
 
 
-def _parent_arc_attachments(match_decisions, recent_story_options):
-    attachments = {}
-    for decision in match_decisions:
-        candidate_label = decision.get("candidate_label")
-        candidate = recent_story_options.get(candidate_label)
-        if not candidate:
-            continue
-        if story_matching.should_attach_to_parent_arc(decision, candidate):
-            attachments[decision["today_label"]] = {
-                "canonical_label": candidate_label,
-                "relationship": decision.get("relationship", ""),
-                "confidence": decision.get("confidence", ""),
-            }
-    return attachments
-
-
 def _trend(story_id, today_count, conn, today):
     return tracker_store.trend(story_id, today_count, conn, today)
 
@@ -276,6 +264,8 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
 
     conn = _get_db()
     try:
+        with conn:
+            _quarantine_uncategorized_memory(conn)
         recent_story_options = _get_recent_story_options(conn, today, lookback_days)
         recent_arc_options = _get_recent_arc_options(conn, today, lookback_days)
         recent_stories = {

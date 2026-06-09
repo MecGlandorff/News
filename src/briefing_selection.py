@@ -6,9 +6,6 @@ from src.source_agreement import source_identity, source_support
 
 THEME_ORDER = ["Geopolitics & War", "USA Politics", "Dutch Politics", "Economy", "Tech", "Climate", "Science", "Sports", "Other"]
 POLITICS_THEMES = {"Geopolitics & War", "USA Politics", "Dutch Politics"}
-SECTION_EXCLUDED_THEMES: set[str] = set()
-LEAD_EXCLUDED_THEMES: set[str] = set()
-LOW_INTEREST_LEAD_THEMES: set[str] = set()
 THEME_SELECTION_PENALTIES = {
     "Tech": 60,
     "Science": 60,

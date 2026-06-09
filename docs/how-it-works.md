@@ -326,7 +326,7 @@ Owned by:
 - `src/briefing_generation.py`
 - `src/top10.py`
 - `src/digest.py`
-- `src/newspaper.py`
+- `src/rendering/newspaper.py`
 
 `run_pipeline()` writes three possible artifacts:
 

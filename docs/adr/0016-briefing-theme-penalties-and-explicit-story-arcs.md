@@ -51,7 +51,10 @@ Add a cached arc-assignment LLM stage.
 
 Code review after implementation confirmed these safeguards:
 
-- Briefing selection no longer has active theme exclusions: `SECTION_EXCLUDED_THEMES`, `LEAD_EXCLUDED_THEMES`, and `LOW_INTEREST_LEAD_THEMES` are empty compatibility aliases.
+- Briefing selection no longer has active theme exclusions. The former
+  `SECTION_EXCLUDED_THEMES`, `LEAD_EXCLUDED_THEMES`, and
+  `LOW_INTEREST_LEAD_THEMES` compatibility aliases were removed in the
+  2026-06 cleanup.
 - Selection ranking uses `selection_score = base score - selection penalty`, so theme policy can lower rank without making a theme impossible to display.
 - `Tech` and `Science` receive a `60` point penalty, `Sports` receives a `260` point penalty, and low-interest keyword matches receive an additional `120` point penalty.
 - Section selection sorts by adjusted selection score and allows high-signal `Tech`, `Science`, and exceptional `Sports` stories into the rendered briefing.

@@ -63,6 +63,19 @@ def _fake_client(response_content):
     return Client()
 
 
+def _fake_response(response_content):
+    class Message:
+        content = json.dumps(response_content)
+
+    class Choice:
+        message = Message()
+
+    class Response:
+        choices = [Choice()]
+
+    return Response()
+
+
 def test_extract_and_save_claims_skips_empty_tracked():
     # Should not raise and not call LLM
     extract_and_save_claims([])
@@ -583,6 +596,92 @@ def test_verifier_failure_default_rejects_the_claim(tmp_path, monkeypatch):
 
     assert get_claims_for_story(42) == []
     assert stats["claim_verifier_rejects"] == 1
+
+
+def test_verifier_explicit_false_is_a_reject_not_a_schema_failure(monkeypatch):
+    response = _fake_response({"supported": False, "reason": "Not supported."})
+    saved = []
+    schema_failures = []
+
+    monkeypatch.setattr(
+        claims_module,
+        "_verifier_completion",
+        lambda claim_text, evidence_span: (response, {"cache": "metadata"}, False),
+    )
+    monkeypatch.setattr(
+        claims_module,
+        "save_cached_chat_completion",
+        lambda metadata, response: saved.append((metadata, response)),
+    )
+    monkeypatch.setattr(
+        claims_module,
+        "mark_schema_failure",
+        lambda *args, **kwargs: schema_failures.append((args, kwargs)),
+    )
+
+    supported = claims_module._verify_claim_with_llm("Claim.", "Evidence.")
+
+    assert supported is False
+    assert len(saved) == 1
+    assert schema_failures == []
+
+
+def test_verifier_malformed_supported_field_is_schema_failure_not_cached_false(monkeypatch):
+    response = _fake_response({"supported": "false", "reason": "Wrong type."})
+    saved = []
+    schema_failures = []
+
+    monkeypatch.setattr(
+        claims_module,
+        "_verifier_completion",
+        lambda claim_text, evidence_span: (response, {"cache": "metadata"}, False),
+    )
+    monkeypatch.setattr(
+        claims_module,
+        "save_cached_chat_completion",
+        lambda metadata, response: saved.append((metadata, response)),
+    )
+    monkeypatch.setattr(
+        claims_module,
+        "mark_schema_failure",
+        lambda *args, **kwargs: schema_failures.append((args, kwargs)),
+    )
+
+    supported = claims_module._verify_claim_with_llm("Claim.", "Evidence.")
+
+    assert supported is False
+    assert saved == []
+    assert len(schema_failures) == 1
+
+
+def test_verifier_refreshes_malformed_cached_response(monkeypatch):
+    cached_response = _fake_response({"supported": "false", "reason": "Wrong type."})
+    fresh_response = _fake_response({"supported": True, "reason": "Supported."})
+    saved = []
+    refreshes = []
+
+    monkeypatch.setattr(
+        claims_module,
+        "_verifier_completion",
+        lambda claim_text, evidence_span: (cached_response, {"cache": "metadata"}, True),
+    )
+
+    def fresh_completion(claim_text, evidence_span):
+        refreshes.append((claim_text, evidence_span))
+        return fresh_response
+
+    monkeypatch.setattr(claims_module, "_uncached_verifier_completion", fresh_completion)
+    monkeypatch.setattr(
+        claims_module,
+        "save_cached_chat_completion",
+        lambda metadata, response: saved.append((metadata, response)),
+    )
+
+    supported = claims_module._verify_claim_with_llm("Claim.", "Evidence.")
+
+    assert supported is True
+    assert refreshes == [("Claim.", "Evidence.")]
+    assert saved == [({"cache": "metadata"}, fresh_response)]
 
 
 def test_cheap_accept_counter_increments_for_entity_overlap(tmp_path, monkeypatch):

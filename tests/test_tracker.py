@@ -168,6 +168,74 @@ def test_story_arc_schema_backfills_legacy_stories(tmp_path, monkeypatch):
     assert arc_count == 1
 
 
+def test_track_quarantines_uncategorized_memory_before_matching(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    data_dir = tmp_path / "daily"
+    monkeypatch.setattr(tracker, "DB_PATH", db_path)
+    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
+
+    conn = tracker._get_db()
+    try:
+        with conn:
+            arc_id = tracker._create_story_arc(
+                conn,
+                "Uncategorized",
+                "Other",
+                "2026-05-01",
+                "2026-05-01",
+            )
+            story_id = conn.execute(
+                """
+                INSERT INTO stories (
+                    arc_id, parent_story_id, canonical_label,
+                    theme, first_seen, last_seen
+                )
+                VALUES (?, NULL, ?, ?, ?, ?)
+                """,
+                (arc_id, "Uncategorized", "Other", "2026-05-01", "2026-05-01"),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO story_daily (story_id, date, source_count, importance_avg, labels_seen)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (story_id, "2026-05-01", 10, 1.0, '["Uncategorized"]'),
+            )
+    finally:
+        conn.close()
+
+    captured = {}
+
+    def fake_match(labels, recent, today=None):
+        captured["recent"] = dict(recent)
+        return {label: "NEW" for label in labels}
+
+    monkeypatch.setattr(tracker, "_match_labels", fake_match)
+
+    tracker.track(
+        [_article(2, "Fresh story", "Fresh Story")],
+        today="2026-05-02",
+        verify_story_matches=False,
+    )
+
+    assert "Uncategorized" not in captured["recent"]
+    assert tracker.tracker_store.QUARANTINED_STORY_LABEL not in captured["recent"]
+
+    conn = sqlite3.connect(db_path)
+    try:
+        labels = conn.execute("""
+            SELECT canonical_label FROM stories ORDER BY story_id
+        """).fetchall()
+        arc_labels = conn.execute("""
+            SELECT canonical_label FROM story_arcs ORDER BY arc_id
+        """).fetchall()
+    finally:
+        conn.close()
+
+    assert labels[0] == (tracker.tracker_store.QUARANTINED_STORY_LABEL,)
+    assert arc_labels[0] == (tracker.tracker_store.QUARANTINED_STORY_LABEL,)
+
+
 def test_track_replaces_same_day_article_story_assignment(tmp_path, monkeypatch):
     db_path = tmp_path / "stories.db"
     data_dir = tmp_path / "daily"
@@ -658,6 +726,40 @@ def test_arc_assignment_uses_mini_model_and_supplied_arc_candidates(monkeypatch)
     assert assignments["Mali rebel offensive"]["accepted"] is True
     assert assignments["Mali rebel offensive"]["arc_id"] == 7
     assert assignments["Mali rebel offensive"]["parent_story_id"] == 3
+
+
+def test_arc_assignment_rejects_adjacent_and_broader_relationships():
+    expected_case = {
+        "today_label": "Mali rebel offensive",
+        "candidate_arcs": [{
+            "arc_id": 7,
+            "recent_stories": [{
+                "story_id": 3,
+                "canonical_label": "Mali attacks",
+            }],
+        }],
+    }
+
+    for relationship in ("adjacent_topic", "broader_context"):
+        assignment = tracker.story_matching.arc_assignment_from_model(
+            {
+                "today_label": "Mali rebel offensive",
+                "arc_id": 7,
+                "parent_story_id": 3,
+                "relationship": relationship,
+                "confidence": "high",
+                "continuity_evidence": ["Shared Mali security context."],
+                "reject_reason": "",
+            },
+            expected_case,
+            "test-model",
+        )
+
+        assert assignment["accepted"] is False
+        assert assignment["arc_id"] is None
+        assert assignment["parent_story_id"] is None
+        assert assignment["relationship"] == relationship
+        assert assignment["reject_reason"] == "Arc assignment did not accept an existing arc."
 
 
 def test_multiple_today_labels_under_one_parent_do_not_overwrite_articles(tmp_path, monkeypatch):
