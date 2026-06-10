@@ -21,6 +21,8 @@ from src.top10 import build_briefing_package, write_top10
 import src.tracker as tracker
 from src.tracker import track
 
+logger = logging.getLogger(__name__)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run the news intelligence pipeline.")
@@ -85,7 +87,7 @@ def temporary_database_paths():
         llm_response_cache.DB_PATH = temp_db
         sources.DB_PATH = temp_db
         observability.DB_PATH = temp_db
-        print(f"DB off: using temporary database at {temp_db}")
+        logger.info("DB off: using temporary database at %s", temp_db)
         try:
             yield
         finally:

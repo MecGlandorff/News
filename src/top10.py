@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
-from email.utils import parsedate_to_datetime
 from pathlib import Path
 from src import briefing_generation, briefing_selection
+from src.article_dates import parse_reported_at
 from src.config import BRIEFING_MODEL
 from src.llm import get_openai_client
 from src.tracker import save_observation_memory
@@ -23,25 +23,15 @@ def _score(story):
     return briefing_selection.score(story)
 
 
-def _parse_reported_at(value):
-    try:
-        parsed = parsedate_to_datetime(value)
-    except Exception:
-        return None
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
-
-
 def _format_reported_at(value):
-    parsed = _parse_reported_at(value)
+    parsed = parse_reported_at(value)
     if parsed:
         return parsed.strftime("%Y-%m-%d %H:%M UTC")
     return value or "unknown time"
 
 
 def _latest_reported_at(articles):
-    parsed = [_parse_reported_at(a.get("published_at")) for a in articles]
+    parsed = [parse_reported_at(a.get("published_at")) for a in articles]
     parsed = [p for p in parsed if p]
     if not parsed:
         return "unknown time"
@@ -50,7 +40,7 @@ def _latest_reported_at(articles):
 
 def _source_lines(articles):
     def sort_key(article):
-        return _parse_reported_at(article.get("published_at")) or datetime.min.replace(tzinfo=timezone.utc)
+        return parse_reported_at(article.get("published_at")) or datetime.min.replace(tzinfo=timezone.utc)
 
     lines = ["Sources:"]
     for a in sorted(articles, key=sort_key, reverse=True):

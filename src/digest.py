@@ -1,7 +1,8 @@
 from collections import defaultdict
 from datetime import datetime, timezone
-from email.utils import parsedate_to_datetime
 from pathlib import Path
+
+from src.article_dates import parse_reported_at
 
 THEME_ORDER = ["Geopolitics & War", "USA Politics", "Dutch Politics", "Economy", "Tech", "Climate", "Science", "Sports", "Other"]
 OUTPUT_DIR  = Path("output")
@@ -15,13 +16,7 @@ TREND_ICON = {
 
 
 def _parse_date(date_str):
-    try:
-        parsed = parsedate_to_datetime(date_str)
-    except Exception:
-        return datetime.min.replace(tzinfo=timezone.utc)
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
+    return parse_reported_at(date_str) or datetime.min.replace(tzinfo=timezone.utc)
 
 
 def _format_reported_at(date_str):
