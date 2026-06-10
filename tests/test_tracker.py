@@ -3,6 +3,7 @@ import sqlite3
 
 import src.llm_response_cache as llm_response_cache
 import src.observability as observability
+import src.story_matching as story_matching
 import src.tracker as tracker
 import src.sources as sources_module
 
@@ -1355,3 +1356,135 @@ def test_recent_story_lookup_uses_newest_duplicate_label(tmp_path, monkeypatch):
     conn.close()
 
     assert recent["Duplicate Label"] == new
+
+
+def test_verifier_rejection_blocks_exact_label_story_reuse(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    data_dir = tmp_path / "daily"
+    client = _fake_tracker_client_sequence([
+        {
+            "matches": [{
+                "today_label": "Border clash",
+                "canonical_label": "Border clash",
+            }]
+        },
+        {
+            "decisions": [{
+                "today_label": "Border clash",
+                "canonical_label": "Border clash",
+                "same_event": False,
+                "relationship": "adjacent_topic",
+                "confidence": "high",
+                "article_dates": ["2026-06-03"],
+                "candidate_last_seen": "2026-06-01",
+                "continuity_evidence": [],
+                "reject_reason": "Different countries and a different border incident.",
+            }]
+        },
+        {
+            "assignments": [{
+                "today_label": "Border clash",
+                "arc_id": "NEW_ARC",
+                "parent_story_id": None,
+                "relationship": "uncertain",
+                "confidence": "low",
+                "continuity_evidence": [],
+                "reject_reason": "Unrelated to the earlier border clash.",
+            }]
+        },
+    ])
+    monkeypatch.setattr(tracker, "DB_PATH", db_path)
+    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
+    monkeypatch.setattr(llm_response_cache, "DB_PATH", db_path)
+    monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
+
+    first_article = _article(1, "Thai and Cambodian troops exchange fire", "Border clash")
+    first_article["text"] = "Thai and Cambodian troops exchanged fire near a disputed temple."
+    first = tracker.track([first_article], today="2026-06-01")
+
+    second_article = _article(2, "Kyrgyz-Tajik border clash wounds dozens", "Border clash")
+    second_article["text"] = "Clashes broke out on the Kyrgyz-Tajik border over a water dispute."
+    tracked = tracker.track([second_article], today="2026-06-03")
+
+    assert tracked[0]["story_id"] != first[0]["story_id"]
+    assert tracked[0]["development_status"] == "new_parent"
+
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    try:
+        story_count = conn.execute(
+            "SELECT COUNT(*) FROM stories WHERE canonical_label = ?",
+            ("Border clash",),
+        ).fetchone()[0]
+        linked_story_id = conn.execute(
+            "SELECT story_id FROM articles WHERE id = ?", ("2",)
+        ).fetchone()["story_id"]
+    finally:
+        conn.close()
+
+    assert story_count == 2
+    assert linked_story_id == tracked[0]["story_id"]
+
+
+def test_generic_label_is_not_reused_across_days(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    data_dir = tmp_path / "daily"
+    match_payload = {
+        "matches": [{
+            "today_label": "Stabbing attack",
+            "canonical_label": "NEW",
+        }]
+    }
+    arc_payload = {
+        "assignments": [{
+            "today_label": "Stabbing attack",
+            "arc_id": "NEW_ARC",
+            "parent_story_id": None,
+            "relationship": "uncertain",
+            "confidence": "low",
+            "continuity_evidence": [],
+            "reject_reason": "Unrelated incidents in different cities.",
+        }]
+    }
+    # No observability run is active in tests, so the LLM response cache is
+    # off and the same-day rerun consumes a second match + arc payload pair.
+    client = _fake_tracker_client_sequence(
+        [match_payload, arc_payload, match_payload, arc_payload]
+    )
+    monkeypatch.setattr(tracker, "DB_PATH", db_path)
+    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
+    monkeypatch.setattr(llm_response_cache, "DB_PATH", db_path)
+    monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
+
+    first = tracker.track(
+        [_article(1, "Knife attack at Hamburg station", "Stabbing attack")],
+        today="2026-06-01",
+    )
+    tracked = tracker.track(
+        [_article(2, "Stabbing at Sydney mall", "Stabbing attack")],
+        today="2026-06-03",
+    )
+
+    assert tracked[0]["story_id"] != first[0]["story_id"]
+
+    # A same-day rerun must reuse today's own story row, not create a third.
+    rerun = tracker.track(
+        [_article(2, "Stabbing at Sydney mall", "Stabbing attack")],
+        today="2026-06-03",
+    )
+    assert rerun[0]["story_id"] == tracked[0]["story_id"]
+
+    conn = sqlite3.connect(db_path)
+    story_count = conn.execute(
+        "SELECT COUNT(*) FROM stories WHERE canonical_label = ?",
+        ("Stabbing attack",),
+    ).fetchone()[0]
+    conn.close()
+    assert story_count == 2
+
+
+def test_exact_label_reuse_allowed():
+    assert story_matching.exact_label_reuse_allowed("Border clash")
+    assert story_matching.exact_label_reuse_allowed("Paris stabbing attack")
+    assert not story_matching.exact_label_reuse_allowed("Stabbing attack")
+    assert not story_matching.exact_label_reuse_allowed("Protest violence")
