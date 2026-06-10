@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import re
 from datetime import date
@@ -211,6 +213,18 @@ def labels_can_refer_to_same_story(left, right):
     if not (is_generic_event_label(left) and is_generic_event_label(right)):
         return True
     return bool(distinctive_label_tokens(left) & distinctive_label_tokens(right))
+
+
+def exact_label_reuse_allowed(label: str) -> bool:
+    """Whether an identical canonical label alone may reuse a story row.
+
+    Generic incident labels ("Stabbing attack") recur across unrelated
+    real-world events, so exact-label equality is only trusted when the
+    label carries at least one distinctive token.
+    """
+    if not is_generic_event_label(label):
+        return True
+    return bool(distinctive_label_tokens(label))
 
 
 def compatible_label_clusters(labels):
@@ -520,6 +534,18 @@ def missing_decision(expected_case, model):
         "continuity_evidence": [],
         "reject_reason": "Verifier returned no decision for this candidate match.",
     }, expected_case, model)
+
+
+def rejected_candidate_story_ids(decisions: list[dict]) -> dict[str, set[int]]:
+    """Map each today label to the story ids the verifier rejected for it."""
+    rejected: dict[str, set[int]] = {}
+    for decision in decisions:
+        if decision.get("accepted") or not decision.get("candidate_story_id"):
+            continue
+        rejected.setdefault(decision["today_label"], set()).add(
+            decision["candidate_story_id"]
+        )
+    return rejected
 
 
 def verify_story_matches(label_map, recent_stories, story_groups, get_client, model, today=None):

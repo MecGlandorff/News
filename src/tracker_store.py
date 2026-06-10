@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import json
 import sqlite3
 from datetime import date, timedelta
 
-from src import observability
+from src import observability, story_matching
 from src.config import (
     DEFAULT_LOOKBACK_DAYS,
     STORY_MEMORY_BLOCKED_LABELS,
@@ -494,20 +496,36 @@ def save_observation_memory(db_path, memories):
         conn.close()
 
 
-def find_story_by_label(conn, canonical_label, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
+def find_story_by_label(
+    conn: sqlite3.Connection,
+    canonical_label: str,
+    today: str,
+    lookback_days: int = DEFAULT_LOOKBACK_DAYS,
+) -> int | None:
+    """Find a story to reuse for an exact canonical-label match.
+
+    Same-day rows are always reusable so reruns stay idempotent. Rows from
+    earlier days are only reused when the label is specific enough that
+    exact equality implies the same real-world event; generic incident
+    labels recur across unrelated events (ADR 0008).
+    """
     if is_blocked_memory_label(canonical_label):
         return None
     start = str(date.fromisoformat(str(today)) - timedelta(days=lookback_days))
     row = conn.execute("""
-        SELECT story_id
+        SELECT story_id, first_seen
         FROM stories
         WHERE canonical_label = ?
           AND last_seen >= ?
           AND first_seen <= ?
-        ORDER BY last_seen DESC
+        ORDER BY last_seen DESC, story_id DESC
         LIMIT 1
     """, (canonical_label, start, today)).fetchone()
-    return row["story_id"] if row else None
+    if row is None:
+        return None
+    if row["first_seen"] != str(today) and not story_matching.exact_label_reuse_allowed(canonical_label):
+        return None
+    return row["story_id"]
 
 
 def get_yesterday_stories(conn, today):

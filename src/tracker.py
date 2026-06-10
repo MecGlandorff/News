@@ -302,6 +302,7 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
             story_groups,
             today=today,
         )
+    rejected_story_ids = story_matching.rejected_candidate_story_ids(match_decisions)
     unmatched_labels = {
         label
         for label, canonical in label_map.items()
@@ -338,6 +339,11 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
 
                 if canonical == "NEW" or canonical not in recent_stories:
                     story_id = _find_story_by_label(conn, story_label, today, lookback_days)
+                    if story_id in rejected_story_ids.get(story_label, ()):
+                        # The verifier rejected this candidate as the same
+                        # event; exact-label reuse must not remake the merge
+                        # it just blocked (ADR 0008).
+                        story_id = None
                     if story_id:
                         conn.execute(
                             "UPDATE stories SET last_seen = ? WHERE story_id = ?",
