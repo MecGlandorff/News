@@ -1,8 +1,8 @@
 from collections import Counter
-from datetime import datetime, timezone
-from email.utils import parsedate_to_datetime
+from datetime import datetime
 from pathlib import Path
 
+from src.article_dates import parse_reported_at
 from src.rendering import newspaper_map
 from src.rendering.geo import infer_story_location
 from src.rendering.pdf_writer import PDFDocument as _PDFDocument
@@ -308,22 +308,12 @@ def _theme_summary(story):
 
 
 def _latest_reported_at(articles):
-    parsed = [_parse_reported_at(a.get("published_at")) for a in articles]
+    parsed = [parse_reported_at(a.get("published_at")) for a in articles]
     parsed = [value for value in parsed if value]
     if parsed:
         return max(parsed).strftime("%Y-%m-%d %H:%M UTC")
     values = [a.get("published_at") for a in articles if a.get("published_at")]
     return values[0] if values else "unknown time"
-
-
-def _parse_reported_at(value):
-    try:
-        parsed = parsedate_to_datetime(value)
-    except (TypeError, ValueError):
-        return None
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
 
 
 def _source_summary(story):

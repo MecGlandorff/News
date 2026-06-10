@@ -1,7 +1,7 @@
 import json
 from datetime import datetime, timezone
-from email.utils import parsedate_to_datetime
 
+from src.article_dates import parse_reported_at
 from src.llm import (
     create_cached_chat_completion,
     mark_schema_failure,
@@ -43,16 +43,6 @@ Rules:
 - Avoid filler phrases and generic endings.
 
 Return a JSON object with key "briefings": array of {canonical_label, status, confidence, source_agreement, dispute_flag, delta_summary, briefing, open_questions}."""
-
-
-def parse_reported_at(value):
-    try:
-        parsed = parsedate_to_datetime(value)
-    except (TypeError, ValueError):
-        return None
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
 
 
 def latest_reported_at(articles):
