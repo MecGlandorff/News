@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import hashlib
 import json
 import sqlite3
@@ -8,7 +10,7 @@ from types import SimpleNamespace
 DB_PATH = Path("data/stories.db")
 
 
-def _get_db():
+def _get_db() -> sqlite3.Connection:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -33,7 +35,7 @@ def _get_db():
     return conn
 
 
-def _canonical_json(value):
+def _canonical_json(value: object) -> str:
     return json.dumps(
         value,
         ensure_ascii=False,
@@ -43,7 +45,15 @@ def _canonical_json(value):
     )
 
 
-def cache_metadata(*, purpose, model, messages, prompt_version=None, response_format=None, kwargs=None):
+def cache_metadata(
+    *,
+    purpose: str,
+    model: str,
+    messages: list[dict],
+    prompt_version: str | None = None,
+    response_format: dict | None = None,
+    kwargs: dict | None = None,
+) -> dict[str, str]:
     request = {
         "purpose": purpose,
         "model": model,
@@ -62,7 +72,7 @@ def cache_metadata(*, purpose, model, messages, prompt_version=None, response_fo
     }
 
 
-def get_cached_response(metadata):
+def get_cached_response(metadata: dict[str, str]) -> str | None:
     conn = _get_db()
     try:
         row = conn.execute(
@@ -106,7 +116,7 @@ def get_cached_response(metadata):
         conn.close()
 
 
-def save_response(metadata, response_content):
+def save_response(metadata: dict[str, str], response_content: str) -> None:
     conn = _get_db()
     try:
         with conn:
@@ -134,7 +144,7 @@ def save_response(metadata, response_content):
         conn.close()
 
 
-def response_from_content(content):
+def response_from_content(content: str) -> SimpleNamespace:
     return SimpleNamespace(
         choices=[
             SimpleNamespace(

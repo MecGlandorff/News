@@ -15,3 +15,15 @@ files = ["src"]
 ignore_missing_imports = true
 disable_error_code = ["import-untyped"]
 warn_unused_configs = true
+
+# Typed-core ratchet (docs/coding-standard.md, Type Hints): modules listed
+# here reject untyped and partially typed defs. Annotate a module fully,
+# then add it. The list only grows.
+[[tool.mypy.overrides]]
+module = [
+    "src.config",
+    "src.pricing",
+    "src.llm_response_cache",
+]
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
