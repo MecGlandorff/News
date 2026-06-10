@@ -31,7 +31,7 @@ The current prototype is directionally strong, but several important parts are s
 - [x] Source metadata is modeled as a first-class table, and source identity is used before source-name fallback
 - [ ] Source agreement is now claim-backed in evidence mode for exact repeated claims, but still does not infer independent corroboration
 - [ ] Source-divergence notes exist for conservative numeric divergence in evidence mode; dates, statuses, and attributions are still not compared
-- [ ] Evaluation coverage is still early; claim-quality comparison is operational, while story, citation, temporal, and source-divergence evals are still planned
+- [ ] Evaluation coverage is still early; claim-quality and story-matching comparisons are operational, while citation, temporal, and source-divergence evals are still planned
 
 ## Priority order
 
@@ -186,7 +186,7 @@ The repo should be able to show that key AI behaviors are improving rather than 
 
 - [x] Add an `evals/` directory
 - [x] Add a small golden dataset for claim extraction
-- [ ] Add a story-clustering evaluation set
+- [x] Add a story-clustering evaluation set
 - [ ] Add a citation-support evaluation set
 - [ ] Add a temporal-diffing evaluation set
 - [x] Add metrics for evidence support rate

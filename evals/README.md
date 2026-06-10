@@ -124,3 +124,111 @@ Those cases cover:
 - identity background that should not gain unsupported roles
 - multi-development sentences that should be split into atomic claims
 - broad analysis theses that should not become event facts
+
+## Story Matching Eval
+
+Run:
+
+```bash
+python -m evals.run_story_match_eval
+```
+
+By default this reads:
+
+```text
+evals/datasets/story_match_cases.jsonl
+evals/datasets/arc_assignment_cases.jsonl
+```
+
+and writes a JSON report to:
+
+```text
+evals/reports/
+```
+
+Use `--no-write` when you only want the headline rates:
+
+```bash
+python -m evals.run_story_match_eval --no-write
+```
+
+This eval does not make OpenAI calls. It is a static reviewed replay: each case
+stores the observed pipeline decision and the reviewed expected decision. The
+case shape leaves room for later `replay_input` objects so a future live replay
+can rerun the verifier or arc-assignment prompt against the same reviewed cases.
+
+## What It Measures
+
+The story-match dataset scores cross-day same-story decisions:
+
+- false merge: observed accepted, reviewer expected new story
+- false split: observed rejected, reviewer expected same story
+- false-merge rate: false merges out of observed accepted matches
+- false-split rate: false splits out of expected matches
+
+The arc-assignment dataset scores broader story-arc attachments:
+
+- false arc: observed attached to an arc, reviewer expected `NEW_ARC`
+- missed arc: observed `NEW_ARC`, reviewer expected an existing arc
+- false-arc rate: false arcs out of observed arc attachments
+
+The first checked-in seed is intentionally small and failure-heavy. Use it as a
+regression baseline and review queue, not as a representative production rate.
+
+## Story Dataset Format
+
+Each JSONL row is one reviewed same-story case:
+
+```json
+{
+  "case_id": "example",
+  "case_type": "story_match",
+  "source": "story_match_decisions 2026-05-28",
+  "run_date": "2026-05-28",
+  "today_label": "Today label",
+  "candidate_label": "Candidate memory label",
+  "observed_decision": {
+    "accepted": true,
+    "relationship": "same_event",
+    "confidence": "high"
+  },
+  "expected_decision": {
+    "accepted": true,
+    "relationship": "same_event"
+  },
+  "review_note": "Why the expected label is correct."
+}
+```
+
+## Arc Dataset Format
+
+Each JSONL row is one reviewed arc-assignment case:
+
+```json
+{
+  "case_id": "example",
+  "case_type": "arc_assignment",
+  "source": "story_developments 2026-05-27",
+  "run_date": "2026-05-27",
+  "today_label": "Today label",
+  "candidate_arc_label": "Candidate arc label",
+  "observed_decision": {
+    "accepted": true,
+    "relationship": "same_arc",
+    "confidence": "high"
+  },
+  "expected_decision": {
+    "accepted": false,
+    "relationship": "new_arc"
+  },
+  "review_note": "Why this should or should not attach."
+}
+```
+
+## How To Read Results
+
+High false-merge or false-arc rates mean the system is corrupting story memory
+by attaching distinct events to the same story or arc. High false-split or
+missed-arc rates mean the system is losing continuity. For the current Phase 2
+seed, the false-arc failures matter most because Phase 3b must decide whether
+to fix or simplify the arc layer.
