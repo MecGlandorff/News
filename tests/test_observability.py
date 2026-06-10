@@ -1,4 +1,3 @@
-import json
 import sqlite3
 from types import SimpleNamespace
 
@@ -9,6 +8,7 @@ import src.classifier as classifier
 from src.classifier import classify_articles
 import src.observability as observability
 from src.llm import create_chat_completion, parse_json_object
+from fakes import FakeLLMClient, FakeUsage
 
 
 def _row(db_path, query, params=()):
@@ -543,33 +543,9 @@ def test_llm_call_records_usage_tokens(tmp_path, monkeypatch):
     run_id = observability.start_run(_run_args(), run_date="2026-05-07")
     observability.set_current_run_id(run_id)
 
-    class Message:
-        content = '{"ok": true}'
-
-    class Choice:
-        message = Message()
-
-    class Usage:
-        prompt_tokens = 11
-        completion_tokens = 5
-
-    class Response:
-        choices = [Choice()]
-        usage = Usage()
-
-    class Completions:
-        def create(self, **kwargs):
-            return Response()
-
-    class Chat:
-        completions = Completions()
-
-    class Client:
-        chat = Chat()
-
     try:
         response = create_chat_completion(
-            Client(),
+            FakeLLMClient({"ok": True}, usage=FakeUsage(prompt_tokens=11, completion_tokens=5)),
             model="test-model",
             messages=[{"role": "user", "content": "test"}],
             purpose="test",
@@ -597,28 +573,9 @@ def test_schema_failure_marks_call_and_run(tmp_path, monkeypatch):
     run_id = observability.start_run(_run_args(), run_date="2026-05-07")
     observability.set_current_run_id(run_id)
 
-    class Message:
-        content = "not json"
-
-    class Choice:
-        message = Message()
-
-    class Response:
-        choices = [Choice()]
-
-    class Completions:
-        def create(self, **kwargs):
-            return Response()
-
-    class Chat:
-        completions = Completions()
-
-    class Client:
-        chat = Chat()
-
     try:
         response = create_chat_completion(
-            Client(),
+            FakeLLMClient("not json"),
             model="test-model",
             messages=[{"role": "user", "content": "test"}],
             purpose="test",
@@ -642,20 +599,13 @@ def test_provider_error_is_visible_in_run_totals(tmp_path, monkeypatch):
     run_id = observability.start_run(_run_args(), run_date="2026-05-07")
     observability.set_current_run_id(run_id)
 
-    class Completions:
-        def create(self, **kwargs):
-            raise RuntimeError("provider down")
-
-    class Chat:
-        completions = Completions()
-
-    class Client:
-        chat = Chat()
+    def raise_provider_error(kwargs):
+        raise RuntimeError("provider down")
 
     try:
         with pytest.raises(RuntimeError, match="provider down"):
             create_chat_completion(
-                Client(),
+                FakeLLMClient(raise_provider_error),
                 model="test-model",
                 messages=[{"role": "user", "content": "test"}],
                 purpose="test",
@@ -677,35 +627,8 @@ def test_schema_failure_marks_the_failed_response_call(tmp_path, monkeypatch):
     run_id = observability.start_run(_run_args(), run_date="2026-05-07")
     observability.set_current_run_id(run_id)
 
-    class Message:
-        def __init__(self, content):
-            self.content = content
-
-    class Choice:
-        def __init__(self, content):
-            self.message = Message(content)
-
-    class Response:
-        def __init__(self, content):
-            self.choices = [Choice(content)]
-
-    class Completions:
-        def __init__(self):
-            self.responses = [Response("not json"), Response('{"ok": true}')]
-
-        def create(self, **kwargs):
-            return self.responses.pop(0)
-
-    class Chat:
-        def __init__(self):
-            self.completions = Completions()
-
-    class Client:
-        def __init__(self):
-            self.chat = Chat()
-
     try:
-        client = Client()
+        client = FakeLLMClient(["not json", {"ok": True}])
         first = create_chat_completion(
             client,
             model="test-model",
@@ -756,38 +679,14 @@ def test_classification_cache_hits_are_run_totals_not_llm_calls(tmp_path, monkey
     run_id = observability.start_run(_run_args(), run_date="2026-05-07")
     observability.set_current_run_id(run_id)
 
-    class Message:
-        content = json.dumps({
-            "results": [{
-                "id": "article-1",
-                "theme": "Economy",
-                "story_label": "Market Rally",
-                "importance": 4,
-            }]
-        })
-
-    class Choice:
-        message = Message()
-
-    class Response:
-        choices = [Choice()]
-
-    class Completions:
-        calls = 0
-
-        def create(self, **kwargs):
-            self.calls += 1
-            return Response()
-
-    class Chat:
-        def __init__(self):
-            self.completions = Completions()
-
-    class Client:
-        def __init__(self):
-            self.chat = Chat()
-
-    client = Client()
+    client = FakeLLMClient({
+        "results": [{
+            "id": "article-1",
+            "theme": "Economy",
+            "story_label": "Market Rally",
+            "importance": 4,
+        }]
+    })
     monkeypatch.setattr(classifier, "get_openai_client", lambda: client)
     article = {
         "id": "article-1",
@@ -809,6 +708,6 @@ def test_classification_cache_hits_are_run_totals_not_llm_calls(tmp_path, monkey
 
     run = _row(db_path, "SELECT llm_calls_count, llm_cache_hits FROM runs WHERE run_id = ?", (run_id,))
     calls = _row(db_path, "SELECT COUNT(*) AS count FROM llm_calls WHERE run_id = ?", (run_id,))
-    assert client.chat.completions.calls == 1
+    assert client.calls == 1
     assert run == {"llm_calls_count": 1, "llm_cache_hits": 1}
     assert calls == {"count": 1}

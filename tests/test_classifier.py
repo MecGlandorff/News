@@ -9,6 +9,7 @@ from src.classifier import classify_articles
 from src.env import load_dotenv_file
 import src.llm as llm
 from src.llm import require_openai_api_key, parse_json_object
+from fakes import FakeLLMClient
 
 
 def _article(article_id, title="Story title", description="Story description"):
@@ -66,31 +67,14 @@ def test_parse_json_object_rejects_non_object():
 def test_classify_articles_caches_model_results(tmp_path, monkeypatch):
     monkeypatch.setattr(article_cache, "DB_PATH", tmp_path / "stories.db")
 
-    class Message:
-        content = '{"results":[{"id":"article-1","theme":"Economy","story_label":"Market Rally","importance":4}]}'
-
-    class Choice:
-        message = Message()
-
-    class Response:
-        choices = [Choice()]
-
-    class Completions:
-        calls = 0
-
-        def create(self, **kwargs):
-            self.calls += 1
-            return Response()
-
-    class Chat:
-        def __init__(self):
-            self.completions = Completions()
-
-    class Client:
-        def __init__(self):
-            self.chat = Chat()
-
-    client = Client()
+    client = FakeLLMClient({
+        "results": [{
+            "id": "article-1",
+            "theme": "Economy",
+            "story_label": "Market Rally",
+            "importance": 4,
+        }]
+    })
     monkeypatch.setattr(classifier, "get_openai_client", lambda: client)
 
     article = {
@@ -107,7 +91,7 @@ def test_classify_articles_caches_model_results(tmp_path, monkeypatch):
     first = classify_articles([article])
     second = classify_articles([article])
 
-    assert client.chat.completions.calls == 1
+    assert client.calls == 1
     assert first == second
     assert second[0]["theme"] == "Economy"
     assert second[0]["story_label"] == "Market Rally"
@@ -118,60 +102,32 @@ def test_classify_articles_retries_omitted_article_ids(tmp_path, monkeypatch):
     monkeypatch.setattr(article_cache, "DB_PATH", tmp_path / "stories.db")
     captured = []
 
-    class Message:
-        def __init__(self, content):
-            self.content = content
-
-    class Choice:
-        def __init__(self, content):
-            self.message = Message(content)
-
-    class Response:
-        def __init__(self, payload):
-            self.choices = [Choice(json.dumps(payload))]
-
-    class Completions:
-        def __init__(self):
-            self.payloads = [
+    client = FakeLLMClient([
+        {
+            "results": [
                 {
-                    "results": [
-                        {
-                            "id": "article-1",
-                            "theme": "Economy",
-                            "story_label": "Market Rally",
-                            "importance": 4,
-                        },
-                        {
-                            "id": "article-2",
-                            "theme": "Other",
-                            "story_label": "Uncategorized",
-                            "importance": 1,
-                        },
-                    ]
+                    "id": "article-1",
+                    "theme": "Economy",
+                    "story_label": "Market Rally",
+                    "importance": 4,
                 },
                 {
-                    "results": [{
-                        "id": "article-2",
-                        "theme": "Tech",
-                        "story_label": "AI Earnings",
-                        "importance": 3,
-                    }]
+                    "id": "article-2",
+                    "theme": "Other",
+                    "story_label": "Uncategorized",
+                    "importance": 1,
                 },
             ]
-
-        def create(self, **kwargs):
-            captured.append(json.loads(kwargs["messages"][1]["content"]))
-            return Response(self.payloads.pop(0))
-
-    class Chat:
-        def __init__(self):
-            self.completions = Completions()
-
-    class Client:
-        def __init__(self):
-            self.chat = Chat()
-
-    client = Client()
+        },
+        {
+            "results": [{
+                "id": "article-2",
+                "theme": "Tech",
+                "story_label": "AI Earnings",
+                "importance": 3,
+            }]
+        },
+    ], capture=captured)
     monkeypatch.setattr(classifier, "get_openai_client", lambda: client)
 
     result = classify_articles([
@@ -180,7 +136,11 @@ def test_classify_articles_retries_omitted_article_ids(tmp_path, monkeypatch):
     ])
 
     assert [item["story_label"] for item in result] == ["Market Rally", "AI Earnings"]
-    assert [[item["id"] for item in batch] for batch in captured] == [
+    captured_batches = [
+        json.loads(call["messages"][1]["content"])
+        for call in captured
+    ]
+    assert [[item["id"] for item in batch] for batch in captured_batches] == [
         ["article-1", "article-2"],
         ["article-2"],
     ]
@@ -196,44 +156,17 @@ def test_classify_articles_retries_omitted_article_ids(tmp_path, monkeypatch):
 def test_classify_articles_fails_when_retry_still_omits_ids(tmp_path, monkeypatch):
     monkeypatch.setattr(article_cache, "DB_PATH", tmp_path / "stories.db")
 
-    class Message:
-        def __init__(self, content):
-            self.content = content
-
-    class Choice:
-        def __init__(self, content):
-            self.message = Message(content)
-
-    class Response:
-        def __init__(self, payload):
-            self.choices = [Choice(json.dumps(payload))]
-
-    class Completions:
-        def __init__(self):
-            self.payloads = [
-                {
-                    "results": [{
-                        "id": "article-1",
-                        "theme": "Economy",
-                        "story_label": "Market Rally",
-                        "importance": 4,
-                    }]
-                },
-                {"results": []},
-            ]
-
-        def create(self, **kwargs):
-            return Response(self.payloads.pop(0))
-
-    class Chat:
-        def __init__(self):
-            self.completions = Completions()
-
-    class Client:
-        def __init__(self):
-            self.chat = Chat()
-
-    client = Client()
+    client = FakeLLMClient([
+        {
+            "results": [{
+                "id": "article-1",
+                "theme": "Economy",
+                "story_label": "Market Rally",
+                "importance": 4,
+            }]
+        },
+        {"results": []},
+    ])
     monkeypatch.setattr(classifier, "get_openai_client", lambda: client)
 
     with pytest.raises(ValueError, match="Classifier omitted classifications"):
@@ -253,38 +186,20 @@ def test_classify_articles_fails_when_retry_still_omits_ids(tmp_path, monkeypatc
 def test_classify_articles_reclassifies_when_content_changes(tmp_path, monkeypatch):
     monkeypatch.setattr(article_cache, "DB_PATH", tmp_path / "stories.db")
 
-    class Completions:
-        def __init__(self):
-            self.calls = 0
+    counter = {"calls": 0}
 
-        def create(self, **kwargs):
-            self.calls += 1
-            label = f"Story {self.calls}"
+    def dynamic_payload(kwargs):
+        counter["calls"] += 1
+        return {
+            "results": [{
+                "id": "article-1",
+                "theme": "Economy",
+                "story_label": f"Story {counter['calls']}",
+                "importance": 3,
+            }]
+        }
 
-            class Message:
-                content = (
-                    '{"results":[{"id":"article-1","theme":"Economy",'
-                    f'"story_label":"{label}","importance":3}}]'
-                    '}'
-                )
-
-            class Choice:
-                message = Message()
-
-            class Response:
-                choices = [Choice()]
-
-            return Response()
-
-    class Chat:
-        def __init__(self):
-            self.completions = Completions()
-
-    class Client:
-        def __init__(self):
-            self.chat = Chat()
-
-    client = Client()
+    client = FakeLLMClient(dynamic_payload)
     monkeypatch.setattr(classifier, "get_openai_client", lambda: client)
 
     article = {
@@ -303,5 +218,5 @@ def test_classify_articles_reclassifies_when_content_changes(tmp_path, monkeypat
     classify_articles([article])
     result = classify_articles([changed])
 
-    assert client.chat.completions.calls == 2
+    assert client.calls == 2
     assert result[0]["story_label"] == "Story 2"
