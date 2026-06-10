@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import date
 from pathlib import Path
 from src.config import (
@@ -13,6 +14,7 @@ from src import observability, story_matching, tracker_store
 
 DB_PATH  = Path("data/stories.db")
 DATA_DIR = Path("data/daily")
+logger = logging.getLogger(__name__)
 
 CONSOLIDATE_PROMPT = story_matching.CONSOLIDATE_PROMPT
 MATCH_PROMPT = story_matching.MATCH_PROMPT
@@ -134,6 +136,7 @@ def _ensure_match_article_text(story_groups, labels):
                 else:
                     fetch_failures += 1
             except Exception:
+                # Network fetch failure falls back to existing RSS text and is counted.
                 article["text"] = article.get("text") or ""
                 fetch_failures += 1
     observability.increment_run_totals(
@@ -602,8 +605,10 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
         story_new_parent_arcs=new_parent_count,
         story_unmatched_new_stories=new_parent_count,
     )
-    print(
-        f"Tracked {len(parent_groups)} stories "
-        f"({new_arc_count} new arcs, {new_child_count} new arc attachments)"
+    logger.info(
+        "Tracked %s stories (%s new arcs, %s new arc attachments)",
+        len(parent_groups),
+        new_arc_count,
+        new_child_count,
     )
     return tracked

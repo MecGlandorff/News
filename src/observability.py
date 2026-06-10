@@ -199,7 +199,7 @@ def _git_sha():
             timeout=2,
             check=False,
         )
-    except Exception:
+    except (OSError, subprocess.SubprocessError):
         return None
     sha = result.stdout.strip()
     return sha or None

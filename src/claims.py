@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 import sqlite3
 import hashlib
@@ -16,6 +17,7 @@ from src.llm import (
 )
 
 DB_PATH = Path("data/stories.db")
+logger = logging.getLogger(__name__)
 
 CLAIMS_PROMPT_VERSION = "2026-05-13-v1"
 CLAIMS_VERIFIER_MODEL = CLAIMS_MODEL
@@ -320,8 +322,8 @@ def _verify_claim_with_llm(claim_text, evidence_span):
     if not was_cached or refreshed_bad_cache:
         try:
             save_cached_chat_completion(cache_metadata, response)
-        except Exception:
-            pass
+        except sqlite3.Error as exc:
+            logger.warning("Claim verifier cache save failed: %s", exc)
     return supported
 
 
@@ -584,7 +586,7 @@ def extract_and_save_claims(tracked):
             try:
                 claims_data = _call_llm(content)
             except Exception as exc:
-                print(f"  Claims extraction failed for {article_id}: {exc}", flush=True)
+                logger.warning("Claims extraction failed for %s: %s", article_id, exc)
                 failed += 1
                 continue
 
@@ -617,11 +619,10 @@ def extract_and_save_claims(tracked):
     finally:
         conn.close()
 
-    print(
+    logger.info(
         f"Claims: {extracted} extracted, {skipped} cached"
         + (f", {invalid} invalid" if invalid else "")
         + (f", {failed} failed" if failed else ""),
-        flush=True,
     )
     return {
         "articles_extracted": extracted,

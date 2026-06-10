@@ -46,7 +46,7 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
 }
 SKIP_TAGS = {"nav", "footer", "header", "aside", "script", "style", "noscript", "form"}
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 TRACKING_QUERY_PREFIXES = ("utm_",)
 TRACKING_QUERY_PARAMS = {"fbclid", "gclid", "mc_cid", "mc_eid"}
 _LAST_SCRAPE_STATS: dict[str, int] = {}
@@ -130,7 +130,7 @@ def _article_id(url):
 def _parse_published_at(value):
     try:
         parsed = parsedate_to_datetime(value)
-    except Exception:
+    except (TypeError, ValueError):
         return None
     if parsed is None:
         return None
@@ -201,14 +201,13 @@ def scrape_all(
     session = _session()
 
     for source_name, lang, rss_url in sources:
-        print(f"[{source_name}] fetching feed...", flush=True)
+        logger.info("[%s] fetching feed...", source_name)
         try:
             feed_items = _parse_rss(rss_url, session=session)
         except Exception as e:
             stats["feed_fetch_failures"] += 1
-            LOGGER.warning("Feed fetch failed for %s: %s", source_name, e)
-            LOGGER.debug("Feed fetch traceback for %s", source_name, exc_info=True)
-            print(f"  ERR feed: {e}", flush=True)
+            logger.warning("Feed fetch failed for %s: %s", source_name, e)
+            logger.debug("Feed fetch traceback for %s", source_name, exc_info=True)
             continue
 
         items = []
@@ -263,7 +262,7 @@ def scrape_all(
                         stats["article_text_fetch_failures"] += 1
                 except Exception as e:
                     stats["article_text_fetch_failures"] += 1
-                    LOGGER.warning("Article text extraction failed for %s: %s", item["url"], e)
+                    logger.warning("Article text extraction failed for %s: %s", item["url"], e)
             article_id = _article_id(item["url"])
             articles.append({
                 "id":           article_id,
@@ -275,30 +274,33 @@ def scrape_all(
                 "published_at": item["published_at"],
                 "text":         text,
             })
-            print(f"  [{article_id}] {item['title'][:70]}", flush=True)
+            logger.debug("  [%s] %s", article_id, item["title"][:70])
             time.sleep(DELAY)
 
     if target_date is not None:
-        print(f"Skipped {skipped_outside_date} feed items outside {target_date}", flush=True)
+        logger.info("Skipped %s feed items outside %s", skipped_outside_date, target_date)
         timestamp_skips = skipped_missing_timestamp + skipped_unparseable_timestamp
-        print(
+        logger.info(
             "Skipped "
-            f"{timestamp_skips} feed items without a usable timestamp "
-            f"({skipped_missing_timestamp} missing, {skipped_unparseable_timestamp} unparseable)",
-            flush=True,
+            "%s feed items without a usable timestamp "
+            "(%s missing, %s unparseable)",
+            timestamp_skips,
+            skipped_missing_timestamp,
+            skipped_unparseable_timestamp,
         )
         timestamp_includes = (
             stats["feed_items_missing_timestamp_included"]
             + stats["feed_items_unparseable_timestamp_included"]
         )
         if timestamp_includes:
-            print(
+            logger.info(
                 "Included "
-                f"{timestamp_includes} feed items without a usable timestamp "
+                "%s feed items without a usable timestamp "
                 "because --include-undated is enabled "
-                f"({stats['feed_items_missing_timestamp_included']} missing, "
-                f"{stats['feed_items_unparseable_timestamp_included']} unparseable)",
-                flush=True,
+                "(%s missing, %s unparseable)",
+                timestamp_includes,
+                stats["feed_items_missing_timestamp_included"],
+                stats["feed_items_unparseable_timestamp_included"],
             )
         if timestamp_skips_by_source:
             parts = []
@@ -309,7 +311,7 @@ def scrape_all(
                     f"({counts['missing_timestamp']} missing, "
                     f"{counts['unparseable_timestamp']} unparseable)"
                 )
-            print("Timestamp skips by source: " + "; ".join(parts), flush=True)
-    print(f"\nTotal: {len(articles)} articles", flush=True)
+            logger.info("Timestamp skips by source: %s", "; ".join(parts))
+    logger.info("Total: %s articles", len(articles))
     _LAST_SCRAPE_STATS = stats
     return articles

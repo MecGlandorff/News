@@ -17,7 +17,7 @@ TREND_ICON = {
 def _parse_date(date_str):
     try:
         parsed = parsedate_to_datetime(date_str)
-    except Exception:
+    except (TypeError, ValueError):
         return datetime.min.replace(tzinfo=timezone.utc)
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)

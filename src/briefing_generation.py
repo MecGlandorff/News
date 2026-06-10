@@ -48,7 +48,7 @@ Return a JSON object with key "briefings": array of {canonical_label, status, co
 def parse_reported_at(value):
     try:
         parsed = parsedate_to_datetime(value)
-    except Exception:
+    except (TypeError, ValueError):
         return None
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)

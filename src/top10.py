@@ -26,7 +26,7 @@ def _score(story):
 def _parse_reported_at(value):
     try:
         parsed = parsedate_to_datetime(value)
-    except Exception:
+    except (TypeError, ValueError):
         return None
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)

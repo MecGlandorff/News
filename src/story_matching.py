@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from datetime import date
 from email.utils import parsedate_to_datetime
@@ -142,6 +143,7 @@ ARC_ACCEPT_RELATIONSHIPS = set(ARC_ASSIGNMENT_ACCEPT_RELATIONSHIPS)
 ARC_RELATIONSHIPS = set(ARC_RELATIONSHIP_VALUES)
 ARC_CANDIDATES_PER_LABEL = 8
 ARC_ASSIGNMENT_CASES_PER_CALL = 12
+logger = logging.getLogger(__name__)
 
 
 def label_tokens(label):
@@ -177,18 +179,18 @@ def article_date(value):
         return ""
     try:
         return parsedate_to_datetime(text).date().isoformat()
-    except Exception:
+    except (TypeError, ValueError):
         pass
     try:
         return date.fromisoformat(text[:10]).isoformat()
-    except Exception:
+    except (TypeError, ValueError):
         return text
 
 
 def days_since(value, today, default_days):
     try:
         return (date.fromisoformat(str(today)) - date.fromisoformat(str(value))).days
-    except Exception:
+    except (TypeError, ValueError):
         return default_days + 1
 
 
@@ -303,7 +305,7 @@ def consolidate_today(story_groups, get_client, model):
         if label not in grouped_labels:
             consolidated[label].extend(articles)
 
-    print(f"  Consolidated {len(story_groups)} labels -> {len(consolidated)} stories", flush=True)
+    logger.info("  Consolidated %s labels -> %s stories", len(story_groups), len(consolidated))
     return consolidated
 
 

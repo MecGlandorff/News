@@ -1,3 +1,5 @@
+import logging
+
 from src import scraper
 
 
@@ -169,7 +171,7 @@ def test_scrape_all_filters_to_target_date(monkeypatch):
     assert [article["title"] for article in articles] == ["Today"]
 
 
-def test_scrape_all_can_include_undated_items_with_target_date(monkeypatch, capsys):
+def test_scrape_all_can_include_undated_items_with_target_date(monkeypatch, caplog):
     def fake_parse_rss(url, session=None):
         return [
             {
@@ -201,13 +203,14 @@ def test_scrape_all_can_include_undated_items_with_target_date(monkeypatch, caps
     monkeypatch.setattr(scraper, "_parse_rss", fake_parse_rss)
     monkeypatch.setattr(scraper.time, "sleep", lambda delay: None)
 
-    articles = scraper.scrape_all(
-        sources=[("Example", "en", "https://example.com/rss")],
-        target_date="2026-04-18",
-        include_undated=True,
-    )
+    with caplog.at_level(logging.INFO, logger="src.scraper"):
+        articles = scraper.scrape_all(
+            sources=[("Example", "en", "https://example.com/rss")],
+            target_date="2026-04-18",
+            include_undated=True,
+        )
 
-    output = capsys.readouterr().out
+    output = caplog.text
     stats = scraper.last_scrape_stats()
     assert [article["title"] for article in articles] == ["Today", "Missing", "Bad date"]
     assert stats["feed_items_outside_date_skipped"] == 1
@@ -218,7 +221,7 @@ def test_scrape_all_can_include_undated_items_with_target_date(monkeypatch, caps
     assert "Included 2 feed items without a usable timestamp because --include-undated is enabled" in output
 
 
-def test_scrape_all_reports_timestamp_skip_reasons(monkeypatch, capsys):
+def test_scrape_all_reports_timestamp_skip_reasons(monkeypatch, caplog):
     def fake_parse_rss(url, session=None):
         if url.endswith("/a"):
             return [
@@ -257,15 +260,16 @@ def test_scrape_all_reports_timestamp_skip_reasons(monkeypatch, capsys):
     monkeypatch.setattr(scraper, "_parse_rss", fake_parse_rss)
     monkeypatch.setattr(scraper.time, "sleep", lambda delay: None)
 
-    articles = scraper.scrape_all(
-        sources=[
-            ("Example A", "en", "https://example.com/a"),
-            ("Example B", "en", "https://example.com/b"),
-        ],
-        target_date="2026-04-18",
-    )
+    with caplog.at_level(logging.INFO, logger="src.scraper"):
+        articles = scraper.scrape_all(
+            sources=[
+                ("Example A", "en", "https://example.com/a"),
+                ("Example B", "en", "https://example.com/b"),
+            ],
+            target_date="2026-04-18",
+        )
 
-    output = capsys.readouterr().out
+    output = caplog.text
     assert [article["title"] for article in articles] == ["Today"]
     stats = scraper.last_scrape_stats()
     assert stats["feed_items_outside_date_skipped"] == 1
