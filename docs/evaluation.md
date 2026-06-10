@@ -33,6 +33,20 @@ For story-match verification, evaluate both the final match result and the store
 - reject reason quality
 - whether full article text changed the decision compared with RSS-only context
 
+Current harness:
+
+```bash
+python -m evals.run_story_match_eval
+```
+
+This is a static reviewed replay. It reads reviewed rows from
+`evals/datasets/story_match_cases.jsonl` and
+`evals/datasets/arc_assignment_cases.jsonl`, compares the observed pipeline
+decision with the reviewed expected decision, and reports false-merge,
+false-split, and false-arc rates. It does not call an LLM. The first seed is
+small and failure-heavy, so use it as a regression baseline and review queue,
+not as a representative production rate.
+
 ### 2. Claim extraction
 
 Question: did the system extract source-supported atomic claims?
@@ -125,6 +139,7 @@ Planned broader shape:
 evals/
   datasets/
     claim_prompt_regressions_2026-05-13.jsonl
+    arc_assignment_cases.jsonl
     golden_claims.jsonl
     article_pairs.jsonl
     story_match_cases.jsonl
@@ -141,9 +156,12 @@ Implemented first:
 ```text
 evals/
   datasets/
+    arc_assignment_cases.jsonl
     golden_claims.jsonl
+    story_match_cases.jsonl
   reports/
   run_claim_quality_eval.py
+  run_story_match_eval.py
   README.md
 ```
 
@@ -157,7 +175,8 @@ Keep datasets small at first. Ten high-quality examples per behavior are more us
 |---|---|
 | Article deduplication | precision / recall / F1 |
 | Story clustering | pairwise precision / recall / F1 |
-| Story-match verification | accepted / rejected accuracy, false-merge rate |
+| Story-match verification | accepted / rejected accuracy, false-merge rate, false-split rate |
+| Story-arc assignment | false-arc rate, missed-arc rate |
 | Claim extraction | validity / coverage / semantic match |
 | Citation accuracy | supported / unsupported / missing |
 | Temporal diffing | new-vs-repeated accuracy |

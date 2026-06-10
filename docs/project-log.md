@@ -9,6 +9,26 @@ source of truth for details.
 
 Entries are newest first.
 
+## 2026-06-10
+
+Changed:
+
+- Added a static reviewed story-matching eval for Phase 2 of the June roadmap.
+- Added seed datasets for cross-day story matches and broader arc assignments.
+- Recorded baseline seed rates for false merges, false splits, and false arcs.
+
+Why it matters:
+
+- Story matching and arc assignment now have an inspectable regression harness
+  before any prompt, model, or arc-gate changes.
+- The first seed makes known failures measurable without adding LLM cost.
+
+Links:
+
+- [June 2026 roadmap](june_roadmap.md)
+- [Evaluation harnesses](../evals/README.md)
+- [South China Sea false-arc issue](issues/2026-05-28-false-arc-south-china-sea.md)
+
 ## 2026-06-09
 
 Retrospective boundary:
