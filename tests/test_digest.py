@@ -8,6 +8,7 @@ import src.observability as observability
 import src.top10 as top10
 from src.claims import extract_and_save_claims
 from src.top10 import build_briefing_markdown, write_top10
+from fakes import FakeLLMClient
 
 
 def test_digest_handles_empty_articles():
@@ -154,35 +155,15 @@ def test_briefing_remembers_generated_story_summary(monkeypatch):
 
 
 def test_get_briefings_sends_previous_context(monkeypatch):
-    captured = {}
-
-    class Message:
-        content = (
-            '{"briefings":[{"canonical_label":"Example Story",'
-            '"delta_summary":"Today added a concrete deadline.",'
-            '"briefing":"Briefing text."}]}'
-        )
-
-    class Choice:
-        message = Message()
-
-    class Response:
-        choices = [Choice()]
-
-    class Completions:
-        def create(self, **kwargs):
-            captured["items"] = json.loads(kwargs["messages"][1]["content"])
-            return Response()
-
-    class Chat:
-        def __init__(self):
-            self.completions = Completions()
-
-    class Client:
-        def __init__(self):
-            self.chat = Chat()
-
-    monkeypatch.setattr(top10, "get_openai_client", lambda: Client())
+    captured = []
+    client = FakeLLMClient({
+        "briefings": [{
+            "canonical_label": "Example Story",
+            "delta_summary": "Today added a concrete deadline.",
+            "briefing": "Briefing text.",
+        }]
+    }, capture=captured)
+    monkeypatch.setattr(top10, "get_openai_client", lambda: client)
 
     result = top10._get_briefings([{
         "canonical_label": "Example Story",
@@ -210,8 +191,9 @@ def test_get_briefings_sends_previous_context(monkeypatch):
             "open_questions": [],
         }
     }
-    assert captured["items"][0]["previous_context"]["summary"] == "Earlier summary."
-    assert captured["items"][0]["previous_context"]["recent_articles"][0]["title"] == "Older title"
+    items = json.loads(captured[0]["messages"][1]["content"])
+    assert items[0]["previous_context"]["summary"] == "Earlier summary."
+    assert items[0]["previous_context"]["recent_articles"][0]["title"] == "Older title"
 
 
 def test_get_briefings_uses_exact_response_cache_inside_run(tmp_path, monkeypatch):
@@ -221,36 +203,13 @@ def test_get_briefings_uses_exact_response_cache_inside_run(tmp_path, monkeypatc
     run_id = observability.start_run({"today": "2026-05-04"}, run_date="2026-05-04")
     observability.set_current_run_id(run_id)
 
-    class Message:
-        content = (
-            '{"briefings":[{"canonical_label":"Example Story",'
-            '"delta_summary":"First detected today.",'
-            '"briefing":"Briefing text."}]}'
-        )
-
-    class Choice:
-        message = Message()
-
-    class Response:
-        choices = [Choice()]
-
-    class Completions:
-        def __init__(self):
-            self.calls = 0
-
-        def create(self, **kwargs):
-            self.calls += 1
-            return Response()
-
-    class Chat:
-        def __init__(self):
-            self.completions = Completions()
-
-    class Client:
-        def __init__(self):
-            self.chat = Chat()
-
-    client = Client()
+    client = FakeLLMClient({
+        "briefings": [{
+            "canonical_label": "Example Story",
+            "delta_summary": "First detected today.",
+            "briefing": "Briefing text.",
+        }]
+    })
     monkeypatch.setattr(top10, "get_openai_client", lambda: client)
     stories = [{
         "canonical_label": "Example Story",
@@ -274,7 +233,7 @@ def test_get_briefings_uses_exact_response_cache_inside_run(tmp_path, monkeypatc
 
     assert first == second
     assert first["Example Story"]["briefing"] == "Briefing text."
-    assert client.chat.completions.calls == 1
+    assert client.calls == 1
 
     conn = sqlite3.connect(db_path)
     try:
@@ -392,64 +351,28 @@ def test_get_briefings_sends_claims_when_evidence_enabled(tmp_path, monkeypatch)
     article["story_id"] = 42
     article["description"] = "Concrete supported claim."
 
-    class ClaimMessage:
-        content = json.dumps({
-            "claims": [{
-                "claim_text": "Example Story has a concrete supported claim.",
-                "claim_type": "fact",
-                "entities": ["Example Story"],
-                "evidence_span": "Concrete supported claim.",
-                "confidence": 0.9,
-            }]
-        })
-
-    class ClaimChoice:
-        message = ClaimMessage()
-
-    class ClaimResponse:
-        choices = [ClaimChoice()]
-
-    class ClaimCompletions:
-        def create(self, **kwargs):
-            return ClaimResponse()
-
-    class ClaimChat:
-        completions = ClaimCompletions()
-
-    class ClaimClient:
-        chat = ClaimChat()
-
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: ClaimClient())
+    claim_client = FakeLLMClient({
+        "claims": [{
+            "claim_text": "Example Story has a concrete supported claim.",
+            "claim_type": "fact",
+            "entities": ["Example Story"],
+            "evidence_span": "Concrete supported claim.",
+            "confidence": 0.9,
+        }]
+    })
+    monkeypatch.setattr(claims_module, "get_openai_client", lambda: claim_client)
     monkeypatch.setattr(claims_module, "_verify_claim_with_llm", lambda c, s: True)
     extract_and_save_claims([article])
 
-    captured = {}
-
-    class BriefingMessage:
-        content = (
-            '{"briefings":[{"canonical_label":"Example Story",'
-            '"delta_summary":"First detected today.",'
-            '"briefing":"Briefing text."}]}'
-        )
-
-    class BriefingChoice:
-        message = BriefingMessage()
-
-    class BriefingResponse:
-        choices = [BriefingChoice()]
-
-    class BriefingCompletions:
-        def create(self, **kwargs):
-            captured["items"] = json.loads(kwargs["messages"][1]["content"])
-            return BriefingResponse()
-
-    class BriefingChat:
-        completions = BriefingCompletions()
-
-    class BriefingClient:
-        chat = BriefingChat()
-
-    monkeypatch.setattr(top10, "get_openai_client", lambda: BriefingClient())
+    captured = []
+    briefing_client = FakeLLMClient({
+        "briefings": [{
+            "canonical_label": "Example Story",
+            "delta_summary": "First detected today.",
+            "briefing": "Briefing text.",
+        }]
+    }, capture=captured)
+    monkeypatch.setattr(top10, "get_openai_client", lambda: briefing_client)
 
     top10._get_briefings([{
         "canonical_label": "Example Story",
@@ -457,8 +380,9 @@ def test_get_briefings_sends_claims_when_evidence_enabled(tmp_path, monkeypatch)
         "articles": [article],
     }], include_evidence=True)
 
-    assert captured["items"][0]["claims"][0]["claim_text"] == "Example Story has a concrete supported claim."
-    assert captured["items"][0]["claims"][0]["evidence_span"] == "Concrete supported claim."
+    items = json.loads(captured[0]["messages"][1]["content"])
+    assert items[0]["claims"][0]["claim_text"] == "Example Story has a concrete supported claim."
+    assert items[0]["claims"][0]["evidence_span"] == "Concrete supported claim."
 
 
 def test_get_briefings_uses_claim_backed_source_agreement(monkeypatch):
@@ -482,34 +406,16 @@ def test_get_briefings_uses_claim_backed_source_agreement(monkeypatch):
             },
         ],
     )
-    captured = {}
-
-    class BriefingMessage:
-        content = (
-            '{"briefings":[{"canonical_label":"Example Story",'
-            '"delta_summary":"First detected today.",'
-            '"briefing":"Briefing text.",'
-            '"source_agreement":"broad"}]}'
-        )
-
-    class BriefingChoice:
-        message = BriefingMessage()
-
-    class BriefingResponse:
-        choices = [BriefingChoice()]
-
-    class BriefingCompletions:
-        def create(self, **kwargs):
-            captured["items"] = json.loads(kwargs["messages"][1]["content"])
-            return BriefingResponse()
-
-    class BriefingChat:
-        completions = BriefingCompletions()
-
-    class BriefingClient:
-        chat = BriefingChat()
-
-    monkeypatch.setattr(top10, "get_openai_client", lambda: BriefingClient())
+    captured = []
+    briefing_client = FakeLLMClient({
+        "briefings": [{
+            "canonical_label": "Example Story",
+            "delta_summary": "First detected today.",
+            "briefing": "Briefing text.",
+            "source_agreement": "broad",
+        }]
+    }, capture=captured)
+    monkeypatch.setattr(top10, "get_openai_client", lambda: briefing_client)
 
     first = _briefing_article(1, "Economy", "Example Story", 4, source="Source A")
     first["source_id"] = 101
@@ -522,7 +428,7 @@ def test_get_briefings_uses_claim_backed_source_agreement(monkeypatch):
         "articles": [first, second],
     }], include_evidence=True)
 
-    item = captured["items"][0]
+    item = json.loads(captured[0]["messages"][1]["content"])[0]
     assert item["claims"][0]["source_id"] == 101
     assert item["claims"][1]["source_id"] == 202
     assert item["claim_source_agreement"]["label"] == "partial"
@@ -551,35 +457,17 @@ def test_get_briefings_forces_possible_conflict_for_claim_number_divergence(monk
             },
         ],
     )
-    captured = {}
-
-    class BriefingMessage:
-        content = (
-            '{"briefings":[{"canonical_label":"Example Story",'
-            '"delta_summary":"First detected today.",'
-            '"briefing":"Briefing text.",'
-            '"source_agreement":"single-source",'
-            '"dispute_flag":"none"}]}'
-        )
-
-    class BriefingChoice:
-        message = BriefingMessage()
-
-    class BriefingResponse:
-        choices = [BriefingChoice()]
-
-    class BriefingCompletions:
-        def create(self, **kwargs):
-            captured["items"] = json.loads(kwargs["messages"][1]["content"])
-            return BriefingResponse()
-
-    class BriefingChat:
-        completions = BriefingCompletions()
-
-    class BriefingClient:
-        chat = BriefingChat()
-
-    monkeypatch.setattr(top10, "get_openai_client", lambda: BriefingClient())
+    captured = []
+    briefing_client = FakeLLMClient({
+        "briefings": [{
+            "canonical_label": "Example Story",
+            "delta_summary": "First detected today.",
+            "briefing": "Briefing text.",
+            "source_agreement": "single-source",
+            "dispute_flag": "none",
+        }]
+    }, capture=captured)
+    monkeypatch.setattr(top10, "get_openai_client", lambda: briefing_client)
 
     first = _briefing_article(1, "Other", "Example Story", 4, source="Source A")
     first["source_id"] = 101
@@ -592,7 +480,8 @@ def test_get_briefings_forces_possible_conflict_for_claim_number_divergence(monk
         "articles": [first, second],
     }], include_evidence=True)
 
-    assert captured["items"][0]["claim_source_agreement"]["source_divergence_notes"]
+    items = json.loads(captured[0]["messages"][1]["content"])
+    assert items[0]["claim_source_agreement"]["source_divergence_notes"]
     assert result["Example Story"]["source_agreement"] == "mixed"
     assert result["Example Story"]["dispute_flag"] == "possible conflict"
 

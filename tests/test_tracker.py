@@ -6,6 +6,7 @@ import src.observability as observability
 import src.story_matching as story_matching
 import src.tracker as tracker
 import src.sources as sources_module
+from fakes import FakeLLMClient
 
 
 def _article(article_id, title, story_label="Test Story"):
@@ -25,59 +26,11 @@ def _article(article_id, title, story_label="Test Story"):
 
 
 def _fake_tracker_client(payload):
-    class Message:
-        content = json.dumps(payload)
-
-    class Choice:
-        message = Message()
-
-    class Response:
-        choices = [Choice()]
-
-    class Completions:
-        def create(self, **kwargs):
-            return Response()
-
-    class Chat:
-        completions = Completions()
-
-    class Client:
-        chat = Chat()
-
-    return Client()
+    return FakeLLMClient(payload)
 
 
 def _fake_tracker_client_sequence(payloads, captured=None):
-    class Message:
-        def __init__(self, content):
-            self.content = content
-
-    class Choice:
-        def __init__(self, content):
-            self.message = Message(content)
-
-    class Response:
-        def __init__(self, payload):
-            self.choices = [Choice(json.dumps(payload))]
-
-    class Completions:
-        def __init__(self):
-            self.payloads = list(payloads)
-
-        def create(self, **kwargs):
-            if captured is not None:
-                captured.append(kwargs)
-            return Response(self.payloads.pop(0))
-
-    class Chat:
-        def __init__(self):
-            self.completions = Completions()
-
-    class Client:
-        def __init__(self):
-            self.chat = Chat()
-
-    return Client()
+    return FakeLLMClient(payloads, capture=captured)
 
 
 def test_track_is_idempotent_for_same_day(tmp_path, monkeypatch):
@@ -1019,35 +972,14 @@ def test_match_labels_allows_ongoing_story_rewording(monkeypatch):
 
 
 def test_match_labels_sends_per_label_candidate_memory(monkeypatch):
-    captured = {}
-
-    class Message:
-        content = json.dumps({
-            "matches": [{
-                "today_label": "Iran Peace Proposal",
-                "canonical_label": "Iran Nuclear Talks",
-            }]
-        })
-
-    class Choice:
-        message = Message()
-
-    class Response:
-        choices = [Choice()]
-
-    class Completions:
-        def create(self, **kwargs):
-            captured["model"] = kwargs["model"]
-            captured["payload"] = json.loads(kwargs["messages"][1]["content"])
-            return Response()
-
-    class Chat:
-        completions = Completions()
-
-    class Client:
-        chat = Chat()
-
-    monkeypatch.setattr(tracker, "get_openai_client", lambda: Client())
+    captured = []
+    client = FakeLLMClient({
+        "matches": [{
+            "today_label": "Iran Peace Proposal",
+            "canonical_label": "Iran Nuclear Talks",
+        }]
+    }, capture=captured)
+    monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
 
     tracker._match_labels(
         {"Iran Peace Proposal"},
@@ -1067,8 +999,9 @@ def test_match_labels_sends_per_label_candidate_memory(monkeypatch):
         },
     )
 
-    assert captured["model"] == "gpt-5.4-mini"
-    match_case = captured["payload"]["match_cases"][0]
+    assert captured[0]["model"] == "gpt-5.4-mini"
+    payload = json.loads(captured[0]["messages"][1]["content"])
+    match_case = payload["match_cases"][0]
     assert match_case["today_label"] == "Iran Peace Proposal"
     recent = match_case["candidates"][0]
     assert recent["canonical_label"] == "Iran Nuclear Talks"
@@ -1081,40 +1014,22 @@ def test_match_labels_batches_crossday_cases(monkeypatch):
     monkeypatch.setattr(tracker.story_matching, "MATCH_CASES_PER_CALL", 2)
     captured_batches = []
 
-    class Message:
-        def __init__(self, content):
-            self.content = content
+    def batch_response(kwargs):
+        payload = json.loads(kwargs["messages"][1]["content"])
+        batch = payload["match_cases"]
+        captured_batches.append([case["today_label"] for case in batch])
+        return {
+            "matches": [
+                {
+                    "today_label": case["today_label"],
+                    "canonical_label": case["candidates"][0]["canonical_label"],
+                }
+                for case in batch
+            ]
+        }
 
-    class Choice:
-        def __init__(self, content):
-            self.message = Message(content)
-
-    class Response:
-        def __init__(self, payload):
-            self.choices = [Choice(json.dumps(payload))]
-
-    class Completions:
-        def create(self, **kwargs):
-            payload = json.loads(kwargs["messages"][1]["content"])
-            batch = payload["match_cases"]
-            captured_batches.append([case["today_label"] for case in batch])
-            return Response({
-                "matches": [
-                    {
-                        "today_label": case["today_label"],
-                        "canonical_label": case["candidates"][0]["canonical_label"],
-                    }
-                    for case in batch
-                ]
-            })
-
-    class Chat:
-        completions = Completions()
-
-    class Client:
-        chat = Chat()
-
-    monkeypatch.setattr(tracker, "get_openai_client", lambda: Client())
+    client = FakeLLMClient(batch_response)
+    monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
     labels = {
         "Alpha Event",
         "Bravo Event",
@@ -1149,37 +1064,12 @@ def test_match_labels_uses_exact_response_cache_inside_run(tmp_path, monkeypatch
     run_id = observability.start_run({"today": "2026-05-04"}, run_date="2026-05-04")
     observability.set_current_run_id(run_id)
 
-    class Message:
-        content = json.dumps({
-            "matches": [{
-                "today_label": "Iran Peace Proposal",
-                "canonical_label": "Iran Nuclear Talks",
-            }]
-        })
-
-    class Choice:
-        message = Message()
-
-    class Response:
-        choices = [Choice()]
-
-    class Completions:
-        def __init__(self):
-            self.calls = 0
-
-        def create(self, **kwargs):
-            self.calls += 1
-            return Response()
-
-    class Chat:
-        def __init__(self):
-            self.completions = Completions()
-
-    class Client:
-        def __init__(self):
-            self.chat = Chat()
-
-    client = Client()
+    client = FakeLLMClient({
+        "matches": [{
+            "today_label": "Iran Peace Proposal",
+            "canonical_label": "Iran Nuclear Talks",
+        }]
+    })
     monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
     recent = {
         "Iran Nuclear Talks": {
@@ -1203,7 +1093,7 @@ def test_match_labels_uses_exact_response_cache_inside_run(tmp_path, monkeypatch
         observability.clear_current_run_id()
 
     assert first == second == {"Iran Peace Proposal": "Iran Nuclear Talks"}
-    assert client.chat.completions.calls == 1
+    assert client.calls == 1
 
     conn = sqlite3.connect(db_path)
     try:

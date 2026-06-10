@@ -3,6 +3,7 @@ import sqlite3
 
 import src.claims as claims_module
 from src.claims import extract_and_save_claims, get_claims_for_story
+from fakes import FakeLLMClient
 
 
 ARTICLE = {
@@ -36,31 +37,7 @@ CLAIM_RESPONSE = {
 
 
 def _fake_client(response_content):
-    class Message:
-        content = json.dumps(response_content)
-
-    class Choice:
-        message = Message()
-
-    class Response:
-        choices = [Choice()]
-
-    class Completions:
-        calls = 0
-
-        def create(self, **kwargs):
-            self.calls += 1
-            return Response()
-
-    class Chat:
-        def __init__(self):
-            self.completions = Completions()
-
-    class Client:
-        def __init__(self):
-            self.chat = Chat()
-
-    return Client()
+    return FakeLLMClient(response_content)
 
 
 def _fake_response(response_content):
@@ -89,7 +66,7 @@ def test_extract_saves_claims_and_caches(tmp_path, monkeypatch):
 
     extract_and_save_claims([ARTICLE])
 
-    assert client.chat.completions.calls == 1
+    assert client.calls == 1
     saved = get_claims_for_story(42)
     assert len(saved) == 2
     assert saved[0]["claim_type"] == "number"
@@ -111,31 +88,9 @@ def test_extract_uses_full_article_text_and_nano_model(tmp_path, monkeypatch):
             }
         ]
     }
-    captured = {}
-
-    class Completions:
-        def create(self, **kwargs):
-            captured["model"] = kwargs["model"]
-            captured["user"] = kwargs["messages"][1]["content"]
-
-            class Message:
-                content = json.dumps(response)
-
-            class Choice:
-                message = Message()
-
-            class Response:
-                choices = [Choice()]
-
-            return Response()
-
-    class Chat:
-        completions = Completions()
-
-    class Client:
-        chat = Chat()
-
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: Client())
+    captured = []
+    client = FakeLLMClient(response, capture=captured)
+    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
 
     article = {
         **ARTICLE,
@@ -146,8 +101,8 @@ def test_extract_uses_full_article_text_and_nano_model(tmp_path, monkeypatch):
     extract_and_save_claims([article])
 
     saved = get_claims_for_story(42)
-    assert captured["model"] == "gpt-5.4-nano"
-    assert full_text in captured["user"]
+    assert captured[0]["model"] == "gpt-5.4-nano"
+    assert full_text in captured[0]["messages"][1]["content"]
     assert len(saved) == 1
     assert saved[0]["evidence_span"] == full_text
 
@@ -171,7 +126,7 @@ def test_extract_skips_already_cached(tmp_path, monkeypatch):
     extract_and_save_claims([ARTICLE])
     extract_and_save_claims([ARTICLE])  # second call — should hit cache
 
-    assert client.chat.completions.calls == 1
+    assert client.calls == 1
 
 
 def test_extract_caches_zero_claim_results(tmp_path, monkeypatch):
@@ -183,7 +138,7 @@ def test_extract_caches_zero_claim_results(tmp_path, monkeypatch):
     first = extract_and_save_claims([ARTICLE])
     second = extract_and_save_claims([ARTICLE])
 
-    assert client.chat.completions.calls == 1
+    assert client.calls == 1
     assert get_claims_for_story(42) == []
     assert first["zero_claim_results"] == 1
     assert second["cached"] == 1
@@ -258,7 +213,7 @@ def test_extract_does_not_cache_schema_failures(tmp_path, monkeypatch):
     extract_and_save_claims([ARTICLE])
     extract_and_save_claims([ARTICLE])
 
-    assert client.chat.completions.calls == 2
+    assert client.calls == 2
     assert get_claims_for_story(42) == []
 
 
@@ -306,7 +261,7 @@ def test_cached_claims_follow_story_reassignment(tmp_path, monkeypatch):
     extract_and_save_claims([ARTICLE])
     extract_and_save_claims([{**ARTICLE, "story_id": 84}])
 
-    assert client.chat.completions.calls == 1
+    assert client.calls == 1
     assert get_claims_for_story(42) == []
     assert len(get_claims_for_story(84)) == 2
 
@@ -319,17 +274,10 @@ def test_content_change_invalidates_stale_claims_before_retry(tmp_path, monkeypa
     extract_and_save_claims([ARTICLE])
     assert len(get_claims_for_story(42)) == 2
 
-    class Completions:
-        def create(self, **kwargs):
-            raise RuntimeError("LLM down")
+    def raise_llm(kwargs):
+        raise RuntimeError("LLM down")
 
-    class Chat:
-        completions = Completions()
-
-    class Client:
-        chat = Chat()
-
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: Client())
+    monkeypatch.setattr(claims_module, "get_openai_client", lambda: FakeLLMClient(raise_llm))
     extract_and_save_claims([{**ARTICLE, "description": "Updated article text."}])
 
     assert get_claims_for_story(42) == []
@@ -338,20 +286,10 @@ def test_content_change_invalidates_stale_claims_before_retry(tmp_path, monkeypa
 def test_extract_handles_llm_failure_gracefully(tmp_path, monkeypatch):
     monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
 
-    def boom(**kwargs):
+    def boom(kwargs):
         raise RuntimeError("LLM down")
 
-    class Completions:
-        def create(self, **kwargs):
-            boom()
-
-    class Chat:
-        completions = Completions()
-
-    class Client:
-        chat = Chat()
-
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: Client())
+    monkeypatch.setattr(claims_module, "get_openai_client", lambda: FakeLLMClient(boom))
 
     # Should not raise — failure is logged and skipped
     extract_and_save_claims([ARTICLE])
@@ -708,30 +646,9 @@ def test_cheap_accept_counter_increments_for_entity_overlap(tmp_path, monkeypatc
 def test_extract_strips_html_from_description(tmp_path, monkeypatch):
     monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
 
-    captured_content = {}
-
-    class Completions:
-        def create(self, **kwargs):
-            captured_content["user"] = kwargs["messages"][1]["content"]
-
-            class Message:
-                content = json.dumps({"claims": []})
-
-            class Choice:
-                message = Message()
-
-            class Response:
-                choices = [Choice()]
-
-            return Response()
-
-    class Chat:
-        completions = Completions()
-
-    class Client:
-        chat = Chat()
-
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: Client())
+    captured_content = []
+    client = FakeLLMClient({"claims": []}, capture=captured_content)
+    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
 
     html_article = {
         **ARTICLE,
@@ -740,6 +657,7 @@ def test_extract_strips_html_from_description(tmp_path, monkeypatch):
     }
     extract_and_save_claims([html_article])
 
-    assert "<p>" not in captured_content["user"]
-    assert "<b>" not in captured_content["user"]
-    assert "Iran" in captured_content["user"]
+    user_content = captured_content[0]["messages"][1]["content"]
+    assert "<p>" not in user_content
+    assert "<b>" not in user_content
+    assert "Iran" in user_content
