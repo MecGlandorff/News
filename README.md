@@ -4,13 +4,13 @@
 
 Most AI news tools summarize the article in front of them. **News** builds a local, source-grounded memory of real-world events: what happened today, what changed since the previous run, which sources support it, and where uncertainty remains.
 
-It is a builder-grade prototype of an intelligence briefing system: RSS ingestion, structured LLM stages, SQLite event memory, evidence-span validation, story-match verification, run observability, Markdown briefings, and newspaper-style PDFs.
+It is a local-first intelligence briefing system with RSS ingestion, structured LLM stages, SQLite event memory, evidence-span validation, story-match verification, run observability, Markdown briefings, and newspaper-style PDFs.
 
 ```text
 Source -> Article -> Claim -> Story Arc -> Story Delta -> Briefing
 ```
 
-> **Status:** Active prototype. Story memory, full-text claim grounding, claim/span derivability gate (deterministic + cheap LLM verifier), source metadata, source-identity support, LLM observability, estimated run cost, exact LLM response caching, default-on full-text story-match verification, and a repeatable claim-quality eval harness are implemented. Evidence-mode claim-backed source agreement now has a conservative first pass for exact repeated claims and numeric divergence; reviewed paraphrase verifier cases and broader date/status/attribution divergence are still in progress.
+> **Status:** Active development. Story memory, full-text claim grounding, claim/span derivability gate (deterministic + cheap LLM verifier), source metadata, source-identity support, LLM observability, estimated run cost, exact LLM response caching, default-on full-text story-match verification, and a repeatable claim-quality eval harness are implemented. Evidence-mode claim-backed source agreement now has a conservative first pass for exact repeated claims and numeric divergence; reviewed paraphrase verifier cases and broader date/status/attribution divergence are still in progress.
 
 ## Why it is great! 
 
