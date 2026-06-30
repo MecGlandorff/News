@@ -9,6 +9,28 @@ source of truth for details.
 
 Entries are newest first.
 
+## 2026-06-30
+
+Changed:
+
+- Added shared number normalization for claim derivability and evidence-mode
+  source agreement.
+- Preserved decimal commas as decimals, so `1,5` no longer normalizes to `15`
+  while thousands-separated values such as `1,000` still match `1000`.
+
+Why it matters:
+
+- Numeric grounding is part of the trust layer. A comma-decimal claim must not be
+  accepted against integer evidence just because entity and word overlap are
+  strong.
+- Source-divergence notes now treat comma-decimal versus integer disagreements
+  as real numeric divergence instead of silently collapsing them.
+
+Links:
+
+- [Claim derivability ADR](adr/0013-claim-evidence-derivability.md)
+- [How it works: derivability gate](how-it-works.md)
+
 ## 2026-06-10
 
 Changed:

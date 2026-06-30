@@ -15,6 +15,7 @@ from src.llm import (
     parse_json_object,
     save_cached_chat_completion,
 )
+from src.number_normalization import normalized_number_tokens
 
 DB_PATH = Path("data/stories.db")
 logger = logging.getLogger(__name__)
@@ -164,7 +165,6 @@ def _evidence_in_content(evidence_span, content):
     return normalized_span in _normalize_for_span_match(content)
 
 
-_NUMBER_PATTERN = re.compile(r"\d+(?:[.,]\d+)*")
 _WORD_PATTERN = re.compile(r"[a-z0-9]+(?:'[a-z0-9]+)?")
 
 # English-only for now; move this to configuration before broadening multilingual derivability.
@@ -203,7 +203,7 @@ _DERIVABILITY_STOPWORDS = {
 
 
 def _number_tokens(text):
-    return {match.replace(",", "") for match in _NUMBER_PATTERN.findall(text or "")}
+    return normalized_number_tokens(text)
 
 
 def _word_tokens(text):
