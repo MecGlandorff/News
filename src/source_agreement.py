@@ -1,5 +1,7 @@
 import re
 
+from src.number_normalization import NUMBER_PATTERN, normalize_number_token
+
 
 CLAIM_STOPWORDS = {
     "a",
@@ -45,7 +47,7 @@ ATTRIBUTION_TOKENS = {
     "source",
     "sources",
 }
-NUMBER_RE = re.compile(r"\b\d+(?:[,.]\d+)*(?:\.\d+)?%?\b")
+NUMBER_RE = NUMBER_PATTERN
 TOKEN_RE = re.compile(r"[a-z0-9]+")
 
 
@@ -160,7 +162,7 @@ def _claim_numbers(claim):
 
 
 def _normalize_number(value):
-    return str(value).replace(",", "")
+    return normalize_number_token(value)
 
 
 def _claim_context_tokens(claim):

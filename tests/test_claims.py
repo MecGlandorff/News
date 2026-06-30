@@ -311,6 +311,22 @@ def test_derivability_check_rejects_when_claim_number_missing_from_span():
     assert decision == "reject"
 
 
+def test_number_tokens_preserve_decimal_comma():
+    assert claims_module._number_tokens("Inflation rose to 1,5 percent.") == {"1.5"}
+    assert claims_module._number_tokens("Inflation rose to 1,50 percent.") == {"1.5"}
+    assert claims_module._number_tokens("Inflation rose to 1.5 percent.") == {"1.5"}
+    assert claims_module._number_tokens("Officials counted 1,000 people.") == {"1000"}
+
+
+def test_derivability_check_rejects_decimal_comma_integer_mismatch():
+    decision = claims_module._derivability_check(
+        "Bank X said the rate rose to 1,5 percent.",
+        "Bank X said the rate rose to 15 percent.",
+        ["Bank X"],
+    )
+    assert decision == "reject"
+
+
 def test_derivability_check_accepts_entity_overlap_with_strong_lexical_support():
     decision = claims_module._derivability_check(
         "Iran proposed capping enrichment at 3.67%.",

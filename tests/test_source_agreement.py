@@ -139,6 +139,33 @@ def test_claim_source_agreement_normalizes_number_formatting():
     assert agreement["source_divergence_notes"] == []
 
 
+def test_claim_source_agreement_flags_decimal_comma_integer_divergence():
+    claims = [
+        {
+            "claim_text": "Central bank said inflation rose to 1,5 percent in May.",
+            "claim_type": "number",
+            "source_id": 1,
+            "source": "Source A",
+        },
+        {
+            "claim_text": "Central bank said inflation rose to 15 percent in May.",
+            "claim_type": "number",
+            "source_id": 2,
+            "source": "Source B",
+        },
+    ]
+
+    agreement = claim_source_agreement(claims)
+
+    assert agreement["label"] == "mixed"
+    assert agreement["basis"] == "claim-number-divergence"
+    assert agreement["source_divergence_notes"] == [{
+        "type": "number",
+        "numbers": [["1.5"], ["15"]],
+        "sources": ["Source A", "Source B"],
+    }]
+
+
 def test_claim_source_agreement_prefers_article_source_id():
     claims = [
         {

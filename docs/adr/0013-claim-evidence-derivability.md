@@ -16,7 +16,7 @@ The flagship pitch of this repo is *source-grounded event memory*. A claim that 
 
 Add a hybrid derivability gate between `claim_text` and `evidence_span` in `src/claims.py`:
 
-1. **Deterministic reject** — if any number in `claim_text` (integer, decimal, percentage, comma-separated number, normalized by stripping commas) does not appear in `evidence_span`, reject immediately. No verifier call.
+1. **Deterministic reject** — if any number in `claim_text` (integer, decimal, percentage, or thousands-separated value, with decimal commas preserved as decimals) does not appear in `evidence_span`, reject immediately. No verifier call.
 2. **Deterministic accept** — if `claim_text` (normalized) is contained in `evidence_span`, or if entity overlap is backed by enough non-entity lexical overlap, accept immediately.
 3. **LLM verifier** for the ambiguous middle — call `gpt-5.4-nano` with a small prompt that asks whether the span supports the claim and returns `{"supported": true | false, "reason": "..."}`. Weak entity-only or anaphoric spans are routed here instead of being accepted deterministically. The verifier uses its own prompt version `CLAIMS_VERIFIER_PROMPT_VERSION = "2026-05-14-v1"` and reuses the existing `llm_response_cache` table via the standard `create_cached_chat_completion` path.
 
