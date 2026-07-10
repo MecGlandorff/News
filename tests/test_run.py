@@ -270,12 +270,65 @@ def test_main_writes_run_artifact_markdown(tmp_path, monkeypatch):
 
     assert run.main() == []
 
-    artifact = observability.RUN_ARTIFACTS_DIR / "run_2026-04-28.md"
-    assert artifact.exists()
+    artifacts = list(observability.RUN_ARTIFACTS_DIR.glob("run_2026-04-28_*.md"))
+    assert len(artifacts) == 1
+    artifact = artifacts[0]
     markdown = artifact.read_text(encoding="utf-8")
     assert "# Run Report: 2026-04-28" in markdown
     assert "| Articles returned | 1 |" in markdown
     assert "| Stories touched | 1 |" in markdown
+
+
+def test_main_replay_is_network_free_and_uses_selected_date(tmp_path, monkeypatch):
+    real_db = tmp_path / "stories.db"
+    monkeypatch.setattr(tracker, "DB_PATH", real_db)
+    monkeypatch.setattr(observability, "DB_PATH", real_db)
+    monkeypatch.setattr(llm_response_cache, "DB_PATH", real_db)
+    monkeypatch.setattr(
+        run,
+        "parse_args",
+        lambda: _args(today=None, replay="2026-04-18"),
+    )
+    monkeypatch.setattr(
+        run,
+        "require_openai_api_key",
+        lambda: (_ for _ in ()).throw(AssertionError("replay must not require an API key")),
+    )
+    result = run.replay.ReplayResult(
+        start_date="2026-04-18",
+        end_date="2026-04-20",
+        dates_rebuilt=3,
+        occurrences_rebuilt=12,
+        stories_rebuilt=5,
+    )
+    seen = []
+    monkeypatch.setattr(
+        run.replay,
+        "rebuild_from_date",
+        lambda db_path, start_date: seen.append((db_path, start_date)) or result,
+    )
+
+    assert run.main() == [result]
+    assert seen == [(real_db, "2026-04-18")]
+    conn = sqlite3.connect(real_db)
+    try:
+        stories_touched = conn.execute(
+            "SELECT stories_touched FROM runs"
+        ).fetchone()[0]
+    finally:
+        conn.close()
+    assert stories_touched == 5
+
+
+def test_main_replay_rejects_db_off(monkeypatch):
+    monkeypatch.setattr(
+        run,
+        "parse_args",
+        lambda: _args(today=None, replay="2026-04-18", db_off=True),
+    )
+
+    with pytest.raises(ValueError, match="cannot use --db-off"):
+        run.main()
 
 
 def test_verify_story_matches_default_is_passed_to_tracker(tmp_path, monkeypatch):

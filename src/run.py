@@ -1,7 +1,7 @@
 import argparse
 from contextlib import contextmanager, nullcontext
-from datetime import date
 import logging
+import sqlite3
 import tempfile
 from pathlib import Path
 
@@ -9,6 +9,7 @@ import src.article_cache as article_cache
 import src.claims as claims
 import src.llm_response_cache as llm_response_cache
 import src.observability as observability
+import src.replay as replay
 import src.scraper as scraper
 import src.sources as sources
 from src.claims import extract_and_save_claims
@@ -19,6 +20,7 @@ from src.rendering.newspaper import write_newspaper_pdf
 from src.scraper import scrape_all
 from src.top10 import build_briefing_package, write_top10
 import src.tracker as tracker
+from src.article_dates import editorial_today
 from src.tracker import track
 
 logger = logging.getLogger(__name__)
@@ -62,6 +64,11 @@ def parse_args():
         help="Verify candidate story matches with full article text and gpt-5.4-nano before reusing story memory",
     )
     parser.add_argument("--pipeline-report", action="store_true", help="Print run totals, LLM calls, latency, token usage, and estimated cost")
+    parser.add_argument(
+        "--replay",
+        metavar="YYYY-MM-DD",
+        help="Rebuild derived tracking state from this date using stored snapshots only",
+    )
     parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
     return parser.parse_args()
 
@@ -167,7 +174,7 @@ def write_pipeline_outputs(args, tracked):
 
 
 def run_pipeline(args, run_date=None):
-    run_date = run_date or args.today or str(date.today())
+    run_date = run_date or args.today or str(editorial_today())
     seed_source_metadata()
     articles = scrape_articles(args, run_date)
     observability.update_run_totals(articles_returned=len(articles))
@@ -195,23 +202,53 @@ def run_pipeline(args, run_date=None):
         claim_verifier_calls=claim_stats.get("claim_verifier_calls", 0),
         claim_verifier_accepts=claim_stats.get("claim_verifier_accepts", 0),
         claim_verifier_rejects=claim_stats.get("claim_verifier_rejects", 0),
+        claim_content_truncations=claim_stats.get("content_truncations", 0),
     )
     return write_pipeline_outputs(args, tracked)
+
+
+def run_replay(start_date):
+    result = replay.rebuild_from_date(tracker.DB_PATH, start_date)
+    observability.update_run_totals(stories_touched=result.stories_rebuilt)
+    logger.info(
+        "Replay rebuilt %s occurrence(s) across %s day(s), %s through %s",
+        result.occurrences_rebuilt,
+        result.dates_rebuilt,
+        result.start_date,
+        result.end_date,
+    )
+    return result
 
 
 def main():
     args = parse_args()
     configure_logging(args.log_level)
-    require_openai_api_key()
+    replay_date = getattr(args, "replay", None)
+    if replay_date and args.today:
+        raise ValueError("--replay cannot be combined with --today/--date")
+    if replay_date and args.db_off:
+        raise ValueError("--replay requires the stored database and cannot use --db-off")
+    if not replay_date:
+        require_openai_api_key()
 
     db_context = temporary_database_paths() if args.db_off else nullcontext()
     with db_context:
-        run_date = args.today or str(date.today())
+        run_date = replay_date or args.today or str(editorial_today())
         run_id = observability.start_run(args, run_date=run_date)
         observability.set_current_run_id(run_id)
         try:
-            outputs = run_pipeline(args, run_date=run_date)
+            outputs = (
+                [run_replay(replay_date)]
+                if replay_date
+                else run_pipeline(args, run_date=run_date)
+            )
             observability.finish_run(run_id, status="ok")
+            try:
+                pruned = llm_response_cache.prune_cache()
+                if pruned:
+                    logger.info("Pruned %s expired or excess exact LLM cache entries", pruned)
+            except sqlite3.Error as exc:
+                logger.warning("Could not prune exact LLM response cache: %s", exc)
             observability.write_run_report_artifact(run_id)
             if getattr(args, "pipeline_report", False):
                 print(observability.pipeline_report(run_id))
