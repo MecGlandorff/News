@@ -191,3 +191,135 @@ def test_claim_source_agreement_prefers_article_source_id():
     assert agreement["label"] == "single-source"
     assert agreement["distinct_claim_source_count"] == 1
     assert agreement["repeated_claim_groups"] == []
+
+
+def test_historical_claims_do_not_strengthen_current_agreement():
+    claims = [
+        {
+            "claim_text": "The government approved the budget.",
+            "claim_type": "fact",
+            "source_id": 1,
+            "is_current": True,
+        },
+        {
+            "claim_text": "The government approved the budget.",
+            "claim_type": "fact",
+            "source_id": 2,
+            "is_current": False,
+            "evidence_role": "historical_context",
+        },
+    ]
+
+    agreement = claim_source_agreement(claims)
+
+    assert agreement["label"] == "single-source"
+    assert agreement["distinct_claim_source_count"] == 1
+    assert agreement["repeated_claim_groups"] == []
+
+
+def test_similar_claim_wording_is_multi_source_support_not_independence():
+    claims = [
+        {
+            "claim_text": "Government approved the emergency budget after a parliamentary vote.",
+            "claim_type": "fact",
+            "source_id": 1,
+        },
+        {
+            "claim_text": "After a parliamentary vote, the government approved the emergency budget.",
+            "claim_type": "fact",
+            "source_id": 2,
+        },
+    ]
+
+    agreement = claim_source_agreement(claims)
+
+    assert agreement["basis"] == "similar-claim-multi-source-support"
+    assert agreement["similar_claim_groups"][0]["distinct_source_count"] == 2
+    assert agreement["independent_corroboration_assessed"] is False
+
+
+def test_claim_source_agreement_flags_date_divergence():
+    claims = [
+        {
+            "claim_text": "The agency said the Brussels summit will begin on June 5, 2026.",
+            "claim_type": "fact",
+            "source_id": 1,
+            "source": "Source A",
+        },
+        {
+            "claim_text": "The agency said the Brussels summit will begin on June 6, 2026.",
+            "claim_type": "fact",
+            "source_id": 2,
+            "source": "Source B",
+        },
+    ]
+
+    agreement = claim_source_agreement(claims)
+
+    assert agreement["label"] == "mixed"
+    assert agreement["basis"] == "claim-date-divergence"
+    assert agreement["source_divergence_notes"][0]["type"] == "date"
+
+
+def test_claim_source_agreement_compares_dates_with_different_month_names():
+    claims = [
+        {
+            "claim_text": "The agency said the Brussels summit will begin on June 30, 2026.",
+            "claim_type": "fact",
+            "source_id": 1,
+        },
+        {
+            "claim_text": "The agency said the Brussels summit will begin on July 1, 2026.",
+            "claim_type": "fact",
+            "source_id": 2,
+        },
+    ]
+
+    agreement = claim_source_agreement(claims)
+
+    assert agreement["basis"] == "claim-date-divergence"
+
+
+def test_claim_source_agreement_flags_explicit_status_divergence():
+    claims = [
+        {
+            "claim_text": "The council approved the central river bridge construction permit.",
+            "claim_type": "fact",
+            "source_id": 1,
+            "source": "Source A",
+        },
+        {
+            "claim_text": "The council rejected the central river bridge construction permit.",
+            "claim_type": "fact",
+            "source_id": 2,
+            "source": "Source B",
+        },
+    ]
+
+    agreement = claim_source_agreement(claims)
+
+    assert agreement["basis"] == "claim-status-divergence"
+    assert agreement["source_divergence_notes"][0]["statuses"] == ["approved", "rejected"]
+
+
+def test_claim_source_agreement_flags_same_statement_with_different_attribution():
+    claims = [
+        {
+            "claim_text": "Minister Alice Brown said the border crossing will reopen after inspections.",
+            "claim_type": "quote",
+            "source_id": 1,
+            "source": "Source A",
+        },
+        {
+            "claim_text": "General Bob Stone said the border crossing will reopen after inspections.",
+            "claim_type": "quote",
+            "source_id": 2,
+            "source": "Source B",
+        },
+    ]
+
+    agreement = claim_source_agreement(claims)
+
+    assert agreement["basis"] == "claim-attribution-divergence"
+    note = agreement["source_divergence_notes"][0]
+    assert note["actors"] == ["general bob stone", "minister alice brown"]
