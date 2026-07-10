@@ -115,6 +115,58 @@ def test_seed_sources_migrates_older_nullable_schema(tmp_path, monkeypatch):
     assert row["bias_notes"] == ""
 
 
+def test_source_schema_migration_preserves_referencing_articles(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    monkeypatch.setattr(sources_module, "DB_PATH", db_path)
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.executescript("""
+            CREATE TABLE sources (
+                source_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                rss_url TEXT NOT NULL,
+                language TEXT NOT NULL,
+                type TEXT NOT NULL DEFAULT 'unknown',
+                reliability TEXT NOT NULL DEFAULT 'unknown',
+                bias_notes TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE TABLE articles (
+                id TEXT,
+                source_id INTEGER REFERENCES sources(source_id)
+            );
+            INSERT INTO sources (
+                source_id, name, rss_url, language, type, reliability
+            ) VALUES (
+                1, 'Example', 'https://example.com/old-rss', 'en',
+                'publication', 'unknown'
+            );
+            INSERT INTO articles (id, source_id) VALUES ('article-1', 1);
+        """)
+        conn.commit()
+    finally:
+        conn.close()
+
+    seed_sources([("Example", "en", "https://example.com/new-rss")])
+
+    conn = sqlite3.connect(db_path)
+    try:
+        article_source = conn.execute(
+            "SELECT source_id FROM articles WHERE id = 'article-1'"
+        ).fetchone()[0]
+        source_name = conn.execute(
+            "SELECT name FROM sources WHERE source_id = ?", (article_source,)
+        ).fetchone()[0]
+        violations = conn.execute("PRAGMA foreign_key_check").fetchall()
+    finally:
+        conn.close()
+
+    assert article_source == 1
+    assert source_name == "Example"
+    assert violations == []
+
+
 def test_sources_schema_requires_explicit_type_and_defaults_empty_bias_notes(tmp_path, monkeypatch):
     db_path = tmp_path / "stories.db"
     monkeypatch.setattr(sources_module, "DB_PATH", db_path)
