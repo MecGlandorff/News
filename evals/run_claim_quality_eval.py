@@ -133,15 +133,37 @@ def _matches_expected_claim(claim, expected_claim):
 
 
 def _matched_expected_ids(valid_claims, expected_claims):
-    matched = []
-    matching_claims = set()
-    for expected in expected_claims:
-        for index, claim in enumerate(valid_claims):
-            if _matches_expected_claim(claim, expected):
-                matched.append(expected["id"])
-                matching_claims.add(index)
-                break
-    return matched, len(matching_claims)
+    candidates = [
+        [
+            claim_index
+            for claim_index, claim in enumerate(valid_claims)
+            if _matches_expected_claim(claim, expected)
+        ]
+        for expected in expected_claims
+    ]
+    claim_matches = {}
+
+    def assign(expected_index, visited_claims):
+        for claim_index in candidates[expected_index]:
+            if claim_index in visited_claims:
+                continue
+            visited_claims.add(claim_index)
+            previous = claim_matches.get(claim_index)
+            if previous is None or assign(previous, visited_claims):
+                claim_matches[claim_index] = expected_index
+                return True
+        return False
+
+    for expected_index in range(len(expected_claims)):
+        assign(expected_index, set())
+
+    matched_indices = set(claim_matches.values())
+    matched = [
+        expected["id"]
+        for index, expected in enumerate(expected_claims)
+        if index in matched_indices
+    ]
+    return matched, len(claim_matches)
 
 
 def _review_claim(claim):
@@ -192,16 +214,42 @@ def evaluate_variant(case, variant, *, index=0, extractor=None, client=None):
             "available_coverage": _ratio(0, len(available_expected)),
             "evidence_valid_rate": None,
             "expected_match_rate": None,
+            "extractor_latency_ms": None,
+            "validation_latency_ms": None,
             "latency_ms": None,
+            "extractor_prompt_tokens": None,
+            "verifier_prompt_tokens": None,
             "prompt_tokens": None,
+            "extractor_completion_tokens": None,
+            "verifier_completion_tokens": None,
             "completion_tokens": None,
+            "extractor_cost_eur": None,
+            "verifier_cost_eur": None,
             "cost_eur": None,
+            "verifier_calls": 0,
+            "verifier_accepts": 0,
+            "verifier_rejects": 0,
             "valid_claims": [],
             "error": str(exc),
         }
 
     raw_claims = outcome.get("raw_claims") or []
-    valid_claims, invalid_count = claims.validate_claims_for_content(raw_claims, content)
+    validation_started = time.perf_counter()
+    with claims.collect_verifier_metrics() as verifier_metrics:
+        classified = claims._classify_claims(raw_claims, content)
+    validation_latency_ms = int((time.perf_counter() - validation_started) * 1000)
+    valid_claims = [validated for validated, _decision in classified if validated]
+    invalid_count = len(classified) - len(valid_claims)
+    verifier_calls = len(verifier_metrics)
+    verifier_prompt_tokens = _sum_metric(verifier_metrics, "prompt_tokens")
+    verifier_completion_tokens = _sum_metric(verifier_metrics, "completion_tokens")
+    verifier_cost_eur = None
+    if verifier_prompt_tokens is not None and verifier_completion_tokens is not None:
+        verifier_cost_eur = pricing.estimate_llm_cost_eur(
+            claims.CLAIMS_VERIFIER_MODEL,
+            verifier_prompt_tokens,
+            verifier_completion_tokens,
+        )
     matched_ids, matched_claim_count = _matched_expected_ids(valid_claims, expected_claims)
     matched_available_ids, _matched_available_claim_count = _matched_expected_ids(
         valid_claims,
@@ -222,12 +270,44 @@ def evaluate_variant(case, variant, *, index=0, extractor=None, client=None):
         "available_coverage": _ratio(len(matched_available_ids), len(available_expected)),
         "evidence_valid_rate": _ratio(len(valid_claims), len(raw_claims)),
         "expected_match_rate": _ratio(matched_claim_count, len(valid_claims)),
-        "latency_ms": outcome.get("latency_ms"),
-        "prompt_tokens": outcome.get("prompt_tokens"),
-        "completion_tokens": outcome.get("completion_tokens"),
-        "cost_eur": outcome.get("cost_eur"),
+        "extractor_latency_ms": outcome.get("latency_ms"),
+        "validation_latency_ms": validation_latency_ms,
+        "latency_ms": _optional_add(outcome.get("latency_ms"), validation_latency_ms),
+        "extractor_prompt_tokens": outcome.get("prompt_tokens"),
+        "verifier_prompt_tokens": verifier_prompt_tokens,
+        "prompt_tokens": _optional_add(outcome.get("prompt_tokens"), verifier_prompt_tokens),
+        "extractor_completion_tokens": outcome.get("completion_tokens"),
+        "verifier_completion_tokens": verifier_completion_tokens,
+        "completion_tokens": _optional_add(
+            outcome.get("completion_tokens"),
+            verifier_completion_tokens,
+        ),
+        "extractor_cost_eur": outcome.get("cost_eur"),
+        "verifier_cost_eur": verifier_cost_eur,
+        "cost_eur": _optional_add(outcome.get("cost_eur"), verifier_cost_eur),
+        "verifier_calls": verifier_calls,
+        "verifier_accepts": sum(1 for item in verifier_metrics if item["supported"]),
+        "verifier_rejects": sum(1 for item in verifier_metrics if not item["supported"]),
         "valid_claims": [_review_claim(claim) for claim in valid_claims],
     }
+
+
+def _sum_metric(metrics, key):
+    values = [
+        0 if item.get(key) is None and item.get("cache_hit") else item.get(key)
+        for item in metrics
+    ]
+    if not values:
+        return 0
+    if any(value is None for value in values):
+        return None
+    return sum(values)
+
+
+def _optional_add(left, right):
+    if left is None or right is None:
+        return None
+    return left + right
 
 
 def _sum_optional(results, key):
@@ -264,6 +344,9 @@ def _summarize_variant(results):
         "prompt_tokens": _sum_optional(results, "prompt_tokens"),
         "completion_tokens": _sum_optional(results, "completion_tokens"),
         "cost_eur": _sum_optional(results, "cost_eur"),
+        "verifier_calls": sum(result.get("verifier_calls", 0) for result in results),
+        "verifier_accepts": sum(result.get("verifier_accepts", 0) for result in results),
+        "verifier_rejects": sum(result.get("verifier_rejects", 0) for result in results),
     }
 
 

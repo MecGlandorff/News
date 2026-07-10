@@ -8,7 +8,7 @@ from src import story_matching
 from src.config import ARC_ASSIGNMENT_MODEL, STORY_MATCH_VERIFIER_MODEL
 
 
-MODE = "static_reviewed_replay"
+MODE = "executable_acceptance_gate_replay"
 DEFAULT_STORY_DATASET = Path(__file__).parent / "datasets" / "story_match_cases.jsonl"
 DEFAULT_ARC_DATASET = Path(__file__).parent / "datasets" / "arc_assignment_cases.jsonl"
 DEFAULT_REPORT_DIR = Path(__file__).parent / "reports"
@@ -142,7 +142,9 @@ def _arc_outcome(observed, expected):
 
 def evaluate_case(case, index=0):
     case_type = case["case_type"]
-    observed = case["observed_decision"]["accepted"]
+    historical_observed = case["observed_decision"]["accepted"]
+    replayed_decision = _replay_current_gate(case)
+    observed = replayed_decision["accepted"]
     expected = case["expected_decision"]["accepted"]
     if case_type == "story_match":
         candidate = case["candidate_label"]
@@ -151,7 +153,7 @@ def evaluate_case(case, index=0):
         candidate = case["candidate_arc_label"]
         outcome = _arc_outcome(observed, expected)
 
-    observed_decision = case["observed_decision"]
+    observed_decision = replayed_decision
     expected_decision = case["expected_decision"]
     return {
         "case_id": _case_id(case, index),
@@ -162,6 +164,7 @@ def evaluate_case(case, index=0):
         "today_label": case["today_label"],
         "candidate": candidate,
         "observed_accepted": observed,
+        "historical_observed_accepted": historical_observed,
         "expected_accepted": expected,
         "outcome": outcome,
         "observed_relationship": observed_decision.get("relationship", ""),
@@ -169,6 +172,59 @@ def evaluate_case(case, index=0):
         "expected_relationship": expected_decision.get("relationship", ""),
         "review_note": case.get("review_note", ""),
     }
+
+
+def _replay_current_gate(case):
+    observed = case["observed_decision"]
+    accepted = observed["accepted"]
+    relationship = observed.get("relationship") or "uncertain"
+    confidence = observed.get("confidence") or ("high" if accepted else "low")
+    evidence = ["Reviewed response replay."] if accepted else []
+    if case["case_type"] == "story_match":
+        expected_case = {
+            "today_label": case["today_label"],
+            "articles": [],
+            "candidate_story": {
+                "story_id": 1,
+                "canonical_label": case["candidate_label"],
+                "last_seen": case.get("run_date", ""),
+            },
+        }
+        raw = {
+            "today_label": case["today_label"],
+            "canonical_label": case["candidate_label"],
+            "same_event": accepted,
+            "relationship": relationship,
+            "confidence": confidence,
+            "continuity_evidence": evidence,
+            "reject_reason": observed.get("reject_reason", ""),
+        }
+        return story_matching.decision_from_model(
+            raw,
+            expected_case,
+            STORY_MATCH_VERIFIER_MODEL,
+        )
+
+    expected_case = {
+        "today_label": case["today_label"],
+        "candidate_arcs": [
+            {
+                "arc_id": 1,
+                "canonical_label": case["candidate_arc_label"],
+                "recent_stories": [{"story_id": 1}],
+            }
+        ],
+    }
+    raw = {
+        "today_label": case["today_label"],
+        "arc_id": 1 if accepted else "NEW_ARC",
+        "parent_story_id": None,
+        "relationship": relationship,
+        "confidence": confidence,
+        "continuity_evidence": evidence,
+        "reject_reason": observed.get("reject_reason", ""),
+    }
+    return story_matching.arc_assignment_from_model(raw, expected_case, ARC_ASSIGNMENT_MODEL)
 
 
 def _summarize_story(results):

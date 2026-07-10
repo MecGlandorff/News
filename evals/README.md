@@ -56,6 +56,9 @@ Each report records:
 - prompt and completion tokens when the API returns usage
 - estimated EUR cost when pricing is available
 - latency in milliseconds
+- verifier calls, accepts/rejects, validation latency, and verifier tokens/cost when usage is available
+
+Expected and extracted claims use maximum one-to-one matching, so one broad extracted claim cannot receive credit for several expected claims.
 
 The difference that matters most right now is:
 
@@ -110,9 +113,9 @@ Bad full-text impact looks like:
 
 The first dataset is intentionally small and fixture-style. It proves the harness and documents the scoring contract, but it is not yet enough to decide policy for all sources.
 
-The biggest open gap is **verifier accuracy**. The claim/evidence derivability gate (ADR 0013) routes paraphrase-style claims through a `gpt-5.4-nano` verifier. The harness covers extraction quality but does not yet measure how often the verifier accepts unsupported paraphrases or rejects faithful ones. Add reviewed paraphrase cases — claims where the deterministic gate cannot decide and the verifier's accept/reject is the only signal — before trusting the verifier for source-agreement or contradiction decisions.
+The biggest open gap is **real reviewed verifier accuracy**. The harness now executes the production validation path and records verifier work, but the checked-in dataset remains fixture-style. Add reviewed paraphrase cases where verifier accept/reject is the deciding signal before making the verifier or claim-backed agreement more authoritative.
 
-Next, also add 5-10 real reviewed cases from recent evidence runs, with full source text stored only where licensing and local use are acceptable. That should happen before broadening claim-backed source agreement beyond exact repeated claims, adding date/status/attribution divergence, or making evidence extraction more automatic.
+Next, add 5-10 real reviewed cases from recent evidence runs, storing source text only where licensing and local use are acceptable. Review the shipped similar-claim and date/status/attribution comparisons on those cases before loosening their deterministic matching or making evidence extraction more automatic.
 
 ## Prompt Regression Cases
 
@@ -152,10 +155,10 @@ Use `--no-write` when you only want the headline rates:
 python -m evals.run_story_match_eval --no-write
 ```
 
-This eval does not make OpenAI calls. It is a static reviewed replay: each case
-stores the observed pipeline decision and the reviewed expected decision. The
-case shape leaves room for later `replay_input` objects so a future live replay
-can rerun the verifier or arc-assignment prompt against the same reviewed cases.
+This eval does not make OpenAI calls. It replays each reviewed historical
+response through the current story-match or arc-assignment acceptance function,
+then compares that executable result with the reviewed expectation. It catches
+gate regressions, but it does not measure current live prompt/model quality.
 
 ## What It Measures
 
