@@ -9,6 +9,43 @@ source of truth for details.
 
 Entries are newest first.
 
+## 2026-07-11
+
+Changed:
+
+- Added append-only article occurrence snapshots, run-scoped assignment history,
+  and transactional `--replay YYYY-MM-DD` rebuilding from stored snapshots only.
+- Made editorial dates explicitly Europe/Brussels and separated current-day
+  evidence from a seven-day historical context window.
+- Tightened claim derivability, bounded high-volume model inputs, split cache-hit
+  observability by layer, bounded the exact-response cache, and added lifecycle
+  handling for abandoned runs.
+- Expanded conservative evidence-mode comparison to highly similar claims and
+  precise number, date, status, and attribution divergence without claiming
+  independent corroboration.
+- Added safer consolidation validation, global briefing deduplication, numeric
+  output grounding, executable acceptance-gate evals, compatibility indexes,
+  and an MIT license.
+- Kept the historical briefing, evaluation-report, presentation, and newspaper
+  artifacts tracked as the public project archive.
+
+Why it matters:
+
+- The pipeline can now reconstruct derived memory without network or model
+  calls while retaining immutable source snapshots.
+- Current conclusions cannot silently borrow agreement from older reporting,
+  and the trust/cost boundaries are both more explicit and measurable.
+- The repository remains a compact personal project: generated history is
+  preserved, while runtime state and transient reports stay local.
+
+Links:
+
+- [Explicit editorial timezone ADR](adr/0018-explicit-editorial-timezone.md)
+- [Occurrence-backed replay ADR](adr/0019-occurrence-backed-replay.md)
+- [Current versus historical evidence ADR](adr/0020-current-versus-historical-evidence.md)
+- [Database guide](database-guide.md)
+- [Evaluation guide](evaluation.md)
+
 ## 2026-06-30
 
 Changed:

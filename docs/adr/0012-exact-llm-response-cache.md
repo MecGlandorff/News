@@ -2,6 +2,8 @@
 
 **Date:** 2026-05-11
 
+**2026-07-11 follow-up:** Exact responses are eligible for reuse for 30 days, and successful runs prune the table to 1,000 entries. Run metrics now attribute cache hits to classification, claims, verifier, matching, briefing, or other layers.
+
 ## Status
 
 Accepted.
@@ -19,6 +21,8 @@ Add a durable SQLite `llm_response_cache` table for exact response reuse on:
 - same-day story consolidation
 - cross-day story matching
 - story-match verification
+- story-arc assignment
+- claim-derivability verification
 - briefing generation
 
 The cache key includes purpose, model, prompt version, messages, response format, and API kwargs. A response is saved only after the caller parses the JSON object and validates the expected top-level list. Cache hits increment `runs.llm_cache_hits` and do not insert fake `llm_calls` rows.
@@ -29,4 +33,4 @@ Reruns and retries with identical inputs can skip expensive model calls entirely
 
 This cache does not make stale or approximate matches. It is exact-result reuse only, so it improves cost without changing story-memory semantics.
 
-The cache currently operates during observed pipeline runs, where cache hits can be counted in run totals.
+The cache operates during observed pipeline runs. Expired entries are ignored on read and pruning runs after successful pipelines. Domain caches for classifications and claims remain separate.

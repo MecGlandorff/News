@@ -5,6 +5,8 @@
 
 2026-05-14 follow-up: the first implementation exists for conservative numeric divergence in evidence mode. It records lightweight comparison output in the briefing input and forces `mixed` / `possible conflict`; it does not add a `contradictions` table or confirmed-conflict prose.
 
+2026-07-11 follow-up: precise date, explicit status-opposite, and identical-statement/different-attribution comparisons now use the same lightweight note shape. Historical claims are context-only and cannot create current divergence by themselves.
+
 ---
 
 ## Context

@@ -5,6 +5,8 @@
 
 2026-05-14 follow-up: evidence-mode source agreement now has a deterministic first pass in `src/source_agreement.py`. Exact repeated non-background claims can back `partial` or `broad`, and comparable numeric divergence can force `mixed` / `possible conflict`. This does not change the source-support decision here: source identity is still not proof of independent corroboration.
 
+2026-07-11 follow-up: conservative similar-claim support and precise number/date/status/attribution divergence are implemented. The output explicitly records that independent corroboration was not assessed.
+
 ---
 
 ## Context
@@ -68,7 +70,7 @@ Add explicit model pricing in `src/config.py` and estimate EUR cost from rows in
 - EUR estimates can drift when model pricing or exchange rates change
 - The report is an estimate, not a billing ledger
 - Source support can still be inflated by syndication across distinct source IDs
-- Broader claim-backed agreement is still missing for dates, statuses, attributions, and independent-corroboration weighting
+- Independent-corroboration weighting is still missing; source identity remains support metadata, not proof of independence
 
 ---
 
@@ -78,6 +80,6 @@ Revisit this decision when:
 
 - OpenAI model pricing changes
 - provider-side cached-input token counts are recorded
-- broader claim-backed source agreement lands beyond exact repeated claims
-- source-divergence notes are backed by claim comparison beyond numeric claims
+- reviewed real cases justify changing the current conservative claim-comparison rules
+- source-divergence precision is measured well enough to broaden or narrow its patterns
 - source reliability or syndication metadata starts weighting agreement

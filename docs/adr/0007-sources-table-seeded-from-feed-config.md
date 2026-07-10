@@ -33,7 +33,9 @@ Defaults for new sources are `type='publication'`, `reliability='unknown'`, `bia
 
 2026-05-09 follow-up: ADR 0010 adds deterministic source support that consumes `articles.source_id` first and falls back to normalized source names for older rows.
 
-2026-05-14 follow-up: evidence-mode claim-backed source agreement now consumes these source identities for exact repeated claims and conservative numeric divergence. Broader reliability weighting and independent-corroboration logic remain future work.
+2026-05-14 follow-up: evidence-mode claim-backed source agreement now consumes these source identities.
+
+2026-07-11 follow-up: conservative similar-claim support and narrow number/date/status/attribution divergence are implemented. Reliability weighting and independent-corroboration logic remain future work.
 
 ---
 
