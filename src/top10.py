@@ -89,13 +89,13 @@ def _development_summary_line(story):
     return ""
 
 
-def _evidence_lines(story_id):
+def _evidence_lines(story_id, as_of_date=None):
     """Return formatted evidence lines for a story, or [] if none."""
     if story_id is None:
         return []
     from src.claims import get_claims_for_story
     claims = [
-        claim for claim in get_claims_for_story(story_id)
+        claim for claim in get_claims_for_story(story_id, as_of_date=as_of_date, history_days=7)
         if claim.get("evidence_span")
     ]
     if not claims:
@@ -110,7 +110,13 @@ def _evidence_lines(story_id):
             source_ref = f"[{source}]({url})"
         else:
             source_ref = source
-        lines.append(f'- `{c["claim_type"]}` — {source_ref} — "{span}" _({pct}%)_')
+        claim_date = str(c.get("editorial_date") or "")
+        history_label = ""
+        if as_of_date and claim_date and claim_date != as_of_date:
+            history_label = f" — historical context ({claim_date})"
+        lines.append(
+            f'- `{c["claim_type"]}`{history_label} — {source_ref} — "{span}" _({pct}%)_'
+        )
     return lines
 
 
@@ -356,7 +362,10 @@ def build_briefing_markdown(tracked, n=3, global_n=10, package=None, show_eviden
                 ]
             story_lines += _source_lines(s["articles"])
             if show_evidence:
-                story_lines += _evidence_lines(s.get("story_id"))
+                story_lines += _evidence_lines(
+                    s.get("story_id"),
+                    as_of_date=briefing_generation.story_editorial_date(s),
+                )
             story_lines.append("")
             lines += story_lines
 
