@@ -292,7 +292,7 @@ Validation is strict. A claim is dropped unless:
 
 Span containment is necessary but not sufficient: a model could pair any article sentence with any claim and pass substring validation. The derivability gate in `_derivability_check()` and `_classify_claim()` decides whether the span actually supports the claim. See [docs/adr/0013-claim-evidence-derivability.md](adr/0013-claim-evidence-derivability.md).
 
-1. **Deterministic reject** — drop missing quantities and explicit negation, direction, or common-unit conflicts. No LLM call.
+1. **Deterministic reject** — drop missing quantities, preserving decimal commas as decimals, and explicit negation, direction, or common-unit conflicts. No LLM call.
 2. **Deterministic accept** — accept only when normalized `claim_text` is contained in `evidence_span` ("cheap_accept").
 3. **LLM verifier** — route every other paraphrase, including entity overlap and anaphoric spans, through the cached `gpt-5.4-nano` verifier. Network, parse, malformed-schema, and uncertain results reject.
 

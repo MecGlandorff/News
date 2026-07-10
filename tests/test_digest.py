@@ -1,6 +1,7 @@
 import json
 import sqlite3
 
+import src.briefing_generation as briefing_generation
 import src.claims as claims_module
 from src.digest import build_themed_markdown
 import src.llm_response_cache as llm_response_cache
@@ -690,7 +691,7 @@ def test_local_dispute_flag_ignores_ordinary_denial_and_rejection_language():
         }],
     }
 
-    assert top10._local_dispute_flag(story) == "none"
+    assert briefing_generation.local_dispute_flag(story) == "none"
 
 
 def test_local_dispute_flag_requires_explicit_divergence_language():
@@ -702,7 +703,7 @@ def test_local_dispute_flag_requires_explicit_divergence_language():
         }],
     }
 
-    assert top10._local_dispute_flag(story) == "possible conflict"
+    assert briefing_generation.local_dispute_flag(story) == "possible conflict"
 
 
 def test_briefing_uses_editorial_sections_and_scraps_sports(monkeypatch):

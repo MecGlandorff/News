@@ -18,7 +18,7 @@ The flagship pitch of this repo is *source-grounded event memory*. A claim that 
 
 Add a conservative derivability gate between `claim_text` and `evidence_span` in `src/claims.py`:
 
-1. **Deterministic reject** — reject missing quantities and explicit negation, semantic-direction, or numeric-unit mismatches. No verifier call.
+1. **Deterministic reject** — reject missing quantities, preserving decimal commas as decimals, and explicit negation, semantic-direction, or numeric-unit mismatches. No verifier call.
 2. **Deterministic accept** — accept only when normalized `claim_text` is contained in `evidence_span`.
 3. **LLM verifier** — route every other paraphrase, including entity-overlap and anaphoric spans, to `gpt-5.4-nano`. The verifier returns `{"supported": true | false, "reason": "..."}` and uses the exact-response cache.
 

@@ -19,10 +19,6 @@ DISPUTE_FLAG_VALUES = briefing_generation.DISPUTE_FLAG_VALUES
 BRIEFING_PROMPT = briefing_generation.BRIEFING_PROMPT
 
 
-def _score(story):
-    return briefing_selection.score(story)
-
-
 def _format_reported_at(value):
     parsed = parse_reported_at(value)
     if parsed:
@@ -120,16 +116,8 @@ def _evidence_lines(story_id, as_of_date=None):
     return lines
 
 
-def _aggregate(tracked):
-    return briefing_selection.aggregate(tracked)
-
-
 def _theme_summary(story):
     return briefing_selection.theme_summary(story)
-
-
-def _choice(value, allowed, default):
-    return briefing_generation.choice(value, allowed, default)
 
 
 def _display_choice(value):
@@ -140,48 +128,12 @@ def _clean_open_questions(value):
     return briefing_generation.clean_open_questions(value)
 
 
-def _local_dispute_flag(story):
-    return briefing_generation.local_dispute_flag(story)
-
-
-def _default_status(story):
-    return briefing_generation.default_status(story)
-
-
-def _default_confidence(story):
-    return briefing_generation.default_confidence(story)
-
-
-def _default_source_agreement(story):
-    return briefing_generation.default_source_agreement(story)
-
-
 def _default_briefing_payload(story=None):
     return briefing_generation.default_briefing_payload(story)
 
 
 def _defaults_by_label(stories):
     return briefing_generation.defaults_by_label(stories)
-
-
-def _is_lead_candidate(story):
-    return briefing_selection.is_lead_candidate(story)
-
-
-def _has_low_interest_keywords(story):
-    return briefing_selection.has_low_interest_keywords(story)
-
-
-def _is_other_important(story):
-    return briefing_selection.is_other_important(story)
-
-
-def _section_candidates(stories, predicate, used_labels, limit):
-    return briefing_selection.section_candidates(stories, predicate, used_labels, limit)
-
-
-def _claims_for_prompt(story):
-    return briefing_generation.claims_for_prompt(story)
 
 
 def _get_briefings(stories, include_evidence=False):
@@ -199,10 +151,6 @@ def _normalize_briefing_payloads(payloads, defaults_by_label=None):
 
 def _merge_briefing_payloads(existing, updates, defaults_by_label=None):
     return briefing_generation.merge_briefing_payloads(existing, updates, defaults_by_label)
-
-
-def _payload_briefing(payloads, label):
-    return briefing_generation.payload_briefing(payloads, label)
 
 
 def _fallback_delta_summary(story):
