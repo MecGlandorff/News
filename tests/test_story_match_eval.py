@@ -98,7 +98,7 @@ def test_story_match_eval_writes_report(tmp_path):
 
     assert output_path.exists()
     loaded = json.loads(output_path.read_text(encoding="utf-8"))
-    assert loaded["mode"] == "static_reviewed_replay"
+    assert loaded["mode"] == "executable_acceptance_gate_replay"
     assert loaded["summary"]["story_match"]["cases"] == 1
 
 

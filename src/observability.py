@@ -28,6 +28,12 @@ RUN_TOTAL_COLUMNS = {
     "claims_saved",
     "stories_touched",
     "llm_cache_hits",
+    "classification_cache_hits",
+    "claim_cache_hits",
+    "verifier_cache_hits",
+    "matching_cache_hits",
+    "briefing_cache_hits",
+    "other_cache_hits",
     "story_match_verifications",
     "story_match_accepts",
     "story_match_rejections",
@@ -56,6 +62,7 @@ RUN_TOTAL_COLUMNS = {
     "claim_verifier_calls",
     "claim_verifier_accepts",
     "claim_verifier_rejects",
+    "claim_content_truncations",
 }
 
 
@@ -67,6 +74,7 @@ def _get_db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
     _create_schema(conn)
     conn.commit()
     return conn
@@ -112,9 +120,16 @@ def _create_schema(conn):
             claim_verifier_calls INTEGER DEFAULT 0,
             claim_verifier_accepts INTEGER DEFAULT 0,
             claim_verifier_rejects INTEGER DEFAULT 0,
+            claim_content_truncations INTEGER DEFAULT 0,
             llm_calls_count     INTEGER DEFAULT 0,
             llm_errors_count    INTEGER DEFAULT 0,
             llm_cache_hits      INTEGER DEFAULT 0,
+            classification_cache_hits INTEGER DEFAULT 0,
+            claim_cache_hits    INTEGER DEFAULT 0,
+            verifier_cache_hits INTEGER DEFAULT 0,
+            matching_cache_hits INTEGER DEFAULT 0,
+            briefing_cache_hits INTEGER DEFAULT 0,
+            other_cache_hits    INTEGER DEFAULT 0,
             schema_failures     INTEGER DEFAULT 0,
             retry_count         INTEGER DEFAULT 0,
             prompt_tokens       INTEGER DEFAULT 0,
@@ -171,7 +186,14 @@ def _create_schema(conn):
     _ensure_column(conn, "runs", "claim_verifier_calls", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "claim_verifier_accepts", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "claim_verifier_rejects", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "claim_content_truncations", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "llm_errors_count", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "classification_cache_hits", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "claim_cache_hits", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "verifier_cache_hits", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "matching_cache_hits", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "briefing_cache_hits", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "other_cache_hits", "INTEGER DEFAULT 0")
 
 
 def _ensure_column(conn, table, column, definition):
@@ -209,6 +231,19 @@ def start_run(cli_args, run_date=None):
     conn = _get_db()
     try:
         with conn:
+            conn.execute(
+                """
+                UPDATE runs
+                SET status = 'abandoned',
+                    finished_at = ?,
+                    error_message = COALESCE(
+                        error_message,
+                        'Process ended before the run was finalized.'
+                    )
+                WHERE status = 'running' AND finished_at IS NULL
+                """,
+                (_utc_now(),),
+            )
             cur = conn.execute(
                 """
                 INSERT INTO runs (started_at, run_date, cli_args, git_sha, status)
@@ -287,23 +322,47 @@ def increment_run_totals(run_id=None, **totals):
         conn.close()
 
 
-def increment_cache_hits(count=1, run_id=None):
+def increment_cache_hits(count=1, run_id=None, *, layer="other", purpose=None):
     run_id = current_run_id() if run_id is None else run_id
     if run_id is None or count <= 0:
         return
+    column = _cache_hit_column(layer, purpose)
     conn = _get_db()
     try:
         with conn:
             conn.execute(
                 """
                 UPDATE runs
-                SET llm_cache_hits = COALESCE(llm_cache_hits, 0) + ?
+                SET llm_cache_hits = COALESCE(llm_cache_hits, 0) + ?,
+                    {column} = COALESCE({column}, 0) + ?
                 WHERE run_id = ?
-                """,
-                (int(count), run_id),
+                """.format(column=column),
+                (int(count), int(count), run_id),
             )
     finally:
         conn.close()
+
+
+def _cache_hit_column(layer, purpose):
+    if layer == "classification":
+        return "classification_cache_hits"
+    if layer == "claims":
+        return "claim_cache_hits"
+    if layer == "exact":
+        if purpose == "claim_verifier":
+            return "verifier_cache_hits"
+        if purpose == "brief":
+            return "briefing_cache_hits"
+        if purpose in {
+            "match-sameday",
+            "match-crossday",
+            "match-verify",
+            "match-arc",
+            "story-match-verify",
+            "arc-assignment",
+        }:
+            return "matching_cache_hits"
+    return "other_cache_hits"
 
 
 def _usage_value(usage, name):
@@ -488,7 +547,11 @@ def get_run_report_data(run_id):
                    claim_zero_results,
                    claim_derivable_accepts, claim_verifier_calls,
                    claim_verifier_accepts, claim_verifier_rejects,
+                   claim_content_truncations,
                    llm_calls_count, llm_cache_hits,
+                   classification_cache_hits, claim_cache_hits,
+                   verifier_cache_hits, matching_cache_hits,
+                   briefing_cache_hits, other_cache_hits,
                    llm_errors_count, schema_failures, retry_count, prompt_tokens,
                    completion_tokens, error_message
             FROM runs
@@ -533,7 +596,53 @@ def _top_developments_from_args(cli_args):
         return 3
 
 
-def _tracked_articles_for_audit(conn, run_date):
+def _use_assignment_history(conn, run_id):
+    # Once the run-scoped table exists, an empty result means this run tracked
+    # no occurrences. Falling back to date-scoped projections would leak rows
+    # from another rerun of the same editorial date into this run's report.
+    return run_id is not None and _table_exists(conn, "occurrence_assignment_history")
+
+
+def _tracked_articles_for_audit(conn, run_date, run_id=None):
+    if _use_assignment_history(conn, run_id):
+        rows = conn.execute(
+            """
+            SELECT o.article_id AS id, o.source_id, o.source, o.title, o.url,
+                   o.published_at, COALESCE(h.importance, c.importance) AS importance,
+                   o.description, h.story_id, h.canonical_label,
+                   COALESCE(h.theme, c.theme) AS theme,
+                   COALESCE(h.story_label, c.story_label) AS story_label,
+                   h.development_status
+            FROM occurrence_assignment_history h
+            JOIN article_occurrences o ON o.occurrence_id = h.occurrence_id
+            JOIN occurrence_classifications c ON c.occurrence_id = h.occurrence_id
+            WHERE h.run_id = ?
+            ORDER BY o.occurrence_id
+            """,
+            (run_id,),
+        ).fetchall()
+        return [
+            {
+                "id": row["id"],
+                "source_id": row["source_id"],
+                "source": row["source"],
+                "title": row["title"] or "Untitled",
+                "description": row["description"] or "",
+                "url": row["url"],
+                "published_at": row["published_at"],
+                "importance": int(row["importance"] or 0),
+                "story_id": row["story_id"],
+                "canonical_label": row["canonical_label"],
+                "story_label": row["story_label"],
+                "theme": row["theme"] or "Other",
+                "trend": (
+                    "new"
+                    if row["development_status"] in {"new_parent", "new_child"}
+                    else "steady"
+                ),
+            }
+            for row in rows
+        ]
     required = {"articles", "stories"}
     if not all(_table_exists(conn, table) for table in required):
         return []
@@ -597,8 +706,8 @@ def _audit_story_item(story, score_value):
     }
 
 
-def _high_signal_not_displayed(conn, run_date, top_developments, limit):
-    tracked = _tracked_articles_for_audit(conn, run_date)
+def _high_signal_not_displayed(conn, run_date, top_developments, limit, run_id=None):
+    tracked = _tracked_articles_for_audit(conn, run_date, run_id=run_id)
     if not tracked:
         return []
 
@@ -622,7 +731,51 @@ def _high_signal_not_displayed(conn, run_date, top_developments, limit):
     return candidates[:limit]
 
 
-def _high_signal_new_parent_arcs(conn, run_date, limit):
+def _high_signal_new_parent_arcs(conn, run_date, limit, run_id=None):
+    if _use_assignment_history(conn, run_id):
+        rows = conn.execute(
+            """
+            SELECT h.story_id, h.canonical_label,
+                   COALESCE(h.theme, c.theme) AS theme,
+                   h.development_label,
+                   COUNT(DISTINCT COALESCE(CAST(o.source_id AS TEXT), lower(o.source)))
+                       AS source_count,
+                   COUNT(*) AS article_count,
+                   AVG(COALESCE(h.importance, c.importance)) AS importance_avg,
+                   ((AVG(COALESCE(h.importance, c.importance)) * 100.0) +
+                    (COUNT(DISTINCT COALESCE(CAST(o.source_id AS TEXT), lower(o.source))) * 12.0))
+                       AS score
+            FROM occurrence_assignment_history h
+            JOIN article_occurrences o ON o.occurrence_id = h.occurrence_id
+            JOIN occurrence_classifications c ON c.occurrence_id = h.occurrence_id
+            WHERE h.run_id = ? AND h.development_status = 'new_parent'
+            GROUP BY h.story_id, h.canonical_label,
+                     COALESCE(h.theme, c.theme), h.development_label
+            HAVING score >= ? OR (source_count >= ? AND importance_avg >= ?)
+            ORDER BY score DESC, source_count DESC, h.development_label
+            LIMIT ?
+            """,
+            (
+                run_id,
+                AUDIT_SCORE_THRESHOLD,
+                AUDIT_SOURCE_THRESHOLD,
+                AUDIT_IMPORTANCE_THRESHOLD,
+                limit,
+            ),
+        ).fetchall()
+        return [
+            {
+                "story_id": row["story_id"],
+                "label": row["canonical_label"],
+                "development_label": row["development_label"],
+                "theme": row["theme"] or "Other",
+                "source_count": int(row["source_count"] or 0),
+                "article_count": int(row["article_count"] or 0),
+                "importance_avg": round(float(row["importance_avg"] or 0), 2),
+                "score": round(float(row["score"] or 0), 1),
+            }
+            for row in rows
+        ]
     if not all(_table_exists(conn, table) for table in {"story_developments", "stories"}):
         return []
     rows = conn.execute(
@@ -663,8 +816,66 @@ def _high_signal_new_parent_arcs(conn, run_date, limit):
     ]
 
 
-def _new_parent_arcs_with_candidates(conn, run_date, limit):
-    if not all(_table_exists(conn, table) for table in {"story_developments", "story_match_decisions"}):
+def _new_parent_arcs_with_candidates(conn, run_date, limit, run_id=None):
+    if _use_assignment_history(conn, run_id):
+        if not _table_exists(conn, "story_match_decisions"):
+            return []
+        placeholders = ", ".join("?" for _ in AUDIT_REVIEW_RELATIONSHIPS)
+        rows = conn.execute(
+            f"""
+            WITH parents AS (
+                SELECT h.story_id, h.development_label,
+                       COUNT(DISTINCT COALESCE(
+                           CAST(o.source_id AS TEXT), lower(o.source)
+                       )) AS source_count,
+                       AVG(COALESCE(h.importance, c.importance)) AS importance_avg
+                FROM occurrence_assignment_history h
+                JOIN article_occurrences o ON o.occurrence_id = h.occurrence_id
+                JOIN occurrence_classifications c ON c.occurrence_id = h.occurrence_id
+                WHERE h.run_id = ? AND h.development_status = 'new_parent'
+                GROUP BY h.story_id, h.development_label
+            )
+            SELECT p.story_id, p.development_label, p.source_count,
+                   p.importance_avg, m.candidate_label, m.relationship,
+                   m.confidence, m.reject_reason
+            FROM parents p
+            JOIN story_match_decisions m
+              ON m.run_id = ?
+             AND lower(m.today_label) = lower(p.development_label)
+            WHERE m.accepted = 0
+              AND lower(COALESCE(m.relationship, '')) IN ({placeholders})
+              AND lower(COALESCE(m.confidence, '')) IN ('medium', 'high')
+            ORDER BY
+              CASE lower(COALESCE(m.confidence, ''))
+                WHEN 'high' THEN 0
+                WHEN 'medium' THEN 1
+                ELSE 2
+              END,
+              p.source_count DESC,
+              p.importance_avg DESC,
+              p.development_label
+            LIMIT ?
+            """,
+            [run_id, run_id, *sorted(AUDIT_REVIEW_RELATIONSHIPS), limit],
+        ).fetchall()
+        return [
+            {
+                "story_id": row["story_id"],
+                "label": row["development_label"],
+                "candidate_label": row["candidate_label"],
+                "relationship": row["relationship"],
+                "confidence": row["confidence"],
+                "source_count": int(row["source_count"] or 0),
+                "importance_avg": round(float(row["importance_avg"] or 0), 2),
+                "reject_reason": row["reject_reason"] or "",
+            }
+            for row in rows
+        ]
+
+    if not all(
+        _table_exists(conn, table)
+        for table in {"story_developments", "story_match_decisions"}
+    ):
         return []
     placeholders = ", ".join("?" for _ in AUDIT_REVIEW_RELATIONSHIPS)
     rows = conn.execute(
@@ -677,6 +888,7 @@ def _new_parent_arcs_with_candidates(conn, run_date, limit):
           ON m.run_date = d.date
          AND lower(m.today_label) = lower(d.development_label)
         WHERE d.date = ?
+          AND (? IS NULL OR m.run_id = ?)
           AND d.development_status = 'new_parent'
           AND m.accepted = 0
           AND lower(COALESCE(m.relationship, '')) IN ({placeholders})
@@ -692,7 +904,7 @@ def _new_parent_arcs_with_candidates(conn, run_date, limit):
           d.development_label
         LIMIT ?
         """,
-        [run_date, *sorted(AUDIT_REVIEW_RELATIONSHIPS), limit],
+        [run_date, run_id, run_id, *sorted(AUDIT_REVIEW_RELATIONSHIPS), limit],
     ).fetchall()
     return [
         {
@@ -709,7 +921,7 @@ def _new_parent_arcs_with_candidates(conn, run_date, limit):
     ]
 
 
-def _rejected_related_matches(conn, run_date, limit):
+def _rejected_related_matches(conn, run_date, limit, run_id=None):
     if not _table_exists(conn, "story_match_decisions"):
         return []
     placeholders = ", ".join("?" for _ in AUDIT_REVIEW_RELATIONSHIPS)
@@ -718,7 +930,7 @@ def _rejected_related_matches(conn, run_date, limit):
         SELECT today_label, candidate_label, relationship, confidence,
                reject_reason, continuity_evidence
         FROM story_match_decisions
-        WHERE run_date = ?
+        WHERE ((? IS NOT NULL AND run_id = ?) OR (? IS NULL AND run_date = ?))
           AND accepted = 0
           AND lower(COALESCE(relationship, '')) IN ({placeholders})
           AND lower(COALESCE(confidence, '')) IN ('medium', 'high')
@@ -732,7 +944,7 @@ def _rejected_related_matches(conn, run_date, limit):
           candidate_label
         LIMIT ?
         """,
-        [run_date, *sorted(AUDIT_REVIEW_RELATIONSHIPS), limit],
+        [run_id, run_id, run_id, run_date, *sorted(AUDIT_REVIEW_RELATIONSHIPS), limit],
     ).fetchall()
     return [
         {
@@ -747,7 +959,7 @@ def _rejected_related_matches(conn, run_date, limit):
     ]
 
 
-def _arc_attachments_review(conn, run_date, limit):
+def _arc_attachments_review(conn, run_date, limit, run_id=None):
     required = {"story_arc_decisions", "story_arcs", "stories"}
     if not all(_table_exists(conn, table) for table in required):
         return []
@@ -758,12 +970,12 @@ def _arc_attachments_review(conn, run_date, limit):
                (SELECT COUNT(*) FROM stories s WHERE s.arc_id = d.arc_id) AS arc_child_count
         FROM story_arc_decisions d
         LEFT JOIN story_arcs a ON a.arc_id = d.arc_id
-        WHERE d.run_date = ?
+        WHERE ((? IS NOT NULL AND d.run_id = ?) OR (? IS NULL AND d.run_date = ?))
           AND d.accepted = 1
         ORDER BY arc_child_count DESC, d.today_label
         LIMIT ?
         """,
-        (run_date, limit),
+        (run_id, run_id, run_id, run_date, limit),
     ).fetchall()
     items = []
     for row in rows:
@@ -787,7 +999,7 @@ def _arc_attachments_review(conn, run_date, limit):
     return items
 
 
-def _rejected_arc_decisions(conn, run_date, limit):
+def _rejected_arc_decisions(conn, run_date, limit, run_id=None):
     required = {"story_arc_decisions", "story_arcs"}
     if not all(_table_exists(conn, table) for table in required):
         return []
@@ -798,7 +1010,7 @@ def _rejected_arc_decisions(conn, run_date, limit):
                a.canonical_label AS proposed_arc_label
         FROM story_arc_decisions d
         LEFT JOIN story_arcs a ON a.arc_id = d.arc_id
-        WHERE d.run_date = ?
+        WHERE ((? IS NOT NULL AND d.run_id = ?) OR (? IS NULL AND d.run_date = ?))
           AND d.accepted = 0
           AND lower(COALESCE(d.confidence, '')) IN ('medium', 'high')
         ORDER BY
@@ -810,7 +1022,7 @@ def _rejected_arc_decisions(conn, run_date, limit):
           d.today_label
         LIMIT ?
         """,
-        (run_date, limit),
+        (run_id, run_id, run_id, run_date, limit),
     ).fetchall()
     return [
         {
@@ -859,31 +1071,37 @@ def novelty_audit(run_id, limit=5):
                 row["run_date"],
                 top_developments,
                 limit,
+                run_id=run_id,
             ),
             "high_signal_new_parent_arcs": _high_signal_new_parent_arcs(
                 conn,
                 row["run_date"],
                 limit,
+                run_id=run_id,
             ),
             "new_parent_arcs_with_candidates": _new_parent_arcs_with_candidates(
                 conn,
                 row["run_date"],
                 limit,
+                run_id=run_id,
             ),
             "rejected_related_matches": _rejected_related_matches(
                 conn,
                 row["run_date"],
                 limit,
+                run_id=run_id,
             ),
             "arc_attachments_review": _arc_attachments_review(
                 conn,
                 row["run_date"],
                 limit,
+                run_id=run_id,
             ),
             "rejected_arc_decisions": _rejected_arc_decisions(
                 conn,
                 row["run_date"],
                 limit,
+                run_id=run_id,
             ),
         }
     finally:
@@ -1096,6 +1314,7 @@ def pipeline_report(run_id):
         f"Claim verifier calls:   {row['claim_verifier_calls'] or 0}",
         f"Claim verifier accepts: {row['claim_verifier_accepts'] or 0}",
         f"Claim verifier rejects: {row['claim_verifier_rejects'] or 0}",
+        f"Claim input truncation:  {row['claim_content_truncations'] or 0}",
         f"Stories touched:        {row['stories_touched'] or 0}",
         f"Developments saved:     {row['story_developments_saved'] or 0}",
         f"Parent attachments:     {row['story_parent_attachments'] or 0}",
@@ -1110,8 +1329,15 @@ def pipeline_report(run_id):
         f"LLM calls:              {row['llm_calls_count'] or 0}",
         f"LLM errors:             {row['llm_errors_count'] or 0}",
         f"LLM cache hits:         {row['llm_cache_hits'] or 0}",
+        f"  classification:       {row['classification_cache_hits'] or 0}",
+        f"  claims:               {row['claim_cache_hits'] or 0}",
+        f"  verifier:             {row['verifier_cache_hits'] or 0}",
+        f"  matching:             {row['matching_cache_hits'] or 0}",
+        f"  briefing:             {row['briefing_cache_hits'] or 0}",
+        f"  other:                {row['other_cache_hits'] or 0}",
         f"Schema failures:        {row['schema_failures'] or 0}",
-        f"Retries:                {row['retry_count'] or 0}",
+        f"Application retries:    {row['retry_count'] or 0}",
+        "SDK retries:            not exposed by client",
         (
             "Tokens:                 "
             f"prompt {row['prompt_tokens'] or 0} / completion {row['completion_tokens'] or 0}"
@@ -1208,7 +1434,7 @@ def _markdown_audit_arc_rejected(item):
 
 def _run_artifact_name(row):
     run_date = row["run_date"] or "unknown-date"
-    return f"run_{run_date}.md"
+    return f"run_{run_date}_{row['run_id']}.md"
 
 
 def run_report_markdown(run_id):
@@ -1262,6 +1488,7 @@ def run_report_markdown(run_id):
         f"| Claim verifier calls | {_markdown_number(row['claim_verifier_calls'])} |",
         f"| Claim verifier accepts | {_markdown_number(row['claim_verifier_accepts'])} |",
         f"| Claim verifier rejects | {_markdown_number(row['claim_verifier_rejects'])} |",
+        f"| Claim input truncations | {_markdown_number(row['claim_content_truncations'])} |",
         f"| Stories touched | {_markdown_number(row['stories_touched'])} |",
         f"| Developments saved | {_markdown_number(row['story_developments_saved'])} |",
         f"| Parent attachments | {_markdown_number(row['story_parent_attachments'])} |",
@@ -1281,8 +1508,15 @@ def run_report_markdown(run_id):
         f"| LLM calls | {_markdown_number(row['llm_calls_count'])} |",
         f"| LLM errors | {_markdown_number(row['llm_errors_count'])} |",
         f"| LLM cache hits | {_markdown_number(row['llm_cache_hits'])} |",
+        f"| Classification cache hits | {_markdown_number(row['classification_cache_hits'])} |",
+        f"| Claim cache hits | {_markdown_number(row['claim_cache_hits'])} |",
+        f"| Verifier cache hits | {_markdown_number(row['verifier_cache_hits'])} |",
+        f"| Matching cache hits | {_markdown_number(row['matching_cache_hits'])} |",
+        f"| Briefing cache hits | {_markdown_number(row['briefing_cache_hits'])} |",
+        f"| Other cache hits | {_markdown_number(row['other_cache_hits'])} |",
         f"| Schema failures | {_markdown_number(row['schema_failures'])} |",
-        f"| Retries | {_markdown_number(row['retry_count'])} |",
+        f"| Application retries | {_markdown_number(row['retry_count'])} |",
+        "| SDK retries | not exposed by client |",
         f"| Prompt tokens | {_markdown_number(row['prompt_tokens'])} |",
         f"| Completion tokens | {_markdown_number(row['completion_tokens'])} |",
     ]

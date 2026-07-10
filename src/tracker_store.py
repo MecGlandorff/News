@@ -4,7 +4,7 @@ import json
 import sqlite3
 from datetime import date, timedelta
 
-from src import observability, story_matching
+from src import observability, occurrences, sources, story_matching
 from src.config import (
     DEFAULT_LOOKBACK_DAYS,
     STORY_MEMORY_BLOCKED_LABELS,
@@ -89,6 +89,8 @@ def get_db(db_path):
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    sources.ensure_sources_schema(conn)
     conn.executescript("""
         CREATE TABLE IF NOT EXISTS story_arcs (
             arc_id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -144,6 +146,7 @@ def get_db(db_path):
         );
         CREATE TABLE IF NOT EXISTS articles (
             id             TEXT,
+            occurrence_id  INTEGER REFERENCES article_occurrences(occurrence_id),
             story_id       INTEGER,
             date           DATE,
             source_id      INTEGER REFERENCES sources(source_id),
@@ -156,6 +159,7 @@ def get_db(db_path):
         );
         CREATE TABLE IF NOT EXISTS article_story_links (
             article_id      TEXT NOT NULL,
+            occurrence_id   INTEGER REFERENCES article_occurrences(occurrence_id),
             story_id        INTEGER NOT NULL,
             observation_id  INTEGER,
             relevance       REAL,
@@ -223,7 +227,31 @@ def get_db(db_path):
     """)
     ensure_column(conn, "articles", "description", "TEXT")
     ensure_column(conn, "articles", "source_id", "INTEGER REFERENCES sources(source_id)")
+    ensure_column(
+        conn,
+        "articles",
+        "occurrence_id",
+        "INTEGER REFERENCES article_occurrences(occurrence_id)",
+    )
+    ensure_column(
+        conn,
+        "article_story_links",
+        "occurrence_id",
+        "INTEGER REFERENCES article_occurrences(occurrence_id)",
+    )
+    occurrences.ensure_schema(conn)
+    conn.executescript("""
+        CREATE INDEX IF NOT EXISTS idx_articles_story_date_published
+            ON articles (story_id, date, published_at);
+        CREATE INDEX IF NOT EXISTS idx_articles_id_story
+            ON articles (id, story_id);
+        CREATE INDEX IF NOT EXISTS idx_articles_date
+            ON articles (date);
+        CREATE INDEX IF NOT EXISTS idx_articles_occurrence
+            ON articles (occurrence_id);
+    """)
     backfill_story_arcs(conn)
+    occurrences.backfill_legacy_articles(conn)
     conn.commit()
     return conn
 
@@ -561,6 +589,15 @@ def reset_tracking_date(conn, today):
 
 def sync_story_dates(conn):
     """Keep story date bounds aligned with the remaining daily rows."""
+    conn.execute("""
+        UPDATE stories
+        SET parent_story_id = NULL
+        WHERE parent_story_id IN (
+            SELECT story_id
+            FROM stories
+            WHERE story_id NOT IN (SELECT DISTINCT story_id FROM story_daily)
+        )
+    """)
     conn.execute("""
         DELETE FROM stories
         WHERE story_id NOT IN (

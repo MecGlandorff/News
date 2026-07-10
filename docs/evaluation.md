@@ -39,13 +39,13 @@ Current harness:
 python -m evals.run_story_match_eval
 ```
 
-This is a static reviewed replay. It reads reviewed rows from
+This is an executable acceptance-gate replay. It reads reviewed rows from
 `evals/datasets/story_match_cases.jsonl` and
-`evals/datasets/arc_assignment_cases.jsonl`, compares the observed pipeline
-decision with the reviewed expected decision, and reports false-merge,
-false-split, and false-arc rates. It does not call an LLM. The first seed is
-small and failure-heavy, so use it as a regression baseline and review queue,
-not as a representative production rate.
+`evals/datasets/arc_assignment_cases.jsonl`, runs the stored response shape
+through the current acceptance code, and compares that result with the reviewed
+expectation. It does not call an LLM or measure current prompt/model quality.
+The first seed is small and failure-heavy, so use it as a gate regression and
+review queue, not as a representative production rate.
 
 ### 2. Claim extraction
 
@@ -194,7 +194,7 @@ Before adding a major AI subsystem, define at least one way to evaluate it.
 Examples:
 
 - before source agreement detection, create claim-pair examples where sources agree, differ, or merely repeat the same wire copy
-- before broadening source-divergence notes beyond the current numeric first pass, create date/status/attribution examples with expected labels
+- before loosening source-divergence matching, add real number/date/status/attribution examples with expected labels
 - after enabling story-match verification by default, keep reviewing accepted and rejected match cases from recent newspapers before making the verifier more permissive
 - before making evidence extraction part of ordinary runs or making claim-backed agreement more authoritative, measure claim quality improvement against token and latency increase
 

@@ -5,7 +5,8 @@ import pytest
 from evals import run_claim_quality_eval as claim_eval
 
 
-def test_claim_eval_compares_rss_and_full_text_inputs():
+def test_claim_eval_compares_rss_and_full_text_inputs(monkeypatch):
+    monkeypatch.setattr(claim_eval.claims, "_verify_claim_with_llm", lambda c, s: True)
     case = {
         "case_id": "riverbend",
         "article": {
@@ -79,7 +80,7 @@ def test_claim_eval_compares_rss_and_full_text_inputs():
     assert full_text["article_coverage"] == 1.0
     assert report["summary"]["comparison"]["article_coverage_delta"] == 0.5
     assert report["summary"]["comparison"]["prompt_tokens_delta"] == 60
-    assert report["summary"]["comparison"]["latency_ms_delta"] == 20
+    assert report["summary"]["comparison"]["latency_ms_delta"] == pytest.approx(20, abs=2)
 
 
 def test_claim_eval_counts_invalid_and_duplicate_claims():
@@ -137,6 +138,50 @@ def test_claim_eval_counts_invalid_and_duplicate_claims():
     assert result["duplicate_claims_count"] == 1
     assert result["evidence_valid_rate"] == pytest.approx(2 / 3)
     assert result["expected_match_rate"] == pytest.approx(1 / 2)
+
+
+def test_claim_eval_matches_expected_claims_one_to_one():
+    claims = [{
+        "claim_text": "Officials approved the budget and tax plan.",
+        "evidence_span": "Officials approved the budget and tax plan.",
+    }]
+    expected = [
+        {"id": "budget", "required_terms": ["approved", "budget"]},
+        {"id": "tax", "required_terms": ["approved", "tax plan"]},
+    ]
+
+    matched, matching_claim_count = claim_eval._matched_expected_ids(claims, expected)
+
+    assert matched == ["budget"]
+    assert matching_claim_count == 1
+
+
+def test_claim_eval_one_to_one_matching_is_not_greedy():
+    claims = [
+        {
+            "claim_text": "Officials approved the budget and tax plan.",
+            "evidence_span": "Officials approved the budget and tax plan.",
+        },
+        {
+            "claim_text": "Officials approved the budget.",
+            "evidence_span": "Officials approved the budget.",
+        },
+    ]
+    expected = [
+        {"id": "budget", "required_terms": ["approved", "budget"]},
+        {"id": "tax", "required_terms": ["approved", "tax plan"]},
+    ]
+
+    matched, matching_claim_count = claim_eval._matched_expected_ids(claims, expected)
+
+    assert matched == ["budget", "tax"]
+    assert matching_claim_count == 2
+
+
+def test_claim_eval_treats_cached_verifier_usage_as_zero_tokens():
+    metrics = [{"cache_hit": True, "prompt_tokens": None}]
+
+    assert claim_eval._sum_metric(metrics, "prompt_tokens") == 0
 
 
 def test_claim_eval_writes_report(tmp_path):

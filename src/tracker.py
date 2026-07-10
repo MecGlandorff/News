@@ -1,6 +1,5 @@
 import json
 import logging
-from datetime import date
 from pathlib import Path
 from src.config import (
     ARC_ASSIGNMENT_MODEL,
@@ -10,7 +9,8 @@ from src.config import (
     TRACKER_MODEL,
 )
 from src.llm import get_openai_client
-from src import observability, story_matching, tracker_store
+from src import observability, occurrences, story_matching, tracker_store
+from src.article_dates import editorial_today
 
 DB_PATH  = Path("data/stories.db")
 DATA_DIR = Path("data/daily")
@@ -122,6 +122,7 @@ def _fetch_article_text_for_match(url):
 def _ensure_match_article_text(story_groups, labels):
     fetch_successes = 0
     fetch_failures = 0
+    enriched_articles = []
     for label in labels:
         for article in story_groups.get(label, []):
             if (article.get("text") or "").strip():
@@ -133,6 +134,7 @@ def _ensure_match_article_text(story_groups, labels):
                 article["text"] = _fetch_article_text_for_match(url)
                 if (article.get("text") or "").strip():
                     fetch_successes += 1
+                    enriched_articles.append(article)
                 else:
                     fetch_failures += 1
             except Exception:
@@ -142,6 +144,23 @@ def _ensure_match_article_text(story_groups, labels):
     observability.increment_run_totals(
         article_text_fetch_successes=fetch_successes,
         article_text_fetch_failures=fetch_failures,
+    )
+    return enriched_articles
+
+
+def _record_article_occurrences(articles, editorial_date):
+    conn = _get_db()
+    try:
+        with conn:
+            return occurrences.record_occurrences(conn, articles, editorial_date)
+    finally:
+        conn.close()
+
+
+def _write_daily_articles(path, articles):
+    path.write_text(
+        json.dumps(articles, ensure_ascii=False, indent=2),
+        encoding="utf-8",
     )
 
 
@@ -259,15 +278,23 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
     if not classified:
         return []
 
-    today = today or str(date.today())
+    today = today or str(editorial_today())
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Capture source evidence before any model-driven grouping. Raw occurrence
+    # rows survive reruns and historical replay; only their derived snapshots
+    # may be updated.
+    occurrence_ids = _record_article_occurrences(classified, today)
+    classified = [
+        {**article, "occurrence_id": occurrence_ids[str(article["id"])]}
+        for article in classified
+    ]
 
     # Save full articles to daily JSON
     daily_path = DATA_DIR / today
     daily_path.mkdir(exist_ok=True)
-    (daily_path / "articles.json").write_text(
-        json.dumps(classified, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    daily_articles_path = daily_path / "articles.json"
+    _write_daily_articles(daily_articles_path, classified)
 
     # Group today's articles by story_label, then consolidate within-day duplicates
     from collections import defaultdict
@@ -298,7 +325,12 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
             for label, canonical in label_map.items()
             if canonical != "NEW" and canonical in recent_story_options
         }
-        _ensure_match_article_text(story_groups, candidate_labels)
+        enriched_articles = _ensure_match_article_text(story_groups, candidate_labels)
+        if enriched_articles:
+            enriched_occurrence_ids = _record_article_occurrences(enriched_articles, today)
+            for article in enriched_articles:
+                article["occurrence_id"] = enriched_occurrence_ids[str(article["id"])]
+            _write_daily_articles(daily_articles_path, classified)
         label_map, match_decisions = _verify_story_matches(
             label_map,
             recent_story_options,
@@ -323,6 +355,7 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
         with conn:
             _save_story_match_decisions(conn, match_decisions, today)
             _reset_tracking_date(conn, today)
+            occurrences.clear_assignments_for_date(conn, today)
 
             # Resolve today's labels to concrete stories. Same-story matches
             # reuse story rows; arc matches create child story rows under the
@@ -553,11 +586,13 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
                         source_id = _source_id_for_name(conn, a.get("source"))
                         conn.execute("""
                             INSERT INTO articles (
-                                id, story_id, date, source_id, source, title, description, url, published_at, importance
+                                id, occurrence_id, story_id, date, source_id, source,
+                                title, description, url, published_at, importance
                             )
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """, (
                             a["id"],
+                            a.get("occurrence_id"),
                             story_id,
                             today,
                             source_id,
@@ -569,12 +604,21 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
                             a["importance"],
                         ))
                         conn.execute("""
-                            INSERT OR REPLACE INTO article_story_links (article_id, story_id, observation_id, relevance)
-                            VALUES (?, ?, ?, ?)
-                        """, (str(a["id"]), story_id, observation_id, 1.0))
+                            INSERT OR REPLACE INTO article_story_links (
+                                article_id, occurrence_id, story_id, observation_id, relevance
+                            )
+                            VALUES (?, ?, ?, ?, ?)
+                        """, (
+                            str(a["id"]),
+                            a.get("occurrence_id"),
+                            story_id,
+                            observation_id,
+                            1.0,
+                        ))
                         tracked.append({
                             **a,
                             "source_id": source_id,
+                            "editorial_date": today,
                             "story_id": story_id,
                             "arc_id": assignment["arc_id"],
                             "arc_label": assignment["arc_label"],
@@ -591,6 +635,7 @@ def track(classified, today=None, lookback_days=DEFAULT_LOOKBACK_DAYS, verify_st
                             "previous_context": previous_context,
                         })
 
+            occurrences.save_assignments(conn, tracked)
             _sync_story_dates(conn)
     finally:
         conn.close()

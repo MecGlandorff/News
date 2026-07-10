@@ -29,6 +29,11 @@ def _create_sources_schema(conn):
     """)
 
 
+def ensure_sources_schema(conn):
+    """Create the shared source table for callers using the same database."""
+    _create_sources_schema(conn)
+
+
 def _source_columns(conn):
     return {row["name"]: row for row in conn.execute("PRAGMA table_info(sources)")}
 
@@ -89,10 +94,13 @@ def _get_db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+    # Keep FK enforcement off only while the legacy table-rebuild migration
+    # may replace `sources`; existing article rows can already reference it.
     _create_sources_schema(conn)
     if _sources_schema_needs_rebuild(conn):
         _rebuild_sources_schema(conn)
     conn.commit()
+    conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
 

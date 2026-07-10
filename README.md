@@ -1,6 +1,6 @@
 # News
 
-## AI News Intelligence That Remembers What Changed
+## Source-Grounded Event Memory
 
 Most AI news tools summarize the article in front of them. **News** builds a local, source-grounded memory of real-world events: what happened today, what changed since the previous run, which sources support it, and where uncertainty remains.
 
@@ -10,14 +10,14 @@ It is a local-first intelligence briefing system with RSS ingestion, structured 
 Source -> Article -> Claim -> Story Arc -> Story Delta -> Briefing
 ```
 
-> **Status:** Active development. Story memory, full-text claim grounding, claim/span derivability gate (deterministic + cheap LLM verifier), source metadata, source-identity support, LLM observability, estimated run cost, exact LLM response caching, default-on full-text story-match verification, and a repeatable claim-quality eval harness are implemented. Evidence-mode claim-backed source agreement now has a conservative first pass for exact repeated claims and numeric divergence; reviewed paraphrase verifier cases and broader date/status/attribution divergence are still in progress.
+> **Status:** Active development. The Phase 3 foundation is implemented: append-only article occurrences, stored-snapshot replay, conservative claim/span verification, source metadata, run-scoped observability, bounded exact-response caching, default-on story-match verification, executable acceptance-gate evals, and claim-backed source support/divergence. Real reviewed claim cases remain the main gate before Phase 4.
 
-## Why it is great! 
+## Why It Exists
 
 - **Product idea:** source-grounded event memory, not another RSS summary feed.
 - **System design:** explicit pipeline from source to article to claim to story delta to briefing.
 - **AI discipline:** structured model outputs, prompt versions, schema validation, cache keys, and fallbacks.
-- **Trust layer:** claims are kept only when an evidence span appears in the article **and** either (1) all numbers and a listed entity from the claim appear in the span, or (2) a cheap `gpt-5.4-nano` verifier confirms the span supports the claim.
+- **Trust layer:** only near-verbatim claims are accepted deterministically. Quantity, unit, direction, and negation mismatches are rejected; every other paraphrase goes through a cached `gpt-5.4-nano` verifier that defaults to reject.
 - **Temporal memory:** story observations preserve what the system knew yesterday so today's briefing can explain movement.
 - **Observability:** `runs` and `llm_calls` record model usage, cache hits, schema failures, scraper counts, claim metrics, latency, tokens, and estimated cost.
 - **Regression posture:** the pytest suite covers scraper behavior, source seeding, caching, tracking, claims, observability, CLI behavior, and PDF output.
@@ -32,9 +32,9 @@ The flagship outcome is an intelligence-style briefing with status, confidence, 
 | Daily delta | Writes "what changed today" instead of repeating generic summaries |
 | Claim grounding | Uses `gpt-5.4-nano` with full article text when available; saves claims only when the evidence span is in the article and a hybrid deterministic + LLM-verifier gate decides the span supports the claim |
 | Source support | Counts distinct source identities with `source_id` first and source-name fallback |
-| Claim-backed agreement | In evidence mode, exact repeated claims can back `partial`/`broad`, and comparable numeric divergence can force `mixed` / `possible conflict` |
+| Claim-backed agreement | Current-day claims support agreement; seven days of older claims are dated context only. Exact/similar multi-source support and precise number/date/status/attribution divergence are compared without claiming source independence |
 | Match verifier | Uses full article text and `gpt-5.4-nano` to reject adjacent-topic story merges |
-| Local database | Keeps stories, articles, observations, claims, sources, runs, LLM calls, and exact LLM response cache rows in SQLite |
+| Local database | Keeps append-only occurrence snapshots plus derived stories, observations, claims, sources, run history, LLM calls, and bounded exact-response cache rows in SQLite |
 | Outputs | Publishes Markdown briefings, digest files, and newspaper-style PDFs |
 | Inspectability | Includes ADRs, failure modes, model behavior docs, database queries, pipeline diagrams, and a claim-quality eval harness |
 
@@ -45,7 +45,7 @@ The flagship outcome is an intelligence-style briefing with status, confidence, 
 - [Briefing archive](briefings/)
 - [Newspaper archive](newspapers/)
 
-The generated files show current pipeline behavior. The curated sample is the best compact showcase of the intended story-card shape.
+The archives intentionally retain historical generated behavior. The curated sample is the best compact showcase of the intended story-card shape.
 
 ## Sample Story Card
 
@@ -73,6 +73,7 @@ RSS feeds
   -> src/sources.py      seed configured sources into SQLite
   -> src/scraper.py      fetch RSS, normalize URLs, filter dates, deduplicate URLs
   -> src/classifier.py   classify theme, story_label, and importance
+  -> src/occurrences.py  preserve source snapshots and replay metadata
   -> src/tracker.py      consolidate labels, match recent stories, write story memory
   -> src/story_matching.py optionally verify candidate matches with full article text
   -> src/claims.py       optionally extract validated claims and evidence spans
@@ -121,11 +122,13 @@ When enabled, the claim layer extracts:
 - `evidence_span`
 - `confidence`
 
-A claim is saved only if its `evidence_span` appears in the article input **and** the claim passes a derivability gate against that span:
+A claim is saved only if its `evidence_span` appears in the bounded article input **and** the claim passes a versioned derivability policy:
 
-1. If any number in `claim_text` is missing from `evidence_span`, the claim is dropped immediately (no LLM call).
-2. If `claim_text` (normalized) appears in `evidence_span`, or if entity overlap is backed by enough non-entity lexical overlap, the claim is accepted deterministically.
-3. Otherwise, including weak entity-only or anaphoric spans, a cheap `gpt-5.4-nano` verifier (`CLAIMS_VERIFIER_PROMPT_VERSION = "2026-05-14-v1"`, cached via `llm_response_cache`) decides whether the span supports the claim. Verifier failures default-reject.
+1. Missing quantities or explicit negation, direction, or unit conflicts are rejected without an LLM call.
+2. A normalized near-verbatim claim contained in the span is accepted deterministically.
+3. Every other paraphrase, including entity-overlap and anaphoric cases, goes to the cached verifier. Malformed output, uncertainty, and network failures reject the claim.
+
+The validation-policy version is part of claim cache reuse, so tightening local rules cannot silently reuse claims accepted under an older policy. Claim input is capped at 20,000 characters and truncation is reported.
 
 Run totals are exposed in `--pipeline-report` as `Claim cheap accepts`, `Claim verifier calls`, `Claim verifier accepts`, and `Claim verifier rejects`. See [docs/adr/0013-claim-evidence-derivability.md](docs/adr/0013-claim-evidence-derivability.md).
 
@@ -185,6 +188,7 @@ python -m src.run --show-evidence
 python -m src.run --fetch-article-text
 python -m src.run --no-verify-story-matches
 python -m src.run --pipeline-report
+python -m src.run --replay 2026-05-07
 python -m src.run --db-off
 python -m src.run --skip-digest
 python -m src.run --skip-briefing
@@ -200,6 +204,8 @@ Notes:
 - `--fetch-article-text` fetches article bodies even when evidence extraction is disabled.
 - Story-match verification is on by default and does not require `--show-evidence`; `--no-verify-story-matches` disables it for comparison runs.
 - `--pipeline-report` prints run totals, scraper counts, claim metrics, model tokens, latency, and estimated EUR cost after success or failure.
+- `--replay DATE` makes no network calls. It transactionally rebuilds derived tracking state from that date forward using stored occurrence, classification, and assignment snapshots, and fails before changing state if a required snapshot is missing.
+- `--replay` cannot be combined with `--date`/`--today` or `--db-off`.
 
 Example audit run:
 
@@ -211,7 +217,7 @@ python -m src.run --date 2026-05-07 --fetch-article-text --show-evidence --pipel
 
 Generated runtime data is intentionally local:
 
-- `data/stories.db`: SQLite story memory, article rows, claims, source metadata, runs, LLM call logs, and exact LLM response cache rows.
+- `data/stories.db`: SQLite occurrence snapshots, derived story memory, claims, source metadata, runs, LLM call logs, and exact LLM response cache rows.
 - `data/daily/`: JSON snapshots of classified articles for each run date.
 - `run_artifacts/`: Markdown run reports written from observability rows.
 - `output/`: generated digest Markdown and scratch outputs.
@@ -241,7 +247,9 @@ Core docs:
 - Story matching can over-merge adjacent topics when the verifier is disabled. Exact verifier responses can be reused for identical prompts, but there is no semantic verifier-decision cache.
 - Claim extraction is cached and evidence-validated; the derivability gate is deterministic-first and falls back to a `gpt-5.4-nano` verifier for paraphrase-style claims. Evidence runs use fetched full text when available, and RSS-vs-full-text quality can be compared with `evals.run_claim_quality_eval`.
 - Source metadata is seeded and attached to new articles; deterministic source support uses `source_id` first.
-- Evidence-mode source agreement is claim-backed for exact repeated non-background claims and conservative numeric divergence. It does not infer source independence, and ordinary runs still use source identity plus briefing defaults.
+- Evidence-mode source agreement is claim-backed for current-day exact and conservative similar-claim support. Precise number, date, status, and attribution differences produce source-divergence notes. It does not infer source independence or confirmed contradiction.
+- Historical claims are available to evidence briefings for seven editorial days but are explicitly context-only and cannot strengthen current agreement.
+- The editorial day is `Europe/Brussels`; stored timestamps remain UTC.
 - EUR cost estimates use explicitly maintained pricing and a static USD-to-EUR rate.
 - Scraper duplicate/failure counts are surfaced in `--pipeline-report`.
 - The project has no hosted UI; the core artifact is local Markdown/PDF plus SQLite memory.
@@ -254,10 +262,14 @@ Multi-source RSS scraping, URL normalization, URL deduplication, and cached arti
 **Phase 2 - Story memory and claim grounding: done.**
 Canonical labels, same-day consolidation, recent-history matching, daily observations, delta summaries, structured claim extraction, and evidence-span validation.
 
-**Phase 3 - Source modeling and observability: in progress.**
-Source metadata, source-identity support, full-text evidence extraction, scraper observability, cost estimates, run observability, exact LLM response caching, the claim-quality comparison harness, and the first evidence-mode claim-backed source-agreement slice have shipped. Next work is running real reviewed claim cases and broadening claim comparison beyond exact repeats and numeric divergence.
+**Phase 3 - Source modeling and observability: implementation complete, review pending.**
+Source metadata, occurrence-backed evidence, stored-snapshot replay, run-scoped observability, bounded caching, conservative derivability, and the first claim-backed agreement/source-divergence slice have shipped. The remaining gate is reviewing real evidence runs, especially paraphrases routed through the verifier.
 
 **Phase 4 - Evaluation and hardening: later.**
-Reviewed claim-quality cases, broader source-divergence handling, story-matching fixtures, and regression evals should land before the system becomes more autonomous.
+Only after Phase 3's real-case review should deeper citation, temporal, story-matching, and source-divergence evals make the system more autonomous.
 
 Out of scope for now: real-time push, multi-user accounts, social signals, paid-source ingestion, cloud deployment, Kubernetes, Terraform, or a heavy frontend.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

@@ -33,6 +33,12 @@ sqlite3 data/stories.db "SELECT run_id, run_date, status FROM runs ORDER BY run_
 ```mermaid
 erDiagram
     sources ||--o{ articles : "source_id"
+    sources ||--o{ article_occurrences : "source_id"
+    article_occurrences ||--o| occurrence_classifications : "occurrence_id"
+    article_occurrences ||--o| occurrence_assignments : "occurrence_id"
+    article_occurrences ||--o{ occurrence_assignment_history : "occurrence_id"
+    article_occurrences ||--o{ articles : "occurrence_id"
+    article_occurrences ||--o{ claims : "occurrence_id"
     story_arcs ||--o{ stories : "arc_id"
     stories ||--o{ stories : "parent_story_id"
     stories ||--o{ story_daily : "story_id"
@@ -41,7 +47,6 @@ erDiagram
     stories ||--o{ articles : "story_id"
     story_observations ||--o{ article_story_links : "observation_id"
     story_observations ||--o{ story_developments : "observation_id"
-    articles ||--o{ claims : "article_id + story_id"
     runs ||--o{ llm_calls : "run_id"
     runs ||--o{ story_match_decisions : "run_id"
     runs ||--o{ story_arc_decisions : "run_id"
@@ -57,7 +62,11 @@ The most important tables are:
 | `story_daily` | per-story daily source/importance aggregates |
 | `story_observations` | daily memory, including generated summary and delta |
 | `story_developments` | daily development labels for a concrete story |
-| `articles` | fetched articles linked to a story/date |
+| `article_occurrences` | append-only retrieved article snapshots for one editorial date |
+| `occurrence_classifications` | latest classifier interpretation attached to an occurrence |
+| `occurrence_assignments` | current completed story/arc assignment plus the classification fields it used |
+| `occurrence_assignment_history` | run-scoped history of completed assignments and their classification fields |
+| `articles` | rebuildable occurrence-to-story/date projection used by existing readers |
 | `article_story_links` | article-to-observation links |
 | `article_classifications` | cached article theme/story/importance classifications |
 | `claims` | validated claims with evidence spans |
@@ -76,6 +85,7 @@ Conditional tables:
 - `story_arc_decisions` (ADR 0017) records one row per arc-assignment case: the candidate arcs supplied to the model (with decision-time scores), the proposed arc and parent, whether the gate accepted it, and the story row the label resolved to. A new story with no row had no arc candidates that scored above zero.
 - `story_arcs` and nullable `stories.arc_id` / `stories.parent_story_id` are added idempotently; legacy flat stories receive one compatibility arc each.
 - `story_developments` records daily development labels; older runs are not backfilled with child labels.
+- Occurrence tables are created on normal tracker startup. Existing `articles` rows are backfilled once as `legacy_metadata_only`; no body text is invented.
 - Older databases may lack newer nullable columns until a run touches the relevant schema helper.
 
 ## Latest Runs
@@ -100,6 +110,11 @@ SELECT
   stories_touched,
   llm_calls_count,
   llm_cache_hits,
+  classification_cache_hits,
+  claim_cache_hits,
+  verifier_cache_hits,
+  matching_cache_hits,
+  briefing_cache_hits,
   prompt_tokens,
   completion_tokens
 FROM runs
@@ -149,6 +164,12 @@ SELECT
   llm_calls_count,
   llm_errors_count,
   llm_cache_hits,
+  classification_cache_hits,
+  claim_cache_hits,
+  verifier_cache_hits,
+  matching_cache_hits,
+  briefing_cache_hits,
+  other_cache_hits,
   schema_failures,
   retry_count,
   prompt_tokens,
@@ -160,9 +181,7 @@ WHERE run_id = 42;
 Review related story-match rejections for the latest run:
 
 ```sql
-WITH latest AS (
-  SELECT run_id, run_date FROM runs ORDER BY run_id DESC LIMIT 1
-)
+WITH latest AS (SELECT run_id FROM runs ORDER BY run_id DESC LIMIT 1)
 SELECT
   today_label,
   candidate_label,
@@ -170,7 +189,7 @@ SELECT
   confidence,
   reject_reason
 FROM story_match_decisions
-WHERE run_date = (SELECT run_date FROM latest)
+WHERE run_id = (SELECT run_id FROM latest)
   AND accepted = 0
   AND relationship IN ('same_story_arc', 'direct_follow_up', 'adjacent_topic', 'broader_context')
   AND confidence IN ('medium', 'high')
@@ -180,9 +199,7 @@ ORDER BY confidence DESC, today_label;
 Reconstruct arc-assignment decisions for the latest run (ADR 0017):
 
 ```sql
-WITH latest AS (
-  SELECT run_date FROM runs ORDER BY run_id DESC LIMIT 1
-)
+WITH latest AS (SELECT run_id FROM runs ORDER BY run_id DESC LIMIT 1)
 SELECT
   today_label,
   candidates,
@@ -194,7 +211,7 @@ SELECT
   confidence,
   reject_reason
 FROM story_arc_decisions
-WHERE run_date = (SELECT run_date FROM latest)
+WHERE run_id = (SELECT run_id FROM latest)
 ORDER BY accepted DESC, today_label;
 ```
 
@@ -264,6 +281,9 @@ FROM llm_response_cache
 ORDER BY last_used_at DESC, created_at DESC
 LIMIT 30;
 ```
+
+Only exact entries used in the last 30 days are eligible for reuse. A successful
+pipeline run prunes the table to its 1,000 most recently used rows.
 
 ## Stories
 
@@ -359,7 +379,47 @@ GROUP BY COALESCE(src.name, a.source), src.type, src.reliability
 ORDER BY article_count DESC;
 ```
 
-Note: `articles` has no primary key. Treat `id + story_id + date` as the practical context for inspection, especially across reruns.
+`articles` remains a compatibility projection and has no primary key. Use
+`occurrence_id` for durable identity; `id + story_id + date` is only a legacy
+inspection fallback.
+
+## Occurrence Snapshots And Replay
+
+Inspect the latest captured snapshot for each article/date:
+
+```sql
+WITH latest AS (
+  SELECT article_id, editorial_date, MAX(occurrence_id) AS occurrence_id
+  FROM article_occurrences
+  GROUP BY article_id, editorial_date
+)
+SELECT
+  o.occurrence_id,
+  o.editorial_date,
+  o.source,
+  o.title,
+  o.retrieval_status,
+  c.story_label,
+  a.story_id,
+  a.canonical_label
+FROM latest l
+JOIN article_occurrences o ON o.occurrence_id = l.occurrence_id
+LEFT JOIN occurrence_classifications c ON c.occurrence_id = o.occurrence_id
+LEFT JOIN occurrence_assignments a ON a.occurrence_id = o.occurrence_id
+ORDER BY o.editorial_date DESC, o.occurrence_id DESC;
+```
+
+Rebuild derived tracking rows from a stored editorial date forward:
+
+```bash
+python -m src.run --replay 2026-05-07
+```
+
+Replay makes no network or model calls. It uses the latest stored occurrence,
+classification, and assignment for each article/date, preserves stored summary
+and delta text where available, and rebuilds forward in one transaction. Raw
+occurrences remain unchanged. The command fails safely when the start date or a
+required snapshot is missing.
 
 ## Claims And Evidence
 
@@ -368,26 +428,31 @@ Claims for one story:
 ```sql
 SELECT
   c.claim_id,
+  o.editorial_date,
   c.claim_type,
   ROUND(c.confidence, 2) AS confidence,
-  a.source,
+  o.source,
   c.claim_text,
   c.evidence_span
 FROM claims c
-LEFT JOIN articles a
-  ON a.id = c.article_id
- AND a.story_id = c.story_id
+LEFT JOIN article_occurrences o ON o.occurrence_id = c.occurrence_id
+LEFT JOIN occurrence_assignments oa ON oa.occurrence_id = c.occurrence_id
 WHERE c.story_id = 123
-ORDER BY c.confidence DESC;
+  AND (c.occurrence_id IS NULL OR oa.story_id = c.story_id)
+ORDER BY o.editorial_date DESC, c.confidence DESC;
 ```
 
 Claim extraction cache status:
 
 ```sql
 SELECT
+  extraction_key,
+  occurrence_id,
   article_id,
   story_id,
   prompt_version,
+  extractor_model,
+  validation_version,
   claims_count,
   extracted_at
 FROM claim_extractions
@@ -399,6 +464,7 @@ Find zero-claim cache rows:
 
 ```sql
 SELECT
+  extraction_key,
   article_id,
   story_id,
   prompt_version,
@@ -411,6 +477,7 @@ ORDER BY extracted_at DESC;
 Important limitation:
 
 - Claims are validated against the input used for extraction.
+- The cache key includes occurrence/article identity, prompt version, model, validation version, and content hash.
 - Evidence runs use title, RSS description, and fetched full article text when available.
 - If full text is empty or unavailable, claim extraction falls back to title plus RSS description.
 

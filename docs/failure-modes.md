@@ -8,13 +8,13 @@ For the end-to-end flow where these failures can enter, read [how-it-works.md](h
 
 ## 1. Source publishes a correction after ingestion
 
-**Description:** A source updates or retracts a claim after the article has been classified and cached. The system stores the original version and will not re-fetch unless the content hash changes.
+**Description:** A source updates or retracts a claim after the article has been classified and cached. A later ingestion may capture changed content, but the system does not understand that the change is a correction.
 
 **Detection:** Manual review; no automated correction tracking.
 
-**Mitigation:** Classification and claim extraction caches use content hashes. If the article input changes, classification is re-run and stale cached claims are invalidated before claim extraction is retried.
+**Mitigation:** Classification and claim extraction caches use content hashes. Changed captured content creates another append-only occurrence; classification and claim extraction are rerun for the new input.
 
-**Current status:** Partially mitigated. The system invalidates stale cached claims, but does not retain explicit correction/retraction history.
+**Current status:** Partially mitigated. Captured versions are retained, but no field identifies a correction, retraction, or superseding claim.
 
 **Future improvement:** Add a `retracted_at` field to `claims` and retain claim history across article corrections.
 
@@ -40,9 +40,9 @@ For the end-to-end flow where these failures can enter, read [how-it-works.md](h
 
 **Detection:** Comparison of RSS description sentiment vs full-text sentiment (requires full-text fetching).
 
-**Mitigation:** None currently. The classifier uses both title and description.
+**Mitigation:** The classifier still uses title and description, but evidence runs extract claims from fetched body text when available and preserve the RSS fallback.
 
-**Current status:** Unmitigated.
+**Current status:** Partially mitigated for claim extraction, not for classification.
 
 **Future improvement:** With `--fetch-article-text`, compare the extracted claims from the headline vs. the body. Flag divergence.
 
@@ -134,17 +134,17 @@ For the end-to-end flow where these failures can enter, read [how-it-works.md](h
 
 ---
 
-## 10. Numeric claims diverge across sources
+## 10. Comparable claims diverge across sources
 
-**Description:** Source A reports "20 casualties"; source B reports "34 casualties." The briefing may synthesize a single number or pick one arbitrarily.
+**Description:** Sources may report different numbers, dates, statuses, or attributions for an otherwise comparable development. The briefing may otherwise collapse those differences into one account.
 
-**Detection:** Claims with `claim_type = "number"` on the same entity across sources within a story.
+**Detection:** Deterministic comparison of current, non-background claims across distinct source identities. Matching remains deliberately narrow.
 
-**Mitigation:** Evidence-mode source agreement compares saved numeric claims with similar context across distinct source identities. When numbers differ, the briefing output is forced to `source_agreement = mixed` and `dispute_flag = possible conflict`. The briefing layer still does not accept `confirmed conflict`.
+**Mitigation:** Evidence-mode source agreement records narrow divergence notes for comparable numbers, dates, statuses, and attributions. Any such note forces `source_agreement = mixed` and `dispute_flag = possible conflict`. The briefing layer still does not accept `confirmed conflict`.
 
-**Current status:** Partially mitigated for conservative numeric divergence in evidence mode. Date, status, and attribution divergence are not compared yet.
+**Current status:** A conservative first pass is implemented in evidence mode. It has not yet been reviewed against enough real cases to justify broader matching.
 
-**Future improvement:** Review numeric divergence cases from real runs, then add date/status/attribution comparison only where matching can stay precise. Keep surfaced differences as source-divergence notes, not confirmed contradiction prose.
+**Future improvement:** Review real divergence cases, measure false matches, and tighten patterns before considering any broader comparison. Keep surfaced differences as source-divergence notes, not confirmed contradiction prose.
 
 ---
 
@@ -196,9 +196,9 @@ For the end-to-end flow where these failures can enter, read [how-it-works.md](h
 
 **Detection:** Compare delta_summary against previous_context to check for repetition.
 
-**Mitigation:** `BRIEFING_PROMPT`: "If previous_context is supplied, use it only for background and continuity. Today's articles are the authority for what is new today."
+**Mitigation:** The briefing prompt treats previous context and up to seven days of older claims as historical context only. Source-agreement conclusions use current-day claims, and rendered evidence labels older claims as historical.
 
-**Current status:** Partially mitigated by prompt design. The delta_summary is a separate field specifically for what is materially new.
+**Current status:** Partially mitigated by prompt design, explicit evidence roles, and a separate `delta_summary`. Generated prose still lacks a general temporal-entailment checker.
 
 **Future improvement:** Add a temporal grounding check: flag when briefing text uses language from previous_context without a temporal qualifier.
 

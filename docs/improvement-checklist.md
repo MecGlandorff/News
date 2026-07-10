@@ -8,8 +8,6 @@ This document is the repo's practical hardening plan.
 
 This file tracks the implementation work needed to make decisions real, inspectable, and measurable.
 
-It follows the writing standard in `docs/communication.md`: explain what exists now, what is weak now, what should happen next, why it comes next, and what done looks like.
-
 ## What the system already does
 
 These pieces are already in place and should be protected as the project evolves.
@@ -29,8 +27,8 @@ The current prototype is directionally strong, but several important parts are s
 - [ ] Full-text claim extraction is enabled for evidence runs, and its cost/latency is visible; the repeatable quality harness and prompt-regression cases exist, but real reviewed current-prompt cases still need to be run
 - [x] Run observability covers token use, latency, cache hits, schema failures, retries, EUR estimates, and scraper duplicate/failure counts
 - [x] Source metadata is modeled as a first-class table, and source identity is used before source-name fallback
-- [ ] Source agreement is now claim-backed in evidence mode for exact repeated claims, but still does not infer independent corroboration
-- [ ] Source-divergence notes exist for conservative numeric divergence in evidence mode; dates, statuses, and attributions are still not compared
+- [ ] Source agreement is claim-backed in evidence mode for exact and highly similar claims, but still does not infer independent corroboration
+- [ ] Source-divergence notes cover narrow number, date, status, and attribution patterns; real reviewed cases are still needed before broadening them
 - [ ] Evaluation coverage is still early; claim-quality and story-matching comparisons are operational, while citation, temporal, and source-divergence evals are still planned
 
 ## Priority order
@@ -43,7 +41,7 @@ The order below matters. The project should measure its pipeline before making e
 - [x] 4. Implement full-text claim extraction behind `--show-evidence`
 - [x] 5. Add a repeatable claim-quality comparison harness
 - [ ] 6. Run real reviewed claim-quality cases and decide whether full-text impact is worth the cost
-- [ ] 7. Add stronger source agreement and lightweight source-divergence handling
+- [x] 7. Add a conservative claim-backed source-agreement and source-divergence first pass
 
 ## 1. Observability
 
@@ -102,7 +100,7 @@ These behaviors already exist and should remain true after refactoring:
 - [x] Use structured JSON output for claims
 - [x] Validate claims before storage
 - [x] Require the evidence span to appear in the extraction input
-- [x] Cache by `article_id + prompt_version`
+- [x] Cache by occurrence/article identity, prompt version, model, validation version, and content hash
 - [x] Use a content hash to invalidate stale claim results
 - [x] Cache zero-claim results
 - [x] Keep cached claims aligned with the current `story_id`
@@ -115,7 +113,7 @@ The richer path is gated behind `--show-evidence`; ordinary runs do not extract 
 - [x] Keep ordinary runs claim-free unless `--show-evidence` is enabled
 - [x] Fetch full text when `--show-evidence` is enabled
 - [x] Only use full text when fetched article text is actually present and usable
-- [ ] Record which input source was used for each extraction: `rss` or `full_text`
+- [x] Record `rss_only` versus `full_text` on the linked article occurrence
 - [x] Add a harness that compares RSS-only and full-text claim extraction
 - [ ] Measure quality improvement against token and latency cost on real reviewed cases
 
@@ -136,11 +134,11 @@ This should be documented clearly so reviewers can understand how the system deg
 - [x] Document that the pipeline falls back to RSS title/description when full text is unavailable
 - [x] Document whether fallback is automatic or treated as a warning
 - [ ] Count fallback events once observability exists
-- [ ] Ensure fallback does not break the run
+- [x] Ensure fallback does not break the run
 
 ## 3. Source modeling
 
-Right now sources are mostly plain strings. That is enough to ingest feeds, but not enough for source-aware reasoning.
+Sources now have stable rows and article links. Reliability and syndication metadata are not yet used to infer independent corroboration.
 
 - [x] Add a `sources` table
 - [x] Seed it from the configured RSS source list
@@ -152,11 +150,12 @@ Right now sources are mostly plain strings. That is enough to ingest feeds, but 
 
 ## 4. Source agreement and source-divergence handling
 
-The briefing surfaces agreement-style labels. In evidence mode, a deterministic claim comparison summary now overrides the model's label for exact repeated non-background claims and conservative numeric divergence. Outside evidence mode, labels still fall back to source identity and prompt-level signals.
+The briefing surfaces agreement-style labels. In evidence mode, a deterministic claim comparison summary now overrides the model's label for exact or highly similar non-background claims and narrow source-divergence patterns. It explicitly does not infer independent corroboration. Outside evidence mode, labels still fall back to source identity and prompt-level signals.
 
 ### Source agreement
 
 - [x] Compare exact repeated claims within a story across multiple sources
+- [x] Compare highly similar claims conservatively without calling them independent corroboration
 - [ ] Distinguish repeated reporting from independent corroboration
 - [x] Mark single-source claim sets clearly when evidence mode has saved claims
 - [x] Surface source agreement using claim-level backing in evidence mode
@@ -164,9 +163,9 @@ The briefing surfaces agreement-style labels. In evidence mode, a deterministic 
 ### Source divergence
 
 - [x] Compare claim pairs for different numbers when the source-agreement layer already has comparable claims
-- [ ] Compare claim pairs for different dates, statuses, or attributions when comparable claims exist
+- [x] Compare claim pairs for different dates, statuses, or attributions when narrow deterministic patterns match
 - [x] Record lightweight source-divergence notes in the comparison output
-- [ ] Avoid a dedicated contradiction module or `contradictions` table in Phase 3
+- [x] Avoid a dedicated contradiction module or `contradictions` table in Phase 3
 - [x] Surface divergence cautiously as a note, not as confirmed contradiction prose
 
 ## 5. Briefing quality

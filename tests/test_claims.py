@@ -2,6 +2,7 @@ import json
 import sqlite3
 
 import src.claims as claims_module
+import src.tracker_store as tracker_store
 from src.claims import extract_and_save_claims, get_claims_for_story
 from fakes import FakeLLMClient
 
@@ -19,7 +20,7 @@ ARTICLE = {
 CLAIM_RESPONSE = {
     "claims": [
         {
-            "claim_text": "Iran proposed capping uranium enrichment at 3.67%.",
+            "claim_text": "Iran proposed capping enrichment at 3.67%.",
             "claim_type": "number",
             "entities": ["Iran"],
             "evidence_span": "Iran proposed capping enrichment at 3.67%.",
@@ -327,13 +328,40 @@ def test_derivability_check_rejects_decimal_comma_integer_mismatch():
     assert decision == "reject"
 
 
-def test_derivability_check_accepts_entity_overlap_with_strong_lexical_support():
+def test_derivability_check_routes_entity_paraphrase_to_verifier():
     decision = claims_module._derivability_check(
         "Iran proposed capping enrichment at 3.67%.",
         "Iran proposed capping enrichment at 3.67 percent.",
         ["Iran"],
     )
-    assert decision == "accept"
+    assert decision == "uncertain"
+
+
+def test_derivability_check_rejects_negation_mismatch():
+    decision = claims_module._derivability_check(
+        "The government will raise taxes.",
+        "The government will not raise taxes.",
+        ["government"],
+    )
+    assert decision == "reject"
+
+
+def test_derivability_check_rejects_direction_mismatch():
+    decision = claims_module._derivability_check(
+        "Acme increased revenue.",
+        "Acme decreased revenue.",
+        ["Acme"],
+    )
+    assert decision == "reject"
+
+
+def test_derivability_check_rejects_unit_mismatch():
+    decision = claims_module._derivability_check(
+        "Acme reported 5 percent growth.",
+        "Acme reported 5 million euros in revenue.",
+        ["Acme"],
+    )
+    assert decision == "reject"
 
 
 def test_derivability_check_routes_weak_entity_overlap_to_verifier():
@@ -638,7 +666,7 @@ def test_verifier_refreshes_malformed_cached_response(monkeypatch):
     assert saved == [({"cache": "metadata"}, fresh_response)]
 
 
-def test_cheap_accept_counter_increments_for_entity_overlap(tmp_path, monkeypatch):
+def test_cheap_accept_counter_increments_only_for_verbatim_claims(tmp_path, monkeypatch):
     monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
 
     client = _fake_client(CLAIM_RESPONSE)
@@ -653,10 +681,99 @@ def test_cheap_accept_counter_increments_for_entity_overlap(tmp_path, monkeypatc
 
     stats = extract_and_save_claims([ARTICLE])
 
-    # Both fixture claims should hit the deterministic accept path.
+    # Both fixture claims are exact spans and should avoid the verifier.
     assert verifier_calls == []
     assert stats["claim_derivable_accepts"] == 2
     assert stats["claim_verifier_calls"] == 0
+
+
+def test_validation_policy_change_invalidates_cached_extraction(tmp_path, monkeypatch):
+    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
+
+    client = _fake_client(CLAIM_RESPONSE)
+    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
+    extract_and_save_claims([ARTICLE])
+
+    conn = sqlite3.connect(tmp_path / "stories.db")
+    conn.execute(
+        "UPDATE claim_extractions SET validation_version = 'old-policy'"
+    )
+    conn.execute("UPDATE claims SET validation_version = 'old-policy'")
+    conn.commit()
+    conn.close()
+
+    extract_and_save_claims([ARTICLE])
+
+    assert client.calls == 2
+    assert len(get_claims_for_story(42)) == 2
+
+
+def test_get_claims_for_story_uses_seven_day_occurrence_window(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    monkeypatch.setattr(claims_module, "DB_PATH", db_path)
+    conn = tracker_store.get_db(db_path)
+    try:
+        with conn:
+            for occurrence_id, editorial_date in [
+                (1, "2026-07-04"),
+                (2, "2026-07-05"),
+                (3, "2026-07-11"),
+            ]:
+                conn.execute(
+                    """
+                    INSERT INTO article_occurrences (
+                        occurrence_id, article_id, editorial_date, source, title,
+                        description, body_text, url, published_at, content_hash,
+                        retrieval_status
+                    ) VALUES (?, ?, ?, 'Source', 'Title', '', '', ?, '', ?, 'rss_only')
+                    """,
+                    (
+                        occurrence_id,
+                        f"article-{occurrence_id}",
+                        editorial_date,
+                        f"https://example.com/{occurrence_id}",
+                        f"hash-{occurrence_id}",
+                    ),
+                )
+                conn.execute(
+                    """
+                    INSERT INTO occurrence_assignments (
+                        occurrence_id, theme, story_label, importance,
+                        story_id, canonical_label,
+                        development_label, development_status
+                    ) VALUES (?, 'World', 'Story', 4, 42, 'Story', 'Story', 'continuing')
+                    """,
+                    (occurrence_id,),
+                )
+    finally:
+        conn.close()
+
+    conn = claims_module._get_db()
+    try:
+        with conn:
+            for occurrence_id in (1, 2, 3):
+                conn.execute(
+                    """
+                    INSERT INTO claims (
+                        article_id, occurrence_id, story_id, claim_text,
+                        claim_type, entities, evidence_span, confidence,
+                        prompt_version, validation_version
+                    ) VALUES (?, ?, 42, ?, 'fact', '[]', 'Evidence', 0.9, ?, ?)
+                    """,
+                    (
+                        f"article-{occurrence_id}",
+                        occurrence_id,
+                        f"Claim {occurrence_id}",
+                        claims_module.CLAIMS_PROMPT_VERSION,
+                        claims_module.CLAIMS_VALIDATION_VERSION,
+                    ),
+                )
+    finally:
+        conn.close()
+
+    saved = get_claims_for_story(42, as_of_date="2026-07-11", history_days=7)
+
+    assert [claim["editorial_date"] for claim in saved] == ["2026-07-11", "2026-07-05"]
 
 
 def test_extract_strips_html_from_description(tmp_path, monkeypatch):
@@ -677,3 +794,17 @@ def test_extract_strips_html_from_description(tmp_path, monkeypatch):
     assert "<p>" not in user_content
     assert "<b>" not in user_content
     assert "Iran" in user_content
+
+
+def test_claim_extraction_bounds_full_text_and_reports_truncation(tmp_path, monkeypatch):
+    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
+    captured = []
+    client = FakeLLMClient({"claims": []}, capture=captured)
+    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
+    article = {**ARTICLE, "id": "long-article", "text": "word " * 10_000}
+
+    stats = extract_and_save_claims([article])
+
+    user_content = captured[0]["messages"][1]["content"]
+    assert len(user_content) <= claims_module.CLAIMS_CONTENT_CHAR_LIMIT
+    assert stats["content_truncations"] == 1

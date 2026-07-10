@@ -1,6 +1,6 @@
 # False arc attachment: South China Sea friction assigned to China-Russia visit
 
-Status: open
+Status: resolved in the current acceptance gate
 Date observed: 2026-05-28
 Observed artifact: `briefings/briefing_20260527_2309.md`
 
@@ -41,9 +41,9 @@ geopolitics, or state-power context.
 - `assign_story_arcs()`
 - `src/top10.py` rendering of `arc_label`
 
-The current arc-assignment path accepts `adjacent_topic` and `broader_context`
-as attachable arc relationships. Existing docs already note questionable loose
-attachments in `docs/session-log.md` and ADR 0016.
+The historical arc-assignment path accepted `adjacent_topic` and
+`broader_context`. The current gate accepts only `same_arc` and
+`parent_context`; contextual relationships remain auditable but cannot attach.
 
 ## Investigation Notes
 
@@ -68,8 +68,9 @@ Check the 2026-05-27 persisted rows for:
 - If local data is repaired, do it with an idempotent SQLite-compatible helper
   or clearly document that this is a generated-artifact-only correction.
 
-## Open Decision
+## Resolution
 
-Decision needed before implementation: should `adjacent_topic` and
-`broader_context` be demoted to audit-only for arc assignment, or should they
-remain attachable with stricter evidence/token gates?
+`adjacent_topic` and `broader_context` are audit-only for arc assignment. The
+reviewed case remains in `evals/datasets/arc_assignment_cases.jsonl`, and the
+current acceptance gate is exercised by the story-match evaluation harness and
+tracker regression tests.
