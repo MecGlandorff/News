@@ -6,10 +6,11 @@ import requests
 from collections import defaultdict
 from bs4 import BeautifulSoup
 from datetime import date
-from email.utils import parsedate_to_datetime
 from requests.adapters import HTTPAdapter
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from urllib3.util.retry import Retry
+
+from src.article_dates import editorial_date
 
 SOURCES = [
     # --- Dutch politics & general ---
@@ -128,15 +129,7 @@ def _article_id(url):
 
 
 def _parse_published_at(value):
-    try:
-        parsed = parsedate_to_datetime(value)
-    except (TypeError, ValueError):
-        return None
-    if parsed is None:
-        return None
-    if parsed.tzinfo is None:
-        return parsed.date()
-    return parsed.astimezone().date()
+    return editorial_date(value)
 
 
 def _published_date_filter_reason(value, target_date):

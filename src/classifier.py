@@ -2,14 +2,17 @@ import json
 from src import observability
 from src.article_cache import get_cached_classifications, save_classifications
 from src.config import (
+    CLASSIFIER_BATCH_SIZE,
     CLASSIFIER_BLOCKED_STORY_LABELS,
+    CLASSIFIER_DESCRIPTION_CHAR_LIMIT,
     CLASSIFIER_MODEL,
     CLASSIFIER_RETRY_BATCH_SIZE,
+    CLASSIFIER_TITLE_CHAR_LIMIT,
 )
 from src.llm import create_chat_completion, get_openai_client, mark_schema_failure, parse_json_object
 
 THEMES = ["Geopolitics & War", "USA Politics", "Dutch Politics", "Economy", "Tech", "Climate", "Science", "Sports", "Other"]
-CLASSIFIER_PROMPT_VERSION = "2026-04-25-v1"
+CLASSIFIER_PROMPT_VERSION = "2026-07-11-v2"
 
 SYSTEM_PROMPT = """You are a news classifier. Given a list of articles, classify each article into exactly one theme.
 
@@ -47,9 +50,23 @@ When in doubt: score 1. A sports result is 1. A doping case is 1. A celebrity st
 
 def _classifier_items(articles):
     return [
-        {"id": str(a["id"]), "title": a["title"], "description": a["description"]}
+        {
+            "id": str(a["id"]),
+            "title": _bounded_text(a.get("title"), CLASSIFIER_TITLE_CHAR_LIMIT),
+            "description": _bounded_text(
+                a.get("description"),
+                CLASSIFIER_DESCRIPTION_CHAR_LIMIT,
+            ),
+        }
         for a in articles
     ]
+
+
+def _bounded_text(value, limit):
+    text = str(value or "")
+    if len(text) <= limit:
+        return text
+    return text[:limit].rsplit(" ", 1)[0].rstrip() + "…"
 
 
 def _chunks(items, size):
@@ -131,12 +148,14 @@ def classify_articles(articles):
     )
     missing = [a for a in articles if str(a["id"]) not in cached]
     classification = dict(cached)
-    observability.increment_cache_hits(len(cached))
+    observability.increment_cache_hits(len(cached), layer="classification")
 
     if missing:
         client = get_openai_client()
 
-        new_classifications = _request_classifications(client, missing)
+        new_classifications = {}
+        for batch in _chunks(missing, CLASSIFIER_BATCH_SIZE):
+            new_classifications.update(_request_classifications(client, batch))
         omitted = _missing_article_ids(missing, new_classifications)
         if omitted:
             retry_articles = [a for a in missing if str(a["id"]) in omitted]

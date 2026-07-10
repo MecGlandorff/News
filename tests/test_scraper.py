@@ -1,6 +1,8 @@
 import logging
+from datetime import datetime, timezone
 
 from src import scraper
+from src.article_dates import editorial_date, editorial_today
 
 
 def test_scrape_all_does_not_fetch_article_text_by_default(monkeypatch):
@@ -315,3 +317,13 @@ def test_article_id_is_stable_for_tracking_query_params():
     tracked = scraper._article_id("https://example.com/story/?fbclid=abc&b=2")
 
     assert plain == tracked
+
+
+def test_editorial_date_uses_brussels_day_boundary():
+    assert editorial_date("Fri, 10 Jul 2026 23:30:00 GMT").isoformat() == "2026-07-11"
+
+
+def test_editorial_today_uses_brussels_day_boundary():
+    now = datetime(2026, 7, 10, 23, 30, tzinfo=timezone.utc)
+
+    assert editorial_today(now).isoformat() == "2026-07-11"

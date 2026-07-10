@@ -98,6 +98,40 @@ def test_classify_articles_caches_model_results(tmp_path, monkeypatch):
     assert second[0]["importance"] == 4
 
 
+def test_classify_articles_bounds_initial_batches_and_text(tmp_path, monkeypatch):
+    monkeypatch.setattr(article_cache, "DB_PATH", tmp_path / "stories.db")
+    captured = []
+
+    def classify_batch(kwargs):
+        items = json.loads(kwargs["messages"][1]["content"])
+        return {
+            "results": [
+                {
+                    "id": item["id"],
+                    "theme": "Other",
+                    "story_label": f"Story {item['id']}",
+                    "importance": 2,
+                }
+                for item in items
+            ]
+        }
+
+    client = FakeLLMClient(classify_batch, capture=captured)
+    monkeypatch.setattr(classifier, "get_openai_client", lambda: client)
+    articles = [
+        _article(f"article-{index}", "T" * 500, "D" * 2000)
+        for index in range(51)
+    ]
+
+    result = classify_articles(articles)
+
+    batches = [json.loads(call["messages"][1]["content"]) for call in captured]
+    assert [len(batch) for batch in batches] == [50, 1]
+    assert len(batches[0][0]["title"]) <= 301
+    assert len(batches[0][0]["description"]) <= 1501
+    assert len(result) == 51
+
+
 def test_classify_articles_retries_omitted_article_ids(tmp_path, monkeypatch):
     monkeypatch.setattr(article_cache, "DB_PATH", tmp_path / "stories.db")
     captured = []
