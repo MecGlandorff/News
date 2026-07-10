@@ -102,7 +102,7 @@ def create_cached_chat_completion(
         )
         cached_content = llm_response_cache.get_cached_response(cache_metadata)
         if cached_content is not None:
-            observability.increment_cache_hits()
+            observability.increment_cache_hits(layer="exact", purpose=purpose)
             return llm_response_cache.response_from_content(cached_content), cache_metadata, True
 
     response = create_chat_completion(

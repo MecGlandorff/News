@@ -8,12 +8,15 @@ from types import SimpleNamespace
 
 
 DB_PATH = Path("data/stories.db")
+CACHE_MAX_AGE_DAYS = 30
+CACHE_MAX_ENTRIES = 1000
 
 
 def _get_db() -> sqlite3.Connection:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
     conn.executescript("""
         CREATE TABLE IF NOT EXISTS llm_response_cache (
             cache_id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -83,12 +86,14 @@ def get_cached_response(metadata: dict[str, str]) -> str | None:
               AND model = ?
               AND prompt_version = ?
               AND request_hash = ?
+              AND created_at >= datetime('now', ?)
             """,
             (
                 metadata["purpose"],
                 metadata["model"],
                 metadata["prompt_version"],
                 metadata["request_hash"],
+                f"-{CACHE_MAX_AGE_DAYS} days",
             ),
         ).fetchone()
         if row is None:
@@ -129,7 +134,10 @@ def save_response(metadata: dict[str, str], response_content: str) -> None:
                 VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT(purpose, model, prompt_version, request_hash) DO UPDATE SET
                     request_json = excluded.request_json,
-                    response_content = excluded.response_content
+                    response_content = excluded.response_content,
+                    hit_count = 0,
+                    created_at = CURRENT_TIMESTAMP,
+                    last_used_at = NULL
                 """,
                 (
                     metadata["purpose"],
@@ -140,6 +148,40 @@ def save_response(metadata: dict[str, str], response_content: str) -> None:
                     response_content,
                 ),
             )
+    finally:
+        conn.close()
+
+
+def prune_cache(
+    *,
+    max_age_days: int = CACHE_MAX_AGE_DAYS,
+    max_entries: int = CACHE_MAX_ENTRIES,
+) -> int:
+    """Delete expired and least-recently-used exact responses."""
+    if max_age_days < 1 or max_entries < 1:
+        raise ValueError("Cache retention values must be positive")
+    conn = _get_db()
+    try:
+        before = int(conn.execute("SELECT COUNT(*) FROM llm_response_cache").fetchone()[0])
+        with conn:
+            conn.execute(
+                "DELETE FROM llm_response_cache WHERE created_at < datetime('now', ?)",
+                (f"-{max_age_days} days",),
+            )
+            conn.execute(
+                """
+                DELETE FROM llm_response_cache
+                WHERE cache_id NOT IN (
+                    SELECT cache_id
+                    FROM llm_response_cache
+                    ORDER BY COALESCE(last_used_at, created_at) DESC, cache_id DESC
+                    LIMIT ?
+                )
+                """,
+                (max_entries,),
+            )
+        after = int(conn.execute("SELECT COUNT(*) FROM llm_response_cache").fetchone()[0])
+        return before - after
     finally:
         conn.close()
 

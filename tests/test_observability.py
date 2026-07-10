@@ -7,8 +7,113 @@ import src.article_cache as article_cache
 import src.classifier as classifier
 from src.classifier import classify_articles
 import src.observability as observability
+import src.tracker_store as tracker_store
 from src.llm import create_chat_completion, parse_json_object
 from fakes import FakeLLMClient, FakeUsage
+
+
+def test_start_run_marks_unfinished_previous_run_abandoned(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    monkeypatch.setattr(observability, "DB_PATH", db_path)
+
+    first = observability.start_run(_run_args(), run_date="2026-05-07")
+    second = observability.start_run(_run_args(), run_date="2026-05-07")
+
+    abandoned = _row(
+        db_path,
+        "SELECT status, finished_at, error_message FROM runs WHERE run_id = ?",
+        (first,),
+    )
+    current = _row(db_path, "SELECT status FROM runs WHERE run_id = ?", (second,))
+    assert abandoned["status"] == "abandoned"
+    assert abandoned["finished_at"] is not None
+    assert "before the run was finalized" in abandoned["error_message"]
+    assert current["status"] == "running"
+
+
+def test_cache_hits_are_attributed_by_layer(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    monkeypatch.setattr(observability, "DB_PATH", db_path)
+    run_id = observability.start_run(_run_args(), run_date="2026-05-07")
+
+    observability.increment_cache_hits(2, run_id, layer="classification")
+    observability.increment_cache_hits(3, run_id, layer="claims")
+    observability.increment_cache_hits(1, run_id, layer="exact", purpose="brief")
+
+    row = _row(
+        db_path,
+        """
+        SELECT llm_cache_hits, classification_cache_hits,
+               claim_cache_hits, briefing_cache_hits
+        FROM runs WHERE run_id = ?
+        """,
+        (run_id,),
+    )
+    assert row == {
+        "llm_cache_hits": 6,
+        "classification_cache_hits": 2,
+        "claim_cache_hits": 3,
+        "briefing_cache_hits": 1,
+    }
+
+
+def test_exact_matching_cache_purposes_are_attributed_to_matching(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    monkeypatch.setattr(observability, "DB_PATH", db_path)
+    run_id = observability.start_run(_run_args(), run_date="2026-05-07")
+
+    for purpose in ("match-sameday", "match-crossday", "match-verify", "match-arc"):
+        observability.increment_cache_hits(run_id=run_id, layer="exact", purpose=purpose)
+
+    row = _row(
+        db_path,
+        """
+        SELECT llm_cache_hits, matching_cache_hits, other_cache_hits
+        FROM runs WHERE run_id = ?
+        """,
+        (run_id,),
+    )
+    assert row == {
+        "llm_cache_hits": 4,
+        "matching_cache_hits": 4,
+        "other_cache_hits": 0,
+    }
+
+
+def test_novelty_audit_filters_decisions_by_run_id(tmp_path, monkeypatch):
+    db_path = tmp_path / "stories.db"
+    monkeypatch.setattr(observability, "DB_PATH", db_path)
+    conn = tracker_store.get_db(db_path)
+    conn.close()
+
+    first = observability.start_run(_run_args(), run_date="2026-05-07")
+    observability.finish_run(first)
+    second = observability.start_run(_run_args(), run_date="2026-05-07")
+    observability.finish_run(second)
+
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.executemany(
+            """
+            INSERT INTO story_match_decisions (
+                run_id, run_date, today_label, candidate_label, accepted,
+                same_event, relationship, confidence, prompt_version
+            ) VALUES (?, '2026-05-07', ?, ?, 0, 0, 'adjacent_topic', 'high', 'v1')
+            """,
+            [
+                (first, "First run label", "First candidate"),
+                (second, "Second run label", "Second candidate"),
+            ],
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    audit = observability.novelty_audit(first)
+
+    assert [item["today_label"] for item in audit["rejected_related_matches"]] == [
+        "First run label"
+    ]
 
 
 def _row(db_path, query, params=()):
@@ -514,7 +619,7 @@ def test_write_run_report_artifact_outputs_markdown_overview(tmp_path, monkeypat
         output_dir=tmp_path / "run_artifacts",
     )
 
-    assert artifact == tmp_path / "run_artifacts" / "run_2026-05-10.md"
+    assert artifact == tmp_path / "run_artifacts" / f"run_2026-05-10_{run_id}.md"
     markdown = artifact.read_text(encoding="utf-8")
     assert "# Run Report: 2026-05-10" in markdown
     assert "| Articles returned | 345 |" in markdown
