@@ -25,6 +25,8 @@ module = [
     "src.pricing",
     "src.llm_response_cache",
     "src.article_dates",
+    "src.occurrences",
+    "src.replay",
 ]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true

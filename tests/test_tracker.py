@@ -122,6 +122,23 @@ def test_story_arc_schema_backfills_legacy_stories(tmp_path, monkeypatch):
     assert arc_count == 1
 
 
+def test_tracker_schema_has_indexes_for_recent_story_article_lookups(tmp_path):
+    conn = tracker.tracker_store.get_db(tmp_path / "stories.db")
+    try:
+        indexes = {
+            row["name"]
+            for row in conn.execute("PRAGMA index_list(articles)").fetchall()
+        }
+    finally:
+        conn.close()
+
+    assert {
+        "idx_articles_story_date_published",
+        "idx_articles_id_story",
+        "idx_articles_date",
+    } <= indexes
+
+
 def test_track_quarantines_uncategorized_memory_before_matching(tmp_path, monkeypatch):
     db_path = tmp_path / "stories.db"
     data_dir = tmp_path / "daily"
@@ -310,6 +327,64 @@ def test_consolidate_today_allows_shared_distinctive_incident(monkeypatch):
 
     assert list(consolidated) == ["Train Collision"]
     assert len(consolidated["Train Collision"]) == 2
+
+
+def test_consolidate_today_rejects_label_repeated_across_groups(monkeypatch):
+    monkeypatch.setattr(
+        tracker,
+        "get_openai_client",
+        lambda: _fake_tracker_client({
+            "groups": [
+                {"canonical_label": "First", "labels": ["Label A"]},
+                {"canonical_label": "Second", "labels": ["Label A", "Label B"]},
+            ],
+        }),
+    )
+    groups = {
+        "Label A": [_article(1, "First")],
+        "Label B": [_article(2, "Second")],
+    }
+
+    consolidated = tracker._consolidate_today(groups)
+
+    assert consolidated is groups
+
+
+def test_consolidate_today_rejects_duplicate_canonical_labels(monkeypatch):
+    monkeypatch.setattr(
+        tracker,
+        "get_openai_client",
+        lambda: _fake_tracker_client({
+            "groups": [
+                {"canonical_label": "Shared", "labels": ["Label A"]},
+                {"canonical_label": "Shared", "labels": ["Label B"]},
+            ],
+        }),
+    )
+    groups = {
+        "Label A": [_article(1, "First")],
+        "Label B": [_article(2, "Second")],
+    }
+
+    consolidated = tracker._consolidate_today(groups)
+
+    assert consolidated is groups
+
+
+def test_consolidate_today_falls_back_on_invalid_json(monkeypatch):
+    monkeypatch.setattr(
+        tracker,
+        "get_openai_client",
+        lambda: FakeLLMClient("not-json"),
+    )
+    groups = {
+        "Label A": [_article(1, "First")],
+        "Label B": [_article(2, "Second")],
+    }
+
+    consolidated = tracker._consolidate_today(groups)
+
+    assert consolidated is groups
 
 
 def test_match_labels_rejects_unrelated_generic_accident(monkeypatch):
@@ -629,9 +704,46 @@ def test_story_match_verifier_fetches_full_text_for_candidate_match(tmp_path, mo
                 FROM runs
                 WHERE run_id = ?
             """, (run_id,)).fetchone()
+            occurrence = conn.execute(
+                """
+                SELECT o.occurrence_id, o.body_text, o.retrieval_status
+                FROM occurrence_assignments a
+                JOIN article_occurrences o ON o.occurrence_id = a.occurrence_id
+                WHERE o.article_id = '2'
+                """
+            ).fetchone()
+            occurrence_rows = conn.execute(
+                """
+                SELECT occurrence_id, retrieval_status
+                FROM article_occurrences
+                WHERE article_id = '2'
+                ORDER BY occurrence_id
+                """
+            ).fetchall()
+            history = conn.execute(
+                """
+                SELECT h.run_id, h.occurrence_id
+                FROM occurrence_assignment_history h
+                JOIN article_occurrences o ON o.occurrence_id = h.occurrence_id
+                WHERE o.article_id = '2'
+                """
+            ).fetchone()
         finally:
             conn.close()
         assert row == (1, 0)
+        assert occurrence[1:] == (
+            "Full article text about the latest Iran nuclear talks proposal.",
+            "full_text",
+        )
+        assert occurrence_rows[0][1] == "rss_only"
+        assert occurrence_rows[1][1] == "full_text"
+        assert tracked[0]["occurrence_id"] == occurrence[0] == occurrence_rows[1][0]
+        assert history == (run_id, occurrence[0])
+        saved_daily = json.loads(
+            (data_dir / "2026-05-02" / "articles.json").read_text(encoding="utf-8")
+        )
+        assert saved_daily[0]["occurrence_id"] == occurrence[0]
+        assert saved_daily[0]["text"] == occurrence[1]
     finally:
         observability.clear_current_run_id()
 
