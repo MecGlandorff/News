@@ -21,8 +21,6 @@ Only the documents linked from this page are part of the maintained project docu
 ## Engineering Practice
 
 - [Project log](project-log.md) - durable project history: what changed, why it mattered, and where to read more.
-- [Coding standard](coding-standard.md) - how code should preserve visible pipeline boundaries and source grounding.
-- [Communication standard](communication.md) - how docs should explain current behavior, weakness, next steps, and done criteria.
 - [Architecture decision records](adr/) - decision history for non-obvious tradeoffs.
 
 ## Generated Artifacts

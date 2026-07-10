@@ -13,15 +13,17 @@ The guiding rule is: LLMs produce structured intermediate artifacts where possib
 | Task | Model | Output | Cache status | Purpose |
 |---|---|---|---|---|
 | Article classification | `gpt-5.4-mini` | JSON | Cached by `content_hash + model + prompt_version` | Assign theme, story label, and importance |
-| Claim extraction | `gpt-5.4-nano` | JSON | Cached by `article_id + prompt_version + content_hash` | Extract atomic claims and evidence spans from full text when available |
+| Claim extraction | `gpt-5.4-nano` | JSON | Cached by occurrence + content + model + prompt/validation versions | Extract atomic claims and evidence spans from full text when available |
+| Claim derivability verification | `gpt-5.4-nano` | JSON | Exact response cache by request shape | Decide uncertain claim/span paraphrases; default reject |
 | Same-day consolidation | `gpt-5.5` | JSON | Exact response cache by request shape | Merge same-day labels that refer to the same event |
-| Cross-day matching | `gpt-5.5` | JSON | Exact response cache by request shape | Match today's labels to recent canonical stories |
+| Cross-day matching | `gpt-5.4-mini` | JSON | Exact response cache by request shape | Match today's labels to recent canonical stories |
 | Story-match verification | `gpt-5.4-nano` | JSON | Exact response cache by request shape | Verify candidate cross-day matches with full article text before reusing story memory |
+| Story-arc assignment | `gpt-5.4-mini` | JSON | Exact response cache by request shape | Attach unmatched concrete stories to supported broader arcs |
 | Briefing generation | `gpt-5.5` | JSON story-card fields plus prose | Exact response cache by request shape | Produce status, confidence, source agreement, dispute flag, `delta_summary`, briefing text, and open questions |
 
 Classification uses `gpt-5.4-mini`. Claim extraction uses `gpt-5.4-nano` behind `--show-evidence`, with full article text when available. Cross-story reasoning and final prose use `gpt-5.5`.
 
-The exact response cache key includes purpose, model, prompt version, messages, response format, and API kwargs. Cache hits skip the model call and increment `runs.llm_cache_hits`; they do not create `llm_calls` rows.
+The exact response cache key includes purpose, model, prompt version, messages, response format, and API kwargs. Cache hits skip the model call and increment the total plus a layer-specific run counter; they do not create `llm_calls` rows. Entries are eligible for reuse for 30 days, and successful runs cap the table at 1,000 rows.
 
 ---
 
@@ -33,9 +35,11 @@ Expected behavior:
 
 - classification returns a `results` list
 - claim extraction returns a `claims` list
+- claim derivability verification returns a `supported` boolean
 - same-day consolidation returns a `groups` list
 - cross-day matching returns a `matches` list
 - story-match verification returns a `decisions` list
+- story-arc assignment returns an `assignments` list
 - briefing generation returns a `briefings` list with bounded story-card fields
 
 Free-form model text should not become internal state unless it is the final briefing prose or a stored story memory summary.
@@ -100,13 +104,15 @@ It returns story-card metadata as bounded labels:
 
 Without evidence mode, these labels are briefing-level signals backed by source identity defaults and prompt constraints. `confirmed conflict` is intentionally not an allowed briefing value; even claim-backed divergence is surfaced as `possible conflict`.
 
-When `--show-evidence` supplies saved claims, the briefing input includes a deterministic `claim_source_agreement` summary. This first pass is intentionally conservative:
+When `--show-evidence` supplies saved claims, the briefing input includes a deterministic `claim_source_agreement` summary:
 
 - background claims are ignored
 - exact repeated non-background claims across distinct source identities count as claim-backed support
+- conservatively similar claims can count as multi-source support, but never as proof of independent corroboration
 - four or more distinct source identities repeating the same claim can produce `broad`; two or three can produce `partial`
 - multiple claim-bearing source identities without exact repeats remain `partial`, not `broad`
-- numeric claims with similar context but different numbers produce lightweight source-divergence notes and force `mixed` plus `possible conflict`
+- precise number, date, explicit status-opposite, or attribution differences produce lightweight source-divergence notes and force `mixed` plus `possible conflict`
+- only current-day claims affect current agreement; claims from the prior six editorial days are dated continuity context
 
 The summary uses `source_id` where available and falls back to normalized source names for older rows. It does not adjudicate truth, infer independence, or create confirmed contradiction prose.
 
@@ -129,7 +135,7 @@ Default behavior:
 
 Current cache behavior:
 
-- cache by claim input content hash and prompt version
+- cache by occurrence identity, content hash, model, prompt version, and validation-policy version
 - cache zero-claim results
 - update cached claim `story_id` when tracking changes
 - ignore older prompt-version claims when rendering current evidence
@@ -141,7 +147,7 @@ Current cache behavior:
 python -m evals.run_claim_quality_eval
 ```
 
-Use that report to decide whether the full-text quality lift is worth the extra cost before broadening claim extraction, expanding claim-backed agreement beyond exact repeats, or adding non-numeric source-divergence notes.
+Use that report to decide whether the full-text quality lift is worth the extra cost before broadening claim extraction or loosening the shipped conservative agreement/divergence patterns.
 
 ---
 
@@ -155,7 +161,7 @@ The most important current risks are:
 - claim extraction can still treat allegations as confirmed facts; the
   `2026-05-13-v1` prompt reduces this risk but needs a live current-prompt eval
 - full-text extraction can increase latency and token use when `--show-evidence` is enabled
-- date/status/attribution claims can diverge across sources but are not yet compared
+- source-divergence comparison is deliberately narrow and may miss semantically equivalent wording outside its precise deterministic patterns
 - exact response caching only reuses identical prompts; it is not a semantic story-match cache
 
 See [failure-modes.md](failure-modes.md) for the broader list.

@@ -225,6 +225,16 @@ Audit trail:
 - run totals include accepted and rejected match checks
 - exact verifier model responses can be reused for identical prompts through `llm_response_cache`, but stored decision rows are audit records, not a semantic match cache
 
+### Immutable occurrences and replay
+
+Before model-driven grouping, `src/occurrences.py` stores an append-only snapshot of each captured article plus separate classification and assignment snapshots. Derived article, observation, and hierarchy rows can therefore be rebuilt without changing source evidence.
+
+```bash
+python -m src.run --replay 2026-05-07
+```
+
+Replay uses stored snapshots only, makes no network calls, rebuilds forward in one transaction, and rolls back if required classification, assignment, or parent context is missing. See ADR 0019.
+
 ## Stage 4: Claims And Evidence
 
 Owned by:
@@ -251,7 +261,7 @@ full article text
 It then checks `claim_extractions` by:
 
 ```text
-article_id + prompt_version + content_hash
+occurrence + content hash + model + prompt version + validation-policy version
 ```
 
 If the cache is valid, the model call is skipped and the current story ID is updated if tracking changed. Zero-claim outputs are cached too.
@@ -276,15 +286,15 @@ Validation is strict. A claim is dropped unless:
 - `confidence` is numeric and in `[0.0, 1.0]`
 - `evidence_span` is non-empty
 - `evidence_span` appears in the extraction input
-- `claim_text` is *derivable* from `evidence_span` under the hybrid gate below
+- `claim_text` is *derivable* from `evidence_span` under the conservative gate below
 
 ### Derivability Gate
 
 Span containment is necessary but not sufficient: a model could pair any article sentence with any claim and pass substring validation. The derivability gate in `_derivability_check()` and `_classify_claim()` decides whether the span actually supports the claim. See [docs/adr/0013-claim-evidence-derivability.md](adr/0013-claim-evidence-derivability.md).
 
-1. **Deterministic reject** — if any number in `claim_text` (integer, decimal, percentage, or thousands-separated value, with decimal commas preserved as decimals) does not appear in `evidence_span`, drop the claim immediately. No LLM call.
-2. **Deterministic accept** — if `claim_text` (normalized) is contained in `evidence_span`, or if entity overlap is backed by enough non-entity lexical overlap, accept immediately ("cheap_accept").
-3. **LLM verifier** — for the ambiguous middle, including weak entity-only or anaphoric spans, call `gpt-5.4-nano` with `CLAIMS_VERIFIER_PROMPT_VERSION = "2026-05-14-v1"` through `create_cached_chat_completion`, asking whether the span supports the claim. Verifier failures (network, parse, unexpected payload) default to reject.
+1. **Deterministic reject** — drop missing quantities and explicit negation, direction, or common-unit conflicts. No LLM call.
+2. **Deterministic accept** — accept only when normalized `claim_text` is contained in `evidence_span` ("cheap_accept").
+3. **LLM verifier** — route every other paraphrase, including entity overlap and anaphoric spans, through the cached `gpt-5.4-nano` verifier. Network, parse, malformed-schema, and uncertain results reject.
 
 The verifier runs **outside** the SQLite transaction so its network call does not hold a write lock. Run totals expose `claim_derivable_accepts`, `claim_verifier_calls`, `claim_verifier_accepts`, and `claim_verifier_rejects`.
 
@@ -299,9 +309,9 @@ flowchart TD
     G --> H[validate fields]
     H --> I{evidence span in input?}
     I -- no --> K[drop claim]
-    I -- yes --> M{number in claim missing from span?}
+    I -- yes --> M{quantity / negation / direction / unit mismatch?}
     M -- yes --> K
-    M -- no --> N{verbatim or strong entity overlap?}
+    M -- no --> N{near-verbatim claim in span?}
     N -- yes --> J[save claim: cheap_accept]
     N -- no --> O[gpt-5.4-nano verifier]
     O -- supported --> J2[save claim: verifier_accept]
@@ -314,7 +324,7 @@ flowchart TD
 Important boundary:
 
 - Claim extraction is extraction, not interpretation.
-- Evidence-mode source agreement uses saved claims only for a narrow deterministic comparison step: exact repeated non-background claims and comparable numeric divergence.
+- Evidence-mode source agreement uses current-day claims for exact/similar support and precise number/date/status/attribution divergence. Six prior days are dated context only.
 - The claims table does not prove truth, source independence, or confirmed contradiction.
 - Full text can be empty when scraping fails; in that case the claim extractor falls back to title and RSS description.
 
@@ -344,7 +354,7 @@ Story selection works like this:
 - select lead stories plus politics/economy/other sections
 - exclude low-value categories from lead placement when appropriate
 
-Briefing generation uses one batched model call for displayed stories. The model returns structured story-card fields:
+Briefing generation uses bounded batches of up to eight displayed stories, with at most six recent articles per story. The model returns structured story-card fields:
 
 ```text
 status, confidence, source_agreement, dispute_flag,
@@ -353,12 +363,13 @@ delta_summary, briefing, open_questions
 
 The allowed labels are normalized and defaults are supplied when the model omits or malforms a field. If a displayed story comes back without briefing text, the system retries missing stories and then falls back to deterministic text if needed.
 
-When evidence mode is enabled, saved claims are also summarized before the briefing call. The first claim-backed source-agreement pass is deterministic and narrow:
+When evidence mode is enabled, saved claims are summarized before the briefing call:
 
 - exact repeated non-background claims across distinct source identities can move agreement to `partial` or `broad`
-- multiple claim-bearing source identities without exact repeats stay conservative at `partial`
-- numeric claims with otherwise similar wording but different numbers create lightweight source-divergence notes and force `mixed`
-- claim-backed labels override the model's briefing-level `source_agreement`; numeric divergence forces `possible conflict`
+- conservative similar-claim groups can provide `partial` multi-source support, without implying independence
+- precise number, date, status, and attribution differences create lightweight source-divergence notes and force `mixed`
+- only current-day claims affect current agreement; six prior days are visibly dated context
+- claim-backed labels override the model's briefing-level `source_agreement`; divergence forces `possible conflict`
 - this adds no new LLM call and no new database table
 
 After briefing generation, `save_observation_memory()` writes the generated summary and `delta_summary` back to `story_observations`. That is what lets the next run compare today's reporting against previous context.
@@ -384,20 +395,20 @@ Owned by:
 runs.status = running
 ```
 
-Every real LLM call records one `llm_calls` row when a current run ID exists. Cache hits update the `runs` row instead of inserting fake call rows. Cache hits can come from article classification, claim extraction, or exact LLM response reuse for matching and briefing calls.
+Every real LLM call records one `llm_calls` row when a current run ID exists. Cache hits update total and layer-specific counters on `runs` instead of inserting fake call rows. Interrupted `running` rows become `abandoned` at the next startup.
 
 At the end, `finish_run()` aggregates LLM rows into the run:
 
 - call count
 - error count
 - schema failures
-- retries
+- application retries (`SDK retries` are reported as unavailable because the client does not expose them)
 - prompt tokens
 - completion tokens
 - total latency
 - estimated cost from explicit model pricing
 
-Scraper and claim-extraction counters are written to the run as the pipeline executes. Cache hits remain aggregate run totals and are not inserted as fake `llm_calls` rows.
+Scraper and claim-extraction counters are written to the run as the pipeline executes. Exact responses older than 30 days are ignored, and successful runs prune the table to at most 1,000 rows.
 
 ```mermaid
 flowchart TD
@@ -436,6 +447,7 @@ Claim cheap accepts:    584
 Claim verifier calls:   42
 Claim verifier accepts: 28
 Claim verifier rejects: 14
+Claim input truncation:  3
 Stories touched:        38
 Story match checks:     14
 Story match accepted:   10
@@ -443,8 +455,15 @@ Story match rejected:   4
 LLM calls:              28
 LLM errors:             0
 LLM cache hits:         9
+  classification:       3
+  claims:               2
+  verifier:             1
+  matching:             2
+  briefing:             1
+  other:                0
 Schema failures:        0
-Retries:                0
+Application retries:    0
+SDK retries:            not exposed by client
 Tokens:                 prompt 18420 / completion 3910
 Estimated cost:         EUR 0.21
   claim: 7 calls, tokens 7200/1300, latency 9.4s, EUR 0.01
@@ -487,12 +506,11 @@ The most expensive failure mode is not just token spend. A false story merge can
 The current system is useful, but several important trust layers are incomplete:
 
 - Source metadata is stored and deterministic source support uses `source_id` with a source-name fallback.
-- Evidence-mode source agreement is claim-backed only for exact repeated non-background claims and conservative numeric divergence.
-- There is no dedicated contradiction module/table. Numeric divergence is surfaced as `possible conflict`, not confirmed contradiction.
+- Evidence-mode source agreement covers exact/similar support and precise number/date/status/attribution divergence, but not independent corroboration.
+- There is no dedicated contradiction module/table. Structured divergence is surfaced as `possible conflict`, not confirmed contradiction.
 - Evidence runs use full article text for claim extraction when body text is available.
 - The derivability gate is in place, but the verifier's paraphrase decisions are asserted by tests with mocks, not measured against reviewed paraphrase cases in `evals/datasets/golden_claims.jsonl`. There is also no per-claim audit row recording which path (cheap accept, verifier accept, verifier reject) decided a saved claim.
 - Exact LLM responses for matching, briefing, and the claim verifier can be cached, but there is no semantic story-match decision cache.
 - Article deduplication is URL-based, not content-fingerprint-based.
-- Date, status, and attribution divergence are not compared yet.
 
 These are the right next improvements because they make the system more inspectable, grounded, and hard to fool.

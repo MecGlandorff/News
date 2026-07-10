@@ -35,6 +35,7 @@ Configured RSS feeds
   -> src/sources.py       seed source metadata and attach source_id where possible
   -> src/scraper.py       fetch feeds, normalize URLs, filter dates, deduplicate URLs
   -> src/classifier.py    classify theme, story label, and importance
+  -> src/occurrences.py   preserve immutable evidence and replay snapshots
   -> src/tracker.py       consolidate labels, match recent stories, write story memory
   -> src/story_matching.py optionally verify candidate story matches with full article text
   -> src/claims.py        optionally extract claims and evidence spans
@@ -67,6 +68,7 @@ The key tables are:
 - `story_observations`: the memory layer used for summaries and deltas.
 - `story_developments`: daily development labels recorded for a concrete story.
 - `articles`: fetched articles linked to stories for the run date.
+- `article_occurrences`: append-only source snapshots, independent of mutable derived tracking rows.
 - `article_story_links`: junction rows from article to story observation.
 - `story_match_decisions`: verifier audit rows for accepted and rejected candidate story matches.
 
@@ -82,13 +84,13 @@ When enabled, `src/claims.py` extracts structured claims from each tracked artic
 - `evidence_span`
 - `confidence`
 
-The claim layer validates model output before storage. A claim is saved only when its type is allowed, confidence is numeric and bounded, entities are strings, and the evidence span appears in the input sent to the model.
+The claim layer validates model output before storage. A claim is saved only when its type is allowed, confidence is numeric and bounded, entities are strings, the evidence span appears in the bounded input, and the claim passes the versioned derivability gate. Only near-verbatim claims are accepted locally; other paraphrases use the verifier after deterministic contradiction guards.
 
 The `claims` and `claim_extractions` tables are created lazily by `src/claims.py`. A local database produced by runs without `--show-evidence` can have story, article, and classification tables without claim tables.
 
 When `--show-evidence` is enabled, scraping fetches full article text and claim extraction uses title, RSS description, and full article text when available. If body extraction fails or a source blocks scraping, the claim extractor falls back to title and RSS description. The claim model is `gpt-5.4-nano`; classification remains on RSS title/description with `gpt-5.4-mini`.
 
-Evidence-mode briefings also receive a deterministic `claim_source_agreement` summary. The current first pass is deliberately narrow: exact repeated non-background claims across distinct source identities can back `partial` or `broad`, and comparable numeric claims with different values can force `mixed` plus `possible conflict`. This uses saved claims and source identity only; it does not infer independent corroboration or confirmed contradiction.
+Evidence-mode briefings receive a deterministic `claim_source_agreement` summary. Current-day exact and conservatively similar claims can provide multi-source support. Precise number, date, explicit status-opposite, and attribution differences can force `mixed` plus `possible conflict`. Claims from the preceding six editorial days are dated context only. This does not infer independent corroboration or confirmed contradiction.
 
 ## How Briefings Are Built
 
@@ -106,35 +108,32 @@ For selected stories, the briefing model returns structured story-card fields:
 
 The final Markdown renders those fields with source links, reported timestamps, and optional evidence spans. The generated summary and delta are written back to `story_observations`, so future runs can compare against previous context.
 
-When evidence-mode claim comparison produces a source-agreement label, `src/briefing_generation.py` overrides the model's `source_agreement` with the deterministic label. Numeric divergence also overrides `dispute_flag` to `possible conflict`.
+When evidence-mode claim comparison produces a source-agreement label, `src/briefing_generation.py` overrides the model's `source_agreement` with the deterministic label. Structured divergence also overrides `dispute_flag` to `possible conflict`. A numeric post-generation guard replaces briefing prose that introduces numbers absent from supplied source material.
 
 The PDF output uses the same briefing package. `src/rendering/newspaper.py` is a renderer, not a separate intelligence pipeline.
 
 ## What Is Weak Or Missing Today
 
-The core story-memory flow exists, but several trust and observability layers are still incomplete.
+The core story-memory and inspectability flow exists; remaining weaknesses are primarily evaluation depth and source-independence modeling.
 
 - Source metadata is seeded into a `sources` table, and new article rows can store `source_id` alongside the source name. Deterministic source support uses `source_id` first and falls back to source names for older rows.
-- Evidence-mode source agreement is claim-backed for exact repeated claims and conservative numeric divergence, but it is not a general agreement model and does not infer independent source corroboration.
-- Run observability stores `runs` and real model calls in `llm_calls`, exact response reuse in `llm_response_cache`, and `--pipeline-report` reports scraper counts, claim metrics, token use, latency, cache hits, retries, schema failures, story-match verifier counts, parent/development totals, novelty-audit review queues, and estimated EUR cost.
+- Evidence-mode source agreement supports exact/similar claims and precise number/date/status/attribution divergence, but it does not infer independent source corroboration.
+- Run observability stores `runs` and real model calls in `llm_calls`, attributes cache hits by layer, scopes decision audits by `run_id`, recovers interrupted runs as `abandoned`, and reports application retries separately from SDK retries that the client does not expose.
 - There is no stored novelty score yet; novelty needs a clear claim-backed definition before becoming schema.
-- Source-divergence notes currently cover numeric divergence only; date, status, and attribution comparison are still missing. A dedicated contradiction module/table is no longer Phase 3 scope.
 - Full-text claim extraction is enabled for evidence runs, but its cost and quality impact still need review against run telemetry.
-- Story-match verifier decisions are stored for audit, exact verifier responses can be cached for identical prompts, and verifier behavior still needs evaluation against a curated fixture set.
+- Acceptance-gate story/arc cases run current code, but they replay reviewed responses rather than calling live models; real prompt/model quality still needs review.
 
 These gaps matter because the project aims to produce auditable intelligence artifacts, not just summaries.
 
 ## What Should Happen Next
 
-The next architecture work is closing out Phase 3 by making source metadata and observability load-bearing rather than just present.
-
-The next source-model step should review the first claim-backed agreement slice on real evidence runs and then decide whether to compare dates, statuses, and attributions.
+The next architecture work is review, not another subsystem: run the shipped claim and divergence behavior against real evidence cases.
 
 The next observability refinement should compare the quality impact of full-text `gpt-5.4-nano` claim extraction against its measured token and latency cost.
 
-The next story-matching refinement should build a small reviewed fixture set from recent generated newspapers. It should include true continuations and false merges, including the 2026-05-07 Gaza detention/flotilla failure, before the verifier is enabled by default.
+The next story-matching refinement should add richer replay inputs or explicitly reviewed live prompt runs for true continuations and false merges.
 
-Only after that should the project expand expensive evidence behavior further, such as broader claim comparison for non-numeric source-divergence notes.
+Only after that should the project expand expensive evidence behavior or infer looser semantic agreement.
 
 ## Why This Order Matters
 
@@ -142,7 +141,7 @@ Source metadata should come before claim-backed source agreement because the sys
 
 Observability should guide broader evidence behavior because full text increases token use and latency. The system should measure the cost and quality of evidence runs before making that path common.
 
-Claim comparison should come before source-divergence prose because divergence notes need structured backing. A briefing label like `possible conflict` is useful, but it is not enough for auditability unless the system can point to the claims that differ. The current numeric first pass follows that rule but does not yet cover dates, statuses, or attributions.
+Claim comparison should come before source-divergence prose because divergence notes need structured backing. A briefing label like `possible conflict` is useful, but it is not enough for auditability unless the system can point to the claims that differ.
 
 ## Data Model Reference
 
@@ -296,6 +295,26 @@ prompt_version    TEXT NOT NULL
 classified_at     TEXT DEFAULT CURRENT_TIMESTAMP
 ```
 
+### `article_occurrences`
+
+Append-only captured source material. Derived classification and assignment snapshots live in `occurrence_classifications`, `occurrence_assignments`, and the run-scoped assignment-history table.
+
+```sql
+occurrence_id    INTEGER PRIMARY KEY AUTOINCREMENT
+article_id       TEXT NOT NULL
+editorial_date   DATE NOT NULL
+source_id        INTEGER
+source           TEXT NOT NULL
+title            TEXT NOT NULL
+description      TEXT
+body_text        TEXT
+url              TEXT NOT NULL
+published_at     TEXT
+content_hash     TEXT NOT NULL
+retrieval_status TEXT NOT NULL
+captured_run_id  INTEGER
+```
+
 ### `claims`
 
 Validated claim extraction results.
@@ -303,6 +322,7 @@ Validated claim extraction results.
 ```sql
 claim_id        INTEGER PRIMARY KEY AUTOINCREMENT
 article_id      TEXT NOT NULL
+occurrence_id   INTEGER
 story_id        INTEGER
 claim_text      TEXT NOT NULL
 claim_type      TEXT
@@ -310,6 +330,7 @@ entities        TEXT
 evidence_span   TEXT
 confidence      REAL
 prompt_version  TEXT
+validation_version TEXT
 created_at      TEXT DEFAULT CURRENT_TIMESTAMP
 ```
 
@@ -318,13 +339,17 @@ created_at      TEXT DEFAULT CURRENT_TIMESTAMP
 Claim extraction cache records, including zero-claim results.
 
 ```sql
+extraction_key  TEXT NOT NULL
+occurrence_id   INTEGER
 article_id      TEXT NOT NULL
 prompt_version  TEXT NOT NULL
 story_id        INTEGER
 content_hash    TEXT NOT NULL
 claims_count    INTEGER NOT NULL
+extractor_model TEXT
+validation_version TEXT
 extracted_at    TEXT DEFAULT CURRENT_TIMESTAMP
-PRIMARY KEY (article_id, prompt_version)
+PRIMARY KEY (extraction_key, prompt_version)
 ```
 
 ### `runs`
@@ -410,7 +435,7 @@ UNIQUE (purpose, model, prompt_version, request_hash)
 | Classification | `gpt-5.4-mini` | theme, story label, importance | Yes |
 | Claim extraction | `gpt-5.4-nano` | structured claims | Yes |
 | Same-day consolidation | `gpt-5.5` | label groups | Exact response cache |
-| Cross-day matching | `gpt-5.5` | label matches | Exact response cache |
+| Cross-day matching | `gpt-5.4-mini` | label matches | Exact response cache |
 | Story-match verification | `gpt-5.4-nano` | continuity decisions | Exact response cache |
 | Briefing generation | `gpt-5.5` | story-card fields and prose | Exact response cache |
 
@@ -435,7 +460,7 @@ The architecture is doing its job when a reviewer can trace one story from sourc
 
 ```text
 RSS source
-  -> normalized article
+  -> immutable article occurrence
   -> validated claim and evidence span
   -> story arc
   -> daily observation
@@ -443,6 +468,6 @@ RSS source
   -> briefing section
 ```
 
-The next version should make that trace more inspectable by reviewing evidence-mode claim-backed agreement on real cases and expanding source-divergence comparison beyond numeric claims when it can stay precise.
+The next version should make that trace more trustworthy by reviewing the shipped agreement, divergence, and paraphrase-verifier behavior on real cases.
 
 See `docs/failure-modes.md`, `docs/model-behavior.md`, and `docs/adr/` for related tradeoffs.
