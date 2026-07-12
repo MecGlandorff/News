@@ -34,12 +34,12 @@ geopolitics, or state-power context.
 
 ## Suspected Area
 
-- `src/story_matching.py`
+- `src/tracker/matching/`
 - `ARC_ASSIGNMENT_PROMPT`
 - `ARC_ACCEPT_RELATIONSHIPS`
 - `arc_assignment_from_model()`
 - `assign_story_arcs()`
-- `src/top10.py` rendering of `arc_label`
+- `src/briefing/markdown.py` rendering of `arc_label`
 
 The historical arc-assignment path accepted `adjacent_topic` and
 `broader_context`. The current gate accepts only `same_arc` and

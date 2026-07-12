@@ -1,6 +1,6 @@
 # Documentation
 
-This documentation explains the project as a source-grounded event-memory system. It is written for future builders who need to understand the actual flow, the trust boundaries, and the places where the current prototype is still weak.
+This documentation explains the project as a source-grounded event-memory system. It is written for future builders who need to understand the actual flow, the trust boundaries, and the places where the current system is still weak.
 
 Only the documents linked from this page are part of the maintained project documentation map.
 

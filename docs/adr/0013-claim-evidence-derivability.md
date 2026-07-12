@@ -16,7 +16,7 @@ The flagship pitch of this repo is *source-grounded event memory*. A claim that 
 
 ## Decision
 
-Add a conservative derivability gate between `claim_text` and `evidence_span` in `src/claims.py`:
+Add a conservative derivability gate between `claim_text` and `evidence_span` in `src/claims/validation.py`:
 
 1. **Deterministic reject** — reject missing quantities, preserving decimal commas as decimals, and explicit negation, semantic-direction, or numeric-unit mismatches. No verifier call.
 2. **Deterministic accept** — accept only when normalized `claim_text` is contained in `evidence_span`.

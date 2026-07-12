@@ -56,15 +56,15 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[python -m src.run] --> B[start_run in src/observability.py]
+    A[python -m src.run] --> B[start_run in src/observability/]
     B --> C[seed sources in src/sources.py]
     C --> D[scrape RSS feeds in src/scraper.py]
     D --> E[classify articles in src/classifier.py]
-    E --> F[track stories in src/tracker.py]
+    E --> F[track stories in src/tracker/]
     F --> G{"--show-evidence?"}
-    G -- yes --> H[extract claims in src/claims.py]
+    G -- yes --> H[extract claims in src/claims/]
     G -- no --> I[skip claim extraction]
-    H --> J[build briefing package in src/top10.py]
+    H --> J[build briefing package in src/briefing/]
     I --> J
     J --> K[write digest Markdown]
     J --> L[write briefing Markdown]
@@ -157,8 +157,8 @@ Trust boundary:
 
 Owned by:
 
-- `src/tracker.py`
-- `src/story_matching.py`
+- `src/tracker/`
+- `src/tracker/matching/`
 - `src/config.py`
 
 Tracking turns classified articles into local story memory.
@@ -227,7 +227,7 @@ Audit trail:
 
 ### Immutable occurrences and replay
 
-Before model-driven grouping, `src/occurrences.py` stores an append-only snapshot of each captured article plus separate classification and assignment snapshots. Derived article, observation, and hierarchy rows can therefore be rebuilt without changing source evidence.
+Before model-driven grouping, `src/tracker/occurrences.py` stores an append-only snapshot of each captured article plus separate classification and assignment snapshots. Derived article, observation, and hierarchy rows can therefore be rebuilt without changing source evidence.
 
 ```bash
 python -m src.run --replay 2026-05-07
@@ -239,8 +239,8 @@ Replay uses stored snapshots only, makes no network calls, rebuilds forward in o
 
 Owned by:
 
-- `src/claims.py`
-- `src/briefing_generation.py`
+- `src/claims/`
+- `src/briefing/grounding.py`
 
 Claims are optional and enabled with:
 
@@ -332,9 +332,11 @@ Important boundary:
 
 Owned by:
 
-- `src/briefing_selection.py`
-- `src/briefing_generation.py`
-- `src/top10.py`
+- `src/briefing/selection.py`
+- `src/briefing/generation.py`
+- `src/briefing/grounding.py`
+- `src/briefing/service.py`
+- `src/briefing/markdown.py`
 - `src/digest.py`
 - `src/rendering/newspaper.py`
 
@@ -344,7 +346,7 @@ Owned by:
 - briefing Markdown in `briefings/`
 - newspaper PDF in `newspapers/`
 
-The important detail is that `src/top10.py` builds one briefing package and reuses it for Markdown and PDF output. This prevents the PDF from becoming a separate intelligence pipeline.
+The important detail is that `src/briefing/service.py` builds one briefing package and reuses it for Markdown and PDF output. This prevents the PDF from becoming a separate intelligence pipeline.
 
 Story selection works like this:
 
@@ -385,7 +387,7 @@ Trust boundary:
 
 Owned by:
 
-- `src/observability.py`
+- `src/observability/`
 - `src/llm.py`
 - model-calling modules
 
