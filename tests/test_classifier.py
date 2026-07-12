@@ -9,7 +9,7 @@ from src.classifier import classify_articles
 from src.env import load_dotenv_file
 import src.llm as llm
 from src.llm import require_openai_api_key, parse_json_object
-from fakes import FakeLLMClient
+from tests.fakes import FakeLLMClient
 
 
 def _article(article_id, title="Story title", description="Story description"):
