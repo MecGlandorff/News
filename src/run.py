@@ -17,7 +17,7 @@ from src.digest import write_digest
 from src.llm import require_openai_api_key
 from src.rendering.newspaper import write_newspaper_pdf
 from src.scraper import scrape_all
-from src.top10 import build_briefing_package, write_top10
+from src.briefing import build_briefing_package, write_top10
 import src.tracker as tracker
 from src.tracker import replay
 from src.article_dates import editorial_today
@@ -142,7 +142,7 @@ def track_stories(classified, run_date, verify_story_matches=True):
 def maybe_extract_claims(args, tracked):
     if args.show_evidence:
         return extract_and_save_claims(tracked)
-    return claims._empty_claim_stats()
+    return claims.empty_claim_stats()
 
 
 def write_pipeline_outputs(args, tracked):

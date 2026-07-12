@@ -11,11 +11,12 @@ from tests.fakes import FakeLLMClient, FakeUsage
 from tests.observability.support import _row, _run_args
 
 
-def test_llm_call_records_usage_tokens(tmp_path, monkeypatch):
+def test_llm_call_records_usage_tokens(tmp_path):
     db_path = tmp_path / "stories.db"
-    monkeypatch.setattr(observability, "DB_PATH", db_path)
-    run_id = observability.start_run(_run_args(), run_date="2026-05-07")
-    observability.set_current_run_id(run_id)
+    run_id = observability.start_run(
+        _run_args(), run_date="2026-05-07", db_path=db_path
+    )
+    observability.set_current_run_id(run_id, db_path=db_path)
 
     try:
         response = create_chat_completion(
@@ -41,11 +42,12 @@ def test_llm_call_records_usage_tokens(tmp_path, monkeypatch):
     assert run == {"llm_calls_count": 1, "prompt_tokens": 11, "completion_tokens": 5}
 
 
-def test_schema_failure_marks_call_and_run(tmp_path, monkeypatch):
+def test_schema_failure_marks_call_and_run(tmp_path):
     db_path = tmp_path / "stories.db"
-    monkeypatch.setattr(observability, "DB_PATH", db_path)
-    run_id = observability.start_run(_run_args(), run_date="2026-05-07")
-    observability.set_current_run_id(run_id)
+    run_id = observability.start_run(
+        _run_args(), run_date="2026-05-07", db_path=db_path
+    )
+    observability.set_current_run_id(run_id, db_path=db_path)
 
     try:
         response = create_chat_completion(
@@ -67,11 +69,12 @@ def test_schema_failure_marks_call_and_run(tmp_path, monkeypatch):
     assert run == {"llm_errors_count": 1, "schema_failures": 1}
 
 
-def test_provider_error_is_visible_in_run_totals(tmp_path, monkeypatch):
+def test_provider_error_is_visible_in_run_totals(tmp_path):
     db_path = tmp_path / "stories.db"
-    monkeypatch.setattr(observability, "DB_PATH", db_path)
-    run_id = observability.start_run(_run_args(), run_date="2026-05-07")
-    observability.set_current_run_id(run_id)
+    run_id = observability.start_run(
+        _run_args(), run_date="2026-05-07", db_path=db_path
+    )
+    observability.set_current_run_id(run_id, db_path=db_path)
 
     def raise_provider_error(kwargs):
         raise RuntimeError("provider down")
@@ -95,11 +98,12 @@ def test_provider_error_is_visible_in_run_totals(tmp_path, monkeypatch):
     assert run == {"llm_errors_count": 1}
 
 
-def test_schema_failure_marks_the_failed_response_call(tmp_path, monkeypatch):
+def test_schema_failure_marks_the_failed_response_call(tmp_path):
     db_path = tmp_path / "stories.db"
-    monkeypatch.setattr(observability, "DB_PATH", db_path)
-    run_id = observability.start_run(_run_args(), run_date="2026-05-07")
-    observability.set_current_run_id(run_id)
+    run_id = observability.start_run(
+        _run_args(), run_date="2026-05-07", db_path=db_path
+    )
+    observability.set_current_run_id(run_id, db_path=db_path)
 
     try:
         client = FakeLLMClient(["not json", {"ok": True}])
@@ -149,9 +153,10 @@ def test_schema_failure_marks_the_failed_response_call(tmp_path, monkeypatch):
 def test_classification_cache_hits_are_run_totals_not_llm_calls(tmp_path, monkeypatch):
     db_path = tmp_path / "stories.db"
     monkeypatch.setattr(article_cache, "DB_PATH", db_path)
-    monkeypatch.setattr(observability, "DB_PATH", db_path)
-    run_id = observability.start_run(_run_args(), run_date="2026-05-07")
-    observability.set_current_run_id(run_id)
+    run_id = observability.start_run(
+        _run_args(), run_date="2026-05-07", db_path=db_path
+    )
+    observability.set_current_run_id(run_id, db_path=db_path)
 
     client = FakeLLMClient({
         "results": [{

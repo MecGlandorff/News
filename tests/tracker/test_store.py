@@ -1,11 +1,10 @@
 import sqlite3
 
-import src.tracker as tracker
+from src.tracker import store as tracker_store
 
 
-def test_story_arc_schema_backfills_legacy_stories(tmp_path, monkeypatch):
+def test_story_arc_schema_backfills_legacy_stories(tmp_path):
     db_path = tmp_path / "stories.db"
-    monkeypatch.setattr(tracker, "DB_PATH", db_path)
 
     conn = sqlite3.connect(db_path)
     try:
@@ -24,7 +23,7 @@ def test_story_arc_schema_backfills_legacy_stories(tmp_path, monkeypatch):
     finally:
         conn.close()
 
-    conn = tracker._get_db()
+    conn = tracker_store.get_db(db_path)
     try:
         columns = {row[1] for row in conn.execute("PRAGMA table_info(stories)").fetchall()}
         row = conn.execute("""
@@ -43,7 +42,7 @@ def test_story_arc_schema_backfills_legacy_stories(tmp_path, monkeypatch):
 
 
 def test_tracker_schema_has_indexes_for_recent_story_article_lookups(tmp_path):
-    conn = tracker.tracker_store.get_db(tmp_path / "stories.db")
+    conn = tracker_store.get_db(tmp_path / "stories.db")
     try:
         indexes = {
             row["name"]
@@ -59,10 +58,9 @@ def test_tracker_schema_has_indexes_for_recent_story_article_lookups(tmp_path):
     } <= indexes
 
 
-def test_trend_uses_latest_prior_day(tmp_path, monkeypatch):
+def test_trend_uses_latest_prior_day(tmp_path):
     db_path = tmp_path / "stories.db"
-    monkeypatch.setattr(tracker, "DB_PATH", db_path)
-    conn = tracker._get_db()
+    conn = tracker_store.get_db(db_path)
     cur = conn.execute(
         "INSERT INTO stories (canonical_label, theme, first_seen, last_seen) VALUES (?, ?, ?, ?)",
         ("Test Story", "Tech", "2026-04-15", "2026-04-18"),
@@ -83,14 +81,13 @@ def test_trend_uses_latest_prior_day(tmp_path, monkeypatch):
         (story_id, "2026-04-17", 4, 3.0, "[]"),
     )
 
-    assert tracker._trend(story_id, 1, conn, "2026-04-18") == "down"
+    assert tracker_store.trend(story_id, 1, conn, "2026-04-18") == "down"
     conn.close()
 
 
-def test_recent_story_lookup_uses_newest_duplicate_label(tmp_path, monkeypatch):
+def test_recent_story_lookup_uses_newest_duplicate_label(tmp_path):
     db_path = tmp_path / "stories.db"
-    monkeypatch.setattr(tracker, "DB_PATH", db_path)
-    conn = tracker._get_db()
+    conn = tracker_store.get_db(db_path)
 
     old = conn.execute(
         "INSERT INTO stories (canonical_label, theme, first_seen, last_seen) VALUES (?, ?, ?, ?)",
@@ -115,7 +112,7 @@ def test_recent_story_lookup_uses_newest_duplicate_label(tmp_path, monkeypatch):
         (new, "2026-04-20", 1, 3.0, "[]"),
     )
 
-    recent = tracker._get_recent_stories(conn, "2026-04-21")
+    recent = tracker_store.get_recent_stories(conn, "2026-04-21")
     conn.close()
 
     assert recent["Duplicate Label"] == new

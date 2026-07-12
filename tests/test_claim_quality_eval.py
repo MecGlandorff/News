@@ -5,8 +5,7 @@ import pytest
 from evals import run_claim_quality_eval as claim_eval
 
 
-def test_claim_eval_compares_rss_and_full_text_inputs(monkeypatch):
-    monkeypatch.setattr(claim_eval.claims, "_verify_claim_with_llm", lambda c, s: True)
+def test_claim_eval_compares_rss_and_full_text_inputs():
     case = {
         "case_id": "riverbend",
         "article": {
@@ -67,7 +66,11 @@ def test_claim_eval_compares_rss_and_full_text_inputs(monkeypatch):
             "cost_eur": 0.001,
         }
 
-    report = claim_eval.run_eval([case], extractor=extractor)
+    report = claim_eval.run_eval(
+        [case],
+        extractor=extractor,
+        verify_claim=lambda claim, evidence: True,
+    )
 
     rss = report["summary"]["variants"]["rss"]
     full_text = report["summary"]["variants"]["full_text"]

@@ -176,7 +176,15 @@ def _review_claim(claim):
     }
 
 
-def evaluate_variant(case, variant, *, index=0, extractor=None, client=None):
+def evaluate_variant(
+    case,
+    variant,
+    *,
+    index=0,
+    extractor=None,
+    client=None,
+    verify_claim=None,
+):
     extractor = extractor or _default_extractor
     article = case["article"]
     expected_claims = case.get("expected_claims", [])
@@ -236,7 +244,11 @@ def evaluate_variant(case, variant, *, index=0, extractor=None, client=None):
     raw_claims = outcome.get("raw_claims") or []
     validation_started = time.perf_counter()
     with claims.collect_verifier_metrics() as verifier_metrics:
-        classified = claims._classify_claims(raw_claims, content)
+        classified = claims.classify_claims_for_content(
+            raw_claims,
+            content,
+            verify_claim=verify_claim,
+        )
     validation_latency_ms = int((time.perf_counter() - validation_started) * 1000)
     valid_claims = [validated for validated, _decision in classified if validated]
     invalid_count = len(classified) - len(valid_claims)
@@ -376,7 +388,14 @@ def _comparison(summary):
     }
 
 
-def run_eval(cases, *, dataset_path=None, extractor=None, client=None):
+def run_eval(
+    cases,
+    *,
+    dataset_path=None,
+    extractor=None,
+    client=None,
+    verify_claim=None,
+):
     if extractor is None and client is None:
         client = claims.get_openai_client()
 
@@ -389,6 +408,7 @@ def run_eval(cases, *, dataset_path=None, extractor=None, client=None):
                 index=index,
                 extractor=extractor,
                 client=client,
+                verify_claim=verify_claim,
             ))
 
     by_variant = {

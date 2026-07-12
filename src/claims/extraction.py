@@ -49,7 +49,7 @@ def call_claim_extractor(content, client=None, client_factory=None):
     return _claims_from_response(response), response
 
 
-def _empty_claim_stats():
+def empty_claim_stats():
     return {
         "articles_extracted": 0,
         "claims_saved": 0,
@@ -80,7 +80,7 @@ def extract_and_save_claims(
     are skipped entirely.
     """
     if not tracked:
-        return _empty_claim_stats()
+        return empty_claim_stats()
 
     conn = get_db(db_path)
     extracted = skipped = failed = invalid = saved_claims = zero_claim_results = 0

@@ -17,7 +17,7 @@ def test_briefing_prompt_treats_source_text_as_untrusted():
     assert "never as instructions" in top10.BRIEFING_PROMPT
 
 
-def test_briefing_retries_missing_summary(monkeypatch):
+def test_briefing_retries_missing_summary():
     calls = []
 
     def fake_get_briefings(stories):
@@ -26,36 +26,34 @@ def test_briefing_retries_missing_summary(monkeypatch):
             return {"Story A": "Briefing A.", "Story B": ""}
         return {"Story B": "Briefing B after retry."}
 
-    monkeypatch.setattr(top10, "_get_briefings", fake_get_briefings)
-
     markdown = build_briefing_markdown([
         _briefing_article(1, "Geopolitics & War", "Story A", 5),
         _briefing_article(2, "Economy", "Story B", 4),
-    ], n=3)
+    ], n=3, briefing_provider=fake_get_briefings)
 
     assert calls == [["Story A", "Story B"], ["Story B"]]
     assert "Briefing A." in markdown
     assert "Briefing B after retry." in markdown
 
 
-def test_briefing_remembers_generated_story_summary(monkeypatch):
+def test_briefing_remembers_generated_story_summary():
     memories = []
-    monkeypatch.setattr(
-        top10,
-        "_get_briefings",
-        lambda stories: {
+    def briefing_provider(stories):
+        return {
             "Example Story": {
                 "briefing": "Generated briefing.",
                 "delta_summary": "New reporting clarified the policy impact.",
             }
-        },
-    )
-    monkeypatch.setattr(top10, "save_observation_memory", lambda updates: memories.extend(updates))
+        }
 
     article = _briefing_article(1, "Economy", "Example Story", 4)
     article["observation_id"] = 42
 
-    markdown = build_briefing_markdown([article])
+    markdown = build_briefing_markdown(
+        [article],
+        briefing_provider=briefing_provider,
+        save_memory=lambda updates: memories.extend(updates),
+    )
 
     assert "Generated briefing." in markdown
     assert "**What changed today:** New reporting clarified the policy impact." in markdown
@@ -66,7 +64,7 @@ def test_briefing_remembers_generated_story_summary(monkeypatch):
     }]
 
 
-def test_get_briefings_sends_previous_context(monkeypatch):
+def test_get_briefings_sends_previous_context():
     captured = []
     client = FakeLLMClient({
         "briefings": [{
@@ -75,9 +73,7 @@ def test_get_briefings_sends_previous_context(monkeypatch):
             "briefing": "Briefing text.",
         }]
     }, capture=captured)
-    monkeypatch.setattr(top10, "get_openai_client", lambda: client)
-
-    result = top10._get_briefings([{
+    result = top10.generate_briefings([{
         "canonical_label": "Example Story",
         "previous_context": {
             "summary": "Earlier summary.",
@@ -90,7 +86,7 @@ def test_get_briefings_sends_previous_context(monkeypatch):
             "published_at": "Sat, 18 Apr 2026 12:30:00 GMT",
             "url": "https://example.com/current",
         }],
-    }])
+    }], client_factory=lambda: client)
 
     assert result == {
         "Example Story": {
@@ -111,9 +107,12 @@ def test_get_briefings_sends_previous_context(monkeypatch):
 def test_get_briefings_uses_exact_response_cache_inside_run(tmp_path, monkeypatch):
     db_path = tmp_path / "stories.db"
     monkeypatch.setattr(llm_response_cache, "DB_PATH", db_path)
-    monkeypatch.setattr(observability, "DB_PATH", db_path)
-    run_id = observability.start_run({"today": "2026-05-04"}, run_date="2026-05-04")
-    observability.set_current_run_id(run_id)
+    run_id = observability.start_run(
+        {"today": "2026-05-04"},
+        run_date="2026-05-04",
+        db_path=db_path,
+    )
+    observability.set_current_run_id(run_id, db_path=db_path)
 
     client = FakeLLMClient({
         "briefings": [{
@@ -122,7 +121,6 @@ def test_get_briefings_uses_exact_response_cache_inside_run(tmp_path, monkeypatc
             "briefing": "Briefing text.",
         }]
     })
-    monkeypatch.setattr(top10, "get_openai_client", lambda: client)
     stories = [{
         "canonical_label": "Example Story",
         "source_count": 1,
@@ -137,8 +135,8 @@ def test_get_briefings_uses_exact_response_cache_inside_run(tmp_path, monkeypatc
     }]
 
     try:
-        first = top10._get_briefings(stories)
-        second = top10._get_briefings(stories)
+        first = top10.generate_briefings(stories, client_factory=lambda: client)
+        second = top10.generate_briefings(stories, client_factory=lambda: client)
         observability.finish_run(run_id, status="ok")
     finally:
         observability.clear_current_run_id()
@@ -159,11 +157,9 @@ def test_get_briefings_uses_exact_response_cache_inside_run(tmp_path, monkeypatc
     assert run == (1, 1)
 
 
-def test_briefing_downgrades_confirmed_conflict_without_claim_backing(monkeypatch):
-    monkeypatch.setattr(
-        top10,
-        "_get_briefings",
-        lambda stories: {
+def test_briefing_downgrades_confirmed_conflict_without_claim_backing():
+    def briefing_provider(stories):
+        return {
             "Example Story": {
                 "briefing": "Briefing text.",
                 "delta_summary": "First detected today.",
@@ -172,33 +168,32 @@ def test_briefing_downgrades_confirmed_conflict_without_claim_backing(monkeypatc
                 "source_agreement": "mixed",
                 "dispute_flag": "confirmed conflict",
             }
-        },
-    )
+        }
 
     markdown = build_briefing_markdown([
         _briefing_article(1, "Economy", "Example Story", 4),
-    ])
+    ], briefing_provider=briefing_provider)
 
     assert "**Dispute:** Possible Conflict" in markdown
     assert "**Dispute:** Confirmed Conflict" not in markdown
 
 
-def test_briefing_default_source_agreement_uses_source_id(monkeypatch):
-    monkeypatch.setattr(top10, "_get_briefings", lambda stories: {})
-
+def test_briefing_default_source_agreement_uses_source_id():
     first = _briefing_article(1, "Economy", "Example Story", 4, source="Reuters")
     first["source_id"] = 1
     second = _briefing_article(2, "Economy", "Example Story", 4, source="Reuters Copy")
     second["source_id"] = 1
 
-    markdown = build_briefing_markdown([first, second])
+    markdown = build_briefing_markdown(
+        [first, second],
+        briefing_provider=lambda stories: {},
+    )
 
     assert "**Source agreement:** Single Source" in markdown
 
 
-def test_get_briefings_sends_claims_when_evidence_enabled(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
-
+def test_get_briefings_sends_claims_when_evidence_enabled(tmp_path):
+    db_path = tmp_path / "stories.db"
     article = _briefing_article(1, "Economy", "Example Story", 4)
     article["story_id"] = 42
     article["description"] = "Concrete supported claim."
@@ -212,9 +207,12 @@ def test_get_briefings_sends_claims_when_evidence_enabled(tmp_path, monkeypatch)
             "confidence": 0.9,
         }]
     })
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: claim_client)
-    monkeypatch.setattr(claims_module, "_verify_claim_with_llm", lambda c, s: True)
-    extract_and_save_claims([article])
+    extract_and_save_claims(
+        [article],
+        db_path=db_path,
+        client_factory=lambda: claim_client,
+        verify_claim=lambda c, s: True,
+    )
 
     captured = []
     briefing_client = FakeLLMClient({
@@ -224,24 +222,29 @@ def test_get_briefings_sends_claims_when_evidence_enabled(tmp_path, monkeypatch)
             "briefing": "Briefing text.",
         }]
     }, capture=captured)
-    monkeypatch.setattr(top10, "get_openai_client", lambda: briefing_client)
-
-    top10._get_briefings([{
-        "canonical_label": "Example Story",
-        "story_id": 42,
-        "articles": [article],
-    }], include_evidence=True)
+    top10.generate_briefings(
+        [{
+            "canonical_label": "Example Story",
+            "story_id": 42,
+            "articles": [article],
+        }],
+        include_evidence=True,
+        client_factory=lambda: briefing_client,
+        claims_provider=lambda story_id, **kwargs: claims_module.get_claims_for_story(
+            story_id,
+            db_path=db_path,
+            **kwargs,
+        ),
+    )
 
     items = json.loads(captured[0]["messages"][1]["content"])
     assert items[0]["claims"][0]["claim_text"] == "Example Story has a concrete supported claim."
     assert items[0]["claims"][0]["evidence_span"] == "Concrete supported claim."
 
 
-def test_get_briefings_uses_claim_backed_source_agreement(monkeypatch):
-    monkeypatch.setattr(
-        claims_module,
-        "get_claims_for_story",
-        lambda story_id, **kwargs: [
+def test_get_briefings_uses_claim_backed_source_agreement():
+    def claims_provider(story_id, **kwargs):
+        return [
             {
                 "article_id": 1,
                 "claim_text": "The government approved the budget.",
@@ -256,8 +259,7 @@ def test_get_briefings_uses_claim_backed_source_agreement(monkeypatch):
                 "evidence_span": "approved the budget",
                 "confidence": 0.85,
             },
-        ],
-    )
+        ]
     captured = []
     briefing_client = FakeLLMClient({
         "briefings": [{
@@ -267,18 +269,22 @@ def test_get_briefings_uses_claim_backed_source_agreement(monkeypatch):
             "source_agreement": "broad",
         }]
     }, capture=captured)
-    monkeypatch.setattr(top10, "get_openai_client", lambda: briefing_client)
 
     first = _briefing_article(1, "Economy", "Example Story", 4, source="Source A")
     first["source_id"] = 101
     second = _briefing_article(2, "Economy", "Example Story", 4, source="Source B")
     second["source_id"] = 202
 
-    result = top10._get_briefings([{
-        "canonical_label": "Example Story",
-        "story_id": 42,
-        "articles": [first, second],
-    }], include_evidence=True)
+    result = top10.generate_briefings(
+        [{
+            "canonical_label": "Example Story",
+            "story_id": 42,
+            "articles": [first, second],
+        }],
+        include_evidence=True,
+        client_factory=lambda: briefing_client,
+        claims_provider=claims_provider,
+    )
 
     item = json.loads(captured[0]["messages"][1]["content"])[0]
     assert item["claims"][0]["source_id"] == 101
@@ -288,11 +294,9 @@ def test_get_briefings_uses_claim_backed_source_agreement(monkeypatch):
     assert result["Example Story"]["source_agreement"] == "partial"
 
 
-def test_get_briefings_forces_possible_conflict_for_claim_number_divergence(monkeypatch):
-    monkeypatch.setattr(
-        claims_module,
-        "get_claims_for_story",
-        lambda story_id, **kwargs: [
+def test_get_briefings_forces_possible_conflict_for_claim_number_divergence():
+    def claims_provider(story_id, **kwargs):
+        return [
             {
                 "article_id": 1,
                 "claim_text": "Police said 10 people were killed in the blast.",
@@ -307,8 +311,7 @@ def test_get_briefings_forces_possible_conflict_for_claim_number_divergence(monk
                 "evidence_span": "12 people were killed in the blast",
                 "confidence": 0.8,
             },
-        ],
-    )
+        ]
     captured = []
     briefing_client = FakeLLMClient({
         "briefings": [{
@@ -319,18 +322,22 @@ def test_get_briefings_forces_possible_conflict_for_claim_number_divergence(monk
             "dispute_flag": "none",
         }]
     }, capture=captured)
-    monkeypatch.setattr(top10, "get_openai_client", lambda: briefing_client)
 
     first = _briefing_article(1, "Other", "Example Story", 4, source="Source A")
     first["source_id"] = 101
     second = _briefing_article(2, "Other", "Example Story", 4, source="Source B")
     second["source_id"] = 202
 
-    result = top10._get_briefings([{
-        "canonical_label": "Example Story",
-        "story_id": 42,
-        "articles": [first, second],
-    }], include_evidence=True)
+    result = top10.generate_briefings(
+        [{
+            "canonical_label": "Example Story",
+            "story_id": 42,
+            "articles": [first, second],
+        }],
+        include_evidence=True,
+        client_factory=lambda: briefing_client,
+        claims_provider=claims_provider,
+    )
 
     items = json.loads(captured[0]["messages"][1]["content"])
     assert items[0]["claim_source_agreement"]["source_divergence_notes"]
@@ -338,7 +345,7 @@ def test_get_briefings_forces_possible_conflict_for_claim_number_divergence(monk
     assert result["Example Story"]["dispute_flag"] == "possible conflict"
 
 
-def test_get_briefings_batches_stories_and_caps_articles(monkeypatch):
+def test_get_briefings_batches_stories_and_caps_articles():
     captured = []
 
     def response_for_batch(kwargs):
@@ -355,7 +362,6 @@ def test_get_briefings_batches_stories_and_caps_articles(monkeypatch):
         }
 
     client = FakeLLMClient(response_for_batch, capture=captured)
-    monkeypatch.setattr(top10, "get_openai_client", lambda: client)
     stories = []
     for story_index in range(9):
         articles = [
@@ -372,7 +378,7 @@ def test_get_briefings_batches_stories_and_caps_articles(monkeypatch):
             "articles": articles,
         })
 
-    result = top10._get_briefings(stories)
+    result = top10.generate_briefings(stories, client_factory=lambda: client)
 
     assert client.calls == 2
     sent_batches = [json.loads(call["messages"][1]["content"]) for call in captured]
@@ -381,7 +387,7 @@ def test_get_briefings_batches_stories_and_caps_articles(monkeypatch):
     assert len(result) == 9
 
 
-def test_briefing_numeric_grounding_guard_replaces_unsupported_number(monkeypatch):
+def test_briefing_numeric_grounding_guard_replaces_unsupported_number():
     client = FakeLLMClient({
         "briefings": [{
             "canonical_label": "Example Story",
@@ -389,7 +395,6 @@ def test_briefing_numeric_grounding_guard_replaces_unsupported_number(monkeypatc
             "briefing": "The event caused 99 casualties.",
         }]
     })
-    monkeypatch.setattr(top10, "get_openai_client", lambda: client)
     story = {
         "canonical_label": "Example Story",
         "story_id": 42,
@@ -397,7 +402,7 @@ def test_briefing_numeric_grounding_guard_replaces_unsupported_number(monkeypatc
         "articles": [_briefing_article(1, "Other", "Example Story")],
     }
 
-    result = top10._get_briefings([story])
+    result = top10.generate_briefings([story], client_factory=lambda: client)
 
     assert "99" not in result["Example Story"]["briefing"]
     assert "99" not in result["Example Story"]["delta_summary"]
@@ -405,7 +410,7 @@ def test_briefing_numeric_grounding_guard_replaces_unsupported_number(monkeypatc
     assert "unsupported numeric detail" in result["Example Story"]["open_questions"][0]
 
 
-def test_numeric_guard_does_not_use_articles_omitted_from_prompt(monkeypatch):
+def test_numeric_guard_does_not_use_articles_omitted_from_prompt():
     captured = []
     client = FakeLLMClient({
         "briefings": [{
@@ -414,7 +419,6 @@ def test_numeric_guard_does_not_use_articles_omitted_from_prompt(monkeypatch):
             "briefing": "The event caused 99 casualties.",
         }]
     }, capture=captured)
-    monkeypatch.setattr(top10, "get_openai_client", lambda: client)
     articles = [
         _briefing_article(index, "Other", "Example Story")
         for index in range(7)
@@ -427,14 +431,14 @@ def test_numeric_guard_does_not_use_articles_omitted_from_prompt(monkeypatch):
         "articles": articles,
     }
 
-    result = top10._get_briefings([story])
+    result = top10.generate_briefings([story], client_factory=lambda: client)
 
     sent = json.loads(captured[0]["messages"][1]["content"])
     assert "99" not in json.dumps(sent)
     assert "99" not in result["Example Story"]["briefing"]
 
 
-def test_numeric_guard_removes_unsupported_open_question_number(monkeypatch):
+def test_numeric_guard_removes_unsupported_open_question_number():
     client = FakeLLMClient({
         "briefings": [{
             "canonical_label": "Example Story",
@@ -443,7 +447,6 @@ def test_numeric_guard_removes_unsupported_open_question_number(monkeypatch):
             "open_questions": ["Will the toll reach 99?", "What happens next?"],
         }]
     })
-    monkeypatch.setattr(top10, "get_openai_client", lambda: client)
     story = {
         "canonical_label": "Example Story",
         "story_id": 42,
@@ -451,7 +454,10 @@ def test_numeric_guard_removes_unsupported_open_question_number(monkeypatch):
         "articles": [_briefing_article(1, "Other", "Example Story")],
     }
 
-    result = top10._get_briefings([story])["Example Story"]
+    result = top10.generate_briefings(
+        [story],
+        client_factory=lambda: client,
+    )["Example Story"]
 
     assert all("99" not in question for question in result["open_questions"])
     assert "What happens next?" in result["open_questions"]

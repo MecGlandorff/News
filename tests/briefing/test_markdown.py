@@ -1,7 +1,6 @@
 
-import src.claims as claims_module
-import src.briefing as top10
 from src.briefing import build_briefing_markdown, write_top10
+from src.briefing import markdown as briefing_markdown
 from tests.briefing.support import _briefing_article
 
 
@@ -12,13 +11,7 @@ def test_briefing_handles_empty_stories():
     assert "No tracked stories found." in markdown
 
 
-def test_briefing_includes_latest_reported_time_and_source_urls(monkeypatch):
-    monkeypatch.setattr(
-        top10,
-        "_get_briefings",
-        lambda stories: {"Example Story": "Briefing text."},
-    )
-
+def test_briefing_includes_latest_reported_time_and_source_urls():
     markdown = build_briefing_markdown([{
         "id": 1,
         "source": "Example News",
@@ -33,7 +26,7 @@ def test_briefing_includes_latest_reported_time_and_source_urls(monkeypatch):
         "canonical_label": "Example Story",
         "importance": 3,
         "trend": "new",
-    }])
+    }], briefing_provider=lambda stories: {"Example Story": "Briefing text."})
 
     assert "latest reported 2026-04-18 12:30 UTC" in markdown
     assert "**What changed today:** First detected today." in markdown
@@ -41,14 +34,7 @@ def test_briefing_includes_latest_reported_time_and_source_urls(monkeypatch):
     assert "[Example development](https://example.com/story)" in markdown
 
 
-def test_write_top10_writes_public_briefing_markdown(tmp_path, monkeypatch):
-    monkeypatch.setattr(top10, "BRIEFINGS_DIR", tmp_path / "briefings")
-    monkeypatch.setattr(
-        top10,
-        "_get_briefings",
-        lambda stories: {"Example Story": "Briefing text."},
-    )
-
+def test_write_top10_writes_public_briefing_markdown(tmp_path):
     out = write_top10([{
         "id": 1,
         "source": "Example News",
@@ -63,7 +49,10 @@ def test_write_top10_writes_public_briefing_markdown(tmp_path, monkeypatch):
         "canonical_label": "Example Story",
         "importance": 3,
         "trend": "new",
-    }])
+    }],
+        output_dir=tmp_path / "briefings",
+        briefing_provider=lambda stories: {"Example Story": "Briefing text."},
+    )
 
     assert out.parent == tmp_path / "briefings"
     assert out.name.startswith("briefing_")
@@ -73,11 +62,9 @@ def test_write_top10_writes_public_briefing_markdown(tmp_path, monkeypatch):
     assert "**What changed today:** First detected today." in text
 
 
-def test_briefing_renders_structured_story_card_fields(monkeypatch):
-    monkeypatch.setattr(
-        top10,
-        "_get_briefings",
-        lambda stories: {
+def test_briefing_renders_structured_story_card_fields():
+    def briefing_provider(stories):
+        return {
             "Example Story": {
                 "briefing": "The decision changes the political stakes.",
                 "delta_summary": "New reporting clarified the policy impact.",
@@ -87,12 +74,11 @@ def test_briefing_renders_structured_story_card_fields(monkeypatch):
                 "dispute_flag": "possible conflict",
                 "open_questions": ["Whether the cabinet changes the proposal."],
             }
-        },
-    )
+        }
 
     markdown = build_briefing_markdown([
         _briefing_article(1, "Economy", "Example Story", 4),
-    ])
+    ], briefing_provider=briefing_provider)
 
     assert "**Status:** Developing" in markdown
     assert "**Confidence:** Medium" in markdown
@@ -103,11 +89,9 @@ def test_briefing_renders_structured_story_card_fields(monkeypatch):
     assert "- Whether the cabinet changes the proposal." in markdown
 
 
-def test_briefing_bounds_invalid_structured_story_card_fields(monkeypatch):
-    monkeypatch.setattr(
-        top10,
-        "_get_briefings",
-        lambda stories: {
+def test_briefing_bounds_invalid_structured_story_card_fields():
+    def briefing_provider(stories):
+        return {
             "Example Story": {
                 "briefing": "Briefing text.",
                 "delta_summary": "First detected today.",
@@ -116,12 +100,11 @@ def test_briefing_bounds_invalid_structured_story_card_fields(monkeypatch):
                 "source_agreement": "everyone agrees",
                 "dispute_flag": "messy",
             }
-        },
-    )
+        }
 
     markdown = build_briefing_markdown([
         _briefing_article(1, "Economy", "Example Story", 4),
-    ])
+    ], briefing_provider=briefing_provider)
 
     assert "certainly explosive" not in markdown
     assert "absolute" not in markdown
@@ -133,29 +116,24 @@ def test_briefing_bounds_invalid_structured_story_card_fields(monkeypatch):
     assert "**Dispute:** None" in markdown
 
 
-def test_evidence_lines_do_not_fallback_to_claim_text(monkeypatch):
-    monkeypatch.setattr(
-        claims_module,
-        "get_claims_for_story",
-        lambda story_id, **kwargs: [{
+def test_evidence_lines_do_not_fallback_to_claim_text():
+    def claims_provider(story_id, **kwargs):
+        return [{
             "claim_text": "Unsupported model wording.",
             "claim_type": "fact",
             "evidence_span": "",
             "confidence": 0.9,
             "source": "Example News",
             "url": "https://example.com/story",
-        }],
-    )
+        }]
 
-    assert top10._evidence_lines(42) == []
+    assert briefing_markdown._evidence_lines(42, get_claims=claims_provider) == []
 
 
-def test_briefing_uses_fallback_when_summary_stays_missing(monkeypatch):
-    monkeypatch.setattr(top10, "_get_briefings", lambda stories: {})
-
+def test_briefing_uses_fallback_when_summary_stays_missing():
     markdown = build_briefing_markdown([
         _briefing_article(1, "Economy", "Missing Story", 4, source="Example News"),
-    ])
+    ], briefing_provider=lambda stories: {})
 
     assert "Missing Story is included based on 1 source" in markdown
     assert "**What changed today:** First detected today." in markdown
@@ -163,13 +141,7 @@ def test_briefing_uses_fallback_when_summary_stays_missing(monkeypatch):
     assert "\n\n\nSources:" not in markdown
 
 
-def test_briefing_marks_new_child_development_under_parent_arc(monkeypatch):
-    monkeypatch.setattr(
-        top10,
-        "_get_briefings",
-        lambda stories: {story["canonical_label"]: "Briefing text." for story in stories},
-    )
-
+def test_briefing_marks_new_child_development_under_parent_arc():
     article = _briefing_article(1, "Geopolitics & War", "Iran conflict", 5)
     article["canonical_label"] = "Iran war crisis"
     article["development_label"] = "Iran conflict"
@@ -177,7 +149,13 @@ def test_briefing_marks_new_child_development_under_parent_arc(monkeypatch):
     article["previous_context"] = {"summary": "Earlier Iran war context."}
     article["trend"] = "steady"
 
-    markdown = build_briefing_markdown([article], n=3)
+    markdown = build_briefing_markdown(
+        [article],
+        n=3,
+        briefing_provider=lambda stories: {
+            story["canonical_label"]: "Briefing text." for story in stories
+        },
+    )
 
     assert "## 1. NEW DEVELOPMENT Iran war crisis" in markdown
     assert "**Parent arc:** Iran war crisis | **Today's development:** Iran conflict" in markdown

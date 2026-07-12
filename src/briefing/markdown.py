@@ -80,13 +80,16 @@ def _development_summary_line(story):
     return ""
 
 
-def _evidence_lines(story_id, as_of_date=None):
+def _evidence_lines(story_id, as_of_date=None, get_claims=None):
     """Return formatted evidence lines for a story, or [] if none."""
     if story_id is None:
         return []
-    from src.claims import get_claims_for_story
+    if get_claims is None:
+        from src.claims import get_claims_for_story
+
+        get_claims = get_claims_for_story
     claims = [
-        claim for claim in get_claims_for_story(story_id, as_of_date=as_of_date, history_days=7)
+        claim for claim in get_claims(story_id, as_of_date=as_of_date, history_days=7)
         if claim.get("evidence_span")
     ]
     if not claims:
@@ -131,7 +134,15 @@ def _fallback_delta_summary(story):
     return briefing_generation.fallback_delta_summary(story)
 
 
-def build_briefing_markdown(tracked, n=3, global_n=10, package=None, show_evidence=False):
+def build_briefing_markdown(
+    tracked,
+    n=3,
+    global_n=10,
+    package=None,
+    show_evidence=False,
+    *,
+    get_claims=None,
+):
     if package is None:
         raise ValueError("briefing package is required")
 
@@ -200,6 +211,7 @@ def build_briefing_markdown(tracked, n=3, global_n=10, package=None, show_eviden
                 story_lines += _evidence_lines(
                     s.get("story_id"),
                     as_of_date=story_editorial_date(s),
+                    get_claims=get_claims,
                 )
             story_lines.append("")
             lines += story_lines

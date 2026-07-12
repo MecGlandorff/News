@@ -140,7 +140,7 @@ def _tracked_articles_for_audit(conn, run_date, run_id=None):
 
 
 def _audit_story_item(story, score_value):
-    from src import briefing_selection
+    from src.briefing import selection as briefing_selection
 
     return {
         "story_id": story.get("story_id"),
@@ -160,7 +160,7 @@ def _high_signal_not_displayed(conn, run_date, top_developments, limit, run_id=N
     if not tracked:
         return []
 
-    from src import briefing_selection
+    from src.briefing import selection as briefing_selection
 
     selected = briefing_selection.select_story_sections(tracked, n=top_developments)
     displayed = {

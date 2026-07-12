@@ -1,19 +1,22 @@
 import sqlite3
 
 import src.claims as claims_module
+from src.claims import schema as claims_schema
 from src.tracker import store as tracker_store
 from src.claims import extract_and_save_claims, get_claims_for_story
 from tests.claims.support import ARTICLE, CLAIM_RESPONSE, _fake_client
 
 
-def test_get_claims_for_story_ignores_old_prompt_versions(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
-
+def test_get_claims_for_story_ignores_old_prompt_versions(tmp_path):
+    db_path = tmp_path / "stories.db"
     client = _fake_client(CLAIM_RESPONSE)
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
-    extract_and_save_claims([ARTICLE])
+    extract_and_save_claims(
+        [ARTICLE],
+        db_path=db_path,
+        client_factory=lambda: client,
+    )
 
-    conn = sqlite3.connect(tmp_path / "stories.db")
+    conn = sqlite3.connect(db_path)
     conn.execute(
         """
         INSERT INTO claims (
@@ -36,33 +39,33 @@ def test_get_claims_for_story_ignores_old_prompt_versions(tmp_path, monkeypatch)
     conn.commit()
     conn.close()
 
-    saved = get_claims_for_story(42)
+    saved = get_claims_for_story(42, db_path=db_path)
     assert len(saved) == 2
     assert "Old cached claim." not in [claim["claim_text"] for claim in saved]
 
 
-def test_cached_claims_follow_story_reassignment(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
-
+def test_cached_claims_follow_story_reassignment(tmp_path):
+    db_path = tmp_path / "stories.db"
     client = _fake_client(CLAIM_RESPONSE)
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
 
-    extract_and_save_claims([ARTICLE])
-    extract_and_save_claims([{**ARTICLE, "story_id": 84}])
+    extract_and_save_claims([ARTICLE], db_path=db_path, client_factory=lambda: client)
+    extract_and_save_claims(
+        [{**ARTICLE, "story_id": 84}],
+        db_path=db_path,
+        client_factory=lambda: client,
+    )
 
     assert client.calls == 1
-    assert get_claims_for_story(42) == []
-    assert len(get_claims_for_story(84)) == 2
+    assert get_claims_for_story(42, db_path=db_path) == []
+    assert len(get_claims_for_story(84, db_path=db_path)) == 2
 
 
-def test_get_claims_for_story_returns_empty_for_unknown(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
-    assert get_claims_for_story(9999) == []
+def test_get_claims_for_story_returns_empty_for_unknown(tmp_path):
+    assert get_claims_for_story(9999, db_path=tmp_path / "stories.db") == []
 
 
-def test_get_claims_for_story_uses_seven_day_occurrence_window(tmp_path, monkeypatch):
+def test_get_claims_for_story_uses_seven_day_occurrence_window(tmp_path):
     db_path = tmp_path / "stories.db"
-    monkeypatch.setattr(claims_module, "DB_PATH", db_path)
     conn = tracker_store.get_db(db_path)
     try:
         with conn:
@@ -100,7 +103,7 @@ def test_get_claims_for_story_uses_seven_day_occurrence_window(tmp_path, monkeyp
     finally:
         conn.close()
 
-    conn = claims_module._get_db()
+    conn = claims_schema.get_db(db_path)
     try:
         with conn:
             for occurrence_id in (1, 2, 3):
@@ -123,6 +126,11 @@ def test_get_claims_for_story_uses_seven_day_occurrence_window(tmp_path, monkeyp
     finally:
         conn.close()
 
-    saved = get_claims_for_story(42, as_of_date="2026-07-11", history_days=7)
+    saved = get_claims_for_story(
+        42,
+        as_of_date="2026-07-11",
+        history_days=7,
+        db_path=db_path,
+    )
 
     assert [claim["editorial_date"] for claim in saved] == ["2026-07-11", "2026-07-05"]

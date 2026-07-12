@@ -9,6 +9,8 @@ def test_pipeline_entrypoints_are_importable():
     entrypoints = (
         claims.extract_and_save_claims,
         claims.get_claims_for_story,
+        claims.classify_claims_for_content,
+        claims.empty_claim_stats,
         tracker.track,
         tracker.save_observation_memory,
         replay.rebuild_from_date,
@@ -18,6 +20,7 @@ def test_pipeline_entrypoints_are_importable():
         observability.write_run_report_artifact,
         briefing.build_briefing_package,
         briefing.build_briefing_markdown,
+        briefing.generate_briefings,
         briefing.write_top10,
     )
 

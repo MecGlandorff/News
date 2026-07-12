@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
-from src.briefing import generation, grounding, markdown, selection, service
+from src.briefing import generation, markdown, selection, service
 from src.briefing.constants import (
     BRIEFING_PROMPT,
     BRIEFING_PROMPT_VERSION,
@@ -24,35 +24,23 @@ POLITICS_THEMES = selection.POLITICS_THEMES
 LOW_INTEREST_KEYWORDS = selection.LOW_INTEREST_KEYWORDS
 TREND_SCORE = selection.TREND_SCORE
 
-choice = grounding.choice
-display_choice = grounding.display_choice
-clean_open_questions = grounding.clean_open_questions
-local_dispute_flag = grounding.local_dispute_flag
-default_status = grounding.default_status
-default_confidence = grounding.default_confidence
-default_source_agreement = grounding.default_source_agreement
-default_briefing_payload = grounding.default_briefing_payload
-defaults_by_label = grounding.defaults_by_label
-normalize_briefing_payloads = grounding.normalize_briefing_payloads
-merge_briefing_payloads = grounding.merge_briefing_payloads
-payload_briefing = grounding.payload_briefing
-fallback_delta_summary = grounding.fallback_delta_summary
-missing_briefing_stories = grounding.missing_briefing_stories
-fallback_briefing = grounding.fallback_briefing
-get_briefings = generation.get_briefings
-
-
-def _get_briefings(stories, include_evidence=False):
+def generate_briefings(
+    stories,
+    include_evidence=False,
+    *,
+    client_factory=None,
+    claims_provider=None,
+):
+    resolved_client_factory = (
+        client_factory if client_factory is not None else get_openai_client
+    )
     return generation.get_briefings(
         stories,
-        get_client=get_openai_client,
+        get_client=resolved_client_factory,
         model=BRIEFING_MODEL,
         include_evidence=include_evidence,
+        get_claims=claims_provider,
     )
-
-
-def _evidence_lines(story_id, as_of_date=None):
-    return markdown._evidence_lines(story_id, as_of_date=as_of_date)
 
 
 def build_briefing_package(
@@ -60,14 +48,35 @@ def build_briefing_package(
     n=3,
     global_n=10,
     include_evidence=False,
+    *,
+    briefing_provider=None,
+    save_memory=None,
+    client_factory=None,
+    claims_provider=None,
 ) -> BriefingPackage:
+    resolved_provider = briefing_provider
+    if resolved_provider is None:
+        def generated_provider(stories, include_evidence=False):
+            return generate_briefings(
+                stories,
+                include_evidence=include_evidence,
+                client_factory=client_factory,
+                claims_provider=claims_provider,
+            )
+
+        resolved_provider = generated_provider
+
+    resolved_save_memory = (
+        save_memory if save_memory is not None else save_observation_memory
+    )
+
     return service.build_briefing_package(
         tracked,
         n=n,
         global_n=global_n,
         include_evidence=include_evidence,
-        get_briefings=_get_briefings,
-        save_observation_memory=save_observation_memory,
+        get_briefings=resolved_provider,
+        save_observation_memory=resolved_save_memory,
     )
 
 
@@ -77,12 +86,21 @@ def build_briefing_markdown(
     global_n=10,
     package=None,
     show_evidence=False,
+    *,
+    briefing_provider=None,
+    save_memory=None,
+    client_factory=None,
+    claims_provider=None,
 ):
     package = package or build_briefing_package(
         tracked,
         n=n,
         global_n=global_n,
         include_evidence=show_evidence,
+        briefing_provider=briefing_provider,
+        save_memory=save_memory,
+        client_factory=client_factory,
+        claims_provider=claims_provider,
     )
     return markdown.build_briefing_markdown(
         tracked,
@@ -90,18 +108,35 @@ def build_briefing_markdown(
         global_n=global_n,
         package=package,
         show_evidence=show_evidence,
+        get_claims=claims_provider,
     )
 
 
-def write_top10(tracked, n=3, package=None, show_evidence=False):
-    BRIEFINGS_DIR.mkdir(exist_ok=True)
+def write_top10(
+    tracked,
+    n=3,
+    package=None,
+    show_evidence=False,
+    *,
+    output_dir=None,
+    briefing_provider=None,
+    save_memory=None,
+    client_factory=None,
+    claims_provider=None,
+):
+    output_dir = Path(output_dir) if output_dir is not None else BRIEFINGS_DIR
+    output_dir.mkdir(exist_ok=True)
     rendered = build_briefing_markdown(
         tracked,
         n=n,
         package=package,
         show_evidence=show_evidence,
+        briefing_provider=briefing_provider,
+        save_memory=save_memory,
+        client_factory=client_factory,
+        claims_provider=claims_provider,
     )
-    output_path = BRIEFINGS_DIR / f"briefing_{datetime.now().strftime('%Y%m%d_%H%M')}.md"
+    output_path = output_dir / f"briefing_{datetime.now().strftime('%Y%m%d_%H%M')}.md"
     output_path.write_text(rendered, encoding="utf-8")
     print(f"Written: {output_path}")
     return output_path
@@ -123,20 +158,6 @@ __all__ = [
     "TREND_SCORE",
     "build_briefing_markdown",
     "build_briefing_package",
-    "clean_open_questions",
-    "choice",
-    "default_briefing_payload",
-    "default_confidence",
-    "default_source_agreement",
-    "default_status",
-    "display_choice",
-    "fallback_briefing",
-    "fallback_delta_summary",
-    "get_briefings",
-    "local_dispute_flag",
-    "merge_briefing_payloads",
-    "missing_briefing_stories",
-    "normalize_briefing_payloads",
-    "payload_briefing",
+    "generate_briefings",
     "write_top10",
 ]

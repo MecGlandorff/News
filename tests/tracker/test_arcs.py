@@ -2,10 +2,13 @@ import json
 import sqlite3
 
 import src.tracker as tracker
+from src.config import ARC_ASSIGNMENT_MODEL, DEFAULT_LOOKBACK_DAYS
+from src.tracker import matching as story_matching
+from src.tracker import store as tracker_store
 from tests.tracker.support import _article, _fake_tracker_client_sequence
 
 
-def test_rejected_parent_arc_match_saves_new_child_development(tmp_path, monkeypatch):
+def test_rejected_parent_arc_match_saves_new_child_development(tmp_path):
     db_path = tmp_path / "stories.db"
     data_dir = tmp_path / "daily"
     client = _fake_tracker_client_sequence([
@@ -47,19 +50,18 @@ def test_rejected_parent_arc_match_saves_new_child_development(tmp_path, monkeyp
             }]
         },
     ])
-    monkeypatch.setattr(tracker, "DB_PATH", db_path)
-    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
-    monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
-
     first = tracker.track(
         [_article(1, "Militants attack towns in Mali", "Mali attacks")],
         today="2026-05-13",
+        db_path=db_path,
+        data_dir=data_dir,
+        client_factory=lambda: client,
     )
     tracker.save_observation_memory([{
         "observation_id": first[0]["observation_id"],
         "summary": "Mali's junta faced rebel and jihadist attacks with Russian backing under strain.",
         "delta_summary": "Rebel pressure on Mali's junta continued.",
-    }])
+    }], db_path=db_path)
 
     article = _article(
         2,
@@ -67,7 +69,14 @@ def test_rejected_parent_arc_match_saves_new_child_development(tmp_path, monkeyp
         "Mali rebel offensive",
     )
     article["published_at"] = "Fri, 15 May 2026 12:00:00 GMT"
-    tracked = tracker.track([article], today="2026-05-15", verify_story_matches=True)
+    tracked = tracker.track(
+        [article],
+        today="2026-05-15",
+        verify_story_matches=True,
+        db_path=db_path,
+        data_dir=data_dir,
+        client_factory=lambda: client,
+    )
 
     assert tracked[0]["canonical_label"] == "Mali rebel offensive"
     assert tracked[0]["arc_label"] == "Mali attacks"
@@ -107,7 +116,7 @@ def test_rejected_parent_arc_match_saves_new_child_development(tmp_path, monkeyp
     }
 
 
-def test_arc_assignment_uses_mini_model_and_supplied_arc_candidates(monkeypatch):
+def test_arc_assignment_uses_mini_model_and_supplied_arc_candidates():
     captured = []
     client = _fake_tracker_client_sequence([
         {
@@ -122,9 +131,7 @@ def test_arc_assignment_uses_mini_model_and_supplied_arc_candidates(monkeypatch)
             }]
         }
     ], captured=captured)
-    monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
-
-    assignments = tracker._assign_story_arcs(
+    assignments = story_matching.assign_story_arcs(
         {"Mali rebel offensive"},
         {
             7: {
@@ -142,7 +149,10 @@ def test_arc_assignment_uses_mini_model_and_supplied_arc_candidates(monkeypatch)
             }
         },
         {"Mali rebel offensive": [_article(2, "Mali rebels launch offensive", "Mali rebel offensive")]},
+        get_client=lambda: client,
+        model=ARC_ASSIGNMENT_MODEL,
         today="2026-05-15",
+        default_days=DEFAULT_LOOKBACK_DAYS,
     )
 
     assert captured[0]["model"] == "gpt-5.4-mini"
@@ -166,7 +176,7 @@ def test_arc_assignment_rejects_adjacent_and_broader_relationships():
     }
 
     for relationship in ("adjacent_topic", "broader_context"):
-        assignment = tracker.story_matching.arc_assignment_from_model(
+        assignment = story_matching.arc_assignment_from_model(
             {
                 "today_label": "Mali rebel offensive",
                 "arc_id": 7,
@@ -208,7 +218,7 @@ def test_arc_assignment_cases_keep_audit_scores_out_of_prompt():
         "Mali rebel offensive": [_article(1, "Mali rebels launch offensive", "Mali rebel offensive")],
     }
 
-    cases, candidate_audit = tracker.story_matching.arc_assignment_cases_for_prompt(
+    cases, candidate_audit = story_matching.arc_assignment_cases_for_prompt(
         {"Mali rebel offensive"},
         arcs,
         story_groups,
@@ -226,12 +236,9 @@ def test_arc_assignment_cases_keep_audit_scores_out_of_prompt():
     assert audit_entries[0]["score"] > 0
 
 
-def test_arc_decisions_persisted_for_accept_and_reject(tmp_path, monkeypatch):
+def test_arc_decisions_persisted_for_accept_and_reject(tmp_path):
     db_path = tmp_path / "stories.db"
     data_dir = tmp_path / "daily"
-    monkeypatch.setattr(tracker, "DB_PATH", db_path)
-    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
-    monkeypatch.setattr(tracker, "_consolidate_today", lambda groups: groups)
 
     tracker.track(
         [
@@ -240,6 +247,9 @@ def test_arc_decisions_persisted_for_accept_and_reject(tmp_path, monkeypatch):
         ],
         today="2026-06-01",
         verify_story_matches=False,
+        db_path=db_path,
+        data_dir=data_dir,
+        consolidate_today=lambda groups: groups,
     )
 
     conn = sqlite3.connect(db_path)
@@ -279,13 +289,6 @@ def test_arc_decisions_persisted_for_accept_and_reject(tmp_path, monkeypatch):
             ]
         }
     ], captured=captured)
-    monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
-    monkeypatch.setattr(
-        tracker,
-        "_match_labels",
-        lambda labels, recent, today=None: {label: "NEW" for label in labels},
-    )
-
     tracker.track(
         [
             _article(3, "Mali rebels launch offensive", "Mali rebel offensive"),
@@ -293,11 +296,18 @@ def test_arc_decisions_persisted_for_accept_and_reject(tmp_path, monkeypatch):
         ],
         today="2026-06-02",
         verify_story_matches=False,
+        db_path=db_path,
+        data_dir=data_dir,
+        client_factory=lambda: client,
+        consolidate_today=lambda groups: groups,
+        match_labels=lambda labels, recent, today=None: {
+            label: "NEW" for label in labels
+        },
     )
 
-    conn = tracker.tracker_store.get_db(db_path)
+    conn = tracker_store.get_db(db_path)
     try:
-        decisions = tracker.tracker_store.get_story_arc_decisions(conn, run_date="2026-06-02")
+        decisions = tracker_store.get_story_arc_decisions(conn, run_date="2026-06-02")
         day_two_stories = {
             row["canonical_label"]: dict(row)
             for row in conn.execute(
@@ -315,8 +325,8 @@ def test_arc_decisions_persisted_for_accept_and_reject(tmp_path, monkeypatch):
     assert accepted["arc_id"] == mali_story["arc_id"]
     assert accepted["parent_story_id"] == mali_story["story_id"]
     assert accepted["relationship"] == "same_arc"
-    assert accepted["assignment_model"] == tracker.ARC_ASSIGNMENT_MODEL
-    assert accepted["prompt_version"] == tracker.story_matching.ARC_ASSIGNMENT_PROMPT_VERSION
+    assert accepted["assignment_model"] == ARC_ASSIGNMENT_MODEL
+    assert accepted["prompt_version"] == story_matching.ARC_ASSIGNMENT_PROMPT_VERSION
     assert json.loads(accepted["continuity_evidence"]) == ["Same Mali rebel campaign continues."]
     accepted_candidates = json.loads(accepted["candidates"])
     assert len(accepted_candidates) == 1
@@ -349,29 +359,24 @@ def test_arc_decisions_persisted_for_accept_and_reject(tmp_path, monkeypatch):
             assert "arc_label" not in option
 
 
-def test_multiple_today_labels_under_one_parent_do_not_overwrite_articles(tmp_path, monkeypatch):
+def test_multiple_today_labels_under_one_parent_do_not_overwrite_articles(tmp_path):
     db_path = tmp_path / "stories.db"
     data_dir = tmp_path / "daily"
-    monkeypatch.setattr(tracker, "DB_PATH", db_path)
-    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
-    monkeypatch.setattr(
-        tracker,
-        "_match_labels",
-        lambda labels, recent, today=None: {
+
+    def match_labels(labels, recent, today=None):
+        return {
             label: "Iran conflict" if "Iran conflict" in recent else "NEW"
             for label in labels
-        },
-    )
-    monkeypatch.setattr(
-        tracker,
-        "_consolidate_today",
-        lambda groups: groups,
-    )
+        }
 
     tracker.track(
         [_article(1, "Iran conflict continues", "Iran conflict")],
         today="2026-05-14",
         verify_story_matches=False,
+        db_path=db_path,
+        data_dir=data_dir,
+        match_labels=match_labels,
+        consolidate_today=lambda groups: groups,
     )
     articles = [
         _article(2, "Iran talks stall", "Iran talks"),
@@ -379,7 +384,15 @@ def test_multiple_today_labels_under_one_parent_do_not_overwrite_articles(tmp_pa
     ]
     articles[1]["source"] = "Second Source"
 
-    tracked = tracker.track(articles, today="2026-05-15", verify_story_matches=False)
+    tracked = tracker.track(
+        articles,
+        today="2026-05-15",
+        verify_story_matches=False,
+        db_path=db_path,
+        data_dir=data_dir,
+        match_labels=match_labels,
+        consolidate_today=lambda groups: groups,
+    )
 
     assert {article["canonical_label"] for article in tracked} == {"Iran conflict"}
     assert {article["development_label"] for article in tracked} == {

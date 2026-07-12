@@ -4,7 +4,7 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
-from src import story_matching
+from src.tracker import matching as story_matching
 from src.config import ARC_ASSIGNMENT_MODEL, STORY_MATCH_VERIFIER_MODEL
 
 

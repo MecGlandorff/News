@@ -7,16 +7,19 @@ from src.tracker import store as tracker_store
 from tests.observability.support import _run_args
 
 
-def test_novelty_audit_filters_decisions_by_run_id(tmp_path, monkeypatch):
+def test_novelty_audit_filters_decisions_by_run_id(tmp_path):
     db_path = tmp_path / "stories.db"
-    monkeypatch.setattr(observability, "DB_PATH", db_path)
     conn = tracker_store.get_db(db_path)
     conn.close()
 
-    first = observability.start_run(_run_args(), run_date="2026-05-07")
-    observability.finish_run(first)
-    second = observability.start_run(_run_args(), run_date="2026-05-07")
-    observability.finish_run(second)
+    first = observability.start_run(
+        _run_args(), run_date="2026-05-07", db_path=db_path
+    )
+    observability.finish_run(first, db_path=db_path)
+    second = observability.start_run(
+        _run_args(), run_date="2026-05-07", db_path=db_path
+    )
+    observability.finish_run(second, db_path=db_path)
 
     conn = sqlite3.connect(db_path)
     try:
@@ -36,22 +39,24 @@ def test_novelty_audit_filters_decisions_by_run_id(tmp_path, monkeypatch):
     finally:
         conn.close()
 
-    audit = observability.novelty_audit(first)
+    audit = observability.novelty_audit(first, db_path=db_path)
 
     assert [item["today_label"] for item in audit["rejected_related_matches"]] == [
         "First run label"
     ]
 
 
-def test_novelty_audit_surfaces_review_candidates(tmp_path, monkeypatch):
+def test_novelty_audit_surfaces_review_candidates(tmp_path):
     db_path = tmp_path / "stories.db"
-    monkeypatch.setattr(observability, "DB_PATH", db_path)
 
-    run_id = observability.start_run(_run_args(), run_date="2026-05-17")
+    run_id = observability.start_run(
+        _run_args(), run_date="2026-05-17", db_path=db_path
+    )
     observability.update_run_totals(
         run_id,
         story_developments_saved=3,
         story_new_parent_arcs=2,
+        db_path=db_path,
     )
     conn = sqlite3.connect(db_path)
     try:
@@ -184,11 +189,11 @@ def test_novelty_audit_surfaces_review_candidates(tmp_path, monkeypatch):
         conn.commit()
     finally:
         conn.close()
-    observability.finish_run(run_id, status="ok")
+    observability.finish_run(run_id, status="ok", db_path=db_path)
 
-    audit = observability.novelty_audit(run_id)
-    report = observability.pipeline_report(run_id)
-    markdown = observability.run_report_markdown(run_id)
+    audit = observability.novelty_audit(run_id, db_path=db_path)
+    report = observability.pipeline_report(run_id, db_path=db_path)
+    markdown = observability.run_report_markdown(run_id, db_path=db_path)
 
     assert audit["new_parent_ratio"] == pytest.approx(2 / 3)
     assert audit["high_signal_not_displayed"] == []
@@ -211,15 +216,17 @@ def test_novelty_audit_surfaces_review_candidates(tmp_path, monkeypatch):
     assert "Rejected arc decisions: 0" in report
 
 
-def test_novelty_audit_surfaces_arc_decisions(tmp_path, monkeypatch):
+def test_novelty_audit_surfaces_arc_decisions(tmp_path):
     db_path = tmp_path / "stories.db"
-    monkeypatch.setattr(observability, "DB_PATH", db_path)
 
-    run_id = observability.start_run(_run_args(), run_date="2026-06-02")
+    run_id = observability.start_run(
+        _run_args(), run_date="2026-06-02", db_path=db_path
+    )
     observability.update_run_totals(
         run_id,
         story_developments_saved=2,
         story_new_parent_arcs=1,
+        db_path=db_path,
     )
     conn = sqlite3.connect(db_path)
     try:
@@ -334,11 +341,11 @@ def test_novelty_audit_surfaces_arc_decisions(tmp_path, monkeypatch):
         conn.commit()
     finally:
         conn.close()
-    observability.finish_run(run_id, status="ok")
+    observability.finish_run(run_id, status="ok", db_path=db_path)
 
-    audit = observability.novelty_audit(run_id)
-    report = observability.pipeline_report(run_id)
-    markdown = observability.run_report_markdown(run_id)
+    audit = observability.novelty_audit(run_id, db_path=db_path)
+    report = observability.pipeline_report(run_id, db_path=db_path)
+    markdown = observability.run_report_markdown(run_id, db_path=db_path)
 
     review = audit["arc_attachments_review"]
     assert len(review) == 1

@@ -1,12 +1,12 @@
 
-import src.claims as claims_module
+from src.claims import validation as validation_module
 from src.claims import verifier as verifier_module
 from src.claims import extract_and_save_claims, get_claims_for_story
 from tests.claims.support import ARTICLE, _fake_client, _fake_response
 
 
 def test_derivability_check_rejects_when_claim_number_missing_from_span():
-    decision = claims_module._derivability_check(
+    decision = validation_module._derivability_check(
         "Iran proposed capping enrichment at 3.67%.",
         "Iran proposed capping enrichment at 5.00%.",
         ["Iran"],
@@ -15,14 +15,14 @@ def test_derivability_check_rejects_when_claim_number_missing_from_span():
 
 
 def test_number_tokens_preserve_decimal_comma():
-    assert claims_module._number_tokens("Inflation rose to 1,5 percent.") == {"1.5"}
-    assert claims_module._number_tokens("Inflation rose to 1,50 percent.") == {"1.5"}
-    assert claims_module._number_tokens("Inflation rose to 1.5 percent.") == {"1.5"}
-    assert claims_module._number_tokens("Officials counted 1,000 people.") == {"1000"}
+    assert validation_module._number_tokens("Inflation rose to 1,5 percent.") == {"1.5"}
+    assert validation_module._number_tokens("Inflation rose to 1,50 percent.") == {"1.5"}
+    assert validation_module._number_tokens("Inflation rose to 1.5 percent.") == {"1.5"}
+    assert validation_module._number_tokens("Officials counted 1,000 people.") == {"1000"}
 
 
 def test_derivability_check_rejects_decimal_comma_integer_mismatch():
-    decision = claims_module._derivability_check(
+    decision = validation_module._derivability_check(
         "Bank X said the rate rose to 1,5 percent.",
         "Bank X said the rate rose to 15 percent.",
         ["Bank X"],
@@ -31,7 +31,7 @@ def test_derivability_check_rejects_decimal_comma_integer_mismatch():
 
 
 def test_derivability_check_routes_entity_paraphrase_to_verifier():
-    decision = claims_module._derivability_check(
+    decision = validation_module._derivability_check(
         "Iran proposed capping enrichment at 3.67%.",
         "Iran proposed capping enrichment at 3.67 percent.",
         ["Iran"],
@@ -40,7 +40,7 @@ def test_derivability_check_routes_entity_paraphrase_to_verifier():
 
 
 def test_derivability_check_rejects_negation_mismatch():
-    decision = claims_module._derivability_check(
+    decision = validation_module._derivability_check(
         "The government will raise taxes.",
         "The government will not raise taxes.",
         ["government"],
@@ -49,7 +49,7 @@ def test_derivability_check_rejects_negation_mismatch():
 
 
 def test_derivability_check_rejects_direction_mismatch():
-    decision = claims_module._derivability_check(
+    decision = validation_module._derivability_check(
         "Acme increased revenue.",
         "Acme decreased revenue.",
         ["Acme"],
@@ -58,7 +58,7 @@ def test_derivability_check_rejects_direction_mismatch():
 
 
 def test_derivability_check_rejects_unit_mismatch():
-    decision = claims_module._derivability_check(
+    decision = validation_module._derivability_check(
         "Acme reported 5 percent growth.",
         "Acme reported 5 million euros in revenue.",
         ["Acme"],
@@ -67,7 +67,7 @@ def test_derivability_check_rejects_unit_mismatch():
 
 
 def test_derivability_check_routes_weak_entity_overlap_to_verifier():
-    decision = claims_module._derivability_check(
+    decision = validation_module._derivability_check(
         "Lydora denied the Marek foreign ministry's allegation about moving artillery near the Kars crossing.",
         "a claim Lydora denied.",
         ["Lydora", "Marek", "Kars"],
@@ -76,7 +76,7 @@ def test_derivability_check_routes_weak_entity_overlap_to_verifier():
 
 
 def test_derivability_check_accepts_claim_text_contained_in_span():
-    decision = claims_module._derivability_check(
+    decision = validation_module._derivability_check(
         "Officials confirmed the offer.",
         "Officials confirmed the offer.",
         [],
@@ -85,7 +85,7 @@ def test_derivability_check_accepts_claim_text_contained_in_span():
 
 
 def test_derivability_check_uncertain_for_paraphrase_without_entity_overlap():
-    decision = claims_module._derivability_check(
+    decision = validation_module._derivability_check(
         "Officials warned about escalation risk.",
         "Senior diplomats expressed concern about regional tensions.",
         [],
@@ -93,9 +93,8 @@ def test_derivability_check_uncertain_for_paraphrase_without_entity_overlap():
     assert decision == "uncertain"
 
 
-def test_verifier_failure_default_rejects_the_claim(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
-
+def test_verifier_failure_default_rejects_the_claim(tmp_path):
+    db_path = tmp_path / "stories.db"
     article = {
         **ARTICLE,
         "id": "verifier-fail",
@@ -113,18 +112,17 @@ def test_verifier_failure_default_rejects_the_claim(tmp_path, monkeypatch):
         ]
     }
     client = _fake_client(response)
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
-
-    def boom(claim_text, evidence_span):
-        raise RuntimeError("verifier network error")
 
     # _verify_claim_with_llm catches errors and returns False, so simulate
     # that contract directly rather than letting the exception escape.
-    monkeypatch.setattr(claims_module, "_verify_claim_with_llm", lambda c, s: False)
+    stats = extract_and_save_claims(
+        [article],
+        db_path=db_path,
+        client_factory=lambda: client,
+        verify_claim=lambda c, s: False,
+    )
 
-    stats = extract_and_save_claims([article])
-
-    assert get_claims_for_story(42) == []
+    assert get_claims_for_story(42, db_path=db_path) == []
     assert stats["claim_verifier_rejects"] == 1
 
 
@@ -153,7 +151,12 @@ def test_verifier_explicit_false_is_a_reject_not_a_schema_failure(monkeypatch):
         lambda *args, **kwargs: schema_failures.append((args, kwargs)),
     )
 
-    supported = claims_module._verify_claim_with_llm("Claim.", "Evidence.")
+    supported = verifier_module.verify_claim_with_llm(
+        "Claim.",
+        "Evidence.",
+        lambda: None,
+        lambda claim_text, evidence_span: response,
+    )
 
     assert supported is False
     assert len(saved) == 1
@@ -185,7 +188,12 @@ def test_verifier_malformed_supported_field_is_schema_failure_not_cached_false(m
         lambda *args, **kwargs: schema_failures.append((args, kwargs)),
     )
 
-    supported = claims_module._verify_claim_with_llm("Claim.", "Evidence.")
+    supported = verifier_module.verify_claim_with_llm(
+        "Claim.",
+        "Evidence.",
+        lambda: None,
+        lambda claim_text, evidence_span: response,
+    )
 
     assert supported is False
     assert saved == []
@@ -212,14 +220,18 @@ def test_verifier_refreshes_malformed_cached_response(monkeypatch):
         refreshes.append((claim_text, evidence_span))
         return fresh_response
 
-    monkeypatch.setattr(claims_module, "_uncached_verifier_completion", fresh_completion)
     monkeypatch.setattr(
         verifier_module,
         "save_cached_chat_completion",
         lambda metadata, response: saved.append((metadata, response)),
     )
 
-    supported = claims_module._verify_claim_with_llm("Claim.", "Evidence.")
+    supported = verifier_module.verify_claim_with_llm(
+        "Claim.",
+        "Evidence.",
+        lambda: None,
+        fresh_completion,
+    )
 
     assert supported is True
     assert refreshes == [("Claim.", "Evidence.")]

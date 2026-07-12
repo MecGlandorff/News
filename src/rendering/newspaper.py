@@ -6,7 +6,7 @@ from src.article_dates import parse_reported_at
 from src.rendering import newspaper_map
 from src.rendering.geo import infer_story_location
 from src.rendering.pdf_writer import PDFDocument as _PDFDocument
-from src.top10 import THEME_ORDER, build_briefing_package
+from src.briefing import THEME_ORDER, build_briefing_package
 
 
 NEWSPAPER_DIR = Path("newspapers")

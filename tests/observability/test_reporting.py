@@ -4,31 +4,34 @@ import src.observability as observability
 from tests.observability.support import _run_args
 
 
-def test_pipeline_report_includes_story_match_verifier_totals(tmp_path, monkeypatch):
+def test_pipeline_report_includes_story_match_verifier_totals(tmp_path):
     db_path = tmp_path / "stories.db"
-    monkeypatch.setattr(observability, "DB_PATH", db_path)
 
-    run_id = observability.start_run(_run_args(), run_date="2026-05-07")
+    run_id = observability.start_run(
+        _run_args(), run_date="2026-05-07", db_path=db_path
+    )
     observability.update_run_totals(
         run_id,
         story_match_verifications=6,
         story_match_accepts=4,
         story_match_rejections=2,
+        db_path=db_path,
     )
-    observability.finish_run(run_id, status="ok")
+    observability.finish_run(run_id, status="ok", db_path=db_path)
 
-    report = observability.pipeline_report(run_id)
+    report = observability.pipeline_report(run_id, db_path=db_path)
 
     assert "Story match checks:     6" in report
     assert "Story match accepted:   4" in report
     assert "Story match rejected:   2" in report
 
 
-def test_pipeline_report_includes_story_development_totals(tmp_path, monkeypatch):
+def test_pipeline_report_includes_story_development_totals(tmp_path):
     db_path = tmp_path / "stories.db"
-    monkeypatch.setattr(observability, "DB_PATH", db_path)
 
-    run_id = observability.start_run(_run_args(), run_date="2026-05-07")
+    run_id = observability.start_run(
+        _run_args(), run_date="2026-05-07", db_path=db_path
+    )
     observability.update_run_totals(
         run_id,
         story_developments_saved=8,
@@ -38,10 +41,11 @@ def test_pipeline_report_includes_story_development_totals(tmp_path, monkeypatch
         story_new_arcs=2,
         story_new_parent_arcs=2,
         story_unmatched_new_stories=2,
+        db_path=db_path,
     )
-    observability.finish_run(run_id, status="ok")
+    observability.finish_run(run_id, status="ok", db_path=db_path)
 
-    report = observability.pipeline_report(run_id)
+    report = observability.pipeline_report(run_id, db_path=db_path)
 
     assert "Developments saved:     8" in report
     assert "Parent attachments:     3" in report
@@ -52,11 +56,12 @@ def test_pipeline_report_includes_story_development_totals(tmp_path, monkeypatch
     assert "Unmatched new stories:  2" in report
 
 
-def test_pipeline_report_includes_scraper_claim_and_cost_totals(tmp_path, monkeypatch):
+def test_pipeline_report_includes_scraper_claim_and_cost_totals(tmp_path):
     db_path = tmp_path / "stories.db"
-    monkeypatch.setattr(observability, "DB_PATH", db_path)
 
-    run_id = observability.start_run(_run_args(), run_date="2026-05-07")
+    run_id = observability.start_run(
+        _run_args(), run_date="2026-05-07", db_path=db_path
+    )
     observability.update_run_totals(
         run_id,
         duplicate_url_skips=2,
@@ -73,6 +78,7 @@ def test_pipeline_report_includes_scraper_claim_and_cost_totals(tmp_path, monkey
         claim_invalid_dropped=6,
         claim_extraction_failures=1,
         claim_zero_results=2,
+        db_path=db_path,
     )
     observability.record_llm_call(
         run_id=run_id,
@@ -80,10 +86,11 @@ def test_pipeline_report_includes_scraper_claim_and_cost_totals(tmp_path, monkey
         purpose="claim",
         usage={"prompt_tokens": 1000, "completion_tokens": 500},
         latency_ms=1200,
+        db_path=db_path,
     )
-    observability.finish_run(run_id, status="ok")
+    observability.finish_run(run_id, status="ok", db_path=db_path)
 
-    report = observability.pipeline_report(run_id)
+    report = observability.pipeline_report(run_id, db_path=db_path)
 
     assert "Duplicate URLs skipped: 2" in report
     assert "Feed fetch failures:    1" in report
@@ -101,11 +108,12 @@ def test_pipeline_report_includes_scraper_claim_and_cost_totals(tmp_path, monkey
     assert "claim: 1 calls, tokens 1000/500, latency 1.2s, EUR 0.0007" in report
 
 
-def test_write_run_report_artifact_outputs_markdown_overview(tmp_path, monkeypatch):
+def test_write_run_report_artifact_outputs_markdown_overview(tmp_path):
     db_path = tmp_path / "stories.db"
-    monkeypatch.setattr(observability, "DB_PATH", db_path)
 
-    run_id = observability.start_run(_run_args(), run_date="2026-05-10")
+    run_id = observability.start_run(
+        _run_args(), run_date="2026-05-10", db_path=db_path
+    )
     observability.update_run_totals(
         run_id,
         articles_returned=345,
@@ -115,6 +123,7 @@ def test_write_run_report_artifact_outputs_markdown_overview(tmp_path, monkeypat
         feed_items_unparseable_timestamp_included=1,
         stories_touched=164,
         llm_cache_hits=4,
+        db_path=db_path,
     )
     observability.record_llm_call(
         run_id=run_id,
@@ -122,12 +131,14 @@ def test_write_run_report_artifact_outputs_markdown_overview(tmp_path, monkeypat
         purpose="brief",
         usage={"prompt_tokens": 33200, "completion_tokens": 7365},
         latency_ms=145000,
+        db_path=db_path,
     )
-    observability.finish_run(run_id, status="ok")
+    observability.finish_run(run_id, status="ok", db_path=db_path)
 
     artifact = observability.write_run_report_artifact(
         run_id,
         output_dir=tmp_path / "run_artifacts",
+        db_path=db_path,
     )
 
     assert artifact == tmp_path / "run_artifacts" / f"run_2026-05-10_{run_id}.md"
