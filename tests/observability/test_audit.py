@@ -3,7 +3,7 @@ import sqlite3
 import pytest
 
 import src.observability as observability
-import src.tracker_store as tracker_store
+from src.tracker import store as tracker_store
 from tests.observability.support import _run_args
 
 

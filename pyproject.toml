@@ -27,8 +27,8 @@ module = [
     "src.article_dates",
     "src.observability.database",
     "src.observability.state",
-    "src.occurrences",
-    "src.replay",
+    "src.tracker.occurrences",
+    "src.tracker.replay",
 ]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true

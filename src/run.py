@@ -9,7 +9,6 @@ import src.article_cache as article_cache
 import src.claims as claims
 import src.llm_response_cache as llm_response_cache
 import src.observability as observability
-import src.replay as replay
 import src.scraper as scraper
 import src.sources as sources
 from src.claims import extract_and_save_claims
@@ -20,6 +19,7 @@ from src.rendering.newspaper import write_newspaper_pdf
 from src.scraper import scrape_all
 from src.top10 import build_briefing_package, write_top10
 import src.tracker as tracker
+from src.tracker import replay
 from src.article_dates import editorial_today
 from src.tracker import track
 

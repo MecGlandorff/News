@@ -1,7 +1,7 @@
 import sqlite3
 
 import src.claims as claims_module
-import src.tracker_store as tracker_store
+from src.tracker import store as tracker_store
 from src.claims import extract_and_save_claims, get_claims_for_story
 from tests.claims.support import ARTICLE, CLAIM_RESPONSE, _fake_client
 
