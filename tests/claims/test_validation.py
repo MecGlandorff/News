@@ -1,5 +1,6 @@
 
 import src.claims as claims_module
+from src.claims import verifier as verifier_module
 from src.claims import extract_and_save_claims, get_claims_for_story
 from tests.claims.support import ARTICLE, _fake_client, _fake_response
 
@@ -133,17 +134,21 @@ def test_verifier_explicit_false_is_a_reject_not_a_schema_failure(monkeypatch):
     schema_failures = []
 
     monkeypatch.setattr(
-        claims_module,
+        verifier_module,
         "_verifier_completion",
-        lambda claim_text, evidence_span: (response, {"cache": "metadata"}, False),
+        lambda claim_text, evidence_span, client_factory: (
+            response,
+            {"cache": "metadata"},
+            False,
+        ),
     )
     monkeypatch.setattr(
-        claims_module,
+        verifier_module,
         "save_cached_chat_completion",
         lambda metadata, response: saved.append((metadata, response)),
     )
     monkeypatch.setattr(
-        claims_module,
+        verifier_module,
         "mark_schema_failure",
         lambda *args, **kwargs: schema_failures.append((args, kwargs)),
     )
@@ -161,17 +166,21 @@ def test_verifier_malformed_supported_field_is_schema_failure_not_cached_false(m
     schema_failures = []
 
     monkeypatch.setattr(
-        claims_module,
+        verifier_module,
         "_verifier_completion",
-        lambda claim_text, evidence_span: (response, {"cache": "metadata"}, False),
+        lambda claim_text, evidence_span, client_factory: (
+            response,
+            {"cache": "metadata"},
+            False,
+        ),
     )
     monkeypatch.setattr(
-        claims_module,
+        verifier_module,
         "save_cached_chat_completion",
         lambda metadata, response: saved.append((metadata, response)),
     )
     monkeypatch.setattr(
-        claims_module,
+        verifier_module,
         "mark_schema_failure",
         lambda *args, **kwargs: schema_failures.append((args, kwargs)),
     )
@@ -190,9 +199,13 @@ def test_verifier_refreshes_malformed_cached_response(monkeypatch):
     refreshes = []
 
     monkeypatch.setattr(
-        claims_module,
+        verifier_module,
         "_verifier_completion",
-        lambda claim_text, evidence_span: (cached_response, {"cache": "metadata"}, True),
+        lambda claim_text, evidence_span, client_factory: (
+            cached_response,
+            {"cache": "metadata"},
+            True,
+        ),
     )
 
     def fresh_completion(claim_text, evidence_span):
@@ -201,7 +214,7 @@ def test_verifier_refreshes_malformed_cached_response(monkeypatch):
 
     monkeypatch.setattr(claims_module, "_uncached_verifier_completion", fresh_completion)
     monkeypatch.setattr(
-        claims_module,
+        verifier_module,
         "save_cached_chat_completion",
         lambda metadata, response: saved.append((metadata, response)),
     )
