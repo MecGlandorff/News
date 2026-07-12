@@ -333,7 +333,7 @@ def test_match_labels_sends_per_label_candidate_memory(monkeypatch):
 
 
 def test_match_labels_batches_crossday_cases(monkeypatch):
-    monkeypatch.setattr(tracker.story_matching, "MATCH_CASES_PER_CALL", 2)
+    monkeypatch.setattr(tracker.story_matching.verification, "MATCH_CASES_PER_CALL", 2)
     captured_batches = []
 
     def batch_response(kwargs):

@@ -1,6 +1,9 @@
 import json
 import logging
 from pathlib import Path
+
+from src import observability, occurrences
+from src.article_dates import editorial_today
 from src.config import (
     ARC_ASSIGNMENT_MODEL,
     CROSSDAY_MATCH_MODEL,
@@ -9,8 +12,8 @@ from src.config import (
     TRACKER_MODEL,
 )
 from src.llm import get_openai_client
-from src import observability, occurrences, story_matching, tracker_store
-from src.article_dates import editorial_today
+from src.tracker import matching as story_matching
+from src import tracker_store
 
 DB_PATH  = Path("data/stories.db")
 DATA_DIR = Path("data/daily")
