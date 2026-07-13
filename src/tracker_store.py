@@ -4,13 +4,14 @@ import json
 import sqlite3
 from datetime import date, timedelta
 
-from src import observability, occurrences, sources, story_matching
+from src import observability, occurrences, sources
 from src.config import (
     DEFAULT_LOOKBACK_DAYS,
     STORY_MEMORY_BLOCKED_LABELS,
     STORY_MEMORY_QUARANTINE_LABEL,
     STORY_MEMORY_QUARANTINE_SOURCE_LABELS,
 )
+from src.tracker import matching as story_matching
 
 QUARANTINED_STORY_LABEL = STORY_MEMORY_QUARANTINE_LABEL
 BLOCKED_MEMORY_LABELS = STORY_MEMORY_BLOCKED_LABELS
