@@ -2,8 +2,8 @@ import sqlite3
 
 import pytest
 
-import src.replay as replay
 import src.tracker as tracker
+from src.tracker import replay
 
 
 def _article(article_id, title):
