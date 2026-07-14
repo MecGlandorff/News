@@ -25,6 +25,7 @@ module = [
     "src.pricing",
     "src.llm_response_cache",
     "src.article_dates",
+    "src.claims.types",
     "src.observability.database",
     "src.observability.state",
     "src.tracker.occurrences",
