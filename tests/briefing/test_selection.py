@@ -1,6 +1,6 @@
 
-import src.top10 as top10
-from src.top10 import build_briefing_markdown
+import src.briefing as top10
+from src.briefing import build_briefing_markdown
 from tests.briefing.support import _briefing_article
 
 

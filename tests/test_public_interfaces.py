@@ -1,6 +1,6 @@
 import src.claims as claims
 import src.observability as observability
-import src.top10 as briefing
+import src.briefing as briefing
 import src.tracker as tracker
 from src.tracker import replay
 

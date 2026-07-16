@@ -1,13 +1,13 @@
 import json
 import sqlite3
 
-import src.briefing_generation as briefing_generation
+import src.briefing as top10
 import src.claims as claims_module
 import src.llm_response_cache as llm_response_cache
 import src.observability as observability
-import src.top10 as top10
+from src.briefing import grounding as briefing_generation
 from src.claims import extract_and_save_claims
-from src.top10 import build_briefing_markdown
+from src.briefing import build_briefing_markdown
 from tests.briefing.support import _briefing_article
 from tests.fakes import FakeLLMClient
 
