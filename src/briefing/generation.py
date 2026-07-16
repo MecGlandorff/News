@@ -18,7 +18,13 @@ from src.llm import (
 )
 
 
-def get_briefings(stories, get_client, model, include_evidence=False):
+def get_briefings(
+    stories,
+    get_client,
+    model,
+    include_evidence=False,
+    get_claims=None,
+):
     """Generate briefing payloads in bounded story batches."""
     if not stories:
         return {}
@@ -31,6 +37,7 @@ def get_briefings(stories, get_client, model, include_evidence=False):
                     get_client,
                     model,
                     include_evidence=include_evidence,
+                    get_claims=get_claims,
                 )
             )
         return merged
@@ -58,7 +65,7 @@ def get_briefings(stories, get_client, model, include_evidence=False):
         if story.get("previous_context"):
             item["previous_context"] = story["previous_context"]
         if include_evidence:
-            agreement = attach_claim_source_agreement(story)
+            agreement = attach_claim_source_agreement(story, get_claims=get_claims)
             item["claims"] = story["claims_for_prompt"]
             if agreement.get("label"):
                 item["claim_source_agreement"] = agreement

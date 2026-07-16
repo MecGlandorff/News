@@ -131,8 +131,8 @@ def defaults_by_label(stories):
     }
 
 
-def attach_claim_source_agreement(story):
-    claims = claims_for_prompt(story)
+def attach_claim_source_agreement(story, get_claims=None):
+    claims = claims_for_prompt(story, get_claims=get_claims)
     agreement = claim_source_agreement(
         [claim for claim in claims if claim.get("is_current")],
         story.get("articles", []),

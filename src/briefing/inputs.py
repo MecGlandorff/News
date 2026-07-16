@@ -16,10 +16,13 @@ def latest_reported_at(articles):
     return max(parsed).strftime("%Y-%m-%d %H:%M UTC")
 
 
-def claims_for_prompt(story):
+def claims_for_prompt(story, get_claims=None):
     if story.get("claims_for_prompt") is not None:
         return story["claims_for_prompt"]
-    from src.claims import get_claims_for_story
+    if get_claims is None:
+        from src.claims import get_claims_for_story
+
+        get_claims = get_claims_for_story
     current_date = story_editorial_date(story)
     article_by_id = {str(article.get("id")): article for article in story.get("articles", [])}
     article_by_occurrence = {
@@ -28,7 +31,7 @@ def claims_for_prompt(story):
         if article.get("occurrence_id") is not None
     }
     claims = []
-    saved_claims = get_claims_for_story(
+    saved_claims = get_claims(
         story.get("story_id"),
         as_of_date=current_date,
         history_days=7,

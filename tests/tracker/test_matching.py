@@ -3,122 +3,123 @@ import sqlite3
 
 import src.llm_response_cache as llm_response_cache
 import src.observability as observability
-import src.story_matching as story_matching
 import src.tracker as tracker
+from src.config import CROSSDAY_MATCH_MODEL, DEFAULT_LOOKBACK_DAYS, TRACKER_MODEL
+from src.tracker import matching as story_matching
 from tests.fakes import FakeLLMClient
 from tests.tracker.support import _article, _fake_tracker_client, _fake_tracker_client_sequence
 
 
-def test_consolidate_today_rejects_unrelated_generic_accidents(monkeypatch):
-    monkeypatch.setattr(
-        tracker,
-        "get_openai_client",
-        lambda: _fake_tracker_client({
+def _consolidate(groups, client):
+    return story_matching.consolidate_today(
+        groups,
+        get_client=lambda: client,
+        model=TRACKER_MODEL,
+    )
+
+
+def _match(labels, recent, *, client=None, today=None):
+    def get_client():
+        if client is None:
+            raise AssertionError("matching should not call the LLM for this case")
+        return client
+
+    return story_matching.match_labels(
+        labels,
+        recent,
+        get_client=get_client,
+        model=CROSSDAY_MATCH_MODEL,
+        today=today,
+        default_days=DEFAULT_LOOKBACK_DAYS,
+    )
+
+
+def test_consolidate_today_rejects_unrelated_generic_accidents():
+    client = _fake_tracker_client({
             "groups": [{
                 "canonical_label": "Fair Ride Accident",
                 "labels": ["Molen Accident", "E-Motorcycle Manslaughter"],
             }],
-        }),
-    )
+        })
 
     groups = {
         "Molen Accident": [_article(1, "Child injured by windmill sail", "Molen Accident")],
         "E-Motorcycle Manslaughter": [_article(2, "E-motorcycle crash kills man", "E-Motorcycle Manslaughter")],
     }
 
-    consolidated = tracker._consolidate_today(groups)
+    consolidated = _consolidate(groups, client)
 
     assert set(consolidated) == {"Molen Accident", "E-Motorcycle Manslaughter"}
     assert len(consolidated["Molen Accident"]) == 1
     assert len(consolidated["E-Motorcycle Manslaughter"]) == 1
 
 
-def test_consolidate_today_allows_shared_distinctive_incident(monkeypatch):
-    monkeypatch.setattr(
-        tracker,
-        "get_openai_client",
-        lambda: _fake_tracker_client({
+def test_consolidate_today_allows_shared_distinctive_incident():
+    client = _fake_tracker_client({
             "groups": [{
                 "canonical_label": "Train Collision",
                 "labels": ["Train Crash", "Train Collision"],
             }],
-        }),
-    )
+        })
 
     groups = {
         "Train Crash": [_article(1, "Two trains crash", "Train Crash")],
         "Train Collision": [_article(2, "Train collision injures passengers", "Train Collision")],
     }
 
-    consolidated = tracker._consolidate_today(groups)
+    consolidated = _consolidate(groups, client)
 
     assert list(consolidated) == ["Train Collision"]
     assert len(consolidated["Train Collision"]) == 2
 
 
-def test_consolidate_today_rejects_label_repeated_across_groups(monkeypatch):
-    monkeypatch.setattr(
-        tracker,
-        "get_openai_client",
-        lambda: _fake_tracker_client({
+def test_consolidate_today_rejects_label_repeated_across_groups():
+    client = _fake_tracker_client({
             "groups": [
                 {"canonical_label": "First", "labels": ["Label A"]},
                 {"canonical_label": "Second", "labels": ["Label A", "Label B"]},
             ],
-        }),
-    )
+        })
     groups = {
         "Label A": [_article(1, "First")],
         "Label B": [_article(2, "Second")],
     }
 
-    consolidated = tracker._consolidate_today(groups)
+    consolidated = _consolidate(groups, client)
 
     assert consolidated is groups
 
 
-def test_consolidate_today_rejects_duplicate_canonical_labels(monkeypatch):
-    monkeypatch.setattr(
-        tracker,
-        "get_openai_client",
-        lambda: _fake_tracker_client({
+def test_consolidate_today_rejects_duplicate_canonical_labels():
+    client = _fake_tracker_client({
             "groups": [
                 {"canonical_label": "Shared", "labels": ["Label A"]},
                 {"canonical_label": "Shared", "labels": ["Label B"]},
             ],
-        }),
-    )
+        })
     groups = {
         "Label A": [_article(1, "First")],
         "Label B": [_article(2, "Second")],
     }
 
-    consolidated = tracker._consolidate_today(groups)
+    consolidated = _consolidate(groups, client)
 
     assert consolidated is groups
 
 
-def test_consolidate_today_falls_back_on_invalid_json(monkeypatch):
-    monkeypatch.setattr(
-        tracker,
-        "get_openai_client",
-        lambda: FakeLLMClient("not-json"),
-    )
+def test_consolidate_today_falls_back_on_invalid_json():
     groups = {
         "Label A": [_article(1, "First")],
         "Label B": [_article(2, "Second")],
     }
 
-    consolidated = tracker._consolidate_today(groups)
+    consolidated = _consolidate(groups, FakeLLMClient("not-json"))
 
     assert consolidated is groups
 
 
-def test_match_labels_rejects_unrelated_generic_accident(monkeypatch):
-    monkeypatch.setattr(
-        tracker,
-        "get_openai_client",
-        lambda: _fake_tracker_client({
+def test_match_labels_rejects_unrelated_generic_accident():
+    client = _fake_tracker_client({
             "matches": [
                 {
                     "today_label": "Molen Accident",
@@ -129,20 +130,20 @@ def test_match_labels_rejects_unrelated_generic_accident(monkeypatch):
                     "canonical_label": "Train Collision",
                 },
             ],
-        }),
-    )
+        })
 
-    matches = tracker._match_labels(
+    matches = _match(
         {"Molen Accident", "Train Crash"},
         {"Fair Ride Accident": 1, "Train Collision": 2},
+        client=client,
     )
 
     assert matches["Molen Accident"] == "NEW"
     assert matches["Train Crash"] == "Train Collision"
 
 
-def test_match_labels_rejects_known_shooting_false_merge(monkeypatch):
-    matches = tracker._match_labels(
+def test_match_labels_rejects_known_shooting_false_merge():
+    matches = _match(
         {"White House Shooting"},
         {
             "OpenAI Shooter Lawsuit": {
@@ -162,7 +163,7 @@ def test_match_labels_rejects_known_shooting_false_merge(monkeypatch):
     assert matches["White House Shooting"] == "NEW"
 
 
-def test_story_match_verifier_rejects_gaza_detention_false_merge(tmp_path, monkeypatch):
+def test_story_match_verifier_rejects_gaza_detention_false_merge(tmp_path):
     db_path = tmp_path / "stories.db"
     data_dir = tmp_path / "daily"
     client = _fake_tracker_client_sequence([
@@ -200,19 +201,18 @@ def test_story_match_verifier_rejects_gaza_detention_false_merge(tmp_path, monke
             }]
         },
     ])
-    monkeypatch.setattr(tracker, "DB_PATH", db_path)
-    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
-    monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
-
     first = tracker.track(
         [_article(1, "Israel intercepts Gaza-bound flotilla", "Gaza flotilla raid")],
         today="2026-05-04",
+        db_path=db_path,
+        data_dir=data_dir,
+        client_factory=lambda: client,
     )
     tracker.save_observation_memory([{
         "observation_id": first[0]["observation_id"],
         "summary": "Israel intercepted a Gaza-bound aid flotilla and detained activists.",
         "delta_summary": "British Gaza flotilla activists alleged abuse after detention.",
-    }])
+    }], db_path=db_path)
 
     article = _article(
         2,
@@ -229,7 +229,14 @@ def test_story_match_verifier_rejects_gaza_detention_false_merge(tmp_path, monke
         "sexual violence and physical abuse in Israeli detention."
     )
 
-    tracked = tracker.track([article], today="2026-05-07", verify_story_matches=True)
+    tracked = tracker.track(
+        [article],
+        today="2026-05-07",
+        verify_story_matches=True,
+        db_path=db_path,
+        data_dir=data_dir,
+        client_factory=lambda: client,
+    )
 
     assert tracked[0]["canonical_label"] == "Israel Detention Abuse"
 
@@ -261,19 +268,15 @@ def test_story_match_verifier_rejects_gaza_detention_false_merge(tmp_path, monke
     assert [row["canonical_label"] for row in story_rows] == ["Israel Detention Abuse"]
 
 
-def test_match_labels_allows_ongoing_story_rewording(monkeypatch):
-    monkeypatch.setattr(
-        tracker,
-        "get_openai_client",
-        lambda: _fake_tracker_client({
+def test_match_labels_allows_ongoing_story_rewording():
+    client = _fake_tracker_client({
             "matches": [{
                 "today_label": "Iran Peace Proposal",
                 "canonical_label": "Iran Nuclear Talks",
             }],
-        }),
-    )
+        })
 
-    matches = tracker._match_labels(
+    matches = _match(
         {"Iran Peace Proposal"},
         {
             "Iran Nuclear Talks": {
@@ -288,12 +291,13 @@ def test_match_labels_allows_ongoing_story_rewording(monkeypatch):
                 }],
             }
         },
+        client=client,
     )
 
     assert matches["Iran Peace Proposal"] == "Iran Nuclear Talks"
 
 
-def test_match_labels_sends_per_label_candidate_memory(monkeypatch):
+def test_match_labels_sends_per_label_candidate_memory():
     captured = []
     client = FakeLLMClient({
         "matches": [{
@@ -301,9 +305,7 @@ def test_match_labels_sends_per_label_candidate_memory(monkeypatch):
             "canonical_label": "Iran Nuclear Talks",
         }]
     }, capture=captured)
-    monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
-
-    tracker._match_labels(
+    _match(
         {"Iran Peace Proposal"},
         {
             "Iran Nuclear Talks": {
@@ -319,6 +321,7 @@ def test_match_labels_sends_per_label_candidate_memory(monkeypatch):
                 }],
             }
         },
+        client=client,
     )
 
     assert captured[0]["model"] == "gpt-5.4-mini"
@@ -333,7 +336,7 @@ def test_match_labels_sends_per_label_candidate_memory(monkeypatch):
 
 
 def test_match_labels_batches_crossday_cases(monkeypatch):
-    monkeypatch.setattr(tracker.story_matching.verification, "MATCH_CASES_PER_CALL", 2)
+    monkeypatch.setattr(story_matching.verification, "MATCH_CASES_PER_CALL", 2)
     captured_batches = []
 
     def batch_response(kwargs):
@@ -351,7 +354,6 @@ def test_match_labels_batches_crossday_cases(monkeypatch):
         }
 
     client = FakeLLMClient(batch_response)
-    monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
     labels = {
         "Alpha Event",
         "Bravo Event",
@@ -369,7 +371,7 @@ def test_match_labels_batches_crossday_cases(monkeypatch):
         for index, label in enumerate(sorted(labels), start=1)
     }
 
-    matches = tracker._match_labels(labels, recent, today="2026-05-02")
+    matches = _match(labels, recent, client=client, today="2026-05-02")
 
     assert captured_batches == [
         ["Alpha Event", "Bravo Event"],
@@ -382,9 +384,12 @@ def test_match_labels_batches_crossday_cases(monkeypatch):
 def test_match_labels_uses_exact_response_cache_inside_run(tmp_path, monkeypatch):
     db_path = tmp_path / "stories.db"
     monkeypatch.setattr(llm_response_cache, "DB_PATH", db_path)
-    monkeypatch.setattr(observability, "DB_PATH", db_path)
-    run_id = observability.start_run({"today": "2026-05-04"}, run_date="2026-05-04")
-    observability.set_current_run_id(run_id)
+    run_id = observability.start_run(
+        {"today": "2026-05-04"},
+        run_date="2026-05-04",
+        db_path=db_path,
+    )
+    observability.set_current_run_id(run_id, db_path=db_path)
 
     client = FakeLLMClient({
         "matches": [{
@@ -392,7 +397,6 @@ def test_match_labels_uses_exact_response_cache_inside_run(tmp_path, monkeypatch
             "canonical_label": "Iran Nuclear Talks",
         }]
     })
-    monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
     recent = {
         "Iran Nuclear Talks": {
             "story_id": 2,
@@ -408,8 +412,18 @@ def test_match_labels_uses_exact_response_cache_inside_run(tmp_path, monkeypatch
     }
 
     try:
-        first = tracker._match_labels({"Iran Peace Proposal"}, recent, today="2026-05-04")
-        second = tracker._match_labels({"Iran Peace Proposal"}, recent, today="2026-05-04")
+        first = _match(
+            {"Iran Peace Proposal"},
+            recent,
+            client=client,
+            today="2026-05-04",
+        )
+        second = _match(
+            {"Iran Peace Proposal"},
+            recent,
+            client=client,
+            today="2026-05-04",
+        )
         observability.finish_run(run_id, status="ok")
     finally:
         observability.clear_current_run_id()
@@ -434,19 +448,15 @@ def test_match_labels_uses_exact_response_cache_inside_run(tmp_path, monkeypatch
     assert call_count == 1
 
 
-def test_match_labels_rejects_model_match_outside_label_candidates(monkeypatch):
-    monkeypatch.setattr(
-        tracker,
-        "get_openai_client",
-        lambda: _fake_tracker_client({
+def test_match_labels_rejects_model_match_outside_label_candidates():
+    client = _fake_tracker_client({
             "matches": [{
                 "today_label": "Iran Peace Proposal",
                 "canonical_label": "Unrelated Story",
             }],
-        }),
-    )
+        })
 
-    matches = tracker._match_labels(
+    matches = _match(
         {"Iran Peace Proposal"},
         {
             "Iran Nuclear Talks": {
@@ -468,6 +478,7 @@ def test_match_labels_rejects_model_match_outside_label_candidates(monkeypatch):
                 "recent_articles": [],
             },
         },
+        client=client,
     )
 
     assert matches["Iran Peace Proposal"] == "NEW"
@@ -493,19 +504,29 @@ def test_candidate_cases_are_capped_and_truncated():
             ],
         }
 
-    cases = tracker._candidate_cases_for_prompt(
+    cases = story_matching.candidate_cases_for_prompt(
         {"Iran Nuclear Talks"},
         recent,
         today="2026-05-04",
         limit=3,
+        default_days=DEFAULT_LOOKBACK_DAYS,
     )
 
     candidates = cases[0]["candidates"]
     assert len(candidates) == 3
-    assert all(len(candidate["summary"]) <= tracker.SUMMARY_CHAR_LIMIT + 3 for candidate in candidates)
-    assert all(len(candidate["last_delta"]) <= tracker.DELTA_CHAR_LIMIT + 3 for candidate in candidates)
+    assert all(
+        len(candidate["summary"]) <= story_matching.SUMMARY_CHAR_LIMIT + 3
+        for candidate in candidates
+    )
+    assert all(
+        len(candidate["last_delta"]) <= story_matching.DELTA_CHAR_LIMIT + 3
+        for candidate in candidates
+    )
     assert all(len(candidate["recent_titles"]) == 2 for candidate in candidates)
-    assert all(len(candidate["recent_titles"][0]) <= tracker.TITLE_CHAR_LIMIT + 3 for candidate in candidates)
+    assert all(
+        len(candidate["recent_titles"][0]) <= story_matching.TITLE_CHAR_LIMIT + 3
+        for candidate in candidates
+    )
 
 
 def test_exact_label_reuse_allowed():

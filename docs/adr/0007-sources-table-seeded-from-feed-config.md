@@ -25,7 +25,7 @@ Add a `sources` table seeded idempotently from `scraper.SOURCES`, and a nullable
 Schema:
 
 - `sources` columns: `source_id`, `name` (unique), `rss_url`, `language`, `type`, `reliability`, `bias_notes`, `created_at`, `updated_at`.
-- `articles.source_id INTEGER REFERENCES sources(source_id)` is added by `_ensure_column` in `src/tracker.py` and populated on insert when a row in `sources` matches the article's source name.
+- `articles.source_id INTEGER REFERENCES sources(source_id)` is added by `ensure_column()` in `src/tracker/store/schema.py` and populated on insert when a row in `sources` matches the article's source name.
 - `seed_sources()` in `src/sources.py` runs every pipeline start. It UPSERTs by `name`, refreshing fields owned by RSS configuration (`rss_url`, `language`, `updated_at`) and preserving fields that may be edited manually later (`reliability`, `bias_notes`).
 - `_sources_schema_needs_rebuild()` upgrades pre-existing `sources` tables in place when their constraints predate the current schema. The rebuild is non-destructive: existing rows are copied with sensible defaults.
 

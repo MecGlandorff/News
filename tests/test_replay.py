@@ -22,18 +22,17 @@ def _article(article_id, title):
     }
 
 
-def _configure_tracking(tmp_path, monkeypatch):
+def _configure_tracking(tmp_path):
     db_path = tmp_path / "stories.db"
-    monkeypatch.setattr(tracker, "DB_PATH", db_path)
-    monkeypatch.setattr(tracker, "DATA_DIR", tmp_path / "daily")
-    monkeypatch.setattr(
-        tracker,
-        "_match_labels",
-        lambda labels, recent, today=None: {
-            label: label if label in recent else "NEW" for label in labels
-        },
-    )
-    return db_path
+
+    def match_labels(labels, recent, today=None):
+        return {label: label if label in recent else "NEW" for label in labels}
+
+    return db_path, {
+        "db_path": db_path,
+        "data_dir": tmp_path / "daily",
+        "match_labels": match_labels,
+    }
 
 
 def _derived_snapshot(db_path):
@@ -67,25 +66,28 @@ def _derived_snapshot(db_path):
         conn.close()
 
 
-def test_replay_rebuilds_forward_from_stored_snapshots(tmp_path, monkeypatch):
-    db_path = _configure_tracking(tmp_path, monkeypatch)
+def test_replay_rebuilds_forward_from_stored_snapshots(tmp_path):
+    db_path, tracking = _configure_tracking(tmp_path)
 
     first = tracker.track(
         [_article(1, "Day one")],
         today="2026-04-18",
         verify_story_matches=False,
+        **tracking,
     )
     tracker.save_observation_memory(
         [{
             "observation_id": first[0]["observation_id"],
             "summary": "Reviewed summary.",
             "delta_summary": "Reviewed delta.",
-        }]
+        }],
+        db_path=db_path,
     )
     tracker.track(
         [_article(2, "Day two")],
         today="2026-04-19",
         verify_story_matches=False,
+        **tracking,
     )
     expected = _derived_snapshot(db_path)
 
@@ -107,12 +109,13 @@ def test_replay_rebuilds_forward_from_stored_snapshots(tmp_path, monkeypatch):
         conn.close()
 
 
-def test_replay_missing_assignment_fails_before_deleting_state(tmp_path, monkeypatch):
-    db_path = _configure_tracking(tmp_path, monkeypatch)
+def test_replay_missing_assignment_fails_before_deleting_state(tmp_path):
+    db_path, tracking = _configure_tracking(tmp_path)
     tracker.track(
         [_article(1, "Day one")],
         today="2026-04-18",
         verify_story_matches=False,
+        **tracking,
     )
 
     conn = sqlite3.connect(db_path)
@@ -132,11 +135,12 @@ def test_replay_missing_assignment_fails_before_deleting_state(tmp_path, monkeyp
 
 
 def test_replay_rolls_back_when_rebuild_fails(tmp_path, monkeypatch):
-    db_path = _configure_tracking(tmp_path, monkeypatch)
+    db_path, tracking = _configure_tracking(tmp_path)
     tracker.track(
         [_article(1, "Day one")],
         today="2026-04-18",
         verify_story_matches=False,
+        **tracking,
     )
     before = _derived_snapshot(db_path)
     monkeypatch.setattr(
@@ -151,8 +155,8 @@ def test_replay_rolls_back_when_rebuild_fails(tmp_path, monkeypatch):
     assert _derived_snapshot(db_path) == before
 
 
-def test_same_day_rerun_does_not_replay_omitted_occurrences(tmp_path, monkeypatch):
-    db_path = _configure_tracking(tmp_path, monkeypatch)
+def test_same_day_rerun_does_not_replay_omitted_occurrences(tmp_path):
+    db_path, tracking = _configure_tracking(tmp_path)
     first_article = _article(1, "First article")
     second_article = _article(2, "Second article")
 
@@ -160,11 +164,13 @@ def test_same_day_rerun_does_not_replay_omitted_occurrences(tmp_path, monkeypatc
         [first_article, second_article],
         today="2026-04-18",
         verify_story_matches=False,
+        **tracking,
     )
     tracker.track(
         [first_article],
         today="2026-04-18",
         verify_story_matches=False,
+        **tracking,
     )
 
     result = replay.rebuild_from_date(db_path, "2026-04-18")
@@ -189,13 +195,14 @@ def test_same_day_rerun_does_not_replay_omitted_occurrences(tmp_path, monkeypatc
     assert assignment_count == 1
 
 
-def test_failed_reclassification_does_not_change_replay_snapshot(tmp_path, monkeypatch):
-    db_path = _configure_tracking(tmp_path, monkeypatch)
+def test_failed_reclassification_does_not_change_replay_snapshot(tmp_path):
+    db_path, tracking = _configure_tracking(tmp_path)
     original = _article(1, "Original title")
     tracker.track(
         [original],
         today="2026-04-18",
         verify_story_matches=False,
+        **tracking,
     )
 
     reclassified = {
@@ -204,16 +211,15 @@ def test_failed_reclassification_does_not_change_replay_snapshot(tmp_path, monke
         "story_label": "Changed label",
         "importance": 1,
     }
-    monkeypatch.setattr(
-        tracker,
-        "_consolidate_today",
-        lambda groups: (_ for _ in ()).throw(RuntimeError("tracking failed")),
-    )
     with pytest.raises(RuntimeError, match="tracking failed"):
         tracker.track(
             [reclassified],
             today="2026-04-18",
             verify_story_matches=False,
+            **tracking,
+            consolidate_today=lambda groups: (_ for _ in ()).throw(
+                RuntimeError("tracking failed")
+            ),
         )
 
     replay.rebuild_from_date(db_path, "2026-04-18")

@@ -6,29 +6,38 @@ from tests.claims.support import ARTICLE, CLAIM_RESPONSE, _fake_client
 from tests.fakes import FakeLLMClient
 
 
+def _extract(db_path, tracked, client, *, verify_claim=None):
+    return extract_and_save_claims(
+        tracked,
+        db_path=db_path,
+        client_factory=lambda: client,
+        verify_claim=verify_claim,
+    )
+
+
+def _saved_claims(db_path, story_id=42):
+    return get_claims_for_story(story_id, db_path=db_path)
+
+
 def test_extract_and_save_claims_skips_empty_tracked():
     # Should not raise and not call LLM
     extract_and_save_claims([])
 
 
-def test_extract_saves_claims_and_caches(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
-
+def test_extract_saves_claims_and_caches(tmp_path):
+    db_path = tmp_path / "stories.db"
     client = _fake_client(CLAIM_RESPONSE)
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
-
-    extract_and_save_claims([ARTICLE])
+    _extract(db_path, [ARTICLE], client)
 
     assert client.calls == 1
-    saved = get_claims_for_story(42)
+    saved = _saved_claims(db_path)
     assert len(saved) == 2
     assert saved[0]["claim_type"] == "number"
     assert "3.67%" in saved[0]["evidence_span"]
 
 
-def test_extract_uses_full_article_text_and_nano_model(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
-
+def test_extract_uses_full_article_text_and_nano_model(tmp_path):
+    db_path = tmp_path / "stories.db"
     full_text = "Full article says Iran submitted a written offer to inspectors."
     response = {
         "claims": [
@@ -43,7 +52,6 @@ def test_extract_uses_full_article_text_and_nano_model(tmp_path, monkeypatch):
     }
     captured = []
     client = FakeLLMClient(response, capture=captured)
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
 
     article = {
         **ARTICLE,
@@ -51,9 +59,9 @@ def test_extract_uses_full_article_text_and_nano_model(tmp_path, monkeypatch):
         "description": "RSS summary without the written-offer evidence.",
         "text": full_text,
     }
-    extract_and_save_claims([article])
+    _extract(db_path, [article], client)
 
-    saved = get_claims_for_story(42)
+    saved = _saved_claims(db_path)
     assert captured[0]["model"] == "gpt-5.4-nano"
     assert full_text in captured[0]["messages"][1]["content"]
     assert len(saved) == 1
@@ -70,36 +78,29 @@ def test_claim_prompt_targets_reviewed_quality_failures():
     assert "Split long sentences" in prompt
 
 
-def test_extract_skips_already_cached(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
-
+def test_extract_skips_already_cached(tmp_path):
+    db_path = tmp_path / "stories.db"
     client = _fake_client(CLAIM_RESPONSE)
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
-
-    extract_and_save_claims([ARTICLE])
-    extract_and_save_claims([ARTICLE])  # second call — should hit cache
+    _extract(db_path, [ARTICLE], client)
+    _extract(db_path, [ARTICLE], client)  # second call — should hit cache
 
     assert client.calls == 1
 
 
-def test_extract_caches_zero_claim_results(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
-
+def test_extract_caches_zero_claim_results(tmp_path):
+    db_path = tmp_path / "stories.db"
     client = _fake_client({"claims": []})
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
-
-    first = extract_and_save_claims([ARTICLE])
-    second = extract_and_save_claims([ARTICLE])
+    first = _extract(db_path, [ARTICLE], client)
+    second = _extract(db_path, [ARTICLE], client)
 
     assert client.calls == 1
-    assert get_claims_for_story(42) == []
+    assert _saved_claims(db_path) == []
     assert first["zero_claim_results"] == 1
     assert second["cached"] == 1
 
 
-def test_extract_rejects_invalid_or_ungrounded_claims(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
-
+def test_extract_rejects_invalid_or_ungrounded_claims(tmp_path):
+    db_path = tmp_path / "stories.db"
     response = {
         "claims": [
             {
@@ -147,63 +148,54 @@ def test_extract_rejects_invalid_or_ungrounded_claims(tmp_path, monkeypatch):
         ]
     }
     client = _fake_client(response)
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
+    _extract(db_path, [ARTICLE], client)
 
-    extract_and_save_claims([ARTICLE])
-
-    saved = get_claims_for_story(42)
+    saved = _saved_claims(db_path)
     assert len(saved) == 1
     assert saved[0]["claim_text"] == "Officials confirmed the offer."
     assert saved[0]["evidence_span"] == "Officials confirmed the offer."
 
 
-def test_extract_does_not_cache_schema_failures(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
-
+def test_extract_does_not_cache_schema_failures(tmp_path):
+    db_path = tmp_path / "stories.db"
     client = _fake_client({"claims": {"claim_text": "not a list"}})
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
-
-    extract_and_save_claims([ARTICLE])
-    extract_and_save_claims([ARTICLE])
+    _extract(db_path, [ARTICLE], client)
+    _extract(db_path, [ARTICLE], client)
 
     assert client.calls == 2
-    assert get_claims_for_story(42) == []
+    assert _saved_claims(db_path) == []
 
 
-def test_content_change_invalidates_stale_claims_before_retry(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
-
+def test_content_change_invalidates_stale_claims_before_retry(tmp_path):
+    db_path = tmp_path / "stories.db"
     client = _fake_client(CLAIM_RESPONSE)
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
-    extract_and_save_claims([ARTICLE])
-    assert len(get_claims_for_story(42)) == 2
+    _extract(db_path, [ARTICLE], client)
+    assert len(_saved_claims(db_path)) == 2
 
     def raise_llm(kwargs):
         raise RuntimeError("LLM down")
 
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: FakeLLMClient(raise_llm))
-    extract_and_save_claims([{**ARTICLE, "description": "Updated article text."}])
+    failing_client = FakeLLMClient(raise_llm)
+    _extract(db_path, [{**ARTICLE, "description": "Updated article text."}], failing_client)
 
-    assert get_claims_for_story(42) == []
+    assert _saved_claims(db_path) == []
 
 
-def test_extract_handles_llm_failure_gracefully(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
-
+def test_extract_handles_llm_failure_gracefully(tmp_path):
+    db_path = tmp_path / "stories.db"
     def boom(kwargs):
         raise RuntimeError("LLM down")
 
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: FakeLLMClient(boom))
+    client = FakeLLMClient(boom)
 
     # Should not raise — failure is logged and skipped
-    extract_and_save_claims([ARTICLE])
+    _extract(db_path, [ARTICLE], client)
 
-    assert get_claims_for_story(42) == []
+    assert _saved_claims(db_path) == []
 
 
-def test_extract_drops_claims_with_number_mismatch_before_calling_verifier(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
-
+def test_extract_drops_claims_with_number_mismatch_before_calling_verifier(tmp_path):
+    db_path = tmp_path / "stories.db"
     article = {
         **ARTICLE,
         "id": "number-mismatch-article",
@@ -221,26 +213,22 @@ def test_extract_drops_claims_with_number_mismatch_before_calling_verifier(tmp_p
         ]
     }
     client = _fake_client(response)
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
 
     verifier_called = []
-    monkeypatch.setattr(
-        claims_module,
-        "_verify_claim_with_llm",
-        lambda c, s: verifier_called.append((c, s)) or True,
-    )
+    def verify_claim(claim_text, evidence_span):
+        verifier_called.append((claim_text, evidence_span))
+        return True
 
-    stats = extract_and_save_claims([article])
+    stats = _extract(db_path, [article], client, verify_claim=verify_claim)
 
     assert verifier_called == []
-    assert get_claims_for_story(42) == []
+    assert _saved_claims(db_path) == []
     assert stats["claim_derivable_accepts"] == 0
     assert stats["claim_verifier_calls"] == 0
 
 
-def test_extract_calls_verifier_for_paraphrase_and_keeps_supported_claims(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
-
+def test_extract_calls_verifier_for_paraphrase_and_keeps_supported_claims(tmp_path):
+    db_path = tmp_path / "stories.db"
     article = {
         **ARTICLE,
         "id": "paraphrase-article",
@@ -258,7 +246,6 @@ def test_extract_calls_verifier_for_paraphrase_and_keeps_supported_claims(tmp_pa
         ]
     }
     client = _fake_client(response)
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
 
     verifier_calls = []
 
@@ -266,12 +253,10 @@ def test_extract_calls_verifier_for_paraphrase_and_keeps_supported_claims(tmp_pa
         verifier_calls.append((claim_text, evidence_span))
         return True
 
-    monkeypatch.setattr(claims_module, "_verify_claim_with_llm", fake_verifier)
-
-    stats = extract_and_save_claims([article])
+    stats = _extract(db_path, [article], client, verify_claim=fake_verifier)
 
     assert len(verifier_calls) == 1
-    saved = get_claims_for_story(42)
+    saved = _saved_claims(db_path)
     assert len(saved) == 1
     assert saved[0]["claim_text"] == "Officials warned about escalation risk."
     assert stats["claim_verifier_calls"] == 1
@@ -279,9 +264,8 @@ def test_extract_calls_verifier_for_paraphrase_and_keeps_supported_claims(tmp_pa
     assert stats["claim_verifier_rejects"] == 0
 
 
-def test_extract_drops_paraphrase_claims_when_verifier_rejects(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
-
+def test_extract_drops_paraphrase_claims_when_verifier_rejects(tmp_path):
+    db_path = tmp_path / "stories.db"
     article = {
         **ARTICLE,
         "id": "paraphrase-rejected",
@@ -299,20 +283,17 @@ def test_extract_drops_paraphrase_claims_when_verifier_rejects(tmp_path, monkeyp
         ]
     }
     client = _fake_client(response)
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
-    monkeypatch.setattr(claims_module, "_verify_claim_with_llm", lambda c, s: False)
 
-    stats = extract_and_save_claims([article])
+    stats = _extract(db_path, [article], client, verify_claim=lambda c, s: False)
 
-    assert get_claims_for_story(42) == []
+    assert _saved_claims(db_path) == []
     assert stats["claim_verifier_calls"] == 1
     assert stats["claim_verifier_accepts"] == 0
     assert stats["claim_verifier_rejects"] == 1
 
 
-def test_extract_routes_weak_entity_overlap_to_verifier(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
-
+def test_extract_routes_weak_entity_overlap_to_verifier(tmp_path):
+    db_path = tmp_path / "stories.db"
     article = {
         **ARTICLE,
         "id": "anaphoric-span",
@@ -336,7 +317,6 @@ def test_extract_routes_weak_entity_overlap_to_verifier(tmp_path, monkeypatch):
         ]
     }
     client = _fake_client(response)
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
 
     verifier_calls = []
 
@@ -344,31 +324,25 @@ def test_extract_routes_weak_entity_overlap_to_verifier(tmp_path, monkeypatch):
         verifier_calls.append((claim_text, evidence_span))
         return False
 
-    monkeypatch.setattr(claims_module, "_verify_claim_with_llm", fake_verifier)
-
-    stats = extract_and_save_claims([article])
+    stats = _extract(db_path, [article], client, verify_claim=fake_verifier)
 
     assert len(verifier_calls) == 1
-    assert get_claims_for_story(42) == []
+    assert _saved_claims(db_path) == []
     assert stats["claim_derivable_accepts"] == 0
     assert stats["claim_verifier_calls"] == 1
     assert stats["claim_verifier_rejects"] == 1
 
 
-def test_cheap_accept_counter_increments_only_for_verbatim_claims(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
-
+def test_cheap_accept_counter_increments_only_for_verbatim_claims(tmp_path):
+    db_path = tmp_path / "stories.db"
     client = _fake_client(CLAIM_RESPONSE)
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
 
     verifier_calls = []
-    monkeypatch.setattr(
-        claims_module,
-        "_verify_claim_with_llm",
-        lambda c, s: verifier_calls.append((c, s)) or True,
-    )
+    def verify_claim(claim_text, evidence_span):
+        verifier_calls.append((claim_text, evidence_span))
+        return True
 
-    stats = extract_and_save_claims([ARTICLE])
+    stats = _extract(db_path, [ARTICLE], client, verify_claim=verify_claim)
 
     # Both fixture claims are exact spans and should avoid the verifier.
     assert verifier_calls == []
@@ -376,14 +350,12 @@ def test_cheap_accept_counter_increments_only_for_verbatim_claims(tmp_path, monk
     assert stats["claim_verifier_calls"] == 0
 
 
-def test_validation_policy_change_invalidates_cached_extraction(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
-
+def test_validation_policy_change_invalidates_cached_extraction(tmp_path):
+    db_path = tmp_path / "stories.db"
     client = _fake_client(CLAIM_RESPONSE)
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
-    extract_and_save_claims([ARTICLE])
+    _extract(db_path, [ARTICLE], client)
 
-    conn = sqlite3.connect(tmp_path / "stories.db")
+    conn = sqlite3.connect(db_path)
     conn.execute(
         "UPDATE claim_extractions SET validation_version = 'old-policy'"
     )
@@ -391,25 +363,24 @@ def test_validation_policy_change_invalidates_cached_extraction(tmp_path, monkey
     conn.commit()
     conn.close()
 
-    extract_and_save_claims([ARTICLE])
+    _extract(db_path, [ARTICLE], client)
 
     assert client.calls == 2
-    assert len(get_claims_for_story(42)) == 2
+    assert len(_saved_claims(db_path)) == 2
 
 
-def test_extract_strips_html_from_description(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
+def test_extract_strips_html_from_description(tmp_path):
+    db_path = tmp_path / "stories.db"
 
     captured_content = []
     client = FakeLLMClient({"claims": []}, capture=captured_content)
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
 
     html_article = {
         **ARTICLE,
         "id": "html-article",
         "description": "<p>Iran <b>offered</b> a deal.</p>",
     }
-    extract_and_save_claims([html_article])
+    _extract(db_path, [html_article], client)
 
     user_content = captured_content[0]["messages"][1]["content"]
     assert "<p>" not in user_content
@@ -417,14 +388,13 @@ def test_extract_strips_html_from_description(tmp_path, monkeypatch):
     assert "Iran" in user_content
 
 
-def test_claim_extraction_bounds_full_text_and_reports_truncation(tmp_path, monkeypatch):
-    monkeypatch.setattr(claims_module, "DB_PATH", tmp_path / "stories.db")
+def test_claim_extraction_bounds_full_text_and_reports_truncation(tmp_path):
+    db_path = tmp_path / "stories.db"
     captured = []
     client = FakeLLMClient({"claims": []}, capture=captured)
-    monkeypatch.setattr(claims_module, "get_openai_client", lambda: client)
     article = {**ARTICLE, "id": "long-article", "text": "word " * 10_000}
 
-    stats = extract_and_save_claims([article])
+    stats = _extract(db_path, [article], client)
 
     user_content = captured[0]["messages"][1]["content"]
     assert len(user_content) <= claims_module.CLAIMS_CONTENT_CHAR_LIMIT

@@ -73,14 +73,14 @@ RSS feeds
   -> src/sources.py      seed configured sources into SQLite
   -> src/scraper.py      fetch RSS, normalize URLs, filter dates, deduplicate URLs
   -> src/classifier.py   classify theme, story_label, and importance
-  -> src/occurrences.py  preserve source snapshots and replay metadata
-  -> src/tracker.py      consolidate labels, match recent stories, write story memory
-  -> src/story_matching.py optionally verify candidate matches with full article text
-  -> src/claims.py       optionally extract validated claims and evidence spans
-  -> src/top10.py        select stories and generate briefing cards
+  -> src/tracker/occurrences.py preserve source snapshots and replay metadata
+  -> src/tracker/        consolidate labels, match recent stories, write story memory
+  -> src/tracker/matching/ optionally verify candidate matches with full article text
+  -> src/claims/         optionally extract validated claims and evidence spans
+  -> src/briefing/       select stories and generate briefing cards
   -> src/digest.py       write local digest Markdown
   -> src/rendering/newspaper.py render the PDF from the same briefing package
-  -> src/observability.py record run totals, model calls, cache hits, and tokens
+  -> src/observability/  record run totals, model calls, cache hits, and tokens
 ```
 
 For the detailed code-path audit, read [docs/how-it-works.md](docs/how-it-works.md).

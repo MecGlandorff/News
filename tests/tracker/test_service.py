@@ -5,19 +5,30 @@ import src.llm_response_cache as llm_response_cache
 import src.observability as observability
 import src.sources as sources_module
 import src.tracker as tracker
+from src.tracker import store as tracker_store
 from tests.tracker.support import _article, _fake_tracker_client_sequence
 
 
-def test_track_is_idempotent_for_same_day(tmp_path, monkeypatch):
+def test_track_is_idempotent_for_same_day(tmp_path):
     db_path = tmp_path / "stories.db"
     data_dir = tmp_path / "daily"
-    monkeypatch.setattr(tracker, "DB_PATH", db_path)
-    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
 
     articles = [_article(1, "First title"), _article(2, "Second title")]
 
-    first = tracker.track(articles, today="2026-04-18", verify_story_matches=False)
-    second = tracker.track(articles, today="2026-04-18", verify_story_matches=False)
+    first = tracker.track(
+        articles,
+        today="2026-04-18",
+        verify_story_matches=False,
+        db_path=db_path,
+        data_dir=data_dir,
+    )
+    second = tracker.track(
+        articles,
+        today="2026-04-18",
+        verify_story_matches=False,
+        db_path=db_path,
+        data_dir=data_dir,
+    )
 
     assert len(first) == 2
     assert len(second) == 2
@@ -40,12 +51,16 @@ def test_track_is_idempotent_for_same_day(tmp_path, monkeypatch):
 def test_track_populates_source_id_when_source_metadata_exists(tmp_path, monkeypatch):
     db_path = tmp_path / "stories.db"
     data_dir = tmp_path / "daily"
-    monkeypatch.setattr(tracker, "DB_PATH", db_path)
-    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
     monkeypatch.setattr(sources_module, "DB_PATH", db_path)
     sources_module.seed_sources([("Test Source", "en", "https://example.com/rss")])
 
-    tracker.track([_article(1, "First title")], today="2026-04-18", verify_story_matches=False)
+    tracker.track(
+        [_article(1, "First title")],
+        today="2026-04-18",
+        verify_story_matches=False,
+        db_path=db_path,
+        data_dir=data_dir,
+    )
 
     conn = sqlite3.connect(db_path)
     row = conn.execute("""
@@ -58,16 +73,13 @@ def test_track_populates_source_id_when_source_metadata_exists(tmp_path, monkeyp
     assert row == (1, "Test Source")
 
 
-def test_track_quarantines_uncategorized_memory_before_matching(tmp_path, monkeypatch):
+def test_track_quarantines_uncategorized_memory_before_matching(tmp_path):
     db_path = tmp_path / "stories.db"
     data_dir = tmp_path / "daily"
-    monkeypatch.setattr(tracker, "DB_PATH", db_path)
-    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
-
-    conn = tracker._get_db()
+    conn = tracker_store.get_db(db_path)
     try:
         with conn:
-            arc_id = tracker._create_story_arc(
+            arc_id = tracker_store.create_story_arc(
                 conn,
                 "Uncategorized",
                 "Other",
@@ -100,16 +112,17 @@ def test_track_quarantines_uncategorized_memory_before_matching(tmp_path, monkey
         captured["recent"] = dict(recent)
         return {label: "NEW" for label in labels}
 
-    monkeypatch.setattr(tracker, "_match_labels", fake_match)
-
     tracker.track(
         [_article(2, "Fresh story", "Fresh Story")],
         today="2026-05-02",
         verify_story_matches=False,
+        db_path=db_path,
+        data_dir=data_dir,
+        match_labels=fake_match,
     )
 
     assert "Uncategorized" not in captured["recent"]
-    assert tracker.tracker_store.QUARANTINED_STORY_LABEL not in captured["recent"]
+    assert tracker_store.QUARANTINED_STORY_LABEL not in captured["recent"]
 
     conn = sqlite3.connect(db_path)
     try:
@@ -122,25 +135,26 @@ def test_track_quarantines_uncategorized_memory_before_matching(tmp_path, monkey
     finally:
         conn.close()
 
-    assert labels[0] == (tracker.tracker_store.QUARANTINED_STORY_LABEL,)
-    assert arc_labels[0] == (tracker.tracker_store.QUARANTINED_STORY_LABEL,)
+    assert labels[0] == (tracker_store.QUARANTINED_STORY_LABEL,)
+    assert arc_labels[0] == (tracker_store.QUARANTINED_STORY_LABEL,)
 
 
-def test_track_replaces_same_day_article_story_assignment(tmp_path, monkeypatch):
+def test_track_replaces_same_day_article_story_assignment(tmp_path):
     db_path = tmp_path / "stories.db"
     data_dir = tmp_path / "daily"
-    monkeypatch.setattr(tracker, "DB_PATH", db_path)
-    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
-
     tracker.track(
         [_article(1, "First title", story_label="Old Story")],
         today="2026-04-18",
         verify_story_matches=False,
+        db_path=db_path,
+        data_dir=data_dir,
     )
     tracker.track(
         [_article(1, "First title", story_label="New Story")],
         today="2026-04-18",
         verify_story_matches=False,
+        db_path=db_path,
+        data_dir=data_dir,
     )
 
     conn = sqlite3.connect(db_path)
@@ -165,32 +179,33 @@ def test_track_replaces_same_day_article_story_assignment(tmp_path, monkeypatch)
     assert article_count == 1
 
 
-def test_track_attaches_previous_story_context(tmp_path, monkeypatch):
+def test_track_attaches_previous_story_context(tmp_path):
     db_path = tmp_path / "stories.db"
     data_dir = tmp_path / "daily"
-    monkeypatch.setattr(tracker, "DB_PATH", db_path)
-    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
-    monkeypatch.setattr(
-        tracker,
-        "_match_labels",
-        lambda labels, recent, today=None: {label: label if label in recent else "NEW" for label in labels},
-    )
+    def match_labels(labels, recent, today=None):
+        return {label: label if label in recent else "NEW" for label in labels}
 
     first = tracker.track(
         [_article(1, "First title")],
         today="2026-04-18",
         verify_story_matches=False,
+        db_path=db_path,
+        data_dir=data_dir,
+        match_labels=match_labels,
     )
     tracker.save_observation_memory([{
         "observation_id": first[0]["observation_id"],
         "summary": "Earlier summary.",
         "delta_summary": "Earlier change.",
-    }])
+    }], db_path=db_path)
 
     second = tracker.track(
         [_article(2, "Second title")],
         today="2026-04-19",
         verify_story_matches=False,
+        db_path=db_path,
+        data_dir=data_dir,
+        match_labels=match_labels,
     )
 
     context = second[0]["previous_context"]
@@ -226,35 +241,43 @@ def test_story_match_verifier_fetches_full_text_for_candidate_match(tmp_path, mo
             }]
         },
     ], captured=captured)
-    monkeypatch.setattr(tracker, "DB_PATH", db_path)
-    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
-    monkeypatch.setattr(observability, "DB_PATH", db_path)
     monkeypatch.setattr(llm_response_cache, "DB_PATH", db_path)
-    monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
-    monkeypatch.setattr(
-        tracker,
-        "_fetch_article_text_for_match",
-        lambda url: "Full article text about the latest Iran nuclear talks proposal.",
-    )
 
-    run_id = observability.start_run({"test": "story-match-text"}, run_date="2026-05-02")
-    observability.set_current_run_id(run_id)
+    run_id = observability.start_run(
+        {"test": "story-match-text"},
+        run_date="2026-05-02",
+        db_path=db_path,
+    )
+    observability.set_current_run_id(run_id, db_path=db_path)
     try:
         first = tracker.track(
             [_article(1, "Iran sends proposal through mediators", "Iran Nuclear Talks")],
             today="2026-05-01",
+            db_path=db_path,
+            data_dir=data_dir,
+            client_factory=lambda: client,
         )
         tracker.save_observation_memory([{
             "observation_id": first[0]["observation_id"],
             "summary": "US-Iran nuclear negotiations continued through mediators.",
             "delta_summary": "Iran sent a proposal but the US response remained unclear.",
-        }])
+        }], db_path=db_path)
 
         article = _article(2, "Iran sends revised peace proposal", "Iran Peace Proposal")
         article["published_at"] = "Sat, 02 May 2026 12:00:00 GMT"
         article["text"] = ""
 
-        tracked = tracker.track([article], today="2026-05-02", verify_story_matches=True)
+        tracked = tracker.track(
+            [article],
+            today="2026-05-02",
+            verify_story_matches=True,
+            db_path=db_path,
+            data_dir=data_dir,
+            client_factory=lambda: client,
+            fetch_article_text=lambda url: (
+                "Full article text about the latest Iran nuclear talks proposal."
+            ),
+        )
 
         assert tracked[0]["canonical_label"] == "Iran Nuclear Talks"
         verifier_payload = json.loads(captured[1]["messages"][1]["content"])
@@ -348,18 +371,27 @@ def test_verifier_rejection_blocks_exact_label_story_reuse(tmp_path, monkeypatch
             }]
         },
     ])
-    monkeypatch.setattr(tracker, "DB_PATH", db_path)
-    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
     monkeypatch.setattr(llm_response_cache, "DB_PATH", db_path)
-    monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
 
     first_article = _article(1, "Thai and Cambodian troops exchange fire", "Border clash")
     first_article["text"] = "Thai and Cambodian troops exchanged fire near a disputed temple."
-    first = tracker.track([first_article], today="2026-06-01")
+    first = tracker.track(
+        [first_article],
+        today="2026-06-01",
+        db_path=db_path,
+        data_dir=data_dir,
+        client_factory=lambda: client,
+    )
 
     second_article = _article(2, "Kyrgyz-Tajik border clash wounds dozens", "Border clash")
     second_article["text"] = "Clashes broke out on the Kyrgyz-Tajik border over a water dispute."
-    tracked = tracker.track([second_article], today="2026-06-03")
+    tracked = tracker.track(
+        [second_article],
+        today="2026-06-03",
+        db_path=db_path,
+        data_dir=data_dir,
+        client_factory=lambda: client,
+    )
 
     assert tracked[0]["story_id"] != first[0]["story_id"]
     assert tracked[0]["development_status"] == "new_parent"
@@ -406,18 +438,21 @@ def test_generic_label_is_not_reused_across_days(tmp_path, monkeypatch):
     client = _fake_tracker_client_sequence(
         [match_payload, arc_payload, match_payload, arc_payload]
     )
-    monkeypatch.setattr(tracker, "DB_PATH", db_path)
-    monkeypatch.setattr(tracker, "DATA_DIR", data_dir)
     monkeypatch.setattr(llm_response_cache, "DB_PATH", db_path)
-    monkeypatch.setattr(tracker, "get_openai_client", lambda: client)
 
     first = tracker.track(
         [_article(1, "Knife attack at Hamburg station", "Stabbing attack")],
         today="2026-06-01",
+        db_path=db_path,
+        data_dir=data_dir,
+        client_factory=lambda: client,
     )
     tracked = tracker.track(
         [_article(2, "Stabbing at Sydney mall", "Stabbing attack")],
         today="2026-06-03",
+        db_path=db_path,
+        data_dir=data_dir,
+        client_factory=lambda: client,
     )
 
     assert tracked[0]["story_id"] != first[0]["story_id"]
@@ -426,6 +461,9 @@ def test_generic_label_is_not_reused_across_days(tmp_path, monkeypatch):
     rerun = tracker.track(
         [_article(2, "Stabbing at Sydney mall", "Stabbing attack")],
         today="2026-06-03",
+        db_path=db_path,
+        data_dir=data_dir,
+        client_factory=lambda: client,
     )
     assert rerun[0]["story_id"] == tracked[0]["story_id"]
 

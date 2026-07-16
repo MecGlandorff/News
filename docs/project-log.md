@@ -9,6 +9,37 @@ source of truth for details.
 
 Entries are newest first.
 
+## 2026-07-12
+
+Changed:
+
+- Reorganized observability, tracking, claims, and briefing into cohesive domain
+  packages with responsibility-focused submodules.
+- Made tracker, claim, and briefing orchestration dependencies explicit while
+  preserving CLI behavior, SQLite compatibility, prompts, models, cache keys,
+  and output contracts.
+- Split the large characterization tests into matching domain folders and added
+  an import-boundary regression test.
+- Removed temporary compatibility modules after all production, eval, and test
+  imports moved to their final owners.
+- Kept the historical briefing, evaluation, presentation, and newspaper
+  artifacts unchanged and tracked.
+
+Why it matters:
+
+- Trust rules, persistence, model calls, audits, and rendering can now be
+  reviewed independently instead of sharing 700–1,600-line modules.
+- The codebase has clearer ownership without adding a framework, service
+  container, generic repository layer, or new runtime dependency.
+- The 213-test characterization baseline plus two package-boundary tests make
+  later cleanup and feature work safer.
+
+Links:
+
+- [Domain package boundaries ADR](adr/0021-domain-package-boundaries.md)
+- [Architecture](architecture.md)
+- [How the project works](how-it-works.md)
+
 ## 2026-07-11
 
 Changed:

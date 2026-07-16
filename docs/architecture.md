@@ -35,16 +35,16 @@ Configured RSS feeds
   -> src/sources.py       seed source metadata and attach source_id where possible
   -> src/scraper.py       fetch feeds, normalize URLs, filter dates, deduplicate URLs
   -> src/classifier.py    classify theme, story label, and importance
-  -> src/occurrences.py   preserve immutable evidence and replay snapshots
-  -> src/tracker.py       consolidate labels, match recent stories, write story memory
-  -> src/story_matching.py optionally verify candidate story matches with full article text
-  -> src/claims.py        optionally extract claims and evidence spans
-  -> src/top10.py         select stories and generate briefing cards
+  -> src/tracker/occurrences.py preserve immutable evidence and replay snapshots
+  -> src/tracker/         consolidate labels, match recent stories, write story memory
+  -> src/tracker/matching/ optionally verify candidate story matches with full article text
+  -> src/claims/          optionally extract claims and evidence spans
+  -> src/briefing/        select stories and generate briefing cards
   -> src/digest.py        write a lightweight local digest
   -> src/rendering/newspaper.py render a newspaper-style PDF
 ```
 
-`src/tracker.py` and `src/top10.py` are orchestration modules. The more specific logic lives in smaller modules: `src/story_matching.py` handles same-day and cross-day label matching, `src/briefing_selection.py` handles story scoring and section selection, and `src/briefing_generation.py` handles briefing model input, structured output normalization, and fallbacks.
+The domain package roots are the stable boundaries. `src/tracker/service.py` orchestrates story memory, `src/tracker/matching/` owns same-day and cross-day matching, `src/claims/` separates extraction from validation and persistence, `src/briefing/` separates selection, generation, grounding, and rendering, and `src/observability/` separates run state, audits, and reports.
 
 The local database is SQLite at `data/stories.db`. Runtime snapshots live under `data/daily/`. Public artifacts are written to `briefings/` and `newspapers/`.
 
@@ -52,7 +52,7 @@ The local database is SQLite at `data/stories.db`. Runtime snapshots live under 
 
 Story memory is built in two layers.
 
-First, `src/tracker.py` groups today's classified articles by story label. It asks the tracking model to consolidate same-day label variants, then asks whether today's labels continue recent canonical stories. The tracker is conservative about generic incident labels such as crashes, shootings, lawsuits, and attacks because false merges corrupt memory more severely than false splits.
+First, `src/tracker/service.py` groups today's classified articles by story label. It asks the tracking model to consolidate same-day label variants, then asks whether today's labels continue recent canonical stories. The tracker is conservative about generic incident labels such as crashes, shootings, lawsuits, and attacks because false merges corrupt memory more severely than false splits.
 
 The tracker verifies candidate cross-day matches before it reuses an existing story ID by default. The verifier uses `gpt-5.4-nano`, the current article title, RSS description, normalized article date, full article text when available, and compact recent story memory. If full text is missing, the tracker fetches it only for candidate matches. Accepted matches require structured same-event evidence. Labels that are not accepted as the same story can then be assigned to an existing `story_arcs` row by the cached `gpt-5.4-mini` arc-assignment step. This preserves broader memory continuity without claiming the child is the same concrete event. Use `--no-verify-story-matches` only for comparison runs against the older label-only match path.
 
@@ -76,7 +76,7 @@ The key tables are:
 
 Claim extraction is optional and enabled with `--show-evidence`.
 
-When enabled, `src/claims.py` extracts structured claims from each tracked article. Each claim includes:
+When enabled, `src/claims/` extracts structured claims from each tracked article. Each claim includes:
 
 - `claim_text`
 - `claim_type`
@@ -86,7 +86,7 @@ When enabled, `src/claims.py` extracts structured claims from each tracked artic
 
 The claim layer validates model output before storage. A claim is saved only when its type is allowed, confidence is numeric and bounded, entities are strings, the evidence span appears in the bounded input, and the claim passes the versioned derivability gate. Only near-verbatim claims are accepted locally; other paraphrases use the verifier after deterministic contradiction guards.
 
-The `claims` and `claim_extractions` tables are created lazily by `src/claims.py`. A local database produced by runs without `--show-evidence` can have story, article, and classification tables without claim tables.
+The `claims` and `claim_extractions` tables are created lazily by `src/claims/schema.py`. A local database produced by runs without `--show-evidence` can have story, article, and classification tables without claim tables.
 
 When `--show-evidence` is enabled, scraping fetches full article text and claim extraction uses title, RSS description, and full article text when available. If body extraction fails or a source blocks scraping, the claim extractor falls back to title and RSS description. The claim model is `gpt-5.4-nano`; classification remains on RSS title/description with `gpt-5.4-mini`.
 
@@ -94,7 +94,7 @@ Evidence-mode briefings receive a deterministic `claim_source_agreement` summary
 
 ## How Briefings Are Built
 
-`src/top10.py` aggregates tracked articles by canonical story and selects briefing-worthy stories. It prioritizes importance, source count, and movement signal while filtering out low-value sports, entertainment, and weak low-interest stories.
+`src/briefing/service.py` builds one package from stories selected by `src/briefing/selection.py`. Selection prioritizes importance, source count, and movement signal while filtering out low-value sports, entertainment, and weak low-interest stories.
 
 For selected stories, the briefing model returns structured story-card fields:
 
@@ -108,7 +108,7 @@ For selected stories, the briefing model returns structured story-card fields:
 
 The final Markdown renders those fields with source links, reported timestamps, and optional evidence spans. The generated summary and delta are written back to `story_observations`, so future runs can compare against previous context.
 
-When evidence-mode claim comparison produces a source-agreement label, `src/briefing_generation.py` overrides the model's `source_agreement` with the deterministic label. Structured divergence also overrides `dispute_flag` to `possible conflict`. A numeric post-generation guard replaces briefing prose that introduces numbers absent from supplied source material.
+When evidence-mode claim comparison produces a source-agreement label, `src/briefing/grounding.py` overrides the model's `source_agreement` with the deterministic label. Structured divergence also overrides `dispute_flag` to `possible conflict`. A numeric post-generation guard replaces briefing prose that introduces numbers absent from supplied source material.
 
 The PDF output uses the same briefing package. `src/rendering/newspaper.py` is a renderer, not a separate intelligence pipeline.
 

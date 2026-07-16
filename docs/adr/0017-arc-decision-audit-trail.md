@@ -8,7 +8,7 @@ Accepted.
 
 ## Context
 
-`assign_story_arcs` in `src/story_matching.py` decides, for every unmatched story
+`assign_story_arcs` in `src/tracker/matching/arcs.py` decides, for every unmatched story
 label, whether to attach it to an existing story arc or let it become a new arc.
 Nothing about that decision is persisted. Only the same-story verifier writes an
 audit row (`story_match_decisions`, ADR 0008).
@@ -52,7 +52,7 @@ Per-candidate analysis stays available through SQLite `json_each` over the
 
 ### Schema
 
-Added to the idempotent `executescript` in `tracker_store.get_db`, next to
+Added to the idempotent `executescript` in `src.tracker.store.get_db`, next to
 `story_match_decisions`:
 
 ```sql
@@ -132,7 +132,7 @@ report), guarded by `_table_exists(conn, "story_arc_decisions")`:
 
 ## Implementation plan (Codex handoff)
 
-`src/story_matching.py`
+`src/tracker/matching/arcs.py`
 
 1. `arc_assignment_cases_for_prompt` returns `(cases, candidate_audit)`, where
    `candidate_audit` maps `today_label` to the audit list described above,
@@ -147,7 +147,7 @@ report), guarded by `_table_exists(conn, "story_arc_decisions")`:
    `candidate_audit` to every returned assignment, including
    `missing_arc_assignment` fallbacks.
 
-`src/tracker_store.py`
+`src/tracker/store/`
 
 4. The DDL above, in the `get_db` executescript.
 5. `save_story_arc_decisions(conn, decisions, run_date, assignment_model,
@@ -161,22 +161,22 @@ report), guarded by `_table_exists(conn, "story_arc_decisions")`:
 6. `get_story_arc_decisions(conn, run_date=None, run_id=None)` — small read
    helper returning dict rows, for the audit queries and tests.
 
-`src/tracker.py`
+`src/tracker/service.py`
 
-7. `_save_story_arc_decisions` wrapper passing `ARC_ASSIGNMENT_MODEL` and
-   `story_matching.ARC_ASSIGNMENT_PROMPT_VERSION`.
+7. `track()` passes `ARC_ASSIGNMENT_MODEL` and
+   `src.tracker.matching.ARC_ASSIGNMENT_PROMPT_VERSION` to persistence.
 8. In `track()`, after the story-resolution loop inside the same write
    transaction (story ids are known there), build
    `{assignment["story_label"]: assignment["story_id"]}` and persist all values
    of `arc_assignments`.
 
-`src/observability.py`
+`src/observability/audit.py`, `console.py`, and `markdown.py`
 
 9. The two audit sections above, added to `novelty_audit()`,
    `novelty_audit_lines()`, and the markdown audit rendering, each guarded by
    `_table_exists`.
 
-Tests (`tests/test_tracker.py`, `tests/test_observability.py`, fake LLM client,
+Tests (`tests/tracker/`, `tests/observability/`, fake LLM client,
 `tmp_path / "stories.db"`):
 
 10. An accepted arc decision persists with `accepted = 1`, its chosen `arc_id`,
