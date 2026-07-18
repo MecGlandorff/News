@@ -263,7 +263,7 @@ Multi-source RSS scraping, URL normalization, URL deduplication, and cached arti
 Canonical labels, same-day consolidation, recent-history matching, daily observations, delta summaries, structured claim extraction, and evidence-span validation.
 
 **Phase 3 - Source modeling and observability: implementation complete, review pending.**
-Source metadata, occurrence-backed evidence, stored-snapshot replay, run-scoped observability, bounded caching, conservative derivability, and the first claim-backed agreement/source-divergence slice have shipped. The remaining gate is reviewing real evidence runs, especially paraphrases routed through the verifier.
+Source metadata, occurrence-backed evidence, stored-snapshot replay, run-scoped observability, bounded caching, conservative derivability, and the first claim-backed agreement/source-divergence slice have shipped. The remaining gate is the [Phase 3 closure review](docs/phase3-closure-plan.md): collect a short daily run series, review real claim-verifier and source-comparison cases, and record the quality/cost decision.
 
 **Phase 4 - Evaluation and hardening: later.**
 Only after Phase 3's real-case review should deeper citation, temporal, story-matching, and source-divergence evals make the system more autonomous.

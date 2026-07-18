@@ -8,6 +8,21 @@ This document is the repo's practical hardening plan.
 
 This file tracks the implementation work needed to make decisions real, inspectable, and measurable.
 
+## Phase 3 closure gate
+
+Phase 3 implementation is complete. Its only remaining gate is the
+[Phase 3 closure plan](phase3-closure-plan.md): collect 5-10 fresh daily runs,
+review 5-10 real claim cases and the shipped source-comparison behavior, then
+record the quality and cost decision.
+
+- [x] Implement and observe the evidence path
+- [x] Ship conservative claim-backed agreement and divergence
+- [ ] Complete the real-run review and record the Phase 3 decision
+
+Independent-corroboration modeling, formal citation and temporal evals, and
+broader evidence automation remain later work. They are not Phase 3 exit
+criteria.
+
 ## What the system already does
 
 These pieces are already in place and should be protected as the project evolves.
@@ -24,12 +39,14 @@ These pieces are already in place and should be protected as the project evolves
 
 The current prototype is directionally strong, but several important parts are still incomplete or only partially implemented.
 
-- [ ] Full-text claim extraction is enabled for evidence runs, and its cost/latency is visible; the repeatable quality harness and prompt-regression cases exist, but real reviewed current-prompt cases still need to be run
+- [x] Full-text claim extraction is enabled for evidence runs, and its cost/latency is visible; the repeatable quality harness and prompt-regression cases exist
+- [ ] Real reviewed current-prompt claim cases still need to be run
 - [x] Run observability covers token use, latency, cache hits, schema failures, retries, EUR estimates, and scraper duplicate/failure counts
 - [x] Source metadata is modeled as a first-class table, and source identity is used before source-name fallback
-- [ ] Source agreement is claim-backed in evidence mode for exact and highly similar claims, but still does not infer independent corroboration
-- [ ] Source-divergence notes cover narrow number, date, status, and attribution patterns; real reviewed cases are still needed before broadening them
-- [ ] Evaluation coverage is still early; claim-quality and story-matching comparisons are operational, while citation, temporal, and source-divergence evals are still planned
+- [x] Source agreement is claim-backed in evidence mode for exact and highly similar claims, without inferring independent corroboration
+- [x] Source-divergence notes cover narrow number, date, status, and attribution patterns
+- [ ] The shipped agreement and divergence behavior still needs review on real cases
+- [ ] Phase 4 evaluation coverage is still early; citation, temporal, and source-divergence evals are still planned
 
 ## Priority order
 
@@ -40,7 +57,7 @@ The order below matters. The project should measure its pipeline before making e
 - [x] 3. Define and document full-text claim extraction for evidence runs
 - [x] 4. Implement full-text claim extraction behind `--show-evidence`
 - [x] 5. Add a repeatable claim-quality comparison harness
-- [ ] 6. Run real reviewed claim-quality cases and decide whether full-text impact is worth the cost
+- [ ] 6. Complete the [Phase 3 closure review](phase3-closure-plan.md) and decide whether full-text impact is worth the cost
 - [x] 7. Add a conservative claim-backed source-agreement and source-divergence first pass
 
 ## 1. Observability
@@ -117,7 +134,7 @@ The richer path is gated behind `--show-evidence`; ordinary runs do not extract 
 - [x] Add a harness that compares RSS-only and full-text claim extraction
 - [ ] Measure quality improvement against token and latency cost on real reviewed cases
 
-### Future control policy
+### Future control policy — not a Phase 3 exit criterion
 
 If evidence runs become too expensive, the repo should explicitly define which articles qualify for richer claim extraction.
 
@@ -156,7 +173,7 @@ The briefing surfaces agreement-style labels. In evidence mode, a deterministic 
 
 - [x] Compare exact repeated claims within a story across multiple sources
 - [x] Compare highly similar claims conservatively without calling them independent corroboration
-- [ ] Distinguish repeated reporting from independent corroboration
+- [ ] Distinguish repeated reporting from independent corroboration (deferred; not a Phase 3 exit criterion)
 - [x] Mark single-source claim sets clearly when evidence mode has saved claims
 - [x] Surface source agreement using claim-level backing in evidence mode
 
@@ -168,7 +185,7 @@ The briefing surfaces agreement-style labels. In evidence mode, a deterministic 
 - [x] Avoid a dedicated contradiction module or `contradictions` table in Phase 3
 - [x] Surface divergence cautiously as a note, not as confirmed contradiction prose
 
-## 5. Briefing quality
+## 5. Briefing quality — Phase 4 hardening
 
 The end product should read like an auditable intelligence artifact rather than a generic article summary.
 
@@ -203,7 +220,7 @@ The repo already communicates a strong architectural idea. The remaining work is
 - [x] Update architecture docs when observability lands
 - [x] Update model-behavior docs when claim-input rules change
 - [x] Update ADR 0004 only if the decision changes or the implementation plan needs clarification
-- [ ] Add one polished sample output that demonstrates evidence, uncertainty, and story deltas together
+- [x] Add one polished sample output that demonstrates evidence, uncertainty, and story deltas together
 
 ## Short version
 
@@ -213,4 +230,4 @@ If only a few improvements happen next, they should be these:
 - [x] Add `--pipeline-report`
 - [x] Implement full-text claim extraction for evidence runs
 - [x] Back evidence-mode source agreement with claim-level comparison
-- [ ] Add evals that measure quality against cost and latency
+- [ ] Complete the Phase 3 real-run review that measures quality against cost and latency
