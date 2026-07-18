@@ -9,6 +9,32 @@ source of truth for details.
 
 Entries are newest first.
 
+## 2026-07-18
+
+Changed:
+
+- Defined one bounded Phase 3 closure gate: a Python 3.12 and database preflight,
+  5-10 fresh daily runs, 5-10 real reviewed claim cases, and a recorded
+  quality/cost decision.
+- Separated the remaining Phase 3 evidence review from later independent-
+  corroboration, citation, temporal-eval, and automation work.
+- Kept fetched article bodies local by default while preserving checked-in
+  aggregate reports and reviewer findings.
+
+Why it matters:
+
+- Phase 3 now has an explicit exit path instead of an open-ended hardening list.
+- The first post-gap live run can safely upgrade the legacy database, and later
+  runs can be judged as a consistent temporal series.
+- Phase 4 cannot begin by accident before real verifier and source-comparison
+  behavior has been reviewed.
+
+Links:
+
+- [Phase 3 closure plan](phase3-closure-plan.md)
+- [Evaluation harnesses](../evals/README.md)
+- [Improvement checklist](improvement-checklist.md)
+
 ## 2026-07-12
 
 Changed:

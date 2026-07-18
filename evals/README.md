@@ -115,7 +115,7 @@ The first dataset is intentionally small and fixture-style. It proves the harnes
 
 The biggest open gap is **real reviewed verifier accuracy**. The harness now executes the production validation path and records verifier work, but the checked-in dataset remains fixture-style. Add reviewed paraphrase cases where verifier accept/reject is the deciding signal before making the verifier or claim-backed agreement more authoritative.
 
-Next, add 5-10 real reviewed cases from recent evidence runs, storing source text only where licensing and local use are acceptable. Review the shipped similar-claim and date/status/attribution comparisons on those cases before loosening their deterministic matching or making evidence extraction more automatic.
+Next, follow the [Phase 3 closure plan](../docs/phase3-closure-plan.md): collect a short daily run series and add 5-10 real reviewed cases from its evidence runs. Keep raw fetched article bodies under the ignored `evals/local/` directory unless redistribution is clearly permitted. Review the shipped similar-claim and date/status/attribution comparisons on those cases before loosening their deterministic matching or making evidence extraction more automatic.
 
 ## Prompt Regression Cases
 

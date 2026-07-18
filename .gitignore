@@ -48,6 +48,10 @@ Thumbs.db
 
 # Dependency directories
 vendor/
+.venv/
+
+# Local evaluation inputs may contain fetched article bodies
+/evals/local/
 
 # Coverage reports
 coverage/
