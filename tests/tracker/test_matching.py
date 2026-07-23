@@ -4,10 +4,19 @@ import sqlite3
 import src.llm_response_cache as llm_response_cache
 import src.observability as observability
 import src.tracker as tracker
-from src.config import CROSSDAY_MATCH_MODEL, DEFAULT_LOOKBACK_DAYS, TRACKER_MODEL
+from src.config import (
+    CROSSDAY_MATCH_MODEL,
+    DEFAULT_LOOKBACK_DAYS,
+    MATCHING_REASONING_EFFORT,
+    TRACKER_MODEL,
+)
 from src.tracker import matching as story_matching
 from tests.fakes import FakeLLMClient
 from tests.tracker.support import _article, _fake_tracker_client, _fake_tracker_client_sequence
+
+
+def test_matching_reasoning_effort_uses_reconstruction_selection():
+    assert MATCHING_REASONING_EFFORT == "low"
 
 
 def _consolidate(groups, client):
