@@ -181,6 +181,11 @@ def get_db(db_path):
             reject_reason        TEXT,
             verifier_model       TEXT,
             prompt_version       TEXT NOT NULL,
+            decision_route       TEXT NOT NULL DEFAULT 'legacy',
+            candidate_signals    TEXT NOT NULL DEFAULT '{}',
+            conflicts            TEXT NOT NULL DEFAULT '[]',
+            ambiguity_reason     TEXT,
+            reasoning_effort     TEXT,
             created_at           TEXT DEFAULT CURRENT_TIMESTAMP
         );
         CREATE INDEX IF NOT EXISTS idx_story_match_decisions_run_id
@@ -203,12 +208,52 @@ def get_db(db_path):
             reject_reason        TEXT,
             assignment_model     TEXT,
             prompt_version       TEXT NOT NULL,
+            decision_route       TEXT NOT NULL DEFAULT 'legacy',
+            candidate_signals    TEXT NOT NULL DEFAULT '{}',
+            conflicts            TEXT NOT NULL DEFAULT '[]',
+            ambiguity_reason     TEXT,
+            reasoning_effort     TEXT,
+            proposed_arc_id      INTEGER,
+            proposed_parent_story_id INTEGER,
+            previous_arc_label   TEXT,
+            proposed_arc_label   TEXT,
+            final_arc_label      TEXT,
             created_at           TEXT DEFAULT CURRENT_TIMESTAMP
         );
         CREATE INDEX IF NOT EXISTS idx_story_arc_decisions_run_id
             ON story_arc_decisions (run_id);
         CREATE INDEX IF NOT EXISTS idx_story_arc_decisions_run_date
             ON story_arc_decisions (run_date);
+        CREATE TABLE IF NOT EXISTS same_day_match_decisions (
+            decision_id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id               INTEGER,
+            run_date             TEXT NOT NULL,
+            left_occurrence_id   INTEGER NOT NULL
+                                 REFERENCES article_occurrences(occurrence_id),
+            right_occurrence_id  INTEGER NOT NULL
+                                 REFERENCES article_occurrences(occurrence_id),
+            candidate_signals    TEXT NOT NULL DEFAULT '{}',
+            accepted             INTEGER NOT NULL,
+            relationship         TEXT NOT NULL,
+            confidence           TEXT,
+            continuity_evidence  TEXT NOT NULL DEFAULT '[]',
+            conflicts            TEXT NOT NULL DEFAULT '[]',
+            reject_reason        TEXT,
+            decision_route       TEXT NOT NULL DEFAULT 'legacy',
+            ambiguity_reason     TEXT,
+            matching_model       TEXT,
+            reasoning_effort     TEXT,
+            prompt_version       TEXT NOT NULL,
+            created_at           TEXT DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (
+                run_id, run_date, left_occurrence_id, right_occurrence_id
+            ),
+            CHECK (left_occurrence_id < right_occurrence_id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_same_day_match_decisions_run_id
+            ON same_day_match_decisions (run_id);
+        CREATE INDEX IF NOT EXISTS idx_same_day_match_decisions_run_date
+            ON same_day_match_decisions (run_date);
         CREATE INDEX IF NOT EXISTS idx_story_developments_story_date
             ON story_developments (story_id, date);
         CREATE INDEX IF NOT EXISTS idx_story_developments_date
@@ -238,6 +283,37 @@ def get_db(db_path):
         "occurrence_id",
         "INTEGER REFERENCES article_occurrences(occurrence_id)",
     )
+    for table in ("story_match_decisions", "story_arc_decisions"):
+        ensure_column(
+            conn,
+            table,
+            "decision_route",
+            "TEXT NOT NULL DEFAULT 'legacy'",
+        )
+        ensure_column(
+            conn,
+            table,
+            "candidate_signals",
+            "TEXT NOT NULL DEFAULT '{}'",
+        )
+        ensure_column(
+            conn,
+            table,
+            "conflicts",
+            "TEXT NOT NULL DEFAULT '[]'",
+        )
+        ensure_column(conn, table, "ambiguity_reason", "TEXT")
+        ensure_column(conn, table, "reasoning_effort", "TEXT")
+    ensure_column(conn, "story_arc_decisions", "proposed_arc_id", "INTEGER")
+    ensure_column(
+        conn,
+        "story_arc_decisions",
+        "proposed_parent_story_id",
+        "INTEGER",
+    )
+    ensure_column(conn, "story_arc_decisions", "previous_arc_label", "TEXT")
+    ensure_column(conn, "story_arc_decisions", "proposed_arc_label", "TEXT")
+    ensure_column(conn, "story_arc_decisions", "final_arc_label", "TEXT")
     occurrences.ensure_schema(conn)
     conn.executescript("""
         CREATE INDEX IF NOT EXISTS idx_articles_story_date_published

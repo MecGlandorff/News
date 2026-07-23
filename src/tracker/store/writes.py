@@ -150,9 +150,10 @@ def save_story_match_decisions(conn, decisions, run_date, verifier_model, prompt
                 run_id, run_date, today_label, candidate_label, candidate_story_id,
                 accepted, same_event, relationship, confidence, article_dates,
                 candidate_last_seen, continuity_evidence, reject_reason,
-                verifier_model, prompt_version
+                verifier_model, prompt_version, decision_route,
+                candidate_signals, conflicts, ambiguity_reason, reasoning_effort
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 run_id,
@@ -170,6 +171,75 @@ def save_story_match_decisions(conn, decisions, run_date, verifier_model, prompt
                 decision.get("reject_reason", ""),
                 decision.get("verifier_model", verifier_model),
                 decision.get("prompt_version", prompt_version),
+                decision.get("decision_route", "legacy"),
+                json.dumps(decision.get("candidate_signals", {}), ensure_ascii=False),
+                json.dumps(decision.get("conflicts", []), ensure_ascii=False),
+                decision.get("ambiguity_reason", ""),
+                decision.get("reasoning_effort", ""),
+            ),
+        )
+
+
+def save_same_day_match_decisions(
+    conn,
+    decisions,
+    run_date,
+    matching_model,
+    prompt_version,
+):
+    if not decisions:
+        return
+    run_id = observability.current_run_id()
+    for decision in decisions:
+        left_id, right_id = sorted(
+            (
+                int(decision["left_occurrence_id"]),
+                int(decision["right_occurrence_id"]),
+            )
+        )
+        conn.execute(
+            """
+            INSERT INTO same_day_match_decisions (
+                run_id, run_date, left_occurrence_id, right_occurrence_id,
+                candidate_signals, accepted, relationship, confidence,
+                continuity_evidence, conflicts, reject_reason, decision_route,
+                ambiguity_reason, matching_model, reasoning_effort, prompt_version
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT (
+                run_id, run_date, left_occurrence_id, right_occurrence_id
+            ) DO UPDATE SET
+                candidate_signals = excluded.candidate_signals,
+                accepted = excluded.accepted,
+                relationship = excluded.relationship,
+                confidence = excluded.confidence,
+                continuity_evidence = excluded.continuity_evidence,
+                conflicts = excluded.conflicts,
+                reject_reason = excluded.reject_reason,
+                decision_route = excluded.decision_route,
+                ambiguity_reason = excluded.ambiguity_reason,
+                matching_model = excluded.matching_model,
+                reasoning_effort = excluded.reasoning_effort,
+                prompt_version = excluded.prompt_version,
+                created_at = CURRENT_TIMESTAMP
+            """,
+            (
+                run_id,
+                run_date,
+                left_id,
+                right_id,
+                json.dumps(decision.get("candidate_signals", {}), ensure_ascii=False),
+                1 if decision.get("accepted") else 0,
+                decision.get("relationship", "uncertain"),
+                decision.get("confidence", "low"),
+                json.dumps(decision.get("continuity_evidence", []), ensure_ascii=False),
+                json.dumps(decision.get("conflicts", []), ensure_ascii=False),
+                decision.get("reject_reason", ""),
+                decision.get("decision_route", "legacy"),
+                decision.get("ambiguity_reason", ""),
+                decision.get("matching_model", matching_model),
+                decision.get("reasoning_effort", ""),
+                decision.get("prompt_version", prompt_version),
             ),
         )
 
@@ -185,9 +255,12 @@ def save_story_arc_decisions(conn, decisions, run_date, assignment_model, prompt
             INSERT INTO story_arc_decisions (
                 run_id, run_date, today_label, candidates, arc_id,
                 parent_story_id, story_id, accepted, relationship, confidence,
-                continuity_evidence, reject_reason, assignment_model, prompt_version
+                continuity_evidence, reject_reason, assignment_model, prompt_version,
+                decision_route, candidate_signals, conflicts, ambiguity_reason,
+                reasoning_effort, proposed_arc_id, proposed_parent_story_id,
+                previous_arc_label, proposed_arc_label, final_arc_label
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 run_id,
@@ -204,5 +277,15 @@ def save_story_arc_decisions(conn, decisions, run_date, assignment_model, prompt
                 decision.get("reject_reason", ""),
                 decision.get("verifier_model", assignment_model),
                 decision.get("prompt_version", prompt_version),
+                decision.get("decision_route", "legacy"),
+                json.dumps(decision.get("candidate_signals", {}), ensure_ascii=False),
+                json.dumps(decision.get("conflicts", []), ensure_ascii=False),
+                decision.get("ambiguity_reason", ""),
+                decision.get("reasoning_effort", ""),
+                decision.get("proposed_arc_id"),
+                decision.get("proposed_parent_story_id"),
+                decision.get("previous_arc_label", ""),
+                decision.get("proposed_arc_label", ""),
+                decision.get("final_arc_label", ""),
             ),
         )

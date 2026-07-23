@@ -26,6 +26,38 @@ def test_pipeline_report_includes_story_match_verifier_totals(tmp_path):
     assert "Story match rejected:   2" in report
 
 
+def test_pipeline_report_includes_evidence_gated_matching_totals(tmp_path):
+    db_path = tmp_path / "stories.db"
+    run_id = observability.start_run(
+        _run_args(), run_date="2026-07-22", db_path=db_path
+    )
+    observability.update_run_totals(
+        run_id,
+        same_day_match_candidates=11,
+        same_day_match_accepts=4,
+        matching_deterministic_decisions=3,
+        matching_mini_decisions=12,
+        matching_fail_closed_decisions=2,
+        matching_ambiguous_cases=2,
+        story_arc_label_promotions=1,
+        db_path=db_path,
+    )
+    observability.finish_run(run_id, status="ok", db_path=db_path)
+
+    report = observability.pipeline_report(run_id, db_path=db_path)
+    markdown = observability.run_report_markdown(run_id, db_path=db_path)
+
+    assert "Same-day candidates:    11" in report
+    assert "Same-day accepted:      4" in report
+    assert "Deterministic decisions:      3" in report
+    assert "Mini decisions:         12" in report
+    assert "Fail-closed decisions:  2" in report
+    assert "Ambiguous matches:      2" in report
+    assert "Arc label promotions:   1" in report
+    assert "| Same-day match candidates | 11 |" in markdown
+    assert "| Arc label promotions | 1 |" in markdown
+
+
 def test_pipeline_report_includes_story_development_totals(tmp_path):
     db_path = tmp_path / "stories.db"
 
