@@ -240,9 +240,12 @@ def test_arc_call_uses_strict_schema_and_effort():
     assert captured[0]["reasoning_effort"] == "low"
     assert captured[0]["response_format"]["type"] == "json_schema"
     assert captured[0]["response_format"]["json_schema"]["strict"] is True
-    item_schema = captured[0]["response_format"]["json_schema"]["schema"][
+    decisions_schema = captured[0]["response_format"]["json_schema"]["schema"][
         "properties"
-    ]["decisions"]["items"]
+    ]["decisions"]
+    assert decisions_schema["minItems"] == 1
+    assert decisions_schema["maxItems"] == 1
+    item_schema = decisions_schema["items"]
     assert "container_type" in item_schema["required"]
 
 

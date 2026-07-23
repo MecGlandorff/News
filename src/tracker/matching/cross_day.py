@@ -24,10 +24,13 @@ from src.tracker.matching.profiles import (
     profile_from_story,
 )
 from src.tracker.matching.retrieval import CandidateSignals, retrieve_candidates
-from src.tracker.matching.schemas import STORY_DECISION_RESPONSE_FORMAT
+from src.tracker.matching.schemas import (
+    STORY_DECISION_RESPONSE_FORMAT,
+    with_exact_decision_count,
+)
 
 
-CROSS_DAY_PROMPT_VERSION = "2026-07-23-v3"
+CROSS_DAY_PROMPT_VERSION = "2026-07-23-v4"
 CROSS_DAY_CASES_PER_CALL = 25
 CROSS_DAY_PROMPT = """You decide whether a current article group continues one
 specific tracked news story.
@@ -314,7 +317,10 @@ def match_story_groups(
             messages=messages,
             purpose="match-crossday-evidence",
             prompt_version=CROSS_DAY_PROMPT_VERSION,
-            response_format=STORY_DECISION_RESPONSE_FORMAT,
+            response_format=with_exact_decision_count(
+                STORY_DECISION_RESPONSE_FORMAT,
+                len(batch),
+            ),
             reasoning_effort=reasoning_effort,
         )
         try:

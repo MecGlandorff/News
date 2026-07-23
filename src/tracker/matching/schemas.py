@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from copy import deepcopy
+from typing import Any
+
 
 def _string_array() -> dict:
     return {
@@ -75,6 +78,20 @@ def _story_decision_response_format(name: str) -> dict:
             "reject_reason",
         ],
     )
+
+
+def with_exact_decision_count(
+    response_format: dict[str, Any],
+    decision_count: int,
+) -> dict[str, Any]:
+    """Return a strict response format requiring one result per supplied case."""
+    if decision_count < 1:
+        raise ValueError("decision_count must be at least 1")
+    exact_format = deepcopy(response_format)
+    decisions = exact_format["json_schema"]["schema"]["properties"]["decisions"]
+    decisions["minItems"] = decision_count
+    decisions["maxItems"] = decision_count
+    return exact_format
 
 
 SAME_DAY_DECISION_RESPONSE_FORMAT = _story_decision_response_format(

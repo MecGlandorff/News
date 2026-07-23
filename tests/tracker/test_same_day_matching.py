@@ -284,6 +284,11 @@ def test_same_day_call_uses_strict_schema_and_reasoning_effort():
     assert captured[0]["reasoning_effort"] == "low"
     assert captured[0]["response_format"]["type"] == "json_schema"
     assert captured[0]["response_format"]["json_schema"]["strict"] is True
+    decisions_schema = captured[0]["response_format"]["json_schema"]["schema"][
+        "properties"
+    ]["decisions"]
+    assert decisions_schema["minItems"] == 1
+    assert decisions_schema["maxItems"] == 1
 
 
 def test_mapping_disambiguates_split_identical_classifier_labels_with_titles():

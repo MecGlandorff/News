@@ -32,12 +32,15 @@ from src.tracker.matching.retrieval import (
     rare_tokens,
     retrieve_candidates,
 )
-from src.tracker.matching.schemas import SAME_DAY_DECISION_RESPONSE_FORMAT
+from src.tracker.matching.schemas import (
+    SAME_DAY_DECISION_RESPONSE_FORMAT,
+    with_exact_decision_count,
+)
 
 
 logger = logging.getLogger(__name__)
 
-SAME_DAY_PROMPT_VERSION = "2026-07-23-v3"
+SAME_DAY_PROMPT_VERSION = "2026-07-23-v4"
 SAME_DAY_CASES_PER_CALL = 25
 SAME_DAY_CANDIDATES_PER_ARTICLE = 5
 SAME_DAY_PROMPT = """You decide whether two current news articles describe the same
@@ -361,7 +364,10 @@ def judge_same_day_edges(
             messages=messages,
             purpose="match-sameday-evidence",
             prompt_version=SAME_DAY_PROMPT_VERSION,
-            response_format=SAME_DAY_DECISION_RESPONSE_FORMAT,
+            response_format=with_exact_decision_count(
+                SAME_DAY_DECISION_RESPONSE_FORMAT,
+                len(batch),
+            ),
             reasoning_effort=reasoning_effort,
         )
         try:

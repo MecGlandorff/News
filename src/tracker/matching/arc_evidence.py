@@ -26,10 +26,13 @@ from src.tracker.matching.profiles import (
     profile_from_articles,
 )
 from src.tracker.matching.retrieval import CandidateSignals, retrieve_candidates
-from src.tracker.matching.schemas import ARC_DECISION_RESPONSE_FORMAT
+from src.tracker.matching.schemas import (
+    ARC_DECISION_RESPONSE_FORMAT,
+    with_exact_decision_count,
+)
 
 
-ARC_EVIDENCE_PROMPT_VERSION = "2026-07-23-v3"
+ARC_EVIDENCE_PROMPT_VERSION = "2026-07-23-v4"
 ARC_EVIDENCE_CASES_PER_CALL = 20
 ARC_EVIDENCE_PROMPT = """You decide whether a new concrete news story belongs
 inside one existing named, continuing real-world event arc.
@@ -468,7 +471,10 @@ def assign_story_arcs_evidence(
             messages=messages,
             purpose="match-arc-evidence",
             prompt_version=ARC_EVIDENCE_PROMPT_VERSION,
-            response_format=ARC_DECISION_RESPONSE_FORMAT,
+            response_format=with_exact_decision_count(
+                ARC_DECISION_RESPONSE_FORMAT,
+                len(batch),
+            ),
             reasoning_effort=reasoning_effort,
         )
         try:

@@ -238,3 +238,8 @@ def test_cross_day_uses_strict_schema_and_requested_effort():
     assert captured[0]["reasoning_effort"] == "low"
     assert captured[0]["response_format"]["type"] == "json_schema"
     assert captured[0]["response_format"]["json_schema"]["strict"] is True
+    decisions_schema = captured[0]["response_format"]["json_schema"]["schema"][
+        "properties"
+    ]["decisions"]
+    assert decisions_schema["minItems"] == 1
+    assert decisions_schema["maxItems"] == 1
