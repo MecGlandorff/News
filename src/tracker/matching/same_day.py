@@ -18,6 +18,7 @@ from src.tracker.matching.gate import (
     CONFIDENT_DECISIONS,
     grounded_shared_anchors,
     has_sufficient_shared_anchors,
+    retrieval_signal_anchors,
 )
 from src.tracker.matching.profiles import (
     MatchProfile,
@@ -36,7 +37,7 @@ from src.tracker.matching.schemas import SAME_DAY_DECISION_RESPONSE_FORMAT
 
 logger = logging.getLogger(__name__)
 
-SAME_DAY_PROMPT_VERSION = "2026-07-23-v2"
+SAME_DAY_PROMPT_VERSION = "2026-07-23-v3"
 SAME_DAY_CASES_PER_CALL = 25
 SAME_DAY_CANDIDATES_PER_ARTICLE = 5
 SAME_DAY_PROMPT = """You decide whether two current news articles describe the same
@@ -49,16 +50,23 @@ Accept only:
 
 Reject articles that merely share a broad topic, place, actor, conflict, sport,
 policy area, accident type, or recurring content format. A classifier label is
-only a retrieval hint and is never proof. Different stages or results of one
-named tournament may be a direct continuation; unrelated transfer rumours,
-crashes, attacks, lawsuits, or generic updates are separate stories.
+only a retrieval hint and is never proof. Sharing a named tournament is not
+enough: different matches, stages, incidents, or results are separate stories
+that may belong to the same arc. Unrelated transfer rumours, crashes, attacks,
+lawsuits, or generic updates are separate stories.
 
 Use only the supplied titles and descriptions. Put concrete names, places,
 organizations, case names, dates, or other shared identifiers in shared_anchors.
 Copy anchors from the supplied evidence in its original language; do not
 translate them. List only mutually incompatible identity facts in conflicts,
 not ordinary follow-up differences. If the evidence is incomplete or ambiguous,
-return uncertain and same_story=false."""
+return uncertain and same_story=false.
+
+An analysis, explainer, or commentary can continue the same story as a breaking
+report when both clearly refer to the same unusual incident; article genre alone
+is not an identity conflict. retrieval_signals.shared_semantic_tokens are
+deterministic cross-language hints, not proof. Use a distinctive combination
+such as an actor plus unusual incident wording, but never a generic token alone."""
 
 
 @dataclass(frozen=True)
@@ -252,11 +260,17 @@ def _decision_from_model(
     conflicts = _clean_strings(raw.get("conflicts"))
     grounded = grounded_shared_anchors(anchors, edge.left, edge.right)
     model_accepts = raw.get("same_story") is True
-    has_anchors = has_sufficient_shared_anchors(
+    grounded_sufficient = has_sufficient_shared_anchors(
         grounded,
         edge.left,
         edge.right,
     )
+    signal_anchors = (
+        []
+        if grounded_sufficient
+        else retrieval_signal_anchors(edge.signals.shared_headline_tokens)
+    )
+    has_anchors = grounded_sufficient or bool(signal_anchors)
     accepted = (
         model_accepts
         and relationship in ACCEPTED_STORY_RELATIONSHIPS
@@ -283,7 +297,9 @@ def _decision_from_model(
             "confidence": (
                 confidence if confidence in {"high", "medium", "low"} else "low"
             ),
-            "continuity_evidence": grounded,
+            "continuity_evidence": list(
+                dict.fromkeys([*grounded, *signal_anchors])
+            ),
             "conflicts": conflicts,
             "reject_reason": " ".join(str(raw.get("reject_reason") or "").split()),
             "decision_route": "mini",

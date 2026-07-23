@@ -16,6 +16,7 @@ from src.tracker.matching.gate import (
     CONFIDENT_DECISIONS,
     grounded_shared_anchors,
     has_sufficient_shared_anchors,
+    retrieval_signal_anchors,
 )
 from src.tracker.matching.profiles import (
     MatchProfile,
@@ -26,23 +27,28 @@ from src.tracker.matching.retrieval import CandidateSignals, retrieve_candidates
 from src.tracker.matching.schemas import STORY_DECISION_RESPONSE_FORMAT
 
 
-CROSS_DAY_PROMPT_VERSION = "2026-07-23-v2"
+CROSS_DAY_PROMPT_VERSION = "2026-07-23-v3"
 CROSS_DAY_CASES_PER_CALL = 25
 CROSS_DAY_PROMPT = """You decide whether a current article group continues one
 specific tracked news story.
 
 Accept only the same concrete event or a direct factual continuation: the same
 named incident, case, operation, negotiation, investigation, policy decision,
-competition, or other identifiable real-world event. Reject broad topic,
-country, actor, conflict, market, sport, accident-type, or recurring-format
-similarity. An existing label, arc label, and retrieval score are hints, never
-proof.
+specific match, or other identifiable real-world event. A shared named
+tournament is only an arc container: different matches, stages, incidents, and
+results are separate stories. Reject broad topic, country, actor, conflict,
+market, sport, accident-type, or recurring-format similarity. An existing
+label, arc label, and retrieval score are hints, never proof.
 
 Use only the supplied current evidence and stored source-grounded memory.
 Put concrete shared identifiers in shared_anchors, copying their original
 wording rather than translating them. Put only mutually incompatible identity
 facts in conflicts, not ordinary follow-up differences. If identity or
-continuity is ambiguous, return uncertain and same_story=false."""
+continuity is ambiguous, return uncertain and same_story=false. An analysis or
+explainer may directly continue the incident it analyzes; article genre alone
+is not a conflict. retrieval_signals.shared_semantic_tokens are deterministic
+cross-language hints, not proof; require a distinctive combination rather than
+one generic token."""
 
 
 @dataclass(frozen=True)
@@ -202,11 +208,17 @@ def _decision_from_model(
         case.candidate,
     )
     model_accepts = raw.get("same_story") is True
-    has_anchors = has_sufficient_shared_anchors(
+    grounded_sufficient = has_sufficient_shared_anchors(
         grounded,
         case.current,
         case.candidate,
     )
+    signal_anchors = (
+        []
+        if grounded_sufficient
+        else retrieval_signal_anchors(case.signals.shared_headline_tokens)
+    )
+    has_anchors = grounded_sufficient or bool(signal_anchors)
     accepted = (
         model_accepts
         and relationship in ACCEPTED_STORY_RELATIONSHIPS
@@ -233,7 +245,9 @@ def _decision_from_model(
             "confidence": (
                 confidence if confidence in {"high", "medium", "low"} else "low"
             ),
-            "continuity_evidence": grounded,
+            "continuity_evidence": list(
+                dict.fromkeys([*grounded, *signal_anchors])
+            ),
             "conflicts": conflicts,
             "reject_reason": " ".join(str(raw.get("reject_reason") or "").split()),
             "decision_route": "mini",

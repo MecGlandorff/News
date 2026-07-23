@@ -86,6 +86,44 @@ def test_cross_day_accepts_grounded_direct_continuation():
     assert decisions[0]["decision_route"] == "mini"
 
 
+def test_cross_day_accept_uses_two_grounded_headline_signals():
+    article = {
+        **_article(
+            "new",
+            "France youth phone restrictions explained",
+            "Phone-free youth",
+        ),
+    }
+    recent = {
+        "France youth restrictions": _story(
+            7,
+            "France youth restrictions",
+            "France introduces youth social-media restrictions",
+        )
+    }
+    client = FakeLLMClient(
+        _payload(
+            accepted=True,
+            relationship="direct_continuation",
+            anchors=["France"],
+        )
+    )
+
+    label_map, decisions = match_story_groups(
+        {"Phone-free youth"},
+        recent,
+        {"Phone-free youth": [article]},
+        get_client=lambda: client,
+        model=MODEL,
+    )
+
+    assert label_map == {"Phone-free youth": "France youth restrictions"}
+    assert decisions[0]["accepted"] is True
+    assert {"france", "youth"} <= set(
+        decisions[0]["continuity_evidence"]
+    )
+
+
 def test_cross_day_rejects_generic_bridge_despite_shared_label():
     current = {
         **_article(

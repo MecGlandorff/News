@@ -53,3 +53,17 @@ def has_sufficient_shared_anchors(
             return True
         shared_tokens.update(tokens)
     return len(shared_tokens) >= 2
+
+
+def retrieval_signal_anchors(
+    shared_headline_tokens: Iterable[str],
+) -> list[str]:
+    """Return locally grounded headline anchors only when at least two agree."""
+    anchors = sorted(
+        {
+            normalize_text(token)
+            for token in shared_headline_tokens
+            if normalize_text(token)
+        }
+    )
+    return anchors if len(anchors) >= 2 else []

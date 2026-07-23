@@ -190,6 +190,7 @@ def test_story_match_verifier_rejects_gaza_detention_false_merge(tmp_path):
             "decisions": [{
                 "case_id": case["case_id"],
                 "belongs_to_arc": False,
+                "container_type": "broad_topic",
                 "relationship": "related_context",
                 "confidence": "high",
                 "shared_anchors": [],

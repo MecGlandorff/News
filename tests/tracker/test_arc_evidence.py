@@ -6,6 +6,7 @@ import src.observability as observability
 import src.tracker as tracker
 from src.tracker.matching.arc_evidence import (
     assign_story_arcs_evidence,
+    is_recurring_content_format,
     material_arc_conflicts,
 )
 from tests.fakes import FakeLLMClient
@@ -53,6 +54,7 @@ def _payload(
                 {
                     "case_id": case["case_id"],
                     "belongs_to_arc": accepted,
+                    "container_type": "named_event",
                     "relationship": relationship,
                     "confidence": "high",
                     "shared_anchors": anchors or ["Tour de France", "2026 race"],
@@ -156,6 +158,63 @@ def test_recurring_content_format_is_rejected_without_model_call():
     assert client.calls == 0
 
 
+def test_reviewed_television_program_is_rejected_without_model_call():
+    article = _article(
+        "new",
+        "Timothy valt voor Michaël in B&B Vol Liefde",
+        "B&B Vol Liefde",
+    )
+    arc = _arc(
+        label="B&B Vol Liefde",
+        story_label="B&B Vol Liefde",
+    )
+    client = FakeLLMClient([])
+
+    assignments = assign_story_arcs_evidence(
+        {"B&B Vol Liefde"},
+        {7: arc},
+        {"B&B Vol Liefde": [article]},
+        get_client=lambda: client,
+        model=MODEL,
+    )
+
+    assert assignments["B&B Vol Liefde"]["accepted"] is False
+    assert assignments["B&B Vol Liefde"]["decision_route"] == "deterministic"
+    assert client.calls == 0
+
+
+def test_arc_gate_rejects_non_event_container_even_if_model_accepts():
+    article = {
+        **_article("new", "Contestant leaves dating show", "Dating show update"),
+        "description": "A new instalment follows another contestant.",
+    }
+    def recurring_payload(kwargs):
+        response = _payload()(kwargs)
+        response["decisions"][0]["container_type"] = "recurring_format"
+        return response
+
+    client = FakeLLMClient(recurring_payload)
+    assignments = assign_story_arcs_evidence(
+        {"Dating show update"},
+        {
+            7: _arc(
+                label="Dating show coverage",
+                story_label="Dating show episode",
+            )
+        },
+        {"Dating show update": [article]},
+        get_client=lambda: client,
+        model=MODEL,
+    )
+
+    decision = assignments["Dating show update"]
+    assert decision["accepted"] is False
+    assert decision["decision_route"] == "fail_closed"
+    assert decision["ambiguity_reason"] == (
+        "non_event_container:recurring_format"
+    )
+
+
 def test_arc_call_uses_strict_schema_and_effort():
     article = {
         **_article(
@@ -181,6 +240,10 @@ def test_arc_call_uses_strict_schema_and_effort():
     assert captured[0]["reasoning_effort"] == "low"
     assert captured[0]["response_format"]["type"] == "json_schema"
     assert captured[0]["response_format"]["json_schema"]["strict"] is True
+    item_schema = captured[0]["response_format"]["json_schema"]["schema"][
+        "properties"
+    ]["decisions"]["items"]
+    assert "container_type" in item_schema["required"]
 
 
 def test_expected_distinct_arc_development_is_not_a_material_conflict():
@@ -193,6 +256,13 @@ def test_expected_distinct_arc_development_is_not_a_material_conflict():
     assert material_arc_conflicts(conflicts) == [
         "Different named tournament in another country"
     ]
+
+
+def test_reviewed_television_program_is_a_recurring_format():
+    assert is_recurring_content_format(
+        "B&B Vol Liefde",
+        "Timothy begint te vallen voor Michaël in B&B Vol Liefde",
+    )
 
 
 def test_tracker_promotes_grounded_one_story_arc_and_records_audit(
@@ -238,6 +308,7 @@ def test_tracker_promotes_grounded_one_story_arc_and_records_audit(
             "decisions": [{
                 "case_id": case["case_id"],
                 "belongs_to_arc": True,
+                "container_type": "named_event",
                 "relationship": "same_arc",
                 "confidence": "high",
                 "shared_anchors": ["Tour de France", "2026"],

@@ -32,6 +32,7 @@ def test_distinct_story_can_join_same_named_arc_without_parent_link(tmp_path):
             "decisions": [{
                 "case_id": case["case_id"],
                 "belongs_to_arc": True,
+                "container_type": "named_event",
                 "relationship": "same_arc",
                 "confidence": "high",
                 "shared_anchors": ["Mali", "rebel"],

@@ -91,6 +91,15 @@ ARC_DECISION_RESPONSE_FORMAT = _strict_array_response(
     item_properties={
         "case_id": {"type": "string"},
         "belongs_to_arc": {"type": "boolean"},
+        "container_type": {
+            "type": "string",
+            "enum": [
+                "named_event",
+                "recurring_format",
+                "broad_topic",
+                "uncertain",
+            ],
+        },
         "relationship": {
             "type": "string",
             "enum": [
@@ -119,6 +128,7 @@ ARC_DECISION_RESPONSE_FORMAT = _strict_array_response(
     required=[
         "case_id",
         "belongs_to_arc",
+        "container_type",
         "relationship",
         "confidence",
         "shared_anchors",

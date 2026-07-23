@@ -117,6 +117,44 @@ def test_different_labels_merge_when_grounded_named_event_matches():
     assert decisions[0]["continuity_evidence"] == ["OpenAI agent", "Acme Cloud"]
 
 
+def test_model_accept_can_use_two_grounded_cross_language_headline_signals():
+    articles = [
+        _with_occurrence(
+            _article(
+                "a",
+                "Was de AI-agent op hol geslagen?",
+                "AI agent behavior",
+            ),
+            1,
+        ),
+        _with_occurrence(
+            _article(
+                "b",
+                "OpenAI says its AI went rogue in a cyberattack",
+                "AI cyberattack",
+            ),
+            2,
+        ),
+    ]
+    client = FakeLLMClient(
+        _response_for_cases(
+            same_story=True,
+            relationship="same_event",
+            anchors=["AI"],
+        )
+    )
+
+    groups, decisions = group_today_articles(
+        articles,
+        get_client=lambda: client,
+        model=MODEL,
+    )
+
+    assert len(groups) == 1
+    assert decisions[0]["accepted"] is True
+    assert {"ai", "rogue"} <= set(decisions[0]["continuity_evidence"])
+
+
 def test_exact_url_duplicate_is_deterministic_and_skips_model():
     left = _with_occurrence(_article("a", "Original title", "First label"), 1)
     right = _with_occurrence(

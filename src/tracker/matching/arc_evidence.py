@@ -15,6 +15,7 @@ from src.tracker.matching.gate import (
     CONFIDENT_DECISIONS,
     grounded_shared_anchors,
     has_sufficient_shared_anchors,
+    retrieval_signal_anchors,
 )
 from src.tracker.matching.profiles import (
     MatchProfile,
@@ -28,7 +29,7 @@ from src.tracker.matching.retrieval import CandidateSignals, retrieve_candidates
 from src.tracker.matching.schemas import ARC_DECISION_RESPONSE_FORMAT
 
 
-ARC_EVIDENCE_PROMPT_VERSION = "2026-07-23-v2"
+ARC_EVIDENCE_PROMPT_VERSION = "2026-07-23-v3"
 ARC_EVIDENCE_CASES_PER_CALL = 20
 ARC_EVIDENCE_PROMPT = """You decide whether a new concrete news story belongs
 inside one existing named, continuing real-world event arc.
@@ -39,6 +40,11 @@ container, such as a named war, election, tournament, court case, negotiation,
 investigation, disaster, or policy rollout. Use parent_context only when the new
 story is a direct consequence or specific follow-up of one supplied child story;
 otherwise parent_story_id must be null.
+
+First classify container_type. Use named_event only for an identifiable
+real-world event container. Use recurring_format for a television programme,
+episode stream, regular roundup, or other recurring content format; broad_topic
+for a subject without a bounded event container; and uncertain when unclear.
 
 Reject broad topic, country, actor, industry, sport, generic accident type,
 recurring entertainment format, episode recap, spoiler stream, transfer-rumour
@@ -55,6 +61,7 @@ arc label as a conflict; conflicts are mutually incompatible container identity
 facts."""
 
 RECURRING_FORMAT_TERMS = {
+    "B&B Vol Liefde",
     "daily roundup",
     "episode recap",
     "live blog",
@@ -105,7 +112,10 @@ class ArcEvidenceCase:
 
 def is_recurring_content_format(*values: object) -> bool:
     text = normalize_text(" ".join(str(value or "") for value in values))
-    return any(term in text for term in RECURRING_FORMAT_TERMS)
+    return any(
+        normalize_text(term) in text
+        for term in RECURRING_FORMAT_TERMS
+    )
 
 
 def _valid_parent_ids(case: ArcEvidenceCase) -> set[int]:
@@ -303,11 +313,17 @@ def _decision_from_model(
         case.current,
         case.arc,
     )
-    has_anchors = has_sufficient_shared_anchors(
+    grounded_sufficient = has_sufficient_shared_anchors(
         grounded,
         case.current,
         case.arc,
     )
+    signal_anchors = (
+        []
+        if grounded_sufficient
+        else retrieval_signal_anchors(case.signals.shared_headline_tokens)
+    )
+    has_anchors = grounded_sufficient or bool(signal_anchors)
     raw_parent_id = raw.get("parent_story_id")
     proposed_parent_id = raw_parent_id if isinstance(raw_parent_id, int) else None
     parent_id = (
@@ -318,6 +334,8 @@ def _decision_from_model(
     )
     valid_parent = relationship != "parent_context" or parent_id is not None
     model_accepts = raw.get("belongs_to_arc") is True
+    container_type = raw.get("container_type")
+    named_event_container = container_type == "named_event"
     accepted = (
         model_accepts
         and relationship in {"same_arc", "parent_context"}
@@ -325,6 +343,7 @@ def _decision_from_model(
         and has_anchors
         and not conflicts
         and valid_parent
+        and named_event_container
         and not is_recurring_content_format(
             case.today_label,
             *case.current.titles,
@@ -368,7 +387,9 @@ def _decision_from_model(
             "confidence": (
                 confidence if confidence in {"high", "medium", "low"} else "low"
             ),
-            "continuity_evidence": grounded,
+            "continuity_evidence": list(
+                dict.fromkeys([*grounded, *signal_anchors])
+            ),
             "conflicts": conflicts,
             "reject_reason": " ".join(str(raw.get("reject_reason") or "").split()),
             "decision_route": "mini",
@@ -386,6 +407,11 @@ def _decision_from_model(
         decision["decision_route"] = "fail_closed"
     elif model_accepts and not valid_parent:
         decision["ambiguity_reason"] = "invalid_parent_context"
+        decision["decision_route"] = "fail_closed"
+    elif model_accepts and not named_event_container:
+        decision["ambiguity_reason"] = (
+            f"non_event_container:{container_type or 'missing'}"
+        )
         decision["decision_route"] = "fail_closed"
     elif relationship == "uncertain":
         decision["ambiguity_reason"] = "model_uncertain"

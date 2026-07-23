@@ -1,6 +1,7 @@
 from src.tracker.matching.gate import (
     grounded_shared_anchors,
     has_sufficient_shared_anchors,
+    retrieval_signal_anchors,
 )
 from src.tracker.matching.profiles import profile_from_articles
 from tests.tracker.support import _article
@@ -59,3 +60,11 @@ def test_gate_grounds_reviewed_cross_language_event_phrase():
 
     assert grounded_shared_anchors(anchors, current, candidate) == anchors
     assert has_sufficient_shared_anchors(anchors, current, candidate) is True
+
+
+def test_gate_requires_two_locally_grounded_headline_signal_anchors():
+    assert retrieval_signal_anchors(["France", "youth"]) == [
+        "france",
+        "youth",
+    ]
+    assert retrieval_signal_anchors(["AI"]) == []
