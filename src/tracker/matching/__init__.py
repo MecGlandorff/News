@@ -22,6 +22,13 @@ from src.tracker.matching.consolidation import (
     consolidate_today,
     validated_consolidation_groups,
 )
+from src.tracker.matching.cross_day import (
+    CROSS_DAY_PROMPT,
+    CROSS_DAY_PROMPT_VERSION,
+    CrossDayCase,
+    match_story_groups,
+    story_candidate_cases,
+)
 from src.tracker.matching.constants import (
     ARC_ASSIGNMENT_PROMPT,
     ARC_ASSIGNMENT_PROMPT_VERSION,
@@ -93,6 +100,9 @@ __all__ = [
     "CANDIDATES_PER_LABEL",
     "CONSOLIDATE_PROMPT",
     "CONSOLIDATE_PROMPT_VERSION",
+    "CROSS_DAY_PROMPT",
+    "CROSS_DAY_PROMPT_VERSION",
+    "CrossDayCase",
     "DELTA_CHAR_LIMIT",
     "GENERIC_EVENT_TOKENS",
     "LABEL_STOPWORDS",
@@ -134,6 +144,7 @@ __all__ = [
     "label_tokens",
     "labels_can_refer_to_same_story",
     "match_labels",
+    "match_story_groups",
     "missing_arc_assignment",
     "profile_from_arc",
     "profile_from_articles",
@@ -147,6 +158,7 @@ __all__ = [
     "CandidateSignals",
     "retrieve_candidates",
     "same_day_candidate_edges",
+    "story_candidate_cases",
     "TodayStoryGroup",
     "truncate_text",
     "validated_consolidation_groups",

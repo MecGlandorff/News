@@ -77,6 +77,9 @@ def get_recent_story_options(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
                     "date": article.get("date", ""),
                     "source": article.get("source", ""),
                     "title": article.get("title", ""),
+                    "description": article.get("description", ""),
+                    "url": article.get("url", ""),
+                    "reported_at": article.get("reported_at", ""),
                 }
                 for article in context.get("recent_articles", [])[:3]
             ],

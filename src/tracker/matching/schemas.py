@@ -40,10 +40,11 @@ def _strict_array_response(
     }
 
 
-SAME_DAY_DECISION_RESPONSE_FORMAT = _strict_array_response(
-    name="same_day_match_decisions",
-    property_name="decisions",
-    item_properties={
+def _story_decision_response_format(name: str) -> dict:
+    return _strict_array_response(
+        name=name,
+        property_name="decisions",
+        item_properties={
         "case_id": {"type": "string"},
         "same_story": {"type": "boolean"},
         "relationship": {
@@ -63,15 +64,23 @@ SAME_DAY_DECISION_RESPONSE_FORMAT = _strict_array_response(
         "shared_anchors": _string_array(),
         "conflicts": _string_array(),
         "reject_reason": {"type": "string"},
-    },
-    required=[
-        "case_id",
-        "same_story",
-        "relationship",
-        "confidence",
-        "shared_anchors",
-        "conflicts",
-        "reject_reason",
-    ],
+        },
+        required=[
+            "case_id",
+            "same_story",
+            "relationship",
+            "confidence",
+            "shared_anchors",
+            "conflicts",
+            "reject_reason",
+        ],
+    )
+
+
+SAME_DAY_DECISION_RESPONSE_FORMAT = _story_decision_response_format(
+    "same_day_match_decisions"
 )
 
+STORY_DECISION_RESPONSE_FORMAT = _story_decision_response_format(
+    "cross_day_story_match_decisions"
+)

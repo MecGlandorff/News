@@ -227,6 +227,9 @@ def profile_from_articles(
 def profile_from_story(label: str, story: Mapping[str, object]) -> MatchProfile:
     recent_articles = _mapping_items(story.get("recent_articles"))
     titles = _clean_values(article.get("title") for article in recent_articles)
+    descriptions = _clean_values(
+        article.get("description") for article in recent_articles
+    )
     summaries = _clean_values(
         (
             story.get("summary"),
@@ -243,6 +246,7 @@ def profile_from_story(label: str, story: Mapping[str, object]) -> MatchProfile:
         story.get("arc_label"),
         story.get("parent_label"),
         *titles,
+        *descriptions,
         *summaries,
     )
     story_id = story.get("story_id")
@@ -254,9 +258,13 @@ def profile_from_story(label: str, story: Mapping[str, object]) -> MatchProfile:
         article_ids=(),
         occurrence_ids=(),
         titles=titles,
-        descriptions=(),
+        descriptions=descriptions,
         summaries=summaries,
-        urls=frozenset(),
+        urls=frozenset(
+            normalize_text(article.get("url"))
+            for article in recent_articles
+            if article.get("url")
+        ),
         tokens=content_tokens(" ".join(str(value or "") for value in evidence_values)),
         distinctive=distinctive_tokens(
             " ".join(str(value or "") for value in evidence_values)
