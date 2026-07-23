@@ -10,7 +10,7 @@ It is a local-first intelligence briefing system with RSS ingestion, structured 
 Source -> Article -> Claim -> Story Arc -> Story Delta -> Briefing
 ```
 
-> **Status:** Active development. The Phase 3 foundation is implemented: append-only article occurrences, stored-snapshot replay, conservative claim/span verification, source metadata, run-scoped observability, bounded exact-response caching, default-on story-match verification, executable acceptance-gate evals, and claim-backed source support/divergence. Real reviewed claim cases remain the main gate before Phase 4.
+> **Status:** Active development. The Phase 3 foundation is implemented: append-only article occurrences, stored-snapshot replay, conservative claim/span verification, source metadata, run-scoped observability, bounded exact-response caching, evidence-gated story/arc matching, executable acceptance-gate evals, and claim-backed source support/divergence. The matching reconstruction passed; a fresh daily run series and real reviewed claim cases remain the gate before Phase 4.
 
 ## Why It Exists
 
@@ -33,7 +33,7 @@ The flagship outcome is an intelligence-style briefing with status, confidence, 
 | Claim grounding | Uses `gpt-5.4-nano` with full article text when available; saves claims only when the evidence span is in the article and a hybrid deterministic + LLM-verifier gate decides the span supports the claim |
 | Source support | Counts distinct source identities with `source_id` first and source-name fallback |
 | Claim-backed agreement | Current-day claims support agreement; seven days of older claims are dated context only. Exact/similar multi-source support and precise number/date/status/attribution divergence are compared without claiming source independence |
-| Match verifier | Uses full article text and `gpt-5.4-nano` to reject adjacent-topic story merges |
+| Story and arc matching | Retrieves candidates from article evidence, asks pinned `gpt-5.4-mini-2026-03-17` for strict structured decisions at `low` reasoning, and applies a deterministic fail-closed evidence gate. Same story and same named arc are separate decisions |
 | Local database | Keeps append-only occurrence snapshots plus derived stories, observations, claims, sources, run history, LLM calls, and bounded exact-response cache rows in SQLite |
 | Outputs | Publishes Markdown briefings, digest files, and newspaper-style PDFs |
 | Inspectability | Includes ADRs, failure modes, model behavior docs, database queries, pipeline diagrams, and a claim-quality eval harness |
@@ -74,8 +74,8 @@ RSS feeds
   -> src/scraper.py      fetch RSS, normalize URLs, filter dates, deduplicate URLs
   -> src/classifier.py   classify theme, story_label, and importance
   -> src/tracker/occurrences.py preserve source snapshots and replay metadata
-  -> src/tracker/        consolidate labels, match recent stories, write story memory
-  -> src/tracker/matching/ optionally verify candidate matches with full article text
+  -> src/tracker/        retrieve and judge same-day, cross-day, and named-arc candidates
+  -> src/tracker/matching/ enforce grounded anchors, conflicts, and fail-closed ambiguity
   -> src/claims/         optionally extract validated claims and evidence spans
   -> src/briefing/       select stories and generate briefing cards
   -> src/digest.py       write local digest Markdown
@@ -98,13 +98,24 @@ The tracker keeps a compact local memory of each event:
 - linked articles and observations per day
 - generated summary and `delta_summary` for the next run
 
-Candidate cross-day matches are verified by default before memory is reused:
+Evidence-gated matching is enabled by default before memory is reused:
 
 ```bash
 python -m src.run
 ```
 
-That verifier uses `gpt-5.4-nano` and full article text for candidate matches. It asks whether today's article group continues the same real-world event, stores rows in `story_match_decisions`, and defaults to a new story when continuity evidence is weak. Use `--no-verify-story-matches` only when comparing against the older label-only match path.
+The matcher builds compact profiles from classifier labels, RSS titles and
+descriptions, and recent source-grounded memory. Deterministic retrieval supplies a
+small candidate set; pinned `gpt-5.4-mini-2026-03-17` judges same-story or same-arc
+semantics with strict JSON Schema; and a deterministic gate verifies shared anchors,
+conflicts, container type, and ambiguity. Exact URL duplicates are the narrow
+deterministic acceptance. Weak, conflicting, malformed, or multiply accepted cases
+remain a new story or arc.
+
+Matching does not fetch article bodies. Missing RSS evidence can therefore cause an
+honest false split instead of a guessed merge. Decisions are auditable in
+`same_day_match_decisions`, `story_match_decisions`, and `story_arc_decisions`. Use
+`--no-verify-story-matches` only for comparison with the legacy label-first path.
 
 ## Source Grounding
 
@@ -202,7 +213,7 @@ Notes:
 - `--db-off` uses a temporary SQLite database/cache and leaves `data/stories.db` untouched.
 - `--show-evidence` fetches article bodies for claim extraction and falls back to RSS title/description when body text is unavailable.
 - `--fetch-article-text` fetches article bodies even when evidence extraction is disabled.
-- Story-match verification is on by default and does not require `--show-evidence`; `--no-verify-story-matches` disables it for comparison runs.
+- Evidence-gated matching is on by default and does not require `--show-evidence`; `--no-verify-story-matches` selects the legacy comparison path.
 - `--pipeline-report` prints run totals, scraper counts, claim metrics, model tokens, latency, and estimated EUR cost after success or failure.
 - `--replay DATE` makes no network calls. It transactionally rebuilds derived tracking state from that date forward using stored occurrence, classification, and assignment snapshots, and fails before changing state if a required snapshot is missing.
 - `--replay` cannot be combined with `--date`/`--today` or `--db-off`.
@@ -244,7 +255,7 @@ Core docs:
 ## Current Limitations
 
 - Article deduplication is URL-based; content fingerprinting across syndicated copies is planned.
-- Story matching can over-merge adjacent topics when the verifier is disabled. Exact verifier responses can be reused for identical prompts, but there is no semantic verifier-decision cache.
+- Evidence-gated matching is precision-first and can over-split when a feed retains only a thin headline or when several candidates clear the gate. It does not fetch body text at matching time, and there is no semantic decision cache. Disabling it restores the less safe legacy label-first path.
 - Claim extraction is cached and evidence-validated; the derivability gate is deterministic-first and falls back to a `gpt-5.4-nano` verifier for paraphrase-style claims. Evidence runs use fetched full text when available, and RSS-vs-full-text quality can be compared with `evals.run_claim_quality_eval`.
 - Source metadata is seeded and attached to new articles; deterministic source support uses `source_id` first.
 - Evidence-mode source agreement is claim-backed for current-day exact and conservative similar-claim support. Precise number, date, status, and attribution differences produce source-divergence notes. It does not infer source independence or confirmed contradiction.
@@ -260,10 +271,10 @@ Core docs:
 Multi-source RSS scraping, URL normalization, URL deduplication, and cached article classification.
 
 **Phase 2 - Story memory and claim grounding: done.**
-Canonical labels, same-day consolidation, recent-history matching, daily observations, delta summaries, structured claim extraction, and evidence-span validation.
+Canonical labels, same-day grouping, recent-history matching, daily observations, delta summaries, structured claim extraction, and evidence-span validation.
 
-**Phase 3 - Source modeling and observability: implementation complete, review pending.**
-Source metadata, occurrence-backed evidence, stored-snapshot replay, run-scoped observability, bounded caching, conservative derivability, and the first claim-backed agreement/source-divergence slice have shipped. The remaining gate is the [Phase 3 closure review](docs/phase3-closure-plan.md): collect a short daily run series, review real claim-verifier and source-comparison cases, and record the quality/cost decision.
+**Phase 3 - Source modeling and observability: implementation complete, fresh review series pending.**
+Source metadata, occurrence-backed evidence, stored-snapshot replay, run-scoped observability, bounded caching, conservative derivability, claim-backed agreement/source divergence, and evidence-gated matching have shipped. The [saved-snapshot matching reconstruction](evals/reports/phase3_matching_reconstruction_2026-07-23.md) selected `low` reasoning with zero reviewed corrupting accepts and 80% recall on five scorable positives; one multiple-candidate continuation stayed fail-closed. The remaining [Phase 3 closure review](docs/phase3-closure-plan.md) is a fresh daily run series plus real claim-verifier and source-comparison review.
 
 **Phase 4 - Evaluation and hardening: later.**
 Only after Phase 3's real-case review should deeper citation, temporal, story-matching, and source-divergence evals make the system more autonomous.

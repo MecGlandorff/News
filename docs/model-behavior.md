@@ -15,13 +15,14 @@ The guiding rule is: LLMs produce structured intermediate artifacts where possib
 | Article classification | `gpt-5.4-mini` | JSON | Cached by `content_hash + model + prompt_version` | Assign theme, story label, and importance |
 | Claim extraction | `gpt-5.4-nano` | JSON | Cached by occurrence + content + model + prompt/validation versions | Extract atomic claims and evidence spans from full text when available |
 | Claim derivability verification | `gpt-5.4-nano` | JSON | Exact response cache by request shape | Decide uncertain claim/span paraphrases; default reject |
-| Same-day consolidation | `gpt-5.5` | JSON | Exact response cache by request shape | Merge same-day labels that refer to the same event |
-| Cross-day matching | `gpt-5.4-mini` | JSON | Exact response cache by request shape | Match today's labels to recent canonical stories |
-| Story-match verification | `gpt-5.4-nano` | JSON | Exact response cache by request shape | Verify candidate cross-day matches with full article text before reusing story memory |
-| Story-arc assignment | `gpt-5.4-mini` | JSON | Exact response cache by request shape | Attach unmatched concrete stories to supported broader arcs |
+| Same-day evidence grouping | `gpt-5.4-mini-2026-03-17` with `low` reasoning | Strict JSON decisions | Exact response cache by request shape | Judge retrieved article pairs; a complete-link gate prevents bridge merges |
+| Cross-day same-story matching | `gpt-5.4-mini-2026-03-17` with `low` reasoning | Strict JSON decisions | Exact response cache by request shape | Decide whether current evidence continues one concrete stored story |
+| Named-arc assignment | `gpt-5.4-mini-2026-03-17` with `low` reasoning | Strict JSON decisions | Exact response cache by request shape | Attach a distinct story only to a supported named event container |
 | Briefing generation | `gpt-5.5` | JSON story-card fields plus prose | Exact response cache by request shape | Produce status, confidence, source agreement, dispute flag, `delta_summary`, briefing text, and open questions |
 
-Classification uses `gpt-5.4-mini`. Claim extraction uses `gpt-5.4-nano` behind `--show-evidence`, with full article text when available. Cross-story reasoning and final prose use `gpt-5.5`.
+Classification and evidence-gated matching use the pinned mini snapshot. Claim
+extraction uses `gpt-5.4-nano` behind `--show-evidence`, with full article text
+when available. Final briefing prose uses `gpt-5.5`.
 
 The exact response cache key includes purpose, model, prompt version, messages, response format, and API kwargs. Cache hits skip the model call and increment the total plus a layer-specific run counter; they do not create `llm_calls` rows. Entries are eligible for reuse for 30 days, and successful runs cap the table at 1,000 rows.
 
@@ -36,10 +37,8 @@ Expected behavior:
 - classification returns a `results` list
 - claim extraction returns a `claims` list
 - claim derivability verification returns a `supported` boolean
-- same-day consolidation returns a `groups` list
-- cross-day matching returns a `matches` list
-- story-match verification returns a `decisions` list
-- story-arc assignment returns an `assignments` list
+- same-day, cross-day, and arc matching return a strict `decisions` object keyed
+  by every supplied short response key; opaque case IDs are restored locally
 - briefing generation returns a `briefings` list with bounded story-card fields
 
 Free-form model text should not become internal state unless it is the final briefing prose or a stored story memory summary.
@@ -74,21 +73,40 @@ The claim layer validates each returned claim before storage. A claim must have 
 
 ### Story tracking
 
-Tracking decides whether labels refer to the same ongoing story. It should preserve temporal continuity and avoid merging stories merely because they share broad topics.
+Tracking decides whether article evidence refers to the same concrete story, or
+whether a distinct story belongs under the same named event arc. Classifier labels are
+retrieval signals, not identity proof.
 
-Candidate cross-day matches are checked by a separate verifier before the tracker reuses a story ID. This is enabled by default and can be disabled with `--no-verify-story-matches` for comparison runs. The verifier receives today's title, RSS description, normalized article date, full article text when available, and compact recent story memory. It returns structured fields including:
+The default cascade is:
 
-- `same_event`
-- `relationship`
-- `confidence`
-- `article_dates`
-- `candidate_last_seen`
-- `continuity_evidence`
-- `reject_reason`
+1. Build compact profiles from classifier labels, RSS titles and descriptions, and
+   recent stored story memory.
+2. Retrieve a capped candidate set with deterministic lexical, semantic, phrase,
+   number, date, and exact-URL signals.
+3. Ask pinned mini for strict structured same-story or same-arc judgments.
+4. Require one schema-constrained decision for every short response key and bind
+   those keys back to opaque internal case IDs locally.
+5. Verify model-supplied anchors against evidence on both sides. Two locally grounded
+   headline signals can fill an omitted anchor, but cannot override a model rejection.
+6. Reject conflicts, recurring formats, broad topics, invalid parent context,
+   multiple accepted candidates, malformed output, and uncertainty.
 
-Only `same_event`, `same_story_arc`, and `direct_follow_up` relationships can be accepted as the same story, and only when confidence is at least medium and continuity evidence is present. `unrelated`, `uncertain`, malformed, or missing verifier decisions cannot reuse an existing story row. Labels that remain unmatched can still be assigned to an existing `story_arcs` row by the separate cached `gpt-5.4-mini` arc-assignment step when there is concrete medium/high-confidence arc evidence. Same-story decisions are stored in `story_match_decisions`; arc-assignment calls are visible in observability as `match-arc`.
+Same story accepts only `same_event` or `direct_continuation` at medium/high
+confidence with grounded evidence. Sharing a tournament or other named container is
+not enough; different matches, stages, incidents, and results belong in separate
+stories and may then attach to one named arc. Arc acceptance requires `same_arc` or
+valid `parent_context`, a `named_event` container, grounded anchors, and no material
+conflict.
 
-The verifier is deliberately separate from claim extraction. It asks whether an article group continues an existing story; it does not extract factual claims for evidence rendering.
+Exact normalized URL duplicates are the narrow deterministic acceptance. Recurring
+content formats can be rejected deterministically. All other unresolved cases become
+new memory. Decisions are stored in `same_day_match_decisions`,
+`story_match_decisions`, and `story_arc_decisions`, including route, retrieval
+signals, conflicts, and ambiguity reason.
+
+Matching does not fetch article bodies. A headline-only occurrence may therefore
+remain split when source identity cannot be proved. `--no-verify-story-matches`
+exists only for comparison with the legacy label-first path.
 
 ### Briefing generation
 
@@ -155,8 +173,9 @@ Use that report to decide whether the full-text quality lift is worth the extra 
 
 The most important current risks are:
 
-- story consolidation over-merges distinct events with similar keywords
-- cross-day matching attaches fresh reporting to an old canonical label when the verifier is disabled or when the verifier lacks enough context
+- the legacy label-first path can over-merge distinct events when evidence-gated matching is disabled
+- the precision-first matcher can over-split headline-only or otherwise thin RSS
+  evidence, or when several plausible candidates clear the gate
 - briefing prose overstates certainty compared with source claims
 - claim extraction can still treat allegations as confirmed facts; the
   `2026-05-13-v1` prompt reduces this risk but needs a live current-prompt eval

@@ -119,7 +119,7 @@ Important boundary:
 - RSS title and description are always available inputs when the feed provides them.
 - Full article text is optional and may be empty because extraction can fail, a source can block scraping, or a page may not expose a usable `<article>` or `<main>` body.
 - Claim extraction uses full article text when `--show-evidence` is enabled and body extraction succeeds.
-- Full article text is also used by the default-on story-match verifier for candidate matches.
+- Evidence-gated matching does not fetch or require full article text.
 
 ## Stage 2: Classification
 
@@ -166,24 +166,29 @@ Tracking turns classified articles into local story memory.
 ```mermaid
 flowchart TD
     A[classified articles] --> B[write data/daily/YYYY-MM-DD/articles.json]
-    B --> C[group by story_label]
-    C --> D[consolidate same-day labels]
-    D --> E[load recent stories from lookback window]
-    E --> F[match today's labels to recent canonical stories]
-    F --> G{"verifier enabled?"}
-    G -- no --> H[persist story assignments]
-    G -- yes --> I[ensure full article text for candidates]
-    I --> J[verify candidate continuity with gpt-5.4-nano]
-    J --> H
-    H --> K[stories]
-    H --> L[story_daily]
-    H --> M[story_observations]
-    H --> N[articles]
-    H --> O[article_story_links]
-    J --> P[story_match_decisions]
+    B --> C[store append-only occurrence snapshots]
+    C --> D[build article evidence profiles]
+    D --> E[retrieve capped same-day pairs]
+    E --> F[pinned mini strict judgment]
+    F --> G[grounded evidence gate and complete-link grouping]
+    G --> H[load recent story and arc memory]
+    H --> I[retrieve and judge cross-day story candidates]
+    I --> J{one grounded same-story match?}
+    J -- yes --> K[reuse concrete story]
+    J -- no --> L[retrieve and judge named-arc candidates]
+    L --> M[reuse supported arc or create new memory]
+    K --> N[persist assignments and observations]
+    M --> N
+    N --> O[same_day_match_decisions]
+    N --> P[story_match_decisions]
+    N --> Q[story_arc_decisions]
 ```
 
-The tracker first saves the classified article snapshot under `data/daily/<date>/articles.json`. Then it groups today's articles by `story_label` and asks the tracker model to consolidate same-day label variants. This reduces duplicate arcs such as two labels for the same election result or diplomatic meeting.
+The tracker first saves the classified article snapshot under
+`data/daily/<date>/articles.json` and preserves an append-only occurrence snapshot.
+It then builds compact evidence profiles from classifier labels, RSS titles and
+descriptions, URLs, dates, and locally normalized anchor signals. Labels help retrieve
+candidates but never authorize a merge.
 
 Next it loads recent story options from SQLite. The lookback window comes from `DEFAULT_LOOKBACK_DAYS`. Recent options include:
 
@@ -194,36 +199,53 @@ Next it loads recent story options from SQLite. The lookback window comes from `
 - previous delta summary
 - a few recent article titles
 
-The cross-day matcher decides whether today's labels continue recent canonical stories or should become new stories.
+Same-day candidate pairs are capped, judged in batches by
+`gpt-5.4-mini-2026-03-17` with `low` reasoning, and passed through a deterministic
+anchor/conflict gate. Accepted clusters require complete-link evidence, preventing a
+weak bridge article from joining otherwise incompatible events.
 
-### Default Story-Match Verification
+### Default Evidence-Gated Matching
 
-Story-match verification is enabled by default. It adds a second check before a candidate match can reuse old memory. Use `--no-verify-story-matches` only for comparison runs against the older label-only match path.
+The same cascade then handles cross-day continuity and named-arc assignment. Use
+`--no-verify-story-matches` only for comparison runs against the older label-first
+path.
 
-The verifier receives:
+Each strict matching decision includes:
 
-- today's article title and RSS description
-- today's article date
-- full article text when available
-- compact recent story memory
-- candidate story label and `story_id`
+- relationship and confidence
+- shared anchors copied from supplied evidence
+- material conflicts
+- a reject reason
+- an arc container type and optional parent only for arc decisions
 
-It returns structured fields:
+Every batch gives its cases short `response_key` values. The strict schema
+requires one decision under each key, and the tracker binds those keys back to
+opaque internal case IDs locally. This prevents omitted or altered model-written
+IDs from silently dropping decisions.
 
-```text
-same_event, relationship, confidence, article_dates,
-candidate_last_seen, continuity_evidence, reject_reason
-```
+The local gate adds:
 
-Only `same_event`, `same_story_arc`, or `direct_follow_up` decisions with enough confidence and continuity evidence are accepted. `adjacent_topic`, `broader_context`, `uncertain`, malformed, or weak decisions default to a new story.
+- grounded-anchor verification on both profiles
+- exact-URL deterministic duplicate acceptance
+- precise year/date conflict rejection
+- recurring-format and broad-container rejection
+- fail-closed handling for malformed output, ambiguity, or multiple accepted stories
+
+Same story means the same concrete event or its direct continuation. A shared
+tournament, war, election, investigation, or policy programme can instead support a
+same-arc decision for distinct stories. Thin source metadata can produce a false split;
+the matcher does not fetch body text or guess beyond retained evidence.
 
 The verifier exists because broad topical similarity can corrupt memory. A real motivating failure was the 2026-05-07 case where an article about alleged abuse of Palestinian detainees in Israeli detention was attached to the existing `Gaza flotilla raid` story. The correct behavior is to treat that as adjacent Gaza/Israel detention context unless there is concrete continuity evidence tying it to the flotilla event.
 
 Audit trail:
 
-- every verifier decision is stored in `story_match_decisions`
-- run totals include accepted and rejected match checks
-- exact verifier model responses can be reused for identical prompts through `llm_response_cache`, but stored decision rows are audit records, not a semantic match cache
+- same-day pair decisions are stored in `same_day_match_decisions`
+- cross-day decisions are stored in `story_match_decisions`
+- named-arc decisions are stored in `story_arc_decisions`
+- run totals distinguish deterministic, mini, fail-closed, and ambiguous routes
+- exact responses can be reused for identical prompts, but audit rows are not a
+  semantic decision cache
 
 ### Immutable occurrences and replay
 
@@ -454,6 +476,13 @@ Stories touched:        38
 Story match checks:     14
 Story match accepted:   10
 Story match rejected:   4
+Same-day candidates:    19
+Same-day accepted:      7
+Deterministic decisions: 2
+Mini decisions:         25
+Fail-closed decisions:  3
+Ambiguous matches:      1
+Arc label promotions:   1
 LLM calls:              28
 LLM errors:             0
 LLM cache hits:         9
@@ -484,9 +513,8 @@ Cost estimates use explicitly maintained model pricing in `src/config.py` and th
 Potentially expensive paths:
 
 - article classification for uncached articles
-- same-day consolidation
-- cross-day story matching
-- default-on story-match verification
+- same-day evidence grouping
+- cross-day story matching and named-arc assignment
 - optional claim extraction
 - briefing generation
 

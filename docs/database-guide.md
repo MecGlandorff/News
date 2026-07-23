@@ -48,6 +48,7 @@ erDiagram
     story_observations ||--o{ article_story_links : "observation_id"
     story_observations ||--o{ story_developments : "observation_id"
     runs ||--o{ llm_calls : "run_id"
+    runs ||--o{ same_day_match_decisions : "run_id"
     runs ||--o{ story_match_decisions : "run_id"
     runs ||--o{ story_arc_decisions : "run_id"
 ```
@@ -74,15 +75,16 @@ The most important tables are:
 | `runs` | one row per pipeline execution |
 | `llm_calls` | one row per real model call |
 | `llm_response_cache` | exact response cache for matching, verification, and briefing calls |
-| `story_match_decisions` | optional verifier audit rows |
-| `story_arc_decisions` | arc-assignment audit rows with the supplied candidate arcs and their decision-time scores |
+| `same_day_match_decisions` | article-pair matching decisions used by complete-link same-day grouping |
+| `story_match_decisions` | cross-day candidate decisions with retrieval signals, route, conflicts, and ambiguity |
+| `story_arc_decisions` | named-arc decisions plus supplied candidates, route, conflicts, ambiguity, and label promotion |
 
 Conditional tables:
 
 - `claims` and `claim_extractions` are created when `--show-evidence` is used.
 - `llm_response_cache` is created when exact cached matching, verification, or briefing calls run in an observed pipeline context.
-- `story_match_decisions` exists in current tracker schema, but rows are only written when the verifier checks candidate cross-day matches. Verification is on by default and can be disabled with `--no-verify-story-matches`.
-- `story_arc_decisions` (ADR 0017) records one row per arc-assignment case: the candidate arcs supplied to the model (with decision-time scores), the proposed arc and parent, whether the gate accepted it, and the story row the label resolved to. A new story with no row had no arc candidates that scored above zero.
+- Matching decision tables are created idempotently with the tracker schema. Evidence-gated matching is on by default and can be disabled only for legacy comparison with `--no-verify-story-matches`.
+- `story_arc_decisions` records one row per retrieved arc case: the candidate signals, proposed arc and parent, whether the gate accepted it, and the story row the label resolved to. A new story with no row had no plausible retrieved arc candidate.
 - `story_arcs` and nullable `stories.arc_id` / `stories.parent_story_id` are added idempotently; legacy flat stories receive one compatibility arc each.
 - `story_developments` records daily development labels; older runs are not backfilled with child labels.
 - Occurrence tables are created on normal tracker startup. Existing `articles` rows are backfilled once as `legacy_metadata_only`; no body text is invented.
@@ -115,6 +117,13 @@ SELECT
   verifier_cache_hits,
   matching_cache_hits,
   briefing_cache_hits,
+  same_day_match_candidates,
+  same_day_match_accepts,
+  matching_deterministic_decisions,
+  matching_mini_decisions,
+  matching_fail_closed_decisions,
+  matching_ambiguous_cases,
+  story_arc_label_promotions,
   prompt_tokens,
   completion_tokens
 FROM runs
@@ -616,15 +625,17 @@ Older rows may not have `source_id`. New rows should get it when the raw source 
 1. Search `stories.canonical_label`.
 2. Inspect `story_daily.labels_seen` across dates.
 3. Inspect `articles` for each date.
-4. Inspect `story_match_decisions` for the run.
-5. If there is no verifier row, the merge came from same-day consolidation, a no-candidate cross-day path, or a run where `--no-verify-story-matches` disabled the verifier.
+4. Inspect `same_day_match_decisions` for same-day grouping.
+5. Inspect `story_match_decisions` and `story_arc_decisions` for cross-day identity and hierarchy.
+6. Check `decision_route`, `candidate_signals`, `conflicts`, and `ambiguity_reason`.
+7. If no evidence-gated row exists, the item was not retrieved as a plausible candidate, was an exact legacy assignment, or the run used `--no-verify-story-matches`.
 
 ### Why did LLM calls spike?
 
 1. Check `runs.llm_calls_count` and token totals.
 2. Group `llm_calls` by `purpose`.
 3. Check `runs.llm_cache_hits`.
-4. Confirm whether `--show-evidence`, `--no-verify-story-matches`, or `--fetch-article-text` changed the expected call shape.
+4. Confirm whether `--show-evidence`, `--no-verify-story-matches`, or the candidate surface changed the expected call shape. Article-text fetching does not feed matching.
 5. Check whether classification or claim content hashes changed, invalidating caches.
 
 ### Why are there no claims?

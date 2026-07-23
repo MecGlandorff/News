@@ -19,6 +19,13 @@ RUN_TOTAL_COLUMNS = {
     "story_new_arcs",
     "story_new_parent_arcs",
     "story_unmatched_new_stories",
+    "same_day_match_candidates",
+    "same_day_match_accepts",
+    "matching_deterministic_decisions",
+    "matching_mini_decisions",
+    "matching_fail_closed_decisions",
+    "matching_ambiguous_cases",
+    "story_arc_label_promotions",
     "duplicate_url_skips",
     "feed_fetch_failures",
     "feed_items_outside_date_skipped",
@@ -63,6 +70,13 @@ def _create_schema(conn):
             story_new_arcs INTEGER DEFAULT 0,
             story_new_parent_arcs INTEGER DEFAULT 0,
             story_unmatched_new_stories INTEGER DEFAULT 0,
+            same_day_match_candidates INTEGER DEFAULT 0,
+            same_day_match_accepts INTEGER DEFAULT 0,
+            matching_deterministic_decisions INTEGER DEFAULT 0,
+            matching_mini_decisions INTEGER DEFAULT 0,
+            matching_fail_closed_decisions INTEGER DEFAULT 0,
+            matching_ambiguous_cases INTEGER DEFAULT 0,
+            story_arc_label_promotions INTEGER DEFAULT 0,
             duplicate_url_skips INTEGER DEFAULT 0,
             feed_fetch_failures INTEGER DEFAULT 0,
             feed_items_outside_date_skipped INTEGER DEFAULT 0,
@@ -129,6 +143,23 @@ def _create_schema(conn):
     _ensure_column(conn, "runs", "story_new_arcs", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "story_new_parent_arcs", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "story_unmatched_new_stories", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "same_day_match_candidates", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "same_day_match_accepts", "INTEGER DEFAULT 0")
+    _ensure_column(
+        conn,
+        "runs",
+        "matching_deterministic_decisions",
+        "INTEGER DEFAULT 0",
+    )
+    _ensure_column(conn, "runs", "matching_mini_decisions", "INTEGER DEFAULT 0")
+    _ensure_column(
+        conn,
+        "runs",
+        "matching_fail_closed_decisions",
+        "INTEGER DEFAULT 0",
+    )
+    _ensure_column(conn, "runs", "matching_ambiguous_cases", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "runs", "story_arc_label_promotions", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "duplicate_url_skips", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "feed_fetch_failures", "INTEGER DEFAULT 0")
     _ensure_column(conn, "runs", "feed_items_outside_date_skipped", "INTEGER DEFAULT 0")

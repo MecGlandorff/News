@@ -8,48 +8,40 @@ from src.tracker import store as tracker_store
 from tests.tracker.support import _article, _fake_tracker_client_sequence
 
 
-def test_rejected_parent_arc_match_saves_new_child_development(tmp_path):
+def test_distinct_story_can_join_same_named_arc_without_parent_link(tmp_path):
     db_path = tmp_path / "stories.db"
     data_dir = tmp_path / "daily"
-    client = _fake_tracker_client_sequence([
-        {
-            "matches": [{
-                "today_label": "Mali rebel offensive",
-                "canonical_label": "Mali attacks",
-            }]
-        },
-        {
-            "decisions": [{
-                "today_label": "Mali rebel offensive",
-                "canonical_label": "Mali attacks",
-                "same_event": False,
-                "relationship": "adjacent_topic",
-                "confidence": "medium",
-                "article_dates": ["2026-05-15"],
-                "candidate_last_seen": "2026-05-13",
-                "continuity_evidence": [
-                    "Shared country/context: Mali security crisis and rebel violence"
-                ],
-                "reject_reason": (
-                    "The airstrikes are a distinct development from the earlier "
-                    "mass-casualty attacks."
-                ),
-            }]
-        },
-        {
-            "assignments": [{
-                "today_label": "Mali rebel offensive",
-                "arc_id": 1,
-                "parent_story_id": 1,
+
+    def story_rejection(kwargs):
+        case = json.loads(kwargs["messages"][1]["content"])["cases"][0]
+        return {
+            "decisions": {case["response_key"]: {
+                "same_story": False,
+                "relationship": "related_context",
+                "confidence": "high",
+                "shared_anchors": ["Mali", "rebel"],
+                "conflicts": [],
+                "reject_reason": "A distinct military development.",
+            }}
+        }
+
+    def arc_acceptance(kwargs):
+        case = json.loads(kwargs["messages"][1]["content"])["cases"][0]
+        return {
+            "decisions": {case["response_key"]: {
+                "belongs_to_arc": True,
+                "container_type": "named_event",
                 "relationship": "same_arc",
-                "confidence": "medium",
-                "continuity_evidence": [
-                    "Both stories concern Mali's security crisis and rebel violence."
-                ],
+                "confidence": "high",
+                "shared_anchors": ["Mali", "rebel"],
+                "conflicts": [],
+                "parent_story_id": None,
+                "proposed_arc_label": "Mali attacks",
                 "reject_reason": "",
-            }]
-        },
-    ])
+            }}
+        }
+
+    client = _fake_tracker_client_sequence([story_rejection, arc_acceptance])
     first = tracker.track(
         [_article(1, "Militants attack towns in Mali", "Mali attacks")],
         today="2026-05-13",
@@ -80,7 +72,7 @@ def test_rejected_parent_arc_match_saves_new_child_development(tmp_path):
 
     assert tracked[0]["canonical_label"] == "Mali rebel offensive"
     assert tracked[0]["arc_label"] == "Mali attacks"
-    assert tracked[0]["parent_label"] == "Mali attacks"
+    assert tracked[0]["parent_label"] == ""
     assert tracked[0]["development_label"] == "Mali rebel offensive"
     assert tracked[0]["development_status"] == "new_child"
 
@@ -108,11 +100,11 @@ def test_rejected_parent_arc_match_saves_new_child_development(tmp_path):
     assert development == {
         "canonical_label": "Mali rebel offensive",
         "arc_label": "Mali attacks",
-        "parent_label": "Mali attacks",
+        "parent_label": None,
         "development_label": "Mali rebel offensive",
         "development_status": "new_child",
         "parent_relationship": "same_arc",
-        "parent_confidence": "medium",
+        "parent_confidence": "high",
     }
 
 
@@ -155,7 +147,7 @@ def test_arc_assignment_uses_mini_model_and_supplied_arc_candidates():
         default_days=DEFAULT_LOOKBACK_DAYS,
     )
 
-    assert captured[0]["model"] == "gpt-5.4-mini"
+    assert captured[0]["model"] == ARC_ASSIGNMENT_MODEL
     payload = json.loads(captured[0]["messages"][1]["content"])
     assert payload["cases"][0]["candidate_arcs"][0]["arc_id"] == 7
     assert assignments["Mali rebel offensive"]["accepted"] is True

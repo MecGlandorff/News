@@ -48,6 +48,73 @@ def test_track_is_idempotent_for_same_day(tmp_path):
     assert article_count == 2
 
 
+def test_default_same_day_evidence_decisions_are_persisted_and_counted(
+    tmp_path,
+    monkeypatch,
+):
+    db_path = tmp_path / "stories.db"
+    data_dir = tmp_path / "daily"
+    monkeypatch.setattr(llm_response_cache, "DB_PATH", db_path)
+
+    def reject_pair(kwargs):
+        case = json.loads(kwargs["messages"][1]["content"])["cases"][0]
+        return {
+            "decisions": {case["response_key"]: {
+                "same_story": False,
+                "relationship": "unrelated",
+                "confidence": "high",
+                "shared_anchors": [],
+                "conflicts": [],
+                "reject_reason": "Different clubs and transfer negotiations.",
+            }}
+        }
+
+    client = _fake_tracker_client_sequence([reject_pair])
+    run_id = observability.start_run(
+        {"test": "same-day-evidence"},
+        run_date="2026-07-23",
+        db_path=db_path,
+    )
+    observability.set_current_run_id(run_id, db_path=db_path)
+    try:
+        tracked = tracker.track(
+            [
+                _article(1, "Liverpool signs striker", "Football transfers"),
+                _article(2, "Madrid goalkeeper deal stalls", "Football transfers"),
+            ],
+            today="2026-07-23",
+            db_path=db_path,
+            data_dir=data_dir,
+            client_factory=lambda: client,
+        )
+    finally:
+        observability.clear_current_run_id()
+
+    assert len({item["story_id"] for item in tracked}) == 2
+    conn = sqlite3.connect(db_path)
+    try:
+        decision = conn.execute(
+            """
+            SELECT accepted, relationship, decision_route
+            FROM same_day_match_decisions
+            """
+        ).fetchone()
+        counters = conn.execute(
+            """
+            SELECT same_day_match_candidates, same_day_match_accepts,
+                   matching_mini_decisions
+            FROM runs
+            WHERE run_id = ?
+            """,
+            (run_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+
+    assert decision == (0, "unrelated", "mini")
+    assert counters == (1, 0, 1)
+
+
 def test_track_populates_source_id_when_source_metadata_exists(tmp_path, monkeypatch):
     db_path = tmp_path / "stories.db"
     data_dir = tmp_path / "daily"
@@ -216,31 +283,29 @@ def test_track_attaches_previous_story_context(tmp_path):
     assert context["recent_articles"][0]["description"] == "Description"
 
 
-def test_story_match_verifier_fetches_full_text_for_candidate_match(tmp_path, monkeypatch):
+def test_evidence_matching_uses_rss_evidence_without_fetching_full_text(
+    tmp_path,
+    monkeypatch,
+):
     db_path = tmp_path / "stories.db"
     data_dir = tmp_path / "daily"
     captured = []
-    client = _fake_tracker_client_sequence([
-        {
-            "matches": [{
-                "today_label": "Iran Peace Proposal",
-                "canonical_label": "Iran Nuclear Talks",
-            }]
-        },
-        {
-            "decisions": [{
-                "today_label": "Iran Peace Proposal",
-                "canonical_label": "Iran Nuclear Talks",
-                "same_event": True,
-                "relationship": "direct_follow_up",
+    fetches = []
+
+    def match_response(kwargs):
+        case = json.loads(kwargs["messages"][1]["content"])["cases"][0]
+        return {
+            "decisions": {case["response_key"]: {
+                "same_story": True,
+                "relationship": "direct_continuation",
                 "confidence": "high",
-                "article_dates": ["2026-05-02"],
-                "candidate_last_seen": "2026-05-01",
-                "continuity_evidence": ["The article reports a new proposal in the same nuclear talks."],
+                "shared_anchors": ["Iran", "proposal"],
+                "conflicts": [],
                 "reject_reason": "",
-            }]
-        },
-    ], captured=captured)
+            }}
+        }
+
+    client = _fake_tracker_client_sequence([match_response], captured=captured)
     monkeypatch.setattr(llm_response_cache, "DB_PATH", db_path)
 
     run_id = observability.start_run(
@@ -274,16 +339,17 @@ def test_story_match_verifier_fetches_full_text_for_candidate_match(tmp_path, mo
             db_path=db_path,
             data_dir=data_dir,
             client_factory=lambda: client,
-            fetch_article_text=lambda url: (
-                "Full article text about the latest Iran nuclear talks proposal."
-            ),
+            fetch_article_text=lambda url: fetches.append(url) or "unused",
         )
 
         assert tracked[0]["canonical_label"] == "Iran Nuclear Talks"
-        verifier_payload = json.loads(captured[1]["messages"][1]["content"])
-        current_article = verifier_payload["cases"][0]["current_articles"][0]
-        assert current_article["article_date"] == "2026-05-02"
-        assert current_article["article_text"] == "Full article text about the latest Iran nuclear talks proposal."
+        assert fetches == []
+        verifier_payload = json.loads(captured[0]["messages"][1]["content"])
+        current = verifier_payload["cases"][0]["current"]
+        assert current["date"] == "2026-05-02"
+        assert current["titles"] == ["Iran sends revised peace proposal"]
+        assert current["descriptions"] == ["Description"]
+        assert "memory_summaries" in verifier_payload["cases"][0]["candidate_story"]
 
         conn = sqlite3.connect(db_path)
         try:
@@ -318,20 +384,16 @@ def test_story_match_verifier_fetches_full_text_for_candidate_match(tmp_path, mo
             ).fetchone()
         finally:
             conn.close()
-        assert row == (1, 0)
-        assert occurrence[1:] == (
-            "Full article text about the latest Iran nuclear talks proposal.",
-            "full_text",
-        )
-        assert occurrence_rows[0][1] == "rss_only"
-        assert occurrence_rows[1][1] == "full_text"
-        assert tracked[0]["occurrence_id"] == occurrence[0] == occurrence_rows[1][0]
+        assert row == (0, 0)
+        assert occurrence[1:] == ("", "rss_only")
+        assert occurrence_rows == [(occurrence[0], "rss_only")]
+        assert tracked[0]["occurrence_id"] == occurrence[0]
         assert history == (run_id, occurrence[0])
         saved_daily = json.loads(
             (data_dir / "2026-05-02" / "articles.json").read_text(encoding="utf-8")
         )
         assert saved_daily[0]["occurrence_id"] == occurrence[0]
-        assert saved_daily[0]["text"] == occurrence[1]
+        assert saved_daily[0]["text"] == ""
     finally:
         observability.clear_current_run_id()
 

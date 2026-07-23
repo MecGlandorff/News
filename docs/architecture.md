@@ -36,8 +36,8 @@ Configured RSS feeds
   -> src/scraper.py       fetch feeds, normalize URLs, filter dates, deduplicate URLs
   -> src/classifier.py    classify theme, story label, and importance
   -> src/tracker/occurrences.py preserve immutable evidence and replay snapshots
-  -> src/tracker/         consolidate labels, match recent stories, write story memory
-  -> src/tracker/matching/ optionally verify candidate story matches with full article text
+  -> src/tracker/         orchestrate evidence-gated grouping and story memory
+  -> src/tracker/matching/ retrieve and judge same-day, cross-day, and named-arc candidates
   -> src/claims/          optionally extract claims and evidence spans
   -> src/briefing/        select stories and generate briefing cards
   -> src/digest.py        write a lightweight local digest
@@ -52,9 +52,21 @@ The local database is SQLite at `data/stories.db`. Runtime snapshots live under 
 
 Story memory is built in two layers.
 
-First, `src/tracker/service.py` groups today's classified articles by story label. It asks the tracking model to consolidate same-day label variants, then asks whether today's labels continue recent canonical stories. The tracker is conservative about generic incident labels such as crashes, shootings, lawsuits, and attacks because false merges corrupt memory more severely than false splits.
+First, `src/tracker/service.py` passes today's classified articles through the
+evidence-gated matching cascade. Compact profiles use classifier labels, RSS titles
+and descriptions, URLs, dates, and recent stored memory. Deterministic retrieval caps
+the candidate set; pinned `gpt-5.4-mini-2026-03-17` at `low` reasoning returns strict
+structured judgments; and local gates verify shared anchors, conflicts, container
+type, and ambiguity. Same-day groups use complete-link acceptance so one bridge
+article cannot silently join incompatible events.
 
-The tracker verifies candidate cross-day matches before it reuses an existing story ID by default. The verifier uses `gpt-5.4-nano`, the current article title, RSS description, normalized article date, full article text when available, and compact recent story memory. If full text is missing, the tracker fetches it only for candidate matches. Accepted matches require structured same-event evidence. Labels that are not accepted as the same story can then be assigned to an existing `story_arcs` row by the cached `gpt-5.4-mini` arc-assignment step. This preserves broader memory continuity without claiming the child is the same concrete event. Use `--no-verify-story-matches` only for comparison runs against the older label-only match path.
+Cross-day acceptance reuses a story only for the same concrete event or direct
+continuation. Unmatched stories can then attach to an existing named `story_arcs` row
+without claiming they are the same story. Different tournament matches or incidents,
+for example, remain separate stories under one tournament arc. Missing evidence
+defaults to new memory, and matching never fetches full article text. Use
+`--no-verify-story-matches` only for comparison runs against the older label-first
+path.
 
 Second, the tracker writes a daily observation for each story. This observation records the label seen today, source count, article count, average importance, and later the generated summary and `delta_summary`. The next run can use that saved memory to answer: what changed since the last observation?
 
@@ -70,7 +82,9 @@ The key tables are:
 - `articles`: fetched articles linked to stories for the run date.
 - `article_occurrences`: append-only source snapshots, independent of mutable derived tracking rows.
 - `article_story_links`: junction rows from article to story observation.
-- `story_match_decisions`: verifier audit rows for accepted and rejected candidate story matches.
+- `same_day_match_decisions`: retrieved article-pair decisions used for same-day grouping.
+- `story_match_decisions`: accepted, rejected, and fail-closed cross-day candidates.
+- `story_arc_decisions`: named-arc candidates, decisions, and label-promotion audit.
 
 ## How Source Grounding Works
 
@@ -121,7 +135,9 @@ The core story-memory and inspectability flow exists; remaining weaknesses are p
 - Run observability stores `runs` and real model calls in `llm_calls`, attributes cache hits by layer, scopes decision audits by `run_id`, recovers interrupted runs as `abandoned`, and reports application retries separately from SDK retries that the client does not expose.
 - There is no stored novelty score yet; novelty needs a clear claim-backed definition before becoming schema.
 - Full-text claim extraction is enabled for evidence runs, but its cost and quality impact still need review against run telemetry.
-- Acceptance-gate story/arc cases run current code, but they replay reviewed responses rather than calling live models; real prompt/model quality still needs review.
+- The saved-snapshot matching reconstruction exercised the live pinned model and
+  selected `low` reasoning with zero reviewed corrupting accepts; fresh daily
+  memory behavior still needs review.
 
 These gaps matter because the project aims to produce auditable intelligence artifacts, not just summaries.
 
@@ -131,7 +147,9 @@ The next architecture work is review, not another subsystem: run the shipped cla
 
 The next observability refinement should compare the quality impact of full-text `gpt-5.4-nano` claim extraction against its measured token and latency cost.
 
-The next story-matching refinement should add richer replay inputs or explicitly reviewed live prompt runs for true continuations and false merges.
+The next story-matching work is to inspect the selected cascade during the fresh
+Phase 3 daily run series, especially thin-input false splits, multiple-candidate
+ambiguity, and arc-label promotion.
 
 Only after that should the project expand expensive evidence behavior or infer looser semantic agreement.
 
@@ -412,7 +430,9 @@ created_at          TEXT NOT NULL
 
 ### `llm_response_cache`
 
-Exact response cache for same-day matching, cross-day matching, story-match verification, and briefing generation. The cache key is the full request shape, not a semantic similarity key.
+Exact response cache for same-day matching, cross-day matching, named-arc matching,
+claim verification, and briefing generation. The cache key is the full request shape,
+not a semantic similarity key.
 
 ```sql
 cache_id         INTEGER PRIMARY KEY AUTOINCREMENT
@@ -434,9 +454,9 @@ UNIQUE (purpose, model, prompt_version, request_hash)
 |---|---|---|---|
 | Classification | `gpt-5.4-mini` | theme, story label, importance | Yes |
 | Claim extraction | `gpt-5.4-nano` | structured claims | Yes |
-| Same-day consolidation | `gpt-5.5` | label groups | Exact response cache |
-| Cross-day matching | `gpt-5.4-mini` | label matches | Exact response cache |
-| Story-match verification | `gpt-5.4-nano` | continuity decisions | Exact response cache |
+| Same-day evidence grouping | `gpt-5.4-mini-2026-03-17`, `low` | pair decisions | Exact response cache |
+| Cross-day same-story matching | `gpt-5.4-mini-2026-03-17`, `low` | continuity decisions | Exact response cache |
+| Named-arc assignment | `gpt-5.4-mini-2026-03-17`, `low` | container decisions | Exact response cache |
 | Briefing generation | `gpt-5.5` | story-card fields and prose | Exact response cache |
 
 All LLM stages should return JSON objects and pass through `parse_json_object()` before downstream code uses the response.

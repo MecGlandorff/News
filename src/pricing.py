@@ -4,7 +4,17 @@ from src.config import MODEL_PRICING_USD_PER_1M_TOKENS, USD_TO_EUR_RATE
 
 
 def model_pricing(model: str) -> dict[str, float] | None:
-    return MODEL_PRICING_USD_PER_1M_TOKENS.get(model)
+    exact = MODEL_PRICING_USD_PER_1M_TOKENS.get(model)
+    if exact is not None:
+        return exact
+    for family in sorted(
+        MODEL_PRICING_USD_PER_1M_TOKENS,
+        key=len,
+        reverse=True,
+    ):
+        if model.startswith(f"{family}-20"):
+            return MODEL_PRICING_USD_PER_1M_TOKENS[family]
+    return None
 
 
 def estimate_llm_cost_eur(

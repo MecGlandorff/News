@@ -158,9 +158,11 @@ evals/
   datasets/
     arc_assignment_cases.jsonl
     golden_claims.jsonl
+    matching_reconstruction_review_2026-07-21_22.jsonl
     story_match_cases.jsonl
   reports/
   run_claim_quality_eval.py
+  run_matching_reconstruction.py
   run_story_match_eval.py
   README.md
 ```
@@ -175,7 +177,7 @@ Keep datasets small at first. Ten high-quality examples per behavior are more us
 |---|---|
 | Article deduplication | precision / recall / F1 |
 | Story clustering | pairwise precision / recall / F1 |
-| Story-match verification | accepted / rejected accuracy, false-merge rate, false-split rate |
+| Evidence-gated matching | corrupting accepts, clear-positive recall, insufficient-evidence cases |
 | Story-arc assignment | false-arc rate, missed-arc rate |
 | Claim extraction | validity / coverage / semantic match |
 | Citation accuracy | supported / unsupported / missing |
@@ -195,7 +197,7 @@ Examples:
 
 - before source agreement detection, create claim-pair examples where sources agree, differ, or merely repeat the same wire copy
 - before loosening source-divergence matching, add real number/date/status/attribution examples with expected labels
-- after enabling story-match verification by default, keep reviewing accepted and rejected match cases from recent newspapers before making the verifier more permissive
+- after selecting evidence-gated matching, keep reviewing same-day, same-story, and same-arc decisions from fresh runs before making the gate more permissive
 - before making evidence extraction part of ordinary runs or making claim-backed agreement more authoritative, measure claim quality improvement against token and latency increase
 
 ---
