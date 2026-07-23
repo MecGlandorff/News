@@ -9,6 +9,47 @@ source of truth for details.
 
 Entries are newest first.
 
+## 2026-07-23
+
+Changed:
+
+- Replaced label-first story grouping with an evidence-gated cascade for
+  same-day grouping, cross-day continuity, and named-arc assignment.
+- Added capped deterministic retrieval, strict structured mini judgments,
+  grounded-anchor/conflict gates, complete-link grouping, fail-closed ambiguity,
+  and auditable same-day/story/arc decision routes.
+- Replayed 158 stored July 21-22 occurrences through isolated database copies
+  and reviewed 16 matching cases without replacing the active database.
+- Selected `low` reasoning for pinned `gpt-5.4-mini-2026-03-17`: it produced
+  zero corrupting accepts and 80% recall on five scorable positives at EUR
+  0.1920, about EUR 0.0127 more than `none`; `none` produced one corrupting
+  accept.
+- Required every batch response key in the strict schema, eliminating the
+  omitted/altered case-ID failures seen during reconstruction. The final run had
+  zero LLM errors, schema failures, and retries for both efforts.
+- Kept one headline-only case explicitly fail-closed and recorded it as
+  insufficient retained evidence rather than forcing a merge.
+- Kept one multiple-candidate India continuation fail-closed instead of
+  weakening the approved ambiguity policy to improve recall.
+
+Why it matters:
+
+- Classifier labels are now retrieval hints instead of authority for durable
+  event identity.
+- Same story and same named arc are separate, inspectable decisions, so distinct
+  tournament developments can share an arc without corrupting one story.
+- The selected reasoning setting is based on reviewed quality and measured cost,
+  not model novelty.
+- Phase 3 remains open for the fresh daily claim/source review series; the
+  reconstruction proves the matching precondition only.
+
+Links:
+
+- [ADR 0022: Evidence-gated matching cascade](adr/0022-evidence-gated-matching-cascade.md)
+- [Matching reconstruction report](../evals/reports/phase3_matching_reconstruction_2026-07-23.md)
+- [Phase 3 closure plan](phase3-closure-plan.md)
+- [Evaluation harnesses](../evals/README.md)
+
 ## 2026-07-18
 
 Changed:

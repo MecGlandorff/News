@@ -117,6 +117,44 @@ The biggest open gap is **real reviewed verifier accuracy**. The harness now exe
 
 Next, follow the [Phase 3 closure plan](../docs/phase3-closure-plan.md): collect a short daily run series and add 5-10 real reviewed cases from its evidence runs. Keep raw fetched article bodies under the ignored `evals/local/` directory unless redistribution is clearly permitted. Review the shipped similar-claim and date/status/attribution comparisons on those cases before loosening their deterministic matching or making evidence extraction more automatic.
 
+## Saved-Snapshot Matching Reconstruction
+
+The reconstruction harness replays stored occurrence and classification snapshots
+through the production matching path in isolated SQLite copies:
+
+```bash
+python -m evals.run_matching_reconstruction \
+  --start-date 2026-07-21 \
+  --end-date 2026-07-22 \
+  --work-dir evals/local/matching-reconstruction-manual \
+  --sanitized-report evals/reports/phase3_matching_reconstruction_manual.md \
+  --confirm-api-cost
+```
+
+The work directory must not already exist. The harness:
+
+- opens `data/stories.db` read-only and creates a SQLite backup under the ignored
+  `evals/local/` directory
+- rebuilds the selected dates independently for reasoning efforts `none` and `low`
+- never replaces the active database
+- checks SQLite integrity and foreign keys for each reconstruction
+- scores reviewed same-day, same-story, and same-arc cases
+- records model calls, tokens, latency, and estimated EUR matching cost
+- reports non-ok runs, LLM errors, schema failures, and application retries
+- requires `--confirm-api-cost` because it makes real OpenAI calls
+
+Review rows can use `review_status: "insufficient_evidence"` with a required
+`evidence_gap`. Such cases remain visible and fail-closed but are excluded from recall
+and corruption scoring; this prevents missing source metadata from being mislabeled as
+a model-quality failure.
+
+The checked-in [July 23 report](reports/phase3_matching_reconstruction_2026-07-23.md)
+replayed 158 occurrences and reviewed 16 cases. Of 15 scorable cases, `low` had zero
+corrupting accepts and recovered four of five clear positives for EUR 0.1920. `none`
+had one corrupting accept and recovered three for EUR 0.1793. Both efforts had zero
+LLM errors and schema failures. The approved gate therefore selected `low`; the active
+database remained unchanged.
+
 ## Prompt Regression Cases
 
 `evals/datasets/claim_prompt_regressions_2026-05-13.jsonl` records targeted cases from reviewed claim failures. Use it when rerunning the current claim prompt against live or mocked LLM output.

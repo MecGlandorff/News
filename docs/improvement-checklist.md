@@ -17,6 +17,7 @@ record the quality and cost decision.
 
 - [x] Implement and observe the evidence path
 - [x] Ship conservative claim-backed agreement and divergence
+- [x] Pass the isolated evidence-gated matching reconstruction and select its reasoning effort
 - [ ] Complete the real-run review and record the Phase 3 decision
 
 Independent-corroboration modeling, formal citation and temporal evals, and

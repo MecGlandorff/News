@@ -42,7 +42,11 @@ article evidence
 
 - Pin classification and matching to `gpt-5.4-mini-2026-03-17` during the
   Phase 3 closure series.
-- Use strict JSON Schema outputs for matching calls.
+- Use RSS titles and descriptions, classifier labels, and recent stored memory
+  for matching profiles. Do not fetch article bodies during matching.
+- Use strict JSON Schema outputs for matching calls. Batch cases receive short,
+  stable response keys that are required as object properties; opaque internal
+  case IDs are rebound locally rather than copied by the model.
 - Use deterministic signals only to retrieve candidates, accept exact content
   duplicates, or reject concrete conflicts. Ordinary semantic matches require
   the model and the evidence gate to agree.
@@ -84,6 +88,26 @@ the same reviewed inputs.
 If neither setting passes, refine the mini prompt, retrieval, or deterministic
 gate. A stronger-model escalation requires a later measured decision.
 
+## Reconstruction Outcome
+
+The final isolated reconstruction replayed 158 stored article occurrences from
+2026-07-21 and 2026-07-22 through separate database copies. It reviewed 16
+cases: 15 were scorable and one remained explicitly insufficient because the
+saved occurrence had a headline but no description or body.
+
+`none` produced one reviewed corrupting accept and recovered three of five
+scorable positives at an estimated EUR 0.1793. `low` produced zero corrupting
+accepts and recovered four of five at EUR 0.1920, an increase of about EUR
+0.0127. Both efforts completed with zero LLM errors, schema failures, or
+retries. The approved precision-first gate therefore selected `low`.
+
+The insufficient-evidence case remains fail-closed and is excluded from quality
+scoring rather than being forced into a merge. One scorable India continuation
+also remained split because two candidate stories cleared the gate and the
+approved ambiguity policy refuses to guess. The reconstruction did not replace
+`data/stories.db`. See the
+[sanitized reconstruction report](../../evals/reports/phase3_matching_reconstruction_2026-07-23.md).
+
 ## Consequences
 
 Positive:
@@ -93,11 +117,13 @@ Positive:
 - accepted matches have reconstructable source-derived anchors;
 - ambiguous cases are visible and cannot silently corrupt memory;
 - the model and reasoning setting remain reproducible during closure;
+- ordinary evidence-gated matching uses the measured `low` reasoning effort;
 - the existing SQLite and exact-cache architecture remains in place.
 
 Negative:
 
 - conservative ambiguity handling can create duplicate or over-split stories;
+- thin RSS metadata can remain an explicit input-quality gap;
 - matching now has more explicit decision data and tests;
 - a one-story arc may remain narrow until a grounded umbrella is available;
 - the July closure series must restart after the behavior change.
@@ -109,4 +135,3 @@ Negative:
 - no automatic repair of historical databases;
 - no change to claim extraction, source agreement, briefing claims, or Phase 4
   scope.
-

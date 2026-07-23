@@ -297,6 +297,43 @@ def _run_cost(output_db: Path, run_ids: list[int]) -> dict[str, object]:
     }
 
 
+def _run_health(output_db: Path, run_ids: list[int]) -> dict[str, int]:
+    if not run_ids:
+        return {
+            "runs": 0,
+            "non_ok_runs": 0,
+            "llm_errors": 0,
+            "schema_failures": 0,
+            "retries": 0,
+        }
+    placeholders = ", ".join("?" for _ in run_ids)
+    connection = sqlite3.connect(output_db)
+    connection.row_factory = sqlite3.Row
+    try:
+        row = connection.execute(
+            f"""
+            SELECT COUNT(*) AS runs,
+                   COALESCE(SUM(CASE WHEN status = 'ok' THEN 0 ELSE 1 END), 0)
+                       AS non_ok_runs,
+                   COALESCE(SUM(llm_errors_count), 0) AS llm_errors,
+                   COALESCE(SUM(schema_failures), 0) AS schema_failures,
+                   COALESCE(SUM(retry_count), 0) AS retries
+            FROM runs
+            WHERE run_id IN ({placeholders})
+            """,
+            run_ids,
+        ).fetchone()
+    finally:
+        connection.close()
+    return {
+        "runs": int(row["runs"]),
+        "non_ok_runs": int(row["non_ok_runs"]),
+        "llm_errors": int(row["llm_errors"]),
+        "schema_failures": int(row["schema_failures"]),
+        "retries": int(row["retries"]),
+    }
+
+
 def reconstruct_effort(
     archive_path: Path,
     output_db: Path,
@@ -375,6 +412,7 @@ def reconstruct_effort(
             "Reconstruction database failed integrity verification"
         )
     run_ids = list(run_ids_by_date.values())
+    health = _run_health(output_db, run_ids)
     return {
         "effort": effort,
         "output_db": output_db.name,
@@ -383,6 +421,7 @@ def reconstruct_effort(
         "integrity": {
             "quick_check": quick_check,
             "foreign_key_violations": len(foreign_keys),
+            **health,
         },
     }
 
@@ -750,6 +789,49 @@ def format_markdown_report(report: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
+            "## Cost Detail",
+            "",
+            "| Effort | Purpose | Calls | Prompt tokens | Completion tokens | Latency | Cost |",
+            "|---|---|---:|---:|---:|---:|---:|",
+        ]
+    )
+    for effort in report["efforts"]:
+        for purpose in effort["cost"]["by_purpose"]:
+            purpose_cost = purpose["cost_eur"]
+            purpose_cost_text = (
+                "unavailable"
+                if purpose_cost is None
+                else f"EUR {purpose_cost:.4f}"
+            )
+            lines.append(
+                f"| {effort['effort']} | {purpose['purpose']} | "
+                f"{purpose['calls']} | {purpose['prompt_tokens']} | "
+                f"{purpose['completion_tokens']} | "
+                f"{purpose['latency_ms'] / 1000:.1f}s | "
+                f"{purpose_cost_text} |"
+            )
+    lines.extend(
+        [
+            "",
+            "## Integrity",
+            "",
+            "| Effort | SQLite quick check | Foreign-key violations | Non-ok runs | LLM errors | Schema failures | Retries |",
+            "|---|---|---:|---:|---:|---:|---:|",
+        ]
+    )
+    for effort in report["efforts"]:
+        integrity = effort["integrity"]
+        lines.append(
+            f"| {effort['effort']} | {integrity['quick_check']} | "
+            f"{integrity['foreign_key_violations']} | "
+            f"{integrity.get('non_ok_runs', 0)} | "
+            f"{integrity.get('llm_errors', 0)} | "
+            f"{integrity.get('schema_failures', 0)} | "
+            f"{integrity.get('retries', 0)} |"
+        )
+    lines.extend(
+        [
+            "",
             "## Selection",
             "",
             f"**Status:** {recommendation['status']}",
@@ -762,7 +844,7 @@ def format_markdown_report(report: dict[str, Any]) -> str:
         ]
     )
     failures = [
-        result
+        (str(effort["effort"]), result)
         for effort in report["efforts"]
         for result in effort["review"]["results"]
         if result["outcome"] in {"corrupting_accept", "missed_positive"}
@@ -770,9 +852,9 @@ def format_markdown_report(report: dict[str, Any]) -> str:
     if not failures:
         lines.append("No reviewed corrupting accepts or missed positives.")
     else:
-        for failure in failures:
+        for effort, failure in failures:
             lines.append(
-                f"- `{failure['case_id']}` ({failure['layer']}, "
+                f"- `{failure['case_id']}` ({effort}, {failure['layer']}, "
                 f"{failure['outcome']}, route `{failure['route']}`)"
             )
     lines.extend(["", "## Insufficient Evidence", ""])
@@ -802,6 +884,8 @@ def format_markdown_report(report: dict[str, Any]) -> str:
             "",
             "The reconstruction databases remain local. Replacing "
             "`data/stories.db` requires a separate explicit decision.",
+            "This result validates the matching precondition only; the fresh "
+            "Phase 3 daily claim/source review series still has to run.",
             "",
         ]
     )

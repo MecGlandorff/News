@@ -79,6 +79,10 @@ def test_single_day_reconstruction_writes_only_isolated_copy(tmp_path):
     )
 
     assert result["integrity"]["quick_check"] == "ok"
+    assert result["integrity"]["non_ok_runs"] == 0
+    assert result["integrity"]["llm_errors"] == 0
+    assert result["integrity"]["schema_failures"] == 0
+    assert result["integrity"]["retries"] == 0
     assert output.is_file()
     assert source_db.read_bytes() == source_before
     connection = sqlite3.connect(output)
@@ -221,15 +225,20 @@ def test_insufficient_evidence_is_reported_but_excluded_from_scoring(tmp_path):
                 "case_id": "clear",
                 "candidate_article_id": "clear-evidence",
             },
+            {
+                **shared,
+                "case_id": "missed",
+                "candidate_article_id": "thin-evidence",
+            },
         ],
         {"2026-07-22": 7},
     )
 
-    assert review["cases"] == 2
-    assert review["scored_cases"] == 1
+    assert review["cases"] == 3
+    assert review["scored_cases"] == 2
     assert review["insufficient_evidence_cases"] == 1
     assert review["accepted_positives"] == 1
-    assert review["clear_positive_recall"] == 1.0
+    assert review["clear_positive_recall"] == 0.5
     assert review["results"][0]["outcome"] == "insufficient_evidence"
 
     markdown = format_markdown_report(
@@ -247,7 +256,27 @@ def test_insufficient_evidence_is_reported_but_excluded_from_scoring(tmp_path):
             "efforts": [
                 {
                     "effort": "none",
-                    "cost": {"cost_eur": 0.01},
+                    "cost": {
+                        "cost_eur": 0.01,
+                        "by_purpose": [
+                            {
+                                "purpose": "match-crossday-evidence",
+                                "calls": 1,
+                                "prompt_tokens": 100,
+                                "completion_tokens": 20,
+                                "latency_ms": 500,
+                                "cost_eur": 0.01,
+                            }
+                        ],
+                    },
+                    "integrity": {
+                        "quick_check": "ok",
+                        "foreign_key_violations": 0,
+                        "non_ok_runs": 0,
+                        "llm_errors": 0,
+                        "schema_failures": 0,
+                        "retries": 0,
+                    },
                     "review": review,
                 }
             ],
@@ -261,3 +290,6 @@ def test_insufficient_evidence_is_reported_but_excluded_from_scoring(tmp_path):
 
     assert "These cases remain fail-closed" in markdown
     assert "No retained description or body text." in markdown
+    assert "`missed` (none, story, missed_positive" in markdown
+    assert "match-crossday-evidence" in markdown
+    assert "| none | ok | 0 | 0 | 0 | 0 | 0 |" in markdown

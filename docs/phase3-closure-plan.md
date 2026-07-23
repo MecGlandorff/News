@@ -1,15 +1,17 @@
 # Phase 3 Closure Plan
 
-**Status:** Ready for evidence collection
+**Status:** Matching reconstruction passed; fresh evidence series pending
 
 **Scope:** Close Phase 3 with current, reviewed production evidence before starting Phase 4.
 
-Phase 3 implementation is complete. The remaining question is empirical: does the
-current evidence path produce grounded claims and cautious source comparisons on real
-news at an acceptable cost?
+Phase 3 implementation is complete. The evidence-gated matching precondition has
+passed an isolated reconstruction. The remaining question is empirical: does the
+current evidence path produce grounded claims, cautious source comparisons, and useful
+multi-day memory on fresh news at an acceptable cost?
 
-This plan turns that question into one bounded closure gate. It does not change model
-choices, prompts, confidence rules, source-agreement semantics, or ordinary-run behavior.
+This plan turns that question into one bounded closure gate. Further changes to model
+choices, prompts, confidence rules, source-agreement semantics, or ordinary-run behavior
+still require a measured decision.
 
 ## What Counts As Phase 3 Closure
 
@@ -40,6 +42,29 @@ These remain useful later work, but do not block this closure gate:
 - formal citation-support and temporal-diff benchmark suites
 - semantic story-match caching
 - dashboards, hosted services, or other Phase 4 product expansion
+
+## Completed Matching Precondition
+
+The [July 23 matching reconstruction](../evals/reports/phase3_matching_reconstruction_2026-07-23.md)
+replayed 158 stored occurrences from July 21-22 through isolated database copies.
+The active database was not replaced.
+
+- 16 reviewed cases: 15 scorable and 1 explicit insufficient-evidence case
+- corrupting accepts: 1 for `none`, 0 for `low`
+- clear-positive recall: 60% for `none`, 80% for `low`
+- estimated matching cost: EUR 0.1793 for `none`, EUR 0.1920 for `low`
+- zero LLM errors, schema failures, and retries for both efforts
+- selected setting: `low`, because it passed the precision gate and improved
+  recall for about EUR 0.0127
+
+The insufficient case remains fail-closed because the saved source occurrence had a
+headline but no description or body. It is recorded as an ingestion-quality gap rather
+than forcing an unsupported merge. One scorable India continuation also stayed split
+because two candidates cleared the gate; selecting one would violate the approved
+fail-closed ambiguity policy.
+
+This reconstruction validates the matching change, but it does not count toward the
+fresh daily closure series below.
 
 ## Step 0: Prepare The Local Runtime
 
@@ -90,9 +115,9 @@ present. The source database remains unchanged by this check.
 
 ## Step 2: Collect A Short Daily Run Series
 
-The story lookback is 14 days, while the last local run predates this closure series by
-several weeks. Treat the first run as a new baseline; the later runs provide the useful
-continuity evidence.
+The story lookback is 14 days. Matching behavior changed after the July 21-22 runs, so
+the closure series restarts with the next fresh run on the selected code. Treat that
+first run as a new baseline; later runs provide the useful continuity evidence.
 
 Use one successful run per Europe/Brussels editorial day:
 
@@ -160,6 +185,7 @@ question is whether a saved claim is actually derivable from its evidence span.
 Use the same run series for a bounded manual review:
 
 - inspect continuing-story matches and rejections from days 2 onward
+- inspect same-day candidate and decision rows for false merges or avoidable splits
 - inspect `delta_summary` for new information versus repeated context
 - inspect accepted and rejected `story_arc_decisions`
 - inspect similar-claim support groups for false equivalence
