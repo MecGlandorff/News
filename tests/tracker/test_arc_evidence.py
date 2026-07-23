@@ -4,7 +4,10 @@ import sqlite3
 import src.llm_response_cache as llm_response_cache
 import src.observability as observability
 import src.tracker as tracker
-from src.tracker.matching.arc_evidence import assign_story_arcs_evidence
+from src.tracker.matching.arc_evidence import (
+    assign_story_arcs_evidence,
+    material_arc_conflicts,
+)
 from tests.fakes import FakeLLMClient
 from tests.tracker.support import _article
 
@@ -178,6 +181,18 @@ def test_arc_call_uses_strict_schema_and_effort():
     assert captured[0]["reasoning_effort"] == "low"
     assert captured[0]["response_format"]["type"] == "json_schema"
     assert captured[0]["response_format"]["json_schema"]["strict"] is True
+
+
+def test_expected_distinct_arc_development_is_not_a_material_conflict():
+    conflicts = [
+        "Different specific development: one is a crash and one a stage victory",
+        "Candidate arc label is narrowly phrased around one rider",
+        "Different named tournament in another country",
+    ]
+
+    assert material_arc_conflicts(conflicts) == [
+        "Different named tournament in another country"
+    ]
 
 
 def test_tracker_promotes_grounded_one_story_arc_and_records_audit(

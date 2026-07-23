@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import math
 from collections import Counter
 from dataclasses import asdict, dataclass
 from datetime import date
@@ -10,6 +9,7 @@ from src.tracker.matching.profiles import MatchProfile, normalize_text
 
 
 DEFAULT_CANDIDATE_LIMIT = 5
+HIGH_SIGNAL_SHARED_TOKENS = {"ai"}
 
 
 def rare_tokens(profiles: Iterable[MatchProfile]) -> frozenset[str]:
@@ -19,11 +19,10 @@ def rare_tokens(profiles: Iterable[MatchProfile]) -> frozenset[str]:
         for profile in items
         for token in profile.distinctive
     )
-    threshold = max(2, math.ceil(len(items) * 0.10))
     return frozenset(
         token
         for token, frequency in frequencies.items()
-        if frequency <= threshold
+        if frequency <= 2
     )
 
 
@@ -41,6 +40,8 @@ class CandidateSignals:
     exact_label: bool
     theme_match: bool
     shared_distinctive_tokens: tuple[str, ...]
+    shared_semantic_tokens: tuple[str, ...]
+    shared_headline_tokens: tuple[str, ...]
     shared_rare_tokens: tuple[str, ...]
     shared_phrases: tuple[str, ...]
     shared_numbers: tuple[str, ...]
@@ -69,6 +70,8 @@ def candidate_signals(
         and normalize_text(current.label) == normalize_text(candidate.label)
     )
     shared_distinctive = current.distinctive & candidate.distinctive
+    shared_semantic = current.semantic & candidate.semantic
+    shared_headline = current.headline_semantic & candidate.headline_semantic
     shared_rare = shared_distinctive & rare
     shared_phrases = current.phrases & candidate.phrases
     shared_numbers = current.numbers & candidate.numbers
@@ -87,6 +90,8 @@ def candidate_signals(
         score += 30
     score += len(shared_rare) * 14
     score += len(shared_distinctive - shared_rare) * 6
+    score += len(shared_semantic) * 5
+    score += len(shared_headline) * 12
     score += len(shared_phrases) * 16
     score += len(shared_numbers) * 4
     if theme_match:
@@ -102,6 +107,8 @@ def candidate_signals(
         exact_label=exact_label,
         theme_match=theme_match,
         shared_distinctive_tokens=tuple(sorted(shared_distinctive)),
+        shared_semantic_tokens=tuple(sorted(shared_semantic)),
+        shared_headline_tokens=tuple(sorted(shared_headline)),
         shared_rare_tokens=tuple(sorted(shared_rare)),
         shared_phrases=tuple(sorted(shared_phrases)),
         shared_numbers=tuple(sorted(shared_numbers)),
@@ -113,18 +120,20 @@ def candidate_signals(
 def is_plausible_candidate(signals: CandidateSignals) -> bool:
     if signals.exact_url:
         return True
-    if signals.shared_phrases and signals.shared_distinctive_tokens:
+    if len(signals.shared_headline_tokens) >= 2:
+        return True
+    if signals.shared_phrases and signals.shared_headline_tokens:
         return True
     if (
-        len(signals.shared_distinctive_tokens) >= 2
-        and signals.shared_rare_tokens
+        len(signals.shared_semantic_tokens) >= 2
+        and signals.shared_headline_tokens
     ):
         return True
-    if signals.shared_rare_tokens and (
-        signals.shared_numbers
-        or signals.exact_label
-        or signals.theme_match
-    ):
+    if signals.exact_label and signals.shared_distinctive_tokens:
+        return True
+    if signals.shared_headline_tokens and signals.shared_numbers:
+        return True
+    if set(signals.shared_headline_tokens) & HIGH_SIGNAL_SHARED_TOKENS:
         return True
     return False
 
@@ -151,4 +160,3 @@ def retrieve_candidates(
         )
     )
     return retrieved[:limit]
-

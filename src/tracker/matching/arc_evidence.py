@@ -28,7 +28,7 @@ from src.tracker.matching.retrieval import CandidateSignals, retrieve_candidates
 from src.tracker.matching.schemas import ARC_DECISION_RESPONSE_FORMAT
 
 
-ARC_EVIDENCE_PROMPT_VERSION = "2026-07-23-v1"
+ARC_EVIDENCE_PROMPT_VERSION = "2026-07-23-v2"
 ARC_EVIDENCE_CASES_PER_CALL = 20
 ARC_EVIDENCE_PROMPT = """You decide whether a new concrete news story belongs
 inside one existing named, continuing real-world event arc.
@@ -48,7 +48,11 @@ Use concrete shared names, places, organizations, case names, competition names,
 dates, or other identifiers as shared_anchors. List material conflicts. When a
 one-story arc has an overly narrow label, proposed_arc_label may supply a short,
 source-grounded named umbrella; otherwise repeat the existing arc label. If
-evidence is ambiguous, return uncertain and belongs_to_arc=false."""
+evidence is ambiguous, return uncertain and belongs_to_arc=false. Copy anchors
+from the supplied evidence in its original language. Do not list the expected
+difference between two developments, a follow-up sequence, or an overly narrow
+arc label as a conflict; conflicts are mutually incompatible container identity
+facts."""
 
 RECURRING_FORMAT_TERMS = {
     "daily roundup",
@@ -63,6 +67,27 @@ RECURRING_FORMAT_TERMS = {
     "transfer rumours",
     "transfer rumors",
 }
+
+NON_MATERIAL_ARC_DIFFERENCE_CUES = {
+    "broader",
+    "different specific development",
+    "distinct development",
+    "follow-up",
+    "general",
+    "narrowly phrased",
+    "overly narrow",
+    "temporal sequence",
+}
+
+
+def material_arc_conflicts(conflicts: Iterable[str]) -> list[str]:
+    material = []
+    for conflict in conflicts:
+        normalized = normalize_text(conflict)
+        if any(cue in normalized for cue in NON_MATERIAL_ARC_DIFFERENCE_CUES):
+            continue
+        material.append(conflict)
+    return material
 
 
 @dataclass(frozen=True)
@@ -271,7 +296,8 @@ def _decision_from_model(
 
     relationship = raw.get("relationship")
     confidence = raw.get("confidence")
-    conflicts = _clean_strings(raw.get("conflicts"))
+    reported_conflicts = _clean_strings(raw.get("conflicts"))
+    conflicts = material_arc_conflicts(reported_conflicts)
     grounded = grounded_shared_anchors(
         _clean_strings(raw.get("shared_anchors")),
         case.current,

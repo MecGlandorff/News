@@ -26,7 +26,7 @@ from src.tracker.matching.retrieval import CandidateSignals, retrieve_candidates
 from src.tracker.matching.schemas import STORY_DECISION_RESPONSE_FORMAT
 
 
-CROSS_DAY_PROMPT_VERSION = "2026-07-23-v1"
+CROSS_DAY_PROMPT_VERSION = "2026-07-23-v2"
 CROSS_DAY_CASES_PER_CALL = 25
 CROSS_DAY_PROMPT = """You decide whether a current article group continues one
 specific tracked news story.
@@ -39,9 +39,10 @@ similarity. An existing label, arc label, and retrieval score are hints, never
 proof.
 
 Use only the supplied current evidence and stored source-grounded memory.
-Put concrete shared identifiers in shared_anchors and material contradictions
-in conflicts. If identity or continuity is ambiguous, return uncertain and
-same_story=false."""
+Put concrete shared identifiers in shared_anchors, copying their original
+wording rather than translating them. Put only mutually incompatible identity
+facts in conflicts, not ordinary follow-up differences. If identity or
+continuity is ambiguous, return uncertain and same_story=false."""
 
 
 @dataclass(frozen=True)
@@ -360,4 +361,3 @@ def match_story_groups(
                     "Multiple candidate stories cleared the gate; no merge was made."
                 )
     return label_map, decisions
-

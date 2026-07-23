@@ -4,8 +4,8 @@ from collections.abc import Iterable
 
 from src.tracker.matching.profiles import (
     MatchProfile,
-    content_tokens,
     normalize_text,
+    semantic_tokens,
 )
 
 
@@ -27,9 +27,13 @@ def grounded_shared_anchors(
         normalized = normalize_text(anchor)
         if not normalized:
             continue
-        tokens = content_tokens(anchor)
         exact_phrase = normalized in left_text and normalized in right_text
-        token_overlap = bool(tokens) and tokens <= left.tokens and tokens <= right.tokens
+        tokens = semantic_tokens(anchor)
+        token_overlap = (
+            bool(tokens)
+            and tokens <= left.semantic
+            and tokens <= right.semantic
+        )
         if exact_phrase or token_overlap:
             grounded.append(anchor)
     return grounded
@@ -44,9 +48,8 @@ def has_sufficient_shared_anchors(
     grounded = grounded_shared_anchors(anchors, left, right)
     shared_tokens: set[str] = set()
     for anchor in grounded:
-        tokens = content_tokens(anchor) & left.distinctive & right.distinctive
+        tokens = semantic_tokens(anchor) & left.semantic & right.semantic
         if len(tokens) >= 2:
             return True
         shared_tokens.update(tokens)
     return len(shared_tokens) >= 2
-

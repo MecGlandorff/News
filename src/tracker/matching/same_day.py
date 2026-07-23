@@ -36,7 +36,7 @@ from src.tracker.matching.schemas import SAME_DAY_DECISION_RESPONSE_FORMAT
 
 logger = logging.getLogger(__name__)
 
-SAME_DAY_PROMPT_VERSION = "2026-07-23-v1"
+SAME_DAY_PROMPT_VERSION = "2026-07-23-v2"
 SAME_DAY_CASES_PER_CALL = 25
 SAME_DAY_CANDIDATES_PER_ARTICLE = 5
 SAME_DAY_PROMPT = """You decide whether two current news articles describe the same
@@ -55,8 +55,10 @@ crashes, attacks, lawsuits, or generic updates are separate stories.
 
 Use only the supplied titles and descriptions. Put concrete names, places,
 organizations, case names, dates, or other shared identifiers in shared_anchors.
-List material contradictions in conflicts. If the evidence is incomplete or
-ambiguous, return uncertain and same_story=false."""
+Copy anchors from the supplied evidence in its original language; do not
+translate them. List only mutually incompatible identity facts in conflicts,
+not ordinary follow-up differences. If the evidence is incomplete or ambiguous,
+return uncertain and same_story=false."""
 
 
 @dataclass(frozen=True)
@@ -110,10 +112,11 @@ def same_day_candidate_edges(profiles: Iterable[MatchProfile]) -> list[Candidate
     by_key: dict[tuple[str, str], CandidateEdge] = {}
 
     for index, current in enumerate(items):
-        local_edges: dict[tuple[str, str], CandidateEdge] = {}
+        label_edges: dict[tuple[str, str], CandidateEdge] = {}
+        retrieved_edges: dict[tuple[str, str], CandidateEdge] = {}
         for retrieved in retrieve_candidates(current, items[index + 1:]):
             edge = _ordered_edge(current, retrieved.profile, retrieved.signals)
-            local_edges[edge.key] = edge
+            retrieved_edges[edge.key] = edge
         for right in items[index + 1:]:
             exact_classifier_label = (
                 bool(normalize_text(current.label))
@@ -127,12 +130,27 @@ def same_day_candidate_edges(profiles: Iterable[MatchProfile]) -> list[Candidate
             if exact_url:
                 by_key[edge.key] = edge
             else:
-                local_edges[edge.key] = edge
-        ranked_local = sorted(
-            local_edges.values(),
+                label_edges[edge.key] = edge
+        ranked_labels = sorted(
+            label_edges.values(),
             key=lambda edge: (-edge.signals.score, edge.key),
         )
-        for edge in ranked_local[:SAME_DAY_CANDIDATES_PER_ARTICLE]:
+        remaining = max(
+            0,
+            SAME_DAY_CANDIDATES_PER_ARTICLE - len(ranked_labels),
+        )
+        ranked_retrieved = sorted(
+            (
+                edge
+                for key, edge in retrieved_edges.items()
+                if key not in label_edges
+            ),
+            key=lambda edge: (-edge.signals.score, edge.key),
+        )
+        for edge in (
+            ranked_labels[:SAME_DAY_CANDIDATES_PER_ARTICLE]
+            + ranked_retrieved[:remaining]
+        ):
             by_key[edge.key] = edge
 
     return sorted(

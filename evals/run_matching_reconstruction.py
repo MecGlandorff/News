@@ -418,6 +418,18 @@ def load_review_cases(path: Path) -> list[dict[str, object]]:
                 raise ReconstructionError(
                     f"{path}:{line_number} expected_accepted must be boolean"
                 )
+            candidate_article_ids = raw.get("candidate_article_ids", [])
+            if (
+                not isinstance(candidate_article_ids, list)
+                or not all(
+                    isinstance(article_id, str) and article_id
+                    for article_id in candidate_article_ids
+                )
+            ):
+                raise ReconstructionError(
+                    f"{path}:{line_number} candidate_article_ids must be "
+                    "an array of non-empty strings"
+                )
             cases.append(raw)
     return cases
 
@@ -458,60 +470,82 @@ def _observed_review_decision(
         str(case["today_article_id"]),
         today_date,
     )
-    candidate = _assignment(
-        connection,
-        str(case["candidate_article_id"]),
-        candidate_date,
+    candidate_aliases = case.get("candidate_article_ids")
+    aliases = candidate_aliases if isinstance(candidate_aliases, list) else []
+    candidate_article_ids = list(
+        dict.fromkeys(
+            [
+                str(case["candidate_article_id"]),
+                *[str(article_id) for article_id in aliases],
+            ]
+        )
     )
+    candidates = [
+        _assignment(connection, article_id, candidate_date)
+        for article_id in candidate_article_ids
+    ]
     run_id = run_ids_by_date.get(today_date)
     if run_id is None:
         raise ReconstructionError(f"No reconstruction run exists for {today_date}")
 
-    if case["layer"] == "same_day":
-        left_id, right_id = sorted(
-            (int(today["occurrence_id"]), int(candidate["occurrence_id"]))
-        )
-        row = connection.execute(
-            """
-            SELECT accepted, relationship, decision_route
-            FROM same_day_match_decisions
-            WHERE run_id = ?
-              AND left_occurrence_id = ?
-              AND right_occurrence_id = ?
-            ORDER BY decision_id DESC
-            LIMIT 1
-            """,
-            (run_id, left_id, right_id),
-        ).fetchone()
-    elif case["layer"] == "story":
-        row = connection.execute(
-            """
-            SELECT accepted, relationship, decision_route
-            FROM story_match_decisions
-            WHERE run_id = ?
-              AND today_label = ?
-              AND candidate_story_id = ?
-            ORDER BY decision_id DESC
-            LIMIT 1
-            """,
-            (run_id, str(today["development_label"]), int(candidate["story_id"])),
-        ).fetchone()
-    else:
-        row = connection.execute(
-            """
-            SELECT accepted, relationship, decision_route
-            FROM story_arc_decisions
-            WHERE run_id = ?
-              AND today_label = ?
-              AND proposed_arc_id = ?
-            ORDER BY decision_id DESC
-            LIMIT 1
-            """,
-            (run_id, str(today["development_label"]), int(candidate["arc_id"])),
-        ).fetchone()
+    rows = []
+    for candidate in candidates:
+        if case["layer"] == "same_day":
+            left_id, right_id = sorted(
+                (int(today["occurrence_id"]), int(candidate["occurrence_id"]))
+            )
+            row = connection.execute(
+                """
+                SELECT accepted, relationship, decision_route
+                FROM same_day_match_decisions
+                WHERE run_id = ?
+                  AND left_occurrence_id = ?
+                  AND right_occurrence_id = ?
+                ORDER BY decision_id DESC
+                LIMIT 1
+                """,
+                (run_id, left_id, right_id),
+            ).fetchone()
+        elif case["layer"] == "story":
+            row = connection.execute(
+                """
+                SELECT accepted, relationship, decision_route
+                FROM story_match_decisions
+                WHERE run_id = ?
+                  AND today_label = ?
+                  AND candidate_story_id = ?
+                ORDER BY decision_id DESC
+                LIMIT 1
+                """,
+                (
+                    run_id,
+                    str(today["development_label"]),
+                    int(candidate["story_id"]),
+                ),
+            ).fetchone()
+        else:
+            row = connection.execute(
+                """
+                SELECT accepted, relationship, decision_route
+                FROM story_arc_decisions
+                WHERE run_id = ?
+                  AND today_label = ?
+                  AND proposed_arc_id = ?
+                ORDER BY decision_id DESC
+                LIMIT 1
+                """,
+                (
+                    run_id,
+                    str(today["development_label"]),
+                    int(candidate["arc_id"]),
+                ),
+            ).fetchone()
+        if row is not None:
+            rows.append(row)
 
-    if row is None:
+    if not rows:
         return False, "not_retrieved", "not_retrieved"
+    row = next((item for item in rows if bool(item["accepted"])), rows[0])
     return bool(row["accepted"]), str(row["relationship"]), str(row["decision_route"])
 
 
@@ -652,7 +686,9 @@ def build_report(
 
 
 def _format_percent(value: object) -> str:
-    return "n/a" if value is None else f"{float(value) * 100:.1f}%"
+    if not isinstance(value, (int, float)):
+        return "n/a"
+    return f"{value * 100:.1f}%"
 
 
 def format_markdown_report(report: dict[str, Any]) -> str:

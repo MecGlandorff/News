@@ -80,6 +80,7 @@ def get_recent_story_options(conn, today, lookback_days=DEFAULT_LOOKBACK_DAYS):
                     "description": article.get("description", ""),
                     "url": article.get("url", ""),
                     "reported_at": article.get("reported_at", ""),
+                    "story_label": article.get("story_label", ""),
                 }
                 for article in context.get("recent_articles", [])[:3]
             ],
@@ -202,11 +203,14 @@ def get_previous_story_context(conn, story_id, today, article_limit=3):
                 context["delta_summary"] = delta_summary
 
     rows = conn.execute("""
-        SELECT date, source, title, description, url, published_at
-        FROM articles
-        WHERE story_id = ?
-          AND date < ?
-        ORDER BY date DESC, published_at DESC
+        SELECT ar.date, ar.source, ar.title, ar.description, ar.url,
+               ar.published_at, c.story_label
+        FROM articles ar
+        LEFT JOIN occurrence_classifications c
+          ON c.occurrence_id = ar.occurrence_id
+        WHERE ar.story_id = ?
+          AND ar.date < ?
+        ORDER BY ar.date DESC, ar.published_at DESC
         LIMIT ?
     """, (story_id, today, article_limit)).fetchall()
     if rows:
@@ -218,6 +222,7 @@ def get_previous_story_context(conn, story_id, today, article_limit=3):
                 "description": r["description"] or "",
                 "url": r["url"],
                 "reported_at": r["published_at"] or "",
+                "story_label": r["story_label"] or "",
             }
             for r in rows
         ]

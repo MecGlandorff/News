@@ -169,3 +169,112 @@ def test_retrieval_limits_and_sorts_candidates_by_evidence_score():
 
     assert len(retrieved) == 3
     assert all(item.signals.shared_phrases for item in retrieved)
+
+
+def test_retrieval_normalizes_reviewed_cross_language_anchor_forms():
+    current = profile_from_articles(
+        [
+            _article(
+                1,
+                "Wijst Frankrijk de weg naar een telefoonvrije jeugd?",
+                "Phone Free Youth",
+                theme="Tech",
+            )
+        ]
+    )
+    candidate = profile_from_story(
+        "French social media restriction",
+        {
+            "story_id": 10,
+            "canonical_label": "French social media restriction",
+            "theme": "Tech",
+            "last_seen": "2026-07-21",
+            "recent_articles": [
+                {
+                    "title": "Frankrijk voert telefoonverbod voor kinderen in",
+                    "description": "De Franse wet beschermt jongeren.",
+                }
+            ],
+        },
+    )
+
+    retrieved = retrieve_candidates(current, [candidate])
+
+    assert len(retrieved) == 1
+    assert {"france", "phone", "youth"} <= set(
+        retrieved[0].signals.shared_semantic_tokens
+    )
+
+
+def test_retrieval_uses_original_classifier_label_from_story_memory():
+    current = profile_from_articles(
+        [
+            _article(
+                1,
+                "Why are young people in India protesting?",
+                "India Youth Protests",
+            )
+        ]
+    )
+    candidate = profile_from_story(
+        "Weer protest in New Delhi",
+        {
+            "story_id": 10,
+            "canonical_label": "Weer protest in New Delhi",
+            "last_seen": "2026-07-21",
+            "recent_articles": [
+                {
+                    "title": "Weer protest in New Delhi",
+                    "story_label": "India Student Protests",
+                }
+            ],
+        },
+    )
+
+    retrieved = retrieve_candidates(current, [candidate])
+
+    assert len(retrieved) == 1
+    assert {"india", "protest"} <= set(
+        retrieved[0].signals.shared_semantic_tokens
+    )
+
+
+def test_theme_and_one_generic_word_do_not_create_candidate():
+    current = profile_from_articles(
+        [_article(1, "European library opens", "Library opening", theme="World")]
+    )
+    candidate = profile_from_story(
+        "European factory",
+        {
+            "story_id": 10,
+            "canonical_label": "European factory",
+            "theme": "World",
+            "last_seen": "2026-07-21",
+            "recent_articles": [{"title": "European factory expands"}],
+        },
+    )
+
+    assert retrieve_candidates(current, [candidate]) == []
+
+
+def test_ai_anchor_is_retrieved_for_mini_even_with_one_shared_token():
+    current = profile_from_articles(
+        [_article(1, "Was de AI-agent op hol geslagen?", "AI Agent Behavior")]
+    )
+    candidate = profile_from_articles(
+        [
+            _article(
+                2,
+                "OpenAI says its AI went rogue in cyberattack",
+                "AI Cyberattack",
+            )
+        ],
+        profile_id="today:2",
+    )
+
+    retrieved = retrieve_candidates(current, [candidate])
+
+    assert [item.profile.profile_id for item in retrieved] == ["today:2"]
+    assert {"ai", "rogue"} <= set(
+        retrieved[0].signals.shared_semantic_tokens
+    )

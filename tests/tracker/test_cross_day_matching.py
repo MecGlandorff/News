@@ -88,7 +88,11 @@ def test_cross_day_accepts_grounded_direct_continuation():
 
 def test_cross_day_rejects_generic_bridge_despite_shared_label():
     current = {
-        **_article("new", "Tram crashes into Erasmus Bridge barrier", "Bridge safety"),
+        **_article(
+            "new",
+            "Tram crashes into Erasmus Bridge barrier",
+            "Erasmus Bridge tram crash",
+        ),
         "description": "A Rotterdam tram hit a barrier on Erasmus Bridge.",
     }
     recent = {
@@ -108,14 +112,14 @@ def test_cross_day_rejects_generic_bridge_despite_shared_label():
     )
 
     label_map, decisions = match_story_groups(
-        {"Bridge safety"},
+        {"Erasmus Bridge tram crash"},
         recent,
-        {"Bridge safety": [current]},
+        {"Erasmus Bridge tram crash": [current]},
         get_client=lambda: client,
         model=MODEL,
     )
 
-    assert label_map == {"Bridge safety": "NEW"}
+    assert label_map == {"Erasmus Bridge tram crash": "NEW"}
     assert decisions == []
     assert client.calls == 0
 
@@ -196,4 +200,3 @@ def test_cross_day_uses_strict_schema_and_requested_effort():
     assert captured[0]["reasoning_effort"] == "low"
     assert captured[0]["response_format"]["type"] == "json_schema"
     assert captured[0]["response_format"]["json_schema"]["strict"] is True
-

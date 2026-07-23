@@ -17,30 +17,135 @@ PROFILE_STOPWORDS = {
     "about",
     "after",
     "amid",
+    "are",
     "before",
+    "been",
+    "being",
+    "can",
+    "could",
     "day",
     "days",
     "had",
     "has",
     "have",
+    "how",
+    "is",
     "its",
     "latest",
     "live",
     "new",
     "news",
+    "may",
+    "might",
+    "more",
+    "most",
+    "no",
+    "not",
     "people",
     "report",
     "reports",
     "say",
     "says",
     "that",
+    "than",
     "their",
     "this",
     "under",
+    "what",
+    "when",
+    "where",
+    "who",
+    "why",
     "will",
+    "would",
     "year",
     "years",
+    # Common Dutch function/news words. Without these, one generic translated
+    # word can crowd out concrete named candidates in a multilingual batch.
+    "aan",
+    "af",
+    "al",
+    "als",
+    "bij",
+    "daar",
+    "dan",
+    "dat",
+    "de",
+    "deze",
+    "die",
+    "dit",
+    "door",
+    "een",
+    "en",
+    "er",
+    "eerste",
+    "gaan",
+    "gaat",
+    "geen",
+    "haar",
+    "hebben",
+    "heeft",
+    "het",
+    "hij",
+    "hun",
+    "kan",
+    "kunnen",
+    "laten",
+    "lijkt",
+    "lijken",
+    "maar",
+    "meer",
+    "met",
+    "moet",
+    "na",
+    "naar",
+    "niet",
+    "nog",
+    "nu",
+    "ook",
+    "op",
+    "over",
+    "uit",
+    "van",
+    "voor",
+    "was",
+    "we",
+    "wel",
+    "werd",
+    "worden",
+    "wordt",
+    "zijn",
+    "ze",
+    "zoals",
+    "zonder",
+    "zou",
+    "zullen",
+    "weg",
+    "wijst",
 }
+
+SEMANTIC_PREFIXES = (
+    ("children", "youth"),
+    ("child", "youth"),
+    ("french", "france"),
+    ("frankr", "france"),
+    ("frans", "france"),
+    ("jeugd", "youth"),
+    ("jong", "youth"),
+    ("kind", "youth"),
+    ("mobile", "phone"),
+    ("phone", "phone"),
+    ("protest", "protest"),
+    ("social", "social"),
+    ("telefoon", "phone"),
+    ("telephone", "phone"),
+    ("youth", "youth"),
+    ("young", "youth"),
+)
+SEMANTIC_PHRASES = {
+    "op hol geslagen": "rogue",
+}
+SEMANTIC_IGNORED_TOKENS = {"free"}
 
 
 def normalize_text(value: object) -> str:
@@ -69,6 +174,28 @@ def distinctive_tokens(value: object) -> frozenset[str]:
         for token in content_tokens(value)
         if token not in GENERIC_EVENT_TOKENS and not token.isdigit()
     )
+
+
+def semantic_tokens(value: object) -> frozenset[str]:
+    """Normalize a tiny reviewed set of cross-language event-anchor forms."""
+    text = normalize_text(value)
+    source_tokens = set(content_tokens(text))
+    normalized = set()
+    for phrase, replacement in SEMANTIC_PHRASES.items():
+        if phrase not in text:
+            continue
+        source_tokens.difference_update(content_tokens(phrase))
+        normalized.add(replacement)
+    for token in source_tokens:
+        if token in SEMANTIC_IGNORED_TOKENS:
+            continue
+        canonical = token
+        for prefix, replacement in SEMANTIC_PREFIXES:
+            if token.startswith(prefix):
+                canonical = replacement
+                break
+        normalized.add(canonical)
+    return frozenset(normalized)
 
 
 def content_phrases(values: Iterable[object]) -> frozenset[str]:
@@ -152,6 +279,8 @@ class MatchProfile:
     urls: frozenset[str]
     tokens: frozenset[str]
     distinctive: frozenset[str]
+    semantic: frozenset[str]
+    headline_semantic: frozenset[str]
     phrases: frozenset[str]
     numbers: frozenset[str]
     years: frozenset[str]
@@ -182,6 +311,7 @@ def profile_from_articles(
     titles = _clean_values(item.get("title") for item in items)
     descriptions = _clean_values(item.get("description") for item in items)
     evidence_values = (resolved_label, *labels, *titles, *descriptions)
+    headline_values = (resolved_label, *labels, *titles)
     article_ids = tuple(str(item.get("id") or "") for item in items)
     occurrence_ids = tuple(
         value
@@ -220,6 +350,12 @@ def profile_from_articles(
         distinctive=distinctive_tokens(
             " ".join(str(value or "") for value in evidence_values)
         ),
+        semantic=semantic_tokens(
+            " ".join(str(value or "") for value in evidence_values)
+        ),
+        headline_semantic=semantic_tokens(
+            " ".join(str(value or "") for value in headline_values)
+        ),
         phrases=content_phrases(evidence_values),
         numbers=numeric_tokens(evidence_values),
         years=year_tokens(evidence_values),
@@ -230,6 +366,9 @@ def profile_from_articles(
 def profile_from_story(label: str, story: Mapping[str, object]) -> MatchProfile:
     recent_articles = _mapping_items(story.get("recent_articles"))
     titles = _clean_values(article.get("title") for article in recent_articles)
+    classifier_labels = _clean_values(
+        article.get("story_label") for article in recent_articles
+    )
     descriptions = _clean_values(
         article.get("description") for article in recent_articles
     )
@@ -248,9 +387,18 @@ def profile_from_story(label: str, story: Mapping[str, object]) -> MatchProfile:
         story.get("canonical_label"),
         story.get("arc_label"),
         story.get("parent_label"),
+        *classifier_labels,
         *titles,
         *descriptions,
         *summaries,
+    )
+    headline_values = (
+        label,
+        story.get("canonical_label"),
+        story.get("arc_label"),
+        story.get("parent_label"),
+        *classifier_labels,
+        *titles,
     )
     story_id = story.get("story_id")
     return MatchProfile(
@@ -271,6 +419,12 @@ def profile_from_story(label: str, story: Mapping[str, object]) -> MatchProfile:
         tokens=content_tokens(" ".join(str(value or "") for value in evidence_values)),
         distinctive=distinctive_tokens(
             " ".join(str(value or "") for value in evidence_values)
+        ),
+        semantic=semantic_tokens(
+            " ".join(str(value or "") for value in evidence_values)
+        ),
+        headline_semantic=semantic_tokens(
+            " ".join(str(value or "") for value in headline_values)
         ),
         phrases=content_phrases(evidence_values),
         numbers=numeric_tokens(evidence_values),
@@ -293,6 +447,7 @@ def profile_from_arc(arc: Mapping[str, object]) -> MatchProfile:
     )
     label = str(arc.get("canonical_label") or "")
     evidence_values = (label, *titles, *summaries)
+    headline_values = (label, *titles)
     return MatchProfile(
         profile_id=f"arc:{arc.get('arc_id')}",
         label=label,
@@ -307,6 +462,12 @@ def profile_from_arc(arc: Mapping[str, object]) -> MatchProfile:
         tokens=content_tokens(" ".join(str(value or "") for value in evidence_values)),
         distinctive=distinctive_tokens(
             " ".join(str(value or "") for value in evidence_values)
+        ),
+        semantic=semantic_tokens(
+            " ".join(str(value or "") for value in evidence_values)
+        ),
+        headline_semantic=semantic_tokens(
+            " ".join(str(value or "") for value in headline_values)
         ),
         phrases=content_phrases(evidence_values),
         numbers=numeric_tokens(evidence_values),
