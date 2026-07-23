@@ -166,41 +166,43 @@ def test_match_labels_rejects_known_shooting_false_merge():
 def test_story_match_verifier_rejects_gaza_detention_false_merge(tmp_path):
     db_path = tmp_path / "stories.db"
     data_dir = tmp_path / "daily"
-    client = _fake_tracker_client_sequence([
-        {
-            "matches": [{
-                "today_label": "Israel Detention Abuse",
-                "canonical_label": "Gaza flotilla raid",
-            }]
-        },
-        {
+
+    def story_rejection(kwargs):
+        case = json.loads(kwargs["messages"][1]["content"])["cases"][0]
+        return {
             "decisions": [{
-                "today_label": "Israel Detention Abuse",
-                "canonical_label": "Gaza flotilla raid",
-                "same_event": False,
-                "relationship": "adjacent_topic",
+                "case_id": case["case_id"],
+                "same_story": False,
+                "relationship": "related_context",
                 "confidence": "high",
-                "article_dates": ["2026-05-07"],
-                "candidate_last_seen": "2026-05-04",
-                "continuity_evidence": [],
+                "shared_anchors": [],
+                "conflicts": [],
                 "reject_reason": (
                     "The article concerns Palestinian detainees generally, "
                     "not the flotilla raid or detained flotilla activists."
                 ),
             }]
-        },
-        {
-            "assignments": [{
-                "today_label": "Israel Detention Abuse",
-                "arc_id": "NEW_ARC",
+        }
+
+    def arc_rejection(kwargs):
+        case = json.loads(kwargs["messages"][1]["content"])["cases"][0]
+        return {
+            "decisions": [{
+                "case_id": case["case_id"],
+                "belongs_to_arc": False,
+                "relationship": "related_context",
+                "confidence": "high",
+                "shared_anchors": [],
+                "conflicts": [],
                 "parent_story_id": None,
-                "relationship": "uncertain",
-                "confidence": "low",
-                "continuity_evidence": [],
-                "reject_reason": "The detention abuse coverage is not part of the flotilla arc.",
+                "proposed_arc_label": "Gaza flotilla raid",
+                "reject_reason": (
+                    "The detention abuse coverage is not part of the flotilla arc."
+                ),
             }]
-        },
-    ])
+        }
+
+    client = _fake_tracker_client_sequence([story_rejection, arc_rejection])
     first = tracker.track(
         [_article(1, "Israel intercepts Gaza-bound flotilla", "Gaza flotilla raid")],
         today="2026-05-04",
@@ -263,7 +265,7 @@ def test_story_match_verifier_rejects_gaza_detention_false_merge(tmp_path):
     assert decision["candidate_label"] == "Gaza flotilla raid"
     assert decision["accepted"] == 0
     assert decision["same_event"] == 0
-    assert decision["relationship"] == "adjacent_topic"
+    assert decision["relationship"] == "related_context"
     assert "not the flotilla raid" in decision["reject_reason"]
     assert [row["canonical_label"] for row in story_rows] == ["Israel Detention Abuse"]
 
@@ -324,7 +326,7 @@ def test_match_labels_sends_per_label_candidate_memory():
         client=client,
     )
 
-    assert captured[0]["model"] == "gpt-5.4-mini"
+    assert captured[0]["model"] == CROSSDAY_MATCH_MODEL
     payload = json.loads(captured[0]["messages"][1]["content"])
     match_case = payload["match_cases"][0]
     assert match_case["today_label"] == "Iran Peace Proposal"

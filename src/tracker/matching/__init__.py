@@ -8,6 +8,14 @@ from src.tracker.matching.arcs import (
     missing_arc_assignment,
     recent_arc_text,
 )
+from src.tracker.matching.arc_evidence import (
+    ARC_EVIDENCE_PROMPT,
+    ARC_EVIDENCE_PROMPT_VERSION,
+    ArcEvidenceCase,
+    arc_evidence_cases,
+    assign_story_arcs_evidence,
+    is_recurring_content_format,
+)
 from src.tracker.matching.candidates import (
     candidate_cases_for_prompt,
     candidate_score,
@@ -81,6 +89,7 @@ from src.tracker.matching.same_day import (
     CandidateEdge,
     TodayStoryGroup,
     group_today_articles,
+    groups_as_story_mapping,
     judge_same_day_edges,
     same_day_candidate_edges,
 )
@@ -97,6 +106,9 @@ __all__ = [
     "ARC_ASSIGNMENT_PROMPT_VERSION",
     "ARC_CANDIDATES_PER_LABEL",
     "ARC_RELATIONSHIPS",
+    "ARC_EVIDENCE_PROMPT",
+    "ARC_EVIDENCE_PROMPT_VERSION",
+    "ArcEvidenceCase",
     "CANDIDATES_PER_LABEL",
     "CONSOLIDATE_PROMPT",
     "CONSOLIDATE_PROMPT_VERSION",
@@ -119,7 +131,9 @@ __all__ = [
     "arc_assignment_cases_for_prompt",
     "arc_assignment_from_model",
     "arc_candidate_score",
+    "arc_evidence_cases",
     "assign_story_arcs",
+    "assign_story_arcs_evidence",
     "candidate_cases_for_prompt",
     "CandidateEdge",
     "candidate_signals",
@@ -138,7 +152,9 @@ __all__ = [
     "distinctive_label_tokens",
     "exact_label_reuse_allowed",
     "group_today_articles",
+    "groups_as_story_mapping",
     "is_generic_event_label",
+    "is_recurring_content_format",
     "is_plausible_candidate",
     "judge_same_day_edges",
     "label_tokens",

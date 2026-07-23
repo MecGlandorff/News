@@ -4,6 +4,7 @@ from src.config import (
     ARC_ASSIGNMENT_MODEL,
     CROSSDAY_MATCH_MODEL,
     DEFAULT_LOOKBACK_DAYS,
+    MATCHING_REASONING_EFFORT,
     STORY_MATCH_VERIFIER_MODEL,
     TRACKER_MODEL,
 )
@@ -36,6 +37,25 @@ def _callbacks_for(client_factory):
     resolved_client_factory = (
         client_factory if client_factory is not None else get_openai_client
     )
+    def group_with_evidence(articles):
+        groups, decisions = story_matching.group_today_articles(
+            articles,
+            get_client=resolved_client_factory,
+            model=TRACKER_MODEL,
+            reasoning_effort=MATCHING_REASONING_EFFORT,
+        )
+        return story_matching.groups_as_story_mapping(groups), decisions
+
+    def match_with_evidence(labels, recent, groups, today=None):
+        return story_matching.match_story_groups(
+            labels,
+            recent,
+            groups,
+            get_client=resolved_client_factory,
+            model=CROSSDAY_MATCH_MODEL,
+            reasoning_effort=MATCHING_REASONING_EFFORT,
+        )
+
     return (
         lambda groups: story_matching.consolidate_today(
             groups,
@@ -67,6 +87,16 @@ def _callbacks_for(client_factory):
             today=today,
             default_days=DEFAULT_LOOKBACK_DAYS,
         ),
+        lambda labels, arcs, groups, today=None: story_matching.assign_story_arcs_evidence(
+            labels,
+            arcs,
+            groups,
+            get_client=resolved_client_factory,
+            model=ARC_ASSIGNMENT_MODEL,
+            reasoning_effort=MATCHING_REASONING_EFFORT,
+        ),
+        group_with_evidence,
+        match_with_evidence,
     )
 
 
@@ -85,8 +115,20 @@ def track(
     verify_matches=None,
     assign_arcs=None,
 ):
-    default_consolidate, default_match, default_verify, default_assign = _callbacks_for(
-        client_factory
+    (
+        default_consolidate,
+        default_match,
+        default_verify,
+        default_legacy_assign,
+        default_evidence_assign,
+        default_group_evidence,
+        default_match_evidence,
+    ) = _callbacks_for(client_factory)
+    use_evidence_grouping = verify_story_matches and consolidate_today is None
+    use_evidence_crossday = (
+        verify_story_matches
+        and match_labels is None
+        and verify_matches is None
     )
     return service.track(
         classified,
@@ -100,7 +142,21 @@ def track(
         ),
         match_labels=match_labels if match_labels is not None else default_match,
         verify_matches=verify_matches if verify_matches is not None else default_verify,
-        assign_arcs=assign_arcs if assign_arcs is not None else default_assign,
+        assign_arcs=(
+            assign_arcs
+            if assign_arcs is not None
+            else (
+                default_evidence_assign
+                if verify_story_matches
+                else default_legacy_assign
+            )
+        ),
+        group_evidence=(
+            default_group_evidence if use_evidence_grouping else None
+        ),
+        match_evidence=(
+            default_match_evidence if use_evidence_crossday else None
+        ),
         fetch_article_text=(
             fetch_article_text
             if fetch_article_text is not None

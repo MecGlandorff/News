@@ -1,6 +1,12 @@
 import json
 
-from src.tracker.matching.same_day import group_today_articles
+from src.tracker.matching.same_day import (
+    SAME_DAY_CANDIDATES_PER_ARTICLE,
+    group_today_articles,
+    groups_as_story_mapping,
+    same_day_candidate_edges,
+)
+from src.tracker.matching.profiles import profile_from_articles
 from tests.fakes import FakeLLMClient
 from tests.tracker.support import _article
 
@@ -240,3 +246,54 @@ def test_same_day_call_uses_strict_schema_and_reasoning_effort():
     assert captured[0]["reasoning_effort"] == "low"
     assert captured[0]["response_format"]["type"] == "json_schema"
     assert captured[0]["response_format"]["json_schema"]["strict"] is True
+
+
+def test_mapping_disambiguates_split_identical_classifier_labels_with_titles():
+    articles = [
+        _with_occurrence(
+            _article("a", "Liverpool signs striker", "Football transfers"),
+            1,
+        ),
+        _with_occurrence(
+            _article("b", "Madrid goalkeeper deal", "Football transfers"),
+            2,
+        ),
+    ]
+    groups, _ = group_today_articles(
+        articles,
+        get_client=lambda: FakeLLMClient(
+            _response_for_cases(
+                same_story=False,
+                relationship="unrelated",
+                anchors=[],
+            )
+        ),
+        model=MODEL,
+    )
+
+    mapped = groups_as_story_mapping(groups)
+
+    assert set(mapped) == {"Liverpool signs striker", "Madrid goalkeeper deal"}
+
+
+def test_same_label_candidate_edges_are_capped_per_article():
+    profiles = [
+        profile_from_articles(
+            [
+                _with_occurrence(
+                    _article(
+                        str(index),
+                        f"Transfer report number {index}",
+                        "Football transfers",
+                    ),
+                    index,
+                )
+            ],
+            profile_id=f"today:{index}",
+        )
+        for index in range(1, 16)
+    ]
+
+    edges = same_day_candidate_edges(profiles)
+
+    assert len(edges) <= len(profiles) * SAME_DAY_CANDIDATES_PER_ARTICLE

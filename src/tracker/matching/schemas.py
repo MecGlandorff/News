@@ -84,3 +84,47 @@ SAME_DAY_DECISION_RESPONSE_FORMAT = _story_decision_response_format(
 STORY_DECISION_RESPONSE_FORMAT = _story_decision_response_format(
     "cross_day_story_match_decisions"
 )
+
+ARC_DECISION_RESPONSE_FORMAT = _strict_array_response(
+    name="story_arc_match_decisions",
+    property_name="decisions",
+    item_properties={
+        "case_id": {"type": "string"},
+        "belongs_to_arc": {"type": "boolean"},
+        "relationship": {
+            "type": "string",
+            "enum": [
+                "same_arc",
+                "parent_context",
+                "related_context",
+                "unrelated",
+                "uncertain",
+            ],
+        },
+        "confidence": {
+            "type": "string",
+            "enum": ["high", "medium", "low"],
+        },
+        "shared_anchors": _string_array(),
+        "conflicts": _string_array(),
+        "parent_story_id": {
+            "anyOf": [
+                {"type": "integer"},
+                {"type": "null"},
+            ]
+        },
+        "proposed_arc_label": {"type": "string"},
+        "reject_reason": {"type": "string"},
+    },
+    required=[
+        "case_id",
+        "belongs_to_arc",
+        "relationship",
+        "confidence",
+        "shared_anchors",
+        "conflicts",
+        "parent_story_id",
+        "proposed_arc_label",
+        "reject_reason",
+    ],
+)

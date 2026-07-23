@@ -6,6 +6,7 @@ from src.article_dates import editorial_today
 from src.config import (
     ARC_ASSIGNMENT_MODEL,
     DEFAULT_LOOKBACK_DAYS,
+    TRACKER_MODEL,
     STORY_MATCH_VERIFIER_MODEL,
 )
 from src.tracker import matching, occurrences, store
@@ -21,6 +22,40 @@ def _record_story_match_verification_totals(decisions):
         story_match_verifications=len(decisions),
         story_match_accepts=sum(1 for decision in decisions if decision.get("accepted")),
         story_match_rejections=sum(1 for decision in decisions if not decision.get("accepted")),
+    )
+
+
+def _record_matching_audit_totals(
+    same_day_decisions,
+    story_decisions,
+    arc_decisions,
+):
+    decisions = [
+        *same_day_decisions,
+        *story_decisions,
+        *arc_decisions,
+    ]
+    observability.update_run_totals(
+        same_day_match_candidates=len(same_day_decisions),
+        same_day_match_accepts=sum(
+            1 for decision in same_day_decisions if decision.get("accepted")
+        ),
+        matching_deterministic_decisions=sum(
+            1 for decision in decisions
+            if decision.get("decision_route") == "deterministic"
+        ),
+        matching_mini_decisions=sum(
+            1 for decision in decisions
+            if decision.get("decision_route") == "mini"
+        ),
+        matching_fail_closed_decisions=sum(
+            1 for decision in decisions
+            if decision.get("decision_route") == "fail_closed"
+        ),
+        matching_ambiguous_cases=sum(
+            1 for decision in decisions
+            if decision.get("ambiguity_reason")
+        ),
     )
 
 
@@ -82,6 +117,8 @@ def track(
     verify_matches,
     assign_arcs,
     fetch_article_text,
+    group_evidence=None,
+    match_evidence=None,
 ):
     if not classified:
         return []
@@ -94,7 +131,11 @@ def track(
     # may be updated.
     occurrence_ids = _record_article_occurrences(classified, today, db_path)
     classified = [
-        {**article, "occurrence_id": occurrence_ids[str(article["id"])]}
+        {
+            **article,
+            "occurrence_id": occurrence_ids[str(article["id"])],
+            "editorial_date": today,
+        }
         for article in classified
     ]
 
@@ -104,12 +145,16 @@ def track(
     daily_articles_path = daily_path / "articles.json"
     _write_daily_articles(daily_articles_path, classified)
 
-    # Group today's articles by story_label, then consolidate within-day duplicates
-    from collections import defaultdict
-    raw_groups = defaultdict(list)
-    for a in classified:
-        raw_groups[a["story_label"]].append(a)
-    story_groups = consolidate_today(raw_groups)
+    same_day_decisions = []
+    if group_evidence is not None:
+        story_groups, same_day_decisions = group_evidence(classified)
+    else:
+        # Legacy/explicit opt-out path retained for replay and injected tests.
+        from collections import defaultdict
+        raw_groups = defaultdict(list)
+        for a in classified:
+            raw_groups[a["story_label"]].append(a)
+        story_groups = consolidate_today(raw_groups)
 
     conn = store.get_db(db_path)
     try:
@@ -124,10 +169,23 @@ def track(
     finally:
         conn.close()
 
-    # Match today's labels to recent canonical labels outside the write transaction.
-    label_map = match_labels(set(story_groups.keys()), recent_story_options, today=today)
+    # Match current evidence to recent source-grounded memory outside the write
+    # transaction. The default path retrieves locally and uses one mini stage.
     match_decisions = []
-    if verify_story_matches:
+    if match_evidence is not None:
+        label_map, match_decisions = match_evidence(
+            set(story_groups.keys()),
+            recent_story_options,
+            story_groups,
+            today=today,
+        )
+    else:
+        label_map = match_labels(
+            set(story_groups.keys()),
+            recent_story_options,
+            today=today,
+        )
+    if verify_story_matches and match_evidence is None:
         candidate_labels = {
             label
             for label, canonical in label_map.items()
@@ -161,6 +219,18 @@ def track(
     conn = store.get_db(db_path)
     try:
         with conn:
+            store.save_same_day_match_decisions(
+                conn,
+                [
+                    decision
+                    for decision in same_day_decisions
+                    if decision.get("left_occurrence_id") is not None
+                    and decision.get("right_occurrence_id") is not None
+                ],
+                today,
+                TRACKER_MODEL,
+                matching.SAME_DAY_PROMPT_VERSION,
+            )
             store.save_story_match_decisions(
                 conn,
                 match_decisions,
@@ -179,6 +249,7 @@ def track(
             new_child_count = 0
             new_arc_count = 0
             arc_attachment_count = 0
+            promoted_arc_ids = set()
             for story_label, articles in story_groups.items():
                 canonical = label_map.get(story_label, "NEW")
                 arc_assignment = arc_assignments.get(story_label) or {}
@@ -259,6 +330,20 @@ def track(
                         "UPDATE stories SET last_seen = ? WHERE story_id = ?",
                         (today, story_id)
                     )
+                promoted_arc_label = arc_assignment.get("final_arc_label", "")
+                previous_arc_label = arc_assignment.get("previous_arc_label", "")
+                promoted_arc_id = arc_assignment.get("arc_id")
+                if (
+                    arc_assignment.get("accepted")
+                    and promoted_arc_id is not None
+                    and promoted_arc_label
+                    and promoted_arc_label != previous_arc_label
+                ):
+                    conn.execute(
+                        "UPDATE story_arcs SET canonical_label = ? WHERE arc_id = ?",
+                        (promoted_arc_label, promoted_arc_id),
+                    )
+                    promoted_arc_ids.add(promoted_arc_id)
                 hierarchy = store.get_story_hierarchy(conn, story_id)
 
                 assignments.append({
@@ -457,6 +542,11 @@ def track(
         conn.close()
 
     _record_story_match_verification_totals(match_decisions)
+    _record_matching_audit_totals(
+        same_day_decisions,
+        match_decisions,
+        list(arc_assignments.values()),
+    )
     observability.update_run_totals(
         story_developments_saved=len(story_groups),
         story_parent_attachments=arc_attachment_count,
@@ -465,6 +555,7 @@ def track(
         story_new_arcs=new_arc_count,
         story_new_parent_arcs=new_parent_count,
         story_unmatched_new_stories=new_parent_count,
+        story_arc_label_promotions=len(promoted_arc_ids),
     )
     logger.info(
         "Tracked %s stories (%s new arcs, %s new arc attachments)",

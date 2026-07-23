@@ -202,7 +202,10 @@ def profile_from_articles(
         profile_id=resolved_id,
         label=resolved_label,
         theme=themes[0] if themes else "",
-        date=_profile_date(item.get("published_at") for item in items),
+        date=_profile_date(
+            item.get("editorial_date") or item.get("published_at")
+            for item in items
+        ),
         article_ids=article_ids,
         occurrence_ids=occurrence_ids,
         titles=titles,

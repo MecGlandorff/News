@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 
 SAME_DAY_PROMPT_VERSION = "2026-07-23-v1"
 SAME_DAY_CASES_PER_CALL = 25
+SAME_DAY_CANDIDATES_PER_ARTICLE = 5
 SAME_DAY_PROMPT = """You decide whether two current news articles describe the same
 specific real-world event or a direct continuation of that event.
 
@@ -103,27 +104,35 @@ def _ordered_edge(
 
 
 def same_day_candidate_edges(profiles: Iterable[MatchProfile]) -> list[CandidateEdge]:
-    """Retrieve sparse article pairs plus all pairs sharing a classifier label."""
+    """Retrieve a capped set of evidence pairs, using labels only as a signal."""
     items = list(profiles)
     rare = rare_tokens(items)
     by_key: dict[tuple[str, str], CandidateEdge] = {}
 
     for index, current in enumerate(items):
+        local_edges: dict[tuple[str, str], CandidateEdge] = {}
         for retrieved in retrieve_candidates(current, items[index + 1:]):
             edge = _ordered_edge(current, retrieved.profile, retrieved.signals)
-            by_key[edge.key] = edge
-
-    for index, left in enumerate(items):
+            local_edges[edge.key] = edge
         for right in items[index + 1:]:
             exact_classifier_label = (
-                bool(normalize_text(left.label))
-                and normalize_text(left.label) == normalize_text(right.label)
+                bool(normalize_text(current.label))
+                and normalize_text(current.label) == normalize_text(right.label)
             )
-            exact_url = bool(left.urls & right.urls)
+            exact_url = bool(current.urls & right.urls)
             if not exact_classifier_label and not exact_url:
                 continue
-            signals = candidate_signals(left, right, rare=rare)
-            edge = _ordered_edge(left, right, signals)
+            signals = candidate_signals(current, right, rare=rare)
+            edge = _ordered_edge(current, right, signals)
+            if exact_url:
+                by_key[edge.key] = edge
+            else:
+                local_edges[edge.key] = edge
+        ranked_local = sorted(
+            local_edges.values(),
+            key=lambda edge: (-edge.signals.score, edge.key),
+        )
+        for edge in ranked_local[:SAME_DAY_CANDIDATES_PER_ARTICLE]:
             by_key[edge.key] = edge
 
     return sorted(
@@ -460,3 +469,23 @@ def group_today_articles(
         len(groups),
     )
     return groups, decisions
+
+
+def groups_as_story_mapping(
+    groups: Iterable[TodayStoryGroup],
+) -> dict[str, list[Mapping[str, object]]]:
+    """Return unique grounded labels for the legacy tracker mapping contract."""
+    items = list(groups)
+    label_counts = Counter(normalize_text(group.label) for group in items)
+    mapped: dict[str, list[Mapping[str, object]]] = {}
+    for group in items:
+        label = group.label
+        if label_counts[normalize_text(label)] > 1:
+            label = group.profile.titles[0] if group.profile.titles else label
+        base = label
+        suffix = 2
+        while label in mapped:
+            label = f"{base} ({suffix})"
+            suffix += 1
+        mapped[label] = list(group.articles)
+    return mapped
