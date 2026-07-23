@@ -33,7 +33,7 @@ def _fetch_article_text_for_match(url):
     return fetch_article_text(url)
 
 
-def _callbacks_for(client_factory):
+def _callbacks_for(client_factory, reasoning_effort):
     resolved_client_factory = (
         client_factory if client_factory is not None else get_openai_client
     )
@@ -42,7 +42,7 @@ def _callbacks_for(client_factory):
             articles,
             get_client=resolved_client_factory,
             model=TRACKER_MODEL,
-            reasoning_effort=MATCHING_REASONING_EFFORT,
+            reasoning_effort=reasoning_effort,
         )
         return story_matching.groups_as_story_mapping(groups), decisions
 
@@ -53,7 +53,7 @@ def _callbacks_for(client_factory):
             groups,
             get_client=resolved_client_factory,
             model=CROSSDAY_MATCH_MODEL,
-            reasoning_effort=MATCHING_REASONING_EFFORT,
+            reasoning_effort=reasoning_effort,
         )
 
     return (
@@ -93,7 +93,7 @@ def _callbacks_for(client_factory):
             groups,
             get_client=resolved_client_factory,
             model=ARC_ASSIGNMENT_MODEL,
-            reasoning_effort=MATCHING_REASONING_EFFORT,
+            reasoning_effort=reasoning_effort,
         ),
         group_with_evidence,
         match_with_evidence,
@@ -114,7 +114,10 @@ def track(
     match_labels=None,
     verify_matches=None,
     assign_arcs=None,
+    matching_reasoning_effort=MATCHING_REASONING_EFFORT,
 ):
+    if matching_reasoning_effort not in {"none", "low"}:
+        raise ValueError("matching_reasoning_effort must be 'none' or 'low'")
     (
         default_consolidate,
         default_match,
@@ -123,7 +126,7 @@ def track(
         default_evidence_assign,
         default_group_evidence,
         default_match_evidence,
-    ) = _callbacks_for(client_factory)
+    ) = _callbacks_for(client_factory, matching_reasoning_effort)
     use_evidence_grouping = verify_story_matches and consolidate_today is None
     use_evidence_crossday = (
         verify_story_matches
