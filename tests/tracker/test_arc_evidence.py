@@ -50,9 +50,8 @@ def _payload(
     def response(kwargs):
         cases = json.loads(kwargs["messages"][1]["content"])["cases"]
         return {
-            "decisions": [
-                {
-                    "case_id": case["case_id"],
+            "decisions": {
+                case["response_key"]: {
                     "belongs_to_arc": accepted,
                     "container_type": "named_event",
                     "relationship": relationship,
@@ -64,7 +63,7 @@ def _payload(
                     "reject_reason": "" if accepted else "Different arc.",
                 }
                 for case in cases
-            ]
+            }
         }
 
     return response
@@ -190,7 +189,7 @@ def test_arc_gate_rejects_non_event_container_even_if_model_accepts():
     }
     def recurring_payload(kwargs):
         response = _payload()(kwargs)
-        response["decisions"][0]["container_type"] = "recurring_format"
+        response["decisions"]["case_1"]["container_type"] = "recurring_format"
         return response
 
     client = FakeLLMClient(recurring_payload)
@@ -243,9 +242,12 @@ def test_arc_call_uses_strict_schema_and_effort():
     decisions_schema = captured[0]["response_format"]["json_schema"]["schema"][
         "properties"
     ]["decisions"]
-    assert decisions_schema["minItems"] == 1
-    assert decisions_schema["maxItems"] == 1
-    item_schema = decisions_schema["items"]
+    assert decisions_schema["type"] == "object"
+    assert decisions_schema["required"] == ["case_1"]
+    assert set(decisions_schema["properties"]) == {"case_1"}
+    item_schema = captured[0]["response_format"]["json_schema"]["schema"][
+        "$defs"
+    ]["decision"]
     assert "container_type" in item_schema["required"]
 
 
@@ -294,22 +296,20 @@ def test_tracker_promotes_grounded_one_story_arc_and_records_audit(
     def reject_same_story(kwargs):
         case = json.loads(kwargs["messages"][1]["content"])["cases"][0]
         return {
-            "decisions": [{
-                "case_id": case["case_id"],
+            "decisions": {case["response_key"]: {
                 "same_story": False,
                 "relationship": "related_context",
                 "confidence": "high",
                 "shared_anchors": ["Tour de France", "2026"],
                 "conflicts": [],
                 "reject_reason": "A distinct stage development.",
-            }]
+            }}
         }
 
     def accept_arc(kwargs):
         case = json.loads(kwargs["messages"][1]["content"])["cases"][0]
         return {
-            "decisions": [{
-                "case_id": case["case_id"],
+            "decisions": {case["response_key"]: {
                 "belongs_to_arc": True,
                 "container_type": "named_event",
                 "relationship": "same_arc",
@@ -319,7 +319,7 @@ def test_tracker_promotes_grounded_one_story_arc_and_records_audit(
                 "parent_story_id": None,
                 "proposed_arc_label": "Tour de France 2026",
                 "reject_reason": "",
-            }]
+            }}
         }
 
     client = FakeLLMClient([reject_same_story, accept_arc])

@@ -179,8 +179,7 @@ def test_story_match_verifier_rejects_gaza_detention_false_merge(tmp_path):
     def story_rejection(kwargs):
         case = json.loads(kwargs["messages"][1]["content"])["cases"][0]
         return {
-            "decisions": [{
-                "case_id": case["case_id"],
+            "decisions": {case["response_key"]: {
                 "same_story": False,
                 "relationship": "related_context",
                 "confidence": "high",
@@ -190,14 +189,13 @@ def test_story_match_verifier_rejects_gaza_detention_false_merge(tmp_path):
                     "The article concerns Palestinian detainees generally, "
                     "not the flotilla raid or detained flotilla activists."
                 ),
-            }]
+            }}
         }
 
     def arc_rejection(kwargs):
         case = json.loads(kwargs["messages"][1]["content"])["cases"][0]
         return {
-            "decisions": [{
-                "case_id": case["case_id"],
+            "decisions": {case["response_key"]: {
                 "belongs_to_arc": False,
                 "container_type": "broad_topic",
                 "relationship": "related_context",
@@ -209,7 +207,7 @@ def test_story_match_verifier_rejects_gaza_detention_false_merge(tmp_path):
                 "reject_reason": (
                     "The detention abuse coverage is not part of the flotilla arc."
                 ),
-            }]
+            }}
         }
 
     client = _fake_tracker_client_sequence([story_rejection, arc_rejection])

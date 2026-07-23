@@ -80,18 +80,54 @@ def _story_decision_response_format(name: str) -> dict:
     )
 
 
-def with_exact_decision_count(
+def decision_response_keys(decision_count: int) -> list[str]:
+    if decision_count < 1:
+        raise ValueError("decision_count must be at least 1")
+    return [f"case_{index + 1}" for index in range(decision_count)]
+
+
+def keyed_decision_response_format(
     response_format: dict[str, Any],
     decision_count: int,
 ) -> dict[str, Any]:
-    """Return a strict response format requiring one result per supplied case."""
-    if decision_count < 1:
-        raise ValueError("decision_count must be at least 1")
-    exact_format = deepcopy(response_format)
-    decisions = exact_format["json_schema"]["schema"]["properties"]["decisions"]
-    decisions["minItems"] = decision_count
-    decisions["maxItems"] = decision_count
-    return exact_format
+    """Require every stable response key exactly once without copying case IDs."""
+    response_keys = decision_response_keys(decision_count)
+    keyed_format = deepcopy(response_format)
+    root_schema = keyed_format["json_schema"]["schema"]
+    decision_schema = root_schema["properties"]["decisions"]["items"]
+    decision_schema["properties"].pop("case_id")
+    decision_schema["required"].remove("case_id")
+    root_schema["properties"]["decisions"] = {
+        "type": "object",
+        "properties": {
+            response_key: {"$ref": "#/$defs/decision"}
+            for response_key in response_keys
+        },
+        "required": response_keys,
+        "additionalProperties": False,
+    }
+    root_schema["$defs"] = {"decision": decision_schema}
+    return keyed_format
+
+
+def decisions_by_case_id(
+    raw_decisions: object,
+    case_ids: list[str],
+) -> tuple[dict[str, dict[str, Any]], bool]:
+    """Bind keyed model decisions back to internal opaque case IDs."""
+    response_keys = decision_response_keys(len(case_ids))
+    if not isinstance(raw_decisions, dict):
+        return {}, False
+    decisions = {}
+    for response_key, case_id in zip(response_keys, case_ids, strict=True):
+        raw = raw_decisions.get(response_key)
+        if isinstance(raw, dict):
+            decisions[case_id] = {**raw, "case_id": case_id}
+    complete = (
+        set(raw_decisions) == set(response_keys)
+        and len(decisions) == len(case_ids)
+    )
+    return decisions, complete
 
 
 SAME_DAY_DECISION_RESPONSE_FORMAT = _story_decision_response_format(

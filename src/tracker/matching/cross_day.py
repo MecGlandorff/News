@@ -26,11 +26,13 @@ from src.tracker.matching.profiles import (
 from src.tracker.matching.retrieval import CandidateSignals, retrieve_candidates
 from src.tracker.matching.schemas import (
     STORY_DECISION_RESPONSE_FORMAT,
-    with_exact_decision_count,
+    decision_response_keys,
+    decisions_by_case_id,
+    keyed_decision_response_format,
 )
 
 
-CROSS_DAY_PROMPT_VERSION = "2026-07-23-v4"
+CROSS_DAY_PROMPT_VERSION = "2026-07-23-v5"
 CROSS_DAY_CASES_PER_CALL = 25
 CROSS_DAY_PROMPT = """You decide whether a current article group continues one
 specific tracked news story.
@@ -51,7 +53,10 @@ continuity is ambiguous, return uncertain and same_story=false. An analysis or
 explainer may directly continue the incident it analyzes; article genre alone
 is not a conflict. retrieval_signals.shared_semantic_tokens are deterministic
 cross-language hints, not proof; require a distinctive combination rather than
-one generic token."""
+one generic token.
+
+Return one decision under every supplied response_key. Never alter, omit, or
+invent response keys."""
 
 
 @dataclass(frozen=True)
@@ -301,12 +306,25 @@ def match_story_groups(
             model_cases.append(case)
 
     for batch in _chunks(model_cases, CROSS_DAY_CASES_PER_CALL):
+        response_keys = decision_response_keys(len(batch))
         messages = [
             {"role": "system", "content": CROSS_DAY_PROMPT},
             {
                 "role": "user",
                 "content": json.dumps(
-                    {"cases": [_prompt_case(case) for case in batch]},
+                    {
+                        "cases": [
+                            {
+                                "response_key": response_key,
+                                **_prompt_case(case),
+                            }
+                            for response_key, case in zip(
+                                response_keys,
+                                batch,
+                                strict=True,
+                            )
+                        ]
+                    },
                     ensure_ascii=False,
                 ),
             },
@@ -317,7 +335,7 @@ def match_story_groups(
             messages=messages,
             purpose="match-crossday-evidence",
             prompt_version=CROSS_DAY_PROMPT_VERSION,
-            response_format=with_exact_decision_count(
+            response_format=keyed_decision_response_format(
                 STORY_DECISION_RESPONSE_FORMAT,
                 len(batch),
             ),
@@ -332,21 +350,13 @@ def match_story_groups(
             )
             continue
         raw_decisions = payload.get("decisions")
-        if not isinstance(raw_decisions, list):
+        by_case, complete = decisions_by_case_id(
+            raw_decisions,
+            [case.case_id for case in batch],
+        )
+        if not complete:
             mark_schema_failure(
-                "Cross-day response decisions must be an array",
-                response=response,
-            )
-            raw_decisions = []
-        by_case = {
-            raw.get("case_id"): raw
-            for raw in raw_decisions
-            if isinstance(raw, dict) and isinstance(raw.get("case_id"), str)
-        }
-        expected_ids = {case.case_id for case in batch}
-        if set(by_case) != expected_ids:
-            mark_schema_failure(
-                "Cross-day response must contain each supplied case exactly once",
+                "Cross-day response must contain every supplied response key",
                 response=response,
             )
         decisions.extend(
@@ -358,7 +368,7 @@ def match_story_groups(
             )
             for case in batch
         )
-        if not cache_hit and set(by_case) == expected_ids:
+        if not cache_hit and complete:
             save_cached_chat_completion(cache_metadata, response)
 
     label_map = {label: "NEW" for label in labels}

@@ -18,17 +18,12 @@ def _with_occurrence(article, occurrence_id):
     return {**article, "occurrence_id": occurrence_id}
 
 
-def _decision_payload(*decisions):
-    return {"decisions": list(decisions)}
-
-
 def _response_for_cases(*, same_story, relationship, anchors, conflicts=None):
     def payload(kwargs):
         request = json.loads(kwargs["messages"][1]["content"])
-        return _decision_payload(
-            *[
-                {
-                    "case_id": case["case_id"],
+        return {
+            "decisions": {
+                case["response_key"]: {
                     "same_story": same_story,
                     "relationship": relationship,
                     "confidence": "high",
@@ -37,8 +32,8 @@ def _response_for_cases(*, same_story, relationship, anchors, conflicts=None):
                     "reject_reason": "" if same_story else "Different concrete events.",
                 }
                 for case in request["cases"]
-            ]
-        )
+            }
+        }
 
     return payload
 
@@ -183,7 +178,7 @@ def test_missing_model_case_fails_closed():
         _with_occurrence(_article("a", "Tour de France stage result", "Tour de France"), 1),
         _with_occurrence(_article("b", "Tour de France standings", "Tour de France"), 2),
     ]
-    client = FakeLLMClient({"decisions": []})
+    client = FakeLLMClient({"decisions": {}})
 
     groups, decisions = group_today_articles(
         articles,
@@ -224,27 +219,24 @@ def test_complete_link_blocks_bridge_merge():
 
     def payload(kwargs):
         cases = json.loads(kwargs["messages"][1]["content"])["cases"]
-        decisions = []
+        decisions = {}
         for case in cases:
             titles = " ".join(case["left"]["titles"] + case["right"]["titles"])
             same_story = not (
                 "Alpha summit opens" in titles and "Beta accord hearing" in titles
             )
-            decisions.append(
-                {
-                    "case_id": case["case_id"],
-                    "same_story": same_story,
-                    "relationship": "same_event" if same_story else "unrelated",
-                    "confidence": "high",
-                    "shared_anchors": (
-                        ["Alpha summit", "Brussels"]
-                        if "Alpha summit opens" in titles
-                        else ["Beta accord", "hearing"]
-                    ),
-                    "conflicts": [],
-                    "reject_reason": "" if same_story else "Different events.",
-                }
-            )
+            decisions[case["response_key"]] = {
+                "same_story": same_story,
+                "relationship": "same_event" if same_story else "unrelated",
+                "confidence": "high",
+                "shared_anchors": (
+                    ["Alpha summit", "Brussels"]
+                    if "Alpha summit opens" in titles
+                    else ["Beta accord", "hearing"]
+                ),
+                "conflicts": [],
+                "reject_reason": "" if same_story else "Different events.",
+            }
         return {"decisions": decisions}
 
     groups, decisions = group_today_articles(
@@ -287,8 +279,9 @@ def test_same_day_call_uses_strict_schema_and_reasoning_effort():
     decisions_schema = captured[0]["response_format"]["json_schema"]["schema"][
         "properties"
     ]["decisions"]
-    assert decisions_schema["minItems"] == 1
-    assert decisions_schema["maxItems"] == 1
+    assert decisions_schema["type"] == "object"
+    assert decisions_schema["required"] == ["case_1"]
+    assert set(decisions_schema["properties"]) == {"case_1"}
 
 
 def test_mapping_disambiguates_split_identical_classifier_labels_with_titles():

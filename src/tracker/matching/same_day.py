@@ -34,13 +34,15 @@ from src.tracker.matching.retrieval import (
 )
 from src.tracker.matching.schemas import (
     SAME_DAY_DECISION_RESPONSE_FORMAT,
-    with_exact_decision_count,
+    decision_response_keys,
+    decisions_by_case_id,
+    keyed_decision_response_format,
 )
 
 
 logger = logging.getLogger(__name__)
 
-SAME_DAY_PROMPT_VERSION = "2026-07-23-v4"
+SAME_DAY_PROMPT_VERSION = "2026-07-23-v5"
 SAME_DAY_CASES_PER_CALL = 25
 SAME_DAY_CANDIDATES_PER_ARTICLE = 5
 SAME_DAY_PROMPT = """You decide whether two current news articles describe the same
@@ -64,6 +66,9 @@ Copy anchors from the supplied evidence in its original language; do not
 translate them. List only mutually incompatible identity facts in conflicts,
 not ordinary follow-up differences. If the evidence is incomplete or ambiguous,
 return uncertain and same_story=false.
+
+Return one decision under every supplied response_key. Never alter, omit, or
+invent response keys.
 
 An analysis, explainer, or commentary can continue the same story as a breaking
 report when both clearly refer to the same unusual incident; article genre alone
@@ -348,12 +353,25 @@ def judge_same_day_edges(
             model_edges.append(edge)
 
     for batch in _chunked(model_edges, SAME_DAY_CASES_PER_CALL):
+        response_keys = decision_response_keys(len(batch))
         messages = [
             {"role": "system", "content": SAME_DAY_PROMPT},
             {
                 "role": "user",
                 "content": json.dumps(
-                    {"cases": [_case_for_prompt(edge) for edge in batch]},
+                    {
+                        "cases": [
+                            {
+                                "response_key": response_key,
+                                **_case_for_prompt(edge),
+                            }
+                            for response_key, edge in zip(
+                                response_keys,
+                                batch,
+                                strict=True,
+                            )
+                        ]
+                    },
                     ensure_ascii=False,
                 ),
             },
@@ -364,7 +382,7 @@ def judge_same_day_edges(
             messages=messages,
             purpose="match-sameday-evidence",
             prompt_version=SAME_DAY_PROMPT_VERSION,
-            response_format=with_exact_decision_count(
+            response_format=keyed_decision_response_format(
                 SAME_DAY_DECISION_RESPONSE_FORMAT,
                 len(batch),
             ),
@@ -379,21 +397,13 @@ def judge_same_day_edges(
             )
             continue
         raw_decisions = payload.get("decisions")
-        if not isinstance(raw_decisions, list):
+        by_case, complete = decisions_by_case_id(
+            raw_decisions,
+            [edge.case_id for edge in batch],
+        )
+        if not complete:
             mark_schema_failure(
-                "Same-day response decisions must be an array",
-                response=response,
-            )
-            raw_decisions = []
-        by_case = {
-            raw.get("case_id"): raw
-            for raw in raw_decisions
-            if isinstance(raw, dict) and isinstance(raw.get("case_id"), str)
-        }
-        expected_ids = {edge.case_id for edge in batch}
-        if set(by_case) != expected_ids:
-            mark_schema_failure(
-                "Same-day response must contain each supplied case exactly once",
+                "Same-day response must contain every supplied response key",
                 response=response,
             )
         decisions.extend(
@@ -405,7 +415,7 @@ def judge_same_day_edges(
             )
             for edge in batch
         )
-        if not cache_hit and set(by_case) == expected_ids:
+        if not cache_hit and complete:
             save_cached_chat_completion(cache_metadata, response)
     return decisions
 

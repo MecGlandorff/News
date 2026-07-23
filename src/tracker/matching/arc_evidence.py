@@ -28,11 +28,13 @@ from src.tracker.matching.profiles import (
 from src.tracker.matching.retrieval import CandidateSignals, retrieve_candidates
 from src.tracker.matching.schemas import (
     ARC_DECISION_RESPONSE_FORMAT,
-    with_exact_decision_count,
+    decision_response_keys,
+    decisions_by_case_id,
+    keyed_decision_response_format,
 )
 
 
-ARC_EVIDENCE_PROMPT_VERSION = "2026-07-23-v4"
+ARC_EVIDENCE_PROMPT_VERSION = "2026-07-23-v5"
 ARC_EVIDENCE_CASES_PER_CALL = 20
 ARC_EVIDENCE_PROMPT = """You decide whether a new concrete news story belongs
 inside one existing named, continuing real-world event arc.
@@ -61,7 +63,10 @@ evidence is ambiguous, return uncertain and belongs_to_arc=false. Copy anchors
 from the supplied evidence in its original language. Do not list the expected
 difference between two developments, a follow-up sequence, or an overly narrow
 arc label as a conflict; conflicts are mutually incompatible container identity
-facts."""
+facts.
+
+Return one decision under every supplied response_key. Never alter, omit, or
+invent response keys."""
 
 RECURRING_FORMAT_TERMS = {
     "B&B Vol Liefde",
@@ -455,12 +460,25 @@ def assign_story_arcs_evidence(
             model_cases.append(case)
 
     for batch in _chunks(model_cases, ARC_EVIDENCE_CASES_PER_CALL):
+        response_keys = decision_response_keys(len(batch))
         messages = [
             {"role": "system", "content": ARC_EVIDENCE_PROMPT},
             {
                 "role": "user",
                 "content": json.dumps(
-                    {"cases": [_prompt_case(case) for case in batch]},
+                    {
+                        "cases": [
+                            {
+                                "response_key": response_key,
+                                **_prompt_case(case),
+                            }
+                            for response_key, case in zip(
+                                response_keys,
+                                batch,
+                                strict=True,
+                            )
+                        ]
+                    },
                     ensure_ascii=False,
                 ),
             },
@@ -471,7 +489,7 @@ def assign_story_arcs_evidence(
             messages=messages,
             purpose="match-arc-evidence",
             prompt_version=ARC_EVIDENCE_PROMPT_VERSION,
-            response_format=with_exact_decision_count(
+            response_format=keyed_decision_response_format(
                 ARC_DECISION_RESPONSE_FORMAT,
                 len(batch),
             ),
@@ -486,21 +504,13 @@ def assign_story_arcs_evidence(
             )
             continue
         raw_decisions = payload.get("decisions")
-        if not isinstance(raw_decisions, list):
+        by_case, complete = decisions_by_case_id(
+            raw_decisions,
+            [case.case_id for case in batch],
+        )
+        if not complete:
             mark_schema_failure(
-                "Arc response decisions must be an array",
-                response=response,
-            )
-            raw_decisions = []
-        by_case = {
-            raw.get("case_id"): raw
-            for raw in raw_decisions
-            if isinstance(raw, dict) and isinstance(raw.get("case_id"), str)
-        }
-        expected_ids = {case.case_id for case in batch}
-        if set(by_case) != expected_ids:
-            mark_schema_failure(
-                "Arc response must contain each supplied case exactly once",
+                "Arc response must contain every supplied response key",
                 response=response,
             )
         decisions.extend(
@@ -512,7 +522,7 @@ def assign_story_arcs_evidence(
             )
             for case in batch
         )
-        if not cache_hit and set(by_case) == expected_ids:
+        if not cache_hit and complete:
             save_cached_chat_completion(cache_metadata, response)
 
     by_label: dict[str, list[dict[str, Any]]] = {}

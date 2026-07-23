@@ -59,15 +59,14 @@ def test_default_same_day_evidence_decisions_are_persisted_and_counted(
     def reject_pair(kwargs):
         case = json.loads(kwargs["messages"][1]["content"])["cases"][0]
         return {
-            "decisions": [{
-                "case_id": case["case_id"],
+            "decisions": {case["response_key"]: {
                 "same_story": False,
                 "relationship": "unrelated",
                 "confidence": "high",
                 "shared_anchors": [],
                 "conflicts": [],
                 "reject_reason": "Different clubs and transfer negotiations.",
-            }]
+            }}
         }
 
     client = _fake_tracker_client_sequence([reject_pair])
@@ -296,15 +295,14 @@ def test_evidence_matching_uses_rss_evidence_without_fetching_full_text(
     def match_response(kwargs):
         case = json.loads(kwargs["messages"][1]["content"])["cases"][0]
         return {
-            "decisions": [{
-                "case_id": case["case_id"],
+            "decisions": {case["response_key"]: {
                 "same_story": True,
                 "relationship": "direct_continuation",
                 "confidence": "high",
                 "shared_anchors": ["Iran", "proposal"],
                 "conflicts": [],
                 "reject_reason": "",
-            }]
+            }}
         }
 
     client = _fake_tracker_client_sequence([match_response], captured=captured)

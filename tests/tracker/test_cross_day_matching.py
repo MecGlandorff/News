@@ -31,9 +31,8 @@ def _payload(*, accepted, relationship, anchors):
     def response(kwargs):
         cases = json.loads(kwargs["messages"][1]["content"])["cases"]
         return {
-            "decisions": [
-                {
-                    "case_id": case["case_id"],
+            "decisions": {
+                case["response_key"]: {
                     "same_story": accepted,
                     "relationship": relationship,
                     "confidence": "high",
@@ -42,7 +41,7 @@ def _payload(*, accepted, relationship, anchors):
                     "reject_reason": "" if accepted else "Different event.",
                 }
                 for case in cases
-            ]
+            }
         }
 
     return response
@@ -241,5 +240,6 @@ def test_cross_day_uses_strict_schema_and_requested_effort():
     decisions_schema = captured[0]["response_format"]["json_schema"]["schema"][
         "properties"
     ]["decisions"]
-    assert decisions_schema["minItems"] == 1
-    assert decisions_schema["maxItems"] == 1
+    assert decisions_schema["type"] == "object"
+    assert decisions_schema["required"] == ["case_1"]
+    assert set(decisions_schema["properties"]) == {"case_1"}

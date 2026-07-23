@@ -15,22 +15,20 @@ def test_distinct_story_can_join_same_named_arc_without_parent_link(tmp_path):
     def story_rejection(kwargs):
         case = json.loads(kwargs["messages"][1]["content"])["cases"][0]
         return {
-            "decisions": [{
-                "case_id": case["case_id"],
+            "decisions": {case["response_key"]: {
                 "same_story": False,
                 "relationship": "related_context",
                 "confidence": "high",
                 "shared_anchors": ["Mali", "rebel"],
                 "conflicts": [],
                 "reject_reason": "A distinct military development.",
-            }]
+            }}
         }
 
     def arc_acceptance(kwargs):
         case = json.loads(kwargs["messages"][1]["content"])["cases"][0]
         return {
-            "decisions": [{
-                "case_id": case["case_id"],
+            "decisions": {case["response_key"]: {
                 "belongs_to_arc": True,
                 "container_type": "named_event",
                 "relationship": "same_arc",
@@ -40,7 +38,7 @@ def test_distinct_story_can_join_same_named_arc_without_parent_link(tmp_path):
                 "parent_story_id": None,
                 "proposed_arc_label": "Mali attacks",
                 "reject_reason": "",
-            }]
+            }}
         }
 
     client = _fake_tracker_client_sequence([story_rejection, arc_acceptance])
