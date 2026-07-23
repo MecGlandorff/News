@@ -7,7 +7,9 @@ from evals.run_matching_reconstruction import (
     ReconstructionError,
     _observed_review_decision,
     archive_database,
+    format_markdown_report,
     reconstruct_effort,
+    score_review_cases,
     snapshot_manifest,
 )
 from tests.tracker.support import _article
@@ -156,3 +158,106 @@ def test_review_case_accepts_any_reviewed_candidate_alias(tmp_path):
 
     assert observed == (True, "same_event", "mini")
     connection.close()
+
+
+def test_insufficient_evidence_is_reported_but_excluded_from_scoring(tmp_path):
+    db_path = tmp_path / "review.db"
+    connection = sqlite3.connect(db_path)
+    connection.executescript(
+        """
+        CREATE TABLE article_occurrences (
+            occurrence_id INTEGER PRIMARY KEY,
+            article_id TEXT NOT NULL,
+            editorial_date TEXT NOT NULL
+        );
+        CREATE TABLE occurrence_assignments (
+            occurrence_id INTEGER PRIMARY KEY,
+            story_id INTEGER NOT NULL,
+            arc_id INTEGER NOT NULL,
+            development_label TEXT NOT NULL
+        );
+        CREATE TABLE story_match_decisions (
+            decision_id INTEGER PRIMARY KEY,
+            run_id INTEGER NOT NULL,
+            today_label TEXT NOT NULL,
+            candidate_story_id INTEGER NOT NULL,
+            accepted INTEGER NOT NULL,
+            relationship TEXT NOT NULL,
+            decision_route TEXT NOT NULL
+        );
+        INSERT INTO article_occurrences VALUES
+            (1, 'today', '2026-07-22'),
+            (2, 'thin-evidence', '2026-07-21'),
+            (3, 'clear-evidence', '2026-07-21');
+        INSERT INTO occurrence_assignments VALUES
+            (1, 20, 20, 'Current label'),
+            (2, 30, 30, 'Thin label'),
+            (3, 31, 31, 'Clear label');
+        INSERT INTO story_match_decisions VALUES
+            (1, 7, 'Current label', 30, 0, 'uncertain', 'fail_closed'),
+            (2, 7, 'Current label', 31, 1, 'same_event', 'mini');
+        """
+    )
+    connection.close()
+    shared = {
+        "layer": "story",
+        "today_date": "2026-07-22",
+        "today_article_id": "today",
+        "candidate_date": "2026-07-21",
+        "expected_accepted": True,
+    }
+    review = score_review_cases(
+        db_path,
+        [
+            {
+                **shared,
+                "case_id": "thin",
+                "candidate_article_id": "thin-evidence",
+                "review_status": "insufficient_evidence",
+                "evidence_gap": "No retained description or body text.",
+            },
+            {
+                **shared,
+                "case_id": "clear",
+                "candidate_article_id": "clear-evidence",
+            },
+        ],
+        {"2026-07-22": 7},
+    )
+
+    assert review["cases"] == 2
+    assert review["scored_cases"] == 1
+    assert review["insufficient_evidence_cases"] == 1
+    assert review["accepted_positives"] == 1
+    assert review["clear_positive_recall"] == 1.0
+    assert review["results"][0]["outcome"] == "insufficient_evidence"
+
+    markdown = format_markdown_report(
+        {
+            "created_at": "2026-07-23T00:00:00+00:00",
+            "manifest": {
+                "start_date": "2026-07-21",
+                "end_date": "2026-07-22",
+                "article_count": 2,
+                "dates": [{}, {}],
+            },
+            "archive": "source-archive.db",
+            "review_dataset": "review.jsonl",
+            "active_database_replaced": False,
+            "efforts": [
+                {
+                    "effort": "none",
+                    "cost": {"cost_eur": 0.01},
+                    "review": review,
+                }
+            ],
+            "recommendation": {
+                "status": "incomplete",
+                "selected_effort": None,
+                "reason": "Both efforts are required.",
+            },
+        }
+    )
+
+    assert "These cases remain fail-closed" in markdown
+    assert "No retained description or body text." in markdown

@@ -26,6 +26,7 @@ MATCHING_CACHE_PURPOSES = (
     "match-crossday-evidence",
     "match-arc-evidence",
 )
+REVIEW_STATUSES = {"scorable", "insufficient_evidence"}
 
 
 class ReconstructionError(RuntimeError):
@@ -418,6 +419,20 @@ def load_review_cases(path: Path) -> list[dict[str, object]]:
                 raise ReconstructionError(
                     f"{path}:{line_number} expected_accepted must be boolean"
                 )
+            review_status = raw.get("review_status", "scorable")
+            if review_status not in REVIEW_STATUSES:
+                raise ReconstructionError(
+                    f"{path}:{line_number} review_status must be one of "
+                    f"{sorted(REVIEW_STATUSES)}"
+                )
+            if (
+                review_status == "insufficient_evidence"
+                and not str(raw.get("evidence_gap", "")).strip()
+            ):
+                raise ReconstructionError(
+                    f"{path}:{line_number} insufficient_evidence cases "
+                    "require evidence_gap"
+                )
             candidate_article_ids = raw.get("candidate_article_ids", [])
             if (
                 not isinstance(candidate_article_ids, list)
@@ -565,7 +580,10 @@ def score_review_cases(
                 run_ids_by_date,
             )
             expected = bool(case["expected_accepted"])
-            if observed and expected:
+            review_status = str(case.get("review_status", "scorable"))
+            if review_status == "insufficient_evidence":
+                outcome = "insufficient_evidence"
+            elif observed and expected:
                 outcome = "correct_accept"
             elif not observed and not expected:
                 outcome = "correct_reject"
@@ -582,23 +600,32 @@ def score_review_cases(
                     "outcome": outcome,
                     "relationship": relationship,
                     "route": route,
+                    "review_status": review_status,
                     "review_note": str(case.get("review_note", "")),
+                    "evidence_gap": str(case.get("evidence_gap", "")),
                 }
             )
     finally:
         connection.close()
 
-    positives = sum(1 for result in results if result["expected_accepted"])
+    scorable = [
+        result
+        for result in results
+        if result["review_status"] == "scorable"
+    ]
+    positives = sum(1 for result in scorable if result["expected_accepted"])
     accepted_positives = sum(
         1
-        for result in results
+        for result in scorable
         if result["expected_accepted"] and result["observed_accepted"]
     )
     corrupting = sum(
-        1 for result in results if result["outcome"] == "corrupting_accept"
+        1 for result in scorable if result["outcome"] == "corrupting_accept"
     )
     return {
         "cases": len(results),
+        "scored_cases": len(scorable),
+        "insufficient_evidence_cases": len(results) - len(scorable),
         "expected_positives": positives,
         "accepted_positives": accepted_positives,
         "clear_positive_recall": (
@@ -706,8 +733,8 @@ def format_markdown_report(report: dict[str, Any]) -> str:
         "",
         "## Effort Comparison",
         "",
-        "| Effort | Reviewed cases | Corrupting accepts | Clear-positive recall | Matching cost |",
-        "|---|---:|---:|---:|---:|",
+        "| Effort | Reviewed | Scored | Insufficient evidence | Corrupting accepts | Clear-positive recall | Matching cost |",
+        "|---|---:|---:|---:|---:|---:|---:|",
     ]
     for effort in report["efforts"]:
         review = effort["review"]
@@ -715,6 +742,8 @@ def format_markdown_report(report: dict[str, Any]) -> str:
         cost_text = "unavailable" if cost is None else f"EUR {cost:.4f}"
         lines.append(
             f"| {effort['effort']} | {review['cases']} | "
+            f"{review['scored_cases']} | "
+            f"{review['insufficient_evidence_cases']} | "
             f"{review['corrupting_accepts']} | "
             f"{_format_percent(review['clear_positive_recall'])} | {cost_text} |"
         )
@@ -745,6 +774,28 @@ def format_markdown_report(report: dict[str, Any]) -> str:
             lines.append(
                 f"- `{failure['case_id']}` ({failure['layer']}, "
                 f"{failure['outcome']}, route `{failure['route']}`)"
+            )
+    lines.extend(["", "## Insufficient Evidence", ""])
+    first_effort = next(iter(report["efforts"]), None)
+    insufficient = (
+        [
+            result
+            for result in first_effort["review"]["results"]
+            if result["outcome"] == "insufficient_evidence"
+        ]
+        if first_effort
+        else []
+    )
+    if not insufficient:
+        lines.append("No reviewed cases were excluded for insufficient evidence.")
+    else:
+        lines.append(
+            "These cases remain fail-closed and are excluded from quality scoring:"
+        )
+        for result in insufficient:
+            lines.append(
+                f"- `{result['case_id']}` ({result['layer']}): "
+                f"{result['evidence_gap']}"
             )
     lines.extend(
         [
