@@ -29,6 +29,7 @@ module = [
     "src.claims.types",
     "src.observability.database",
     "src.observability.state",
+    "src.tracker.matching.schemas",
     "src.tracker.occurrences",
     "src.tracker.replay",
 ]

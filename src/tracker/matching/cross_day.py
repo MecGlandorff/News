@@ -25,10 +25,9 @@ from src.tracker.matching.profiles import (
 )
 from src.tracker.matching.retrieval import CandidateSignals, retrieve_candidates
 from src.tracker.matching.schemas import (
-    STORY_DECISION_RESPONSE_FORMAT,
+    cross_day_decision_response_format,
     decision_response_keys,
     decisions_by_case_id,
-    keyed_decision_response_format,
 )
 
 
@@ -335,10 +334,7 @@ def match_story_groups(
             messages=messages,
             purpose="match-crossday-evidence",
             prompt_version=CROSS_DAY_PROMPT_VERSION,
-            response_format=keyed_decision_response_format(
-                STORY_DECISION_RESPONSE_FORMAT,
-                len(batch),
-            ),
+            response_format=cross_day_decision_response_format(len(batch)),
             reasoning_effort=reasoning_effort,
         )
         try:

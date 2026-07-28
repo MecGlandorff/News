@@ -33,10 +33,9 @@ from src.tracker.matching.retrieval import (
     retrieve_candidates,
 )
 from src.tracker.matching.schemas import (
-    SAME_DAY_DECISION_RESPONSE_FORMAT,
     decision_response_keys,
     decisions_by_case_id,
-    keyed_decision_response_format,
+    same_day_decision_response_format,
 )
 
 
@@ -382,10 +381,7 @@ def judge_same_day_edges(
             messages=messages,
             purpose="match-sameday-evidence",
             prompt_version=SAME_DAY_PROMPT_VERSION,
-            response_format=keyed_decision_response_format(
-                SAME_DAY_DECISION_RESPONSE_FORMAT,
-                len(batch),
-            ),
+            response_format=same_day_decision_response_format(len(batch)),
             reasoning_effort=reasoning_effort,
         )
         try:
