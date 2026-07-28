@@ -27,10 +27,9 @@ from src.tracker.matching.profiles import (
 )
 from src.tracker.matching.retrieval import CandidateSignals, retrieve_candidates
 from src.tracker.matching.schemas import (
-    ARC_DECISION_RESPONSE_FORMAT,
+    arc_decision_response_format,
     decision_response_keys,
     decisions_by_case_id,
-    keyed_decision_response_format,
 )
 
 
@@ -489,10 +488,7 @@ def assign_story_arcs_evidence(
             messages=messages,
             purpose="match-arc-evidence",
             prompt_version=ARC_EVIDENCE_PROMPT_VERSION,
-            response_format=keyed_decision_response_format(
-                ARC_DECISION_RESPONSE_FORMAT,
-                len(batch),
-            ),
+            response_format=arc_decision_response_format(len(batch)),
             reasoning_effort=reasoning_effort,
         )
         try:
