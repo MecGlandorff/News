@@ -47,6 +47,7 @@ def load_cases(path: Path, selected: list[str] | None = None) -> list[dict]:
             for value in expected["continuations"].values()
         ):
             raise ValueError("expected continuation refers to unknown memory")
+        score_case(case, None)  # Validate complete gold labels before paid execution.
     if selected:
         if not set(selected) <= ids:
             raise ValueError("unknown selected case ID")
@@ -162,17 +163,25 @@ def run(
                     write(directory / "response.json", response)
                 except (RuntimeError, ValueError, OSError) as exc:
                     error = f"{type(exc).__name__}: {exc}"
+                    terminal = "single" if strategy == "single" else "group"
+                    try:
+                        response = json.loads((directory / terminal / "final.json").read_text())
+                        write(directory / "response.json", response)
+                    except (OSError, ValueError):
+                        pass
                 calls = [
                     json.loads(path.read_text())
                     for path in sorted(directory.glob("*/metadata.json"))
                 ]
+                score = score_case(case, response)
+                score["strict_pass"] = score["strict_pass"] and error is None
                 trial = {
                     "case": case["id"],
                     "strategy": strategy,
                     "repeat": repeat,
                     "duration_seconds": round(time.monotonic() - begun, 3),
                     "error": error,
-                    "score": score_case(case, response),
+                    "score": score,
                     "calls": calls,
                 }
                 write(directory / "trial.json", trial)

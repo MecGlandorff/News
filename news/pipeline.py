@@ -22,6 +22,7 @@ from news.domain import (
 APP_ID = 0x4E455753
 MEMORY_DAYS = 14
 MEMORY_EVENTS = 30
+MAX_REQUEST_CHARS = 240_000
 
 
 def analyze(
@@ -33,12 +34,18 @@ def analyze(
     executable: str = "codex",
 ) -> dict:
     options = {"timeout": timeout, "executable": executable}
+    if len(canonical(payload)) > MAX_REQUEST_CHARS:
+        raise ValueError(
+            f"articles plus memory exceed {MAX_REQUEST_CHARS} characters; "
+            "reduce the input batch or start a separate backtest state"
+        )
     if strategy == "single":
         result = run_task("single", payload, artifact_dir / "single", **options)
     elif strategy == "staged":
         extracted = run_task("extract", payload, artifact_dir / "extract", **options)
         reduced = validate_extraction(payload, extracted)
         result = run_task("group", reduced, artifact_dir / "group", **options)
+        validate_result(reduced, result)
     else:
         raise ValueError(f"unknown strategy: {strategy}")
     validate_result(payload, result)

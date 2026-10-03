@@ -14,6 +14,11 @@ from news.domain import TIMEZONE, valid_day, valid_url, validate_input
 MAX_FEED_BYTES = 2_000_000
 
 
+class _NoDTD(ET.TreeBuilder):
+    def doctype(self, name, public_id, system_id):
+        raise ValueError("feed DTD/entity declarations are not supported")
+
+
 class _PlainText(HTMLParser):
     def __init__(self):
         super().__init__(convert_charrefs=True)
@@ -60,6 +65,10 @@ def _child_text(entry: ET.Element, *names: str) -> str:
     for name in names:
         for child in entry:
             if child.tag.rsplit("}", 1)[-1] == name:
+                if len(child):
+                    return (child.text or "") + "".join(
+                        ET.tostring(node, encoding="unicode") for node in child
+                    )
                 return "".join(child.itertext()).strip()
     return ""
 
@@ -68,9 +77,7 @@ def parse_feed(data: bytes, source: str, base_url: str, day: str, limit: int) ->
     valid_day(day)
     if len(data) > MAX_FEED_BYTES:
         raise ValueError("feed exceeds 2 MB")
-    if re.search(rb"<!\s*(?:DOCTYPE|ENTITY)", data, re.IGNORECASE):
-        raise ValueError("feed DTD/entity declarations are not supported")
-    root = ET.fromstring(data)
+    root = ET.fromstring(data, parser=ET.XMLParser(target=_NoDTD()))
     if root.tag.rsplit("}", 1)[-1] not in {"rss", "feed", "RDF"}:
         raise ValueError("response is not an RSS or Atom feed")
     articles, seen = [], set()

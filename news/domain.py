@@ -36,7 +36,12 @@ def valid_url(value: str) -> str:
     if not isinstance(value, str) or any(c.isspace() or ord(c) < 32 for c in value):
         raise ValueError("URL must be an absolute HTTP(S) URL without whitespace")
     parsed = urlsplit(value)
-    if parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.username:
+    if (
+        parsed.scheme not in {"http", "https"}
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+    ):
         raise ValueError("URL must be an absolute HTTP(S) URL without credentials")
     _ = parsed.port  # Reject malformed ports before network or Markdown rendering.
     return value
@@ -64,6 +69,7 @@ def validate_input(value: object) -> dict:
             raise ValueError(f"each article must contain exactly {sorted(fields)}")
         for key, limit in (("id", 100), ("source", 160), ("title", 500), ("text", 20_000)):
             _text(article[key], key, limit)
+        valid_url(article["url"])
         if article["id"] in ids or article["url"] in urls:
             raise ValueError("article IDs and URLs must be unique within a snapshot")
         ids.add(article["id"])
