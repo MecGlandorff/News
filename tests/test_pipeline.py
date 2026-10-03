@@ -136,3 +136,10 @@ def test_invalid_timeout_never_calls_model(snapshot, fake_model, tmp_path, timeo
     with pytest.raises(ValueError):
         pipeline.run(snapshot, tmp_path, timeout=timeout)
     assert not fake_model
+
+
+def test_combined_memory_is_bounded_before_model(snapshot, fake_model, tmp_path):
+    payload = dict(snapshot, memory=[{"id": "large", "quote": "x" * 240_000}])
+    with pytest.raises(ValueError, match="articles plus memory exceed"):
+        pipeline.analyze(payload, "single", tmp_path)
+    assert not fake_model

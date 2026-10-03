@@ -72,6 +72,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     except (ValueError, OSError, RuntimeError, sqlite3.Error, URLError, ParseError) as exc:
         print(f"news: {exc}", file=sys.stderr)
+        for note in getattr(exc, "__notes__", ()):
+            print(note, file=sys.stderr)
         return 1
     except KeyboardInterrupt:
         print("news: interrupted; accepted event memory was not partially written", file=sys.stderr)

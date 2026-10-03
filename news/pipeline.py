@@ -217,7 +217,13 @@ def run(
                     ),
                 )
         except BaseException as exc:
-            _write_json(directory / "failure.json", {"error": str(exc), "type": type(exc).__name__})
+            try:
+                _write_json(
+                    directory / "failure.json", {"error": str(exc), "type": type(exc).__name__}
+                )
+            except OSError:
+                pass  # Disk failures must not replace the original exception.
+            exc.add_note(f"Run artifacts: {directory}")
             raise
         return result, False
 

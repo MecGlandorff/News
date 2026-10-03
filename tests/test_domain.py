@@ -16,6 +16,8 @@ def test_input_is_copied_and_sorted(snapshot):
 @pytest.mark.parametrize(
     "field,value",
     [
+        ("url", []),
+        ("url", "https://:secret@example.test/a"),
         ("id", ""),
         ("source", "  "),
         ("title", []),
