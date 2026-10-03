@@ -100,3 +100,11 @@ def test_case_ids_cannot_escape_output_directory(case, tmp_path):
     experiment.write(path, [case])
     with pytest.raises(ValueError, match="filesystem-safe"):
         experiment.load_cases(path)
+
+
+@pytest.mark.parametrize("name", ["cases.json", "holdout.json"])
+def test_committed_corpora_have_valid_gold_and_input_contracts(name):
+    from news.domain import validate_result
+
+    for case in experiment.load_cases(Path("evals") / name):
+        validate_result(case["input"], golden(case))

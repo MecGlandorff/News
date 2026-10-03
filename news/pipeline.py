@@ -44,6 +44,10 @@ def analyze(
     elif strategy == "staged":
         extracted = run_task("extract", payload, artifact_dir / "extract", **options)
         reduced = validate_extraction(payload, extracted)
+        if len(canonical(reduced)) > MAX_REQUEST_CHARS:
+            raise ValueError(
+                f"extracted evidence plus memory exceed {MAX_REQUEST_CHARS} characters"
+            )
         result = run_task("group", reduced, artifact_dir / "group", **options)
         validate_result(reduced, result)
     else:

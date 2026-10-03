@@ -130,8 +130,8 @@ observed within 14 days. The complete article-plus-memory request is capped at
 never silently truncated to fit. These are small-workload limits, not a scalable
 retrieval architecture.
 
-The briefing identifies new and continuing events and shows which quoted text
-differs from the previous observation. That is **textual change**, not a semantic
+The briefing identifies new and continuing events and reports how many quotes
+differ from the previous observation. That is **textual change**, not a semantic
 novelty judgment. Labels and continuity are model interpretations. Exact quotes
 prove that text occurs in the captured source; they do not prove truth, relevance,
 independent corroboration or the correctness of the label. The first version
@@ -166,11 +166,17 @@ incomplete experiment, not lost artifacts. Budgets are ceilings, not guarantees
 that a run will complete within account limits.
 
 The [16-case corpus](evals/README.md) is explicitly synthetic and independently
-labeled. Repetitions reveal variation on those cases. They do not establish
+labeled. Four additional longer holdout cases live in `evals/holdout.json`; run
+them with `--cases evals/holdout.json`. Repetitions reveal variation on those cases. They do not establish
 general real-news quality. See [the recorded comparison](evals/RESULTS.md) for
 the measured choice of default and remaining gaps.
 
-For a new approach, create a Git worktree, keep the corpus and model settings
-fixed, and write a new task variant. Keep any tuning data separate from later
+For a new approach, create a Git worktree:
+
+```sh
+git worktree add -b experiments/my-approach ../News-my-approach from-scratch/main
+```
+
+Keep the corpus and model settings fixed and write a new task variant. Keep any tuning data separate from later
 holdout cases. Have another agent review failures and proposed changes before
 merging the small changes that earned their place.

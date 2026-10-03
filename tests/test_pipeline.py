@@ -143,3 +143,21 @@ def test_combined_memory_is_bounded_before_model(snapshot, fake_model, tmp_path)
     with pytest.raises(ValueError, match="articles plus memory exceed"):
         pipeline.analyze(payload, "single", tmp_path)
     assert not fake_model
+
+
+def test_extraction_cannot_expand_second_request_past_limit(snapshot, monkeypatch, tmp_path):
+    snapshot["articles"][0]["text"] = "x" * 12_000
+    calls = []
+
+    def expanding(task, payload, directory, **kwargs):
+        calls.append(task)
+        return {
+            "articles": [
+                {"article_id": "bridge-1", "quotes": ["x" * size for size in range(11_970, 12_000)]}
+            ]
+        }
+
+    monkeypatch.setattr(pipeline, "run_task", expanding)
+    with pytest.raises(ValueError, match="extracted evidence plus memory exceed"):
+        pipeline.analyze(dict(snapshot, memory=[]), "staged", tmp_path)
+    assert calls == ["extract"]
