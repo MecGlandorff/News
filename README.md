@@ -16,6 +16,20 @@ developments, sources, corrections and unresolved questions**. The existing
 `run` command below remains available for comparison. The prototype has not yet
 earned promotion through independent live evaluation.
 
+This `experiments/story-schema` branch tests a narrower decoding constraint with
+the same result fields, prompt, transport and runtime validator. Its nested
+schema branches require a new story to contain new event identities and empty
+prior continuity evidence; every event in an existing story requires at least
+one continuity reference. An existing story may still gain a distinct new event.
+The schema uses nested `anyOf` and shared definitions, as supported by the
+[official Structured Outputs guide](https://developers.openai.com/api/docs/guides/structured-outputs#supported-schemas).
+This moves existing structural rules into the supplied schema. It does **not**
+prevent a semantic false merge supported by an irrelevant but exact quote, or
+establish that a summary such as `Placeholder` is meaningful. The runtime guard
+remains necessary for capture IDs, quote spans, coverage and story/event references.
+Offline tests preserve those limitations explicitly. No live benefit is claimed
+until the frozen-payload comparison and independent timeline review are complete.
+
 ```sh
 python -m news story-run --input examples/day1.json --state .news/story-demo
 python -m news story-run --input examples/day2.json --state .news/story-demo
