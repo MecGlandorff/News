@@ -155,6 +155,8 @@ def retrieve(db: sqlite3.Connection, snapshot: dict, *, hits_per_article: int = 
                 for key, source in sources.items()
             ),
         )
+        # Merge replacement segments before querying this rebuilt snapshot.
+        db.execute("INSERT INTO source_search(source_search) VALUES ('optimize')")
     frequencies = dict(db.execute("SELECT term, doc FROM source_terms"))
     articles = [capture(article, snapshot["day"]) for article in snapshot["articles"]]
     diagnostics = {"archive_captures": len(sources), "queries": [], "selection": []}
