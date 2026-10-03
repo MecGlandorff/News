@@ -64,6 +64,9 @@ passing three selected trajectories would not certify general product quality.
 rubric/review bindings and the call ceiling before model execution. It preserves
 daily briefings and, for the story engine, full story timelines alongside model
 artifacts and a report. Semantic review remains a separate artifact.
+Links in the collected daily briefings open the story as known at that run.
+The separate `timelines/` exports contain each story's full accepted history at
+the end of the replay; they must not be mistaken for what an earlier run knew.
 
 ```sh
 python -m evals.evolution \

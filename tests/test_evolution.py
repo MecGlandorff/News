@@ -83,7 +83,11 @@ def fake_model(monkeypatch, *, fail_at=None, interruption=False):
         )
         if failed:
             raise KeyboardInterrupt() if interruption else RuntimeError("failed model call")
-        (directory / "briefing.md").write_text(f"# Observed {snapshot['day']}\n", encoding="utf-8")
+        (directory / "stories").mkdir()
+        (directory / "stories/s-bridge.md").write_text(snapshot["day"], encoding="utf-8")
+        (directory / "briefing.md").write_text(
+            f"# Observed {snapshot['day']}\n[Bridge](stories/s-bridge.md)\n", encoding="utf-8"
+        )
         return {"run_id": directory.name, "stories": [{"id": "s-bridge"}]}, False
 
     monkeypatch.setattr(evolution, "execute", run)
@@ -104,6 +108,12 @@ def test_replay_freezes_provenance_and_reader_outputs_without_rubric_leak(corpus
     assert report["calls_without_usage"] == 0
     assert report["semantic_review"].startswith("Pending")
     assert report["reader_outputs"] == ["daily-briefings.md", "timelines/s-bridge.md"]
+    aggregate = (corpus[3] / "daily-briefings.md").read_text()
+    for number, day in enumerate(("2026-05-01", "2026-05-20"), 1):
+        target = f"state/runs/run-{number}/stories/s-bridge.md"
+        assert f"]({target})" in aggregate
+        assert (corpus[3] / target).read_text() == day
+    assert "](stories/s-bridge.md)" not in aggregate
     for name, digest in report["reader_output_sha256"].items():
         assert sha256(corpus[3] / name) == digest
     manifest = read(corpus[3] / "manifest.json")

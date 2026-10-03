@@ -168,7 +168,13 @@ def evaluate(
             entry["run_id"] = result["run_id"]
             report["assigned_records"] += len(snapshot["articles"])
             directory = state / "runs" / result["run_id"]
-            briefings.append((directory / "briefing.md").read_text(encoding="utf-8"))
+            briefing = (directory / "briefing.md").read_text(encoding="utf-8")
+            for item in result.get("stories", []):
+                relative = directory.relative_to(output) / "stories" / f"{item['id']}.md"
+                briefing = briefing.replace(
+                    f"](stories/{item['id']}.md)", f"]({relative.as_posix()})"
+                )
+            briefings.append(briefing)
             stories.update(s["id"] for s in result.get("stories", []))
         except BaseException as exc:
             entry["error"] = f"{type(exc).__name__}: {exc}"
