@@ -1,0 +1,5 @@
+[
+  {"name": "NOS", "url": "https://feeds.nos.nl/nosnieuwsalgemeen"},
+  {"name": "BBC News", "url": "https://feeds.bbci.co.uk/news/rss.xml"},
+  {"name": "The Guardian", "url": "https://www.theguardian.com/world/rss"}
+]

@@ -31,7 +31,9 @@ def response_for(case):
 @pytest.mark.parametrize("case", CASES, ids=lambda case: case["id"])
 def test_labeled_partitions_pass_and_are_explicitly_synthetic(case):
     assert case["description"].startswith("SYNTHETIC:")
-    assert all(article["url"].startswith("https://example.test/") for article in case["input"]["articles"])
+    assert all(
+        article["url"].startswith("https://example.test/") for article in case["input"]["articles"]
+    )
     score = score_case(case, response_for(case))
     assert score["strict_pass"]
     assert score["valid"]
@@ -170,7 +172,10 @@ def test_non_exact_or_empty_quotes_reduce_coverage(quote):
 
 def test_quote_cannot_be_borrowed_from_title_or_another_article():
     case = BY_ID["same_event_sources"]
-    for replacement in (case["input"]["articles"][0]["title"], case["input"]["articles"][1]["text"]):
+    for replacement in (
+        case["input"]["articles"][0]["title"],
+        case["input"]["articles"][1]["text"],
+    ):
         response = response_for(case)
         response["events"][0]["evidence"][0]["quote"] = replacement
         score = score_case(case, response)

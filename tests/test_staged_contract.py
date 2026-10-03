@@ -8,6 +8,7 @@ these cases; no legacy output is accepted as a new event-matching oracle.
 from copy import deepcopy
 
 import pytest
+
 from news.domain import validate_extraction, validate_result
 from news.pipeline import analyze
 
@@ -49,8 +50,7 @@ def payload():
                         "article_id": "old1",
                         "source": "City News",
                         "quote": (
-                            "The Brook bridge in Bergen closed on Thursday "
-                            "after a truck collision."
+                            "The Brook bridge in Bergen closed on Thursday after a truck collision."
                         ),
                     }
                 ],
