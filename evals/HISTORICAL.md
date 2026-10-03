@@ -8,6 +8,56 @@ This experiment feeds those captured sources through the rebuild and compares
 event assignments with preserved old runs. It does not fetch current versions of
 article pages or rerun the latest legacy application.
 
+## Completed baseline
+
+Both fresh rebuild replays assigned all 158 articles and passed source-quote and
+coverage validation. On the selected 19-pair audit, both preserved ten of twelve
+positive connections and avoided all seven labeled incorrect merges.
+
+| Saved implementation / fresh replay | Selected positives matched | Incorrect merges / 7 negatives | Selected label agreement | Legacy-label agreement |
+|---|---:|---:|---:|---:|
+| Original live runs, `0b693b0` | 11/12 | 4 | 14/19 | 5/10 |
+| July 23 keyed reconstruction, `a31b2a2` | 8/12 | 0 | 15/19 | 9/10 |
+| Earlier July 23 reconstruction, `ede09e4` | 9/12 | 0 | 16/19 | 10/10 |
+| Rebuild `27929e6`, repetition 1 | 10/12 | 0 | 17/19 | 7/10 |
+| Rebuild `27929e6`, repetition 2 | 10/12 | 0 | 17/19 | 7/10 |
+
+These selected counts do **not** establish general superiority. The three legacy
+positive labels are disputed from RSS evidence, and all twelve additional
+positive labels are independent-agent judgments rather than human ground truth.
+
+Both new replays missed the Gandhi arrest/release follow-up and the Hegseth
+hearing update. Their predecessor events were absent from the later model input.
+In repetition 1, eligible memory before the four batches contained 0, 38, 58 and
+101 events, but the application exposed only 0, 30, 30 and 30. Two correctly
+separated negative pairs also lacked a predecessor in memory; only five of the
+seven negative checks actually presented both sides to the matcher.
+
+The evidence history has a separate problem: a later observation replaced the
+earlier Gandhi arrest quote with a broader protest quote. Increasing capacity
+alone is therefore not an established fix. The Hegseth event retained only a
+headline, omitting funding detail available in its captured RSS description.
+
+| Fresh rebuild replay | Calls | Failed calls | Runtime seconds | Input tokens | Cached input tokens | Output tokens |
+|---|---:|---:|---:|---:|---:|---:|
+| Repetition 1 | 4 | 0 | 552.975 | 84,683 | 19,968 | 13,374 |
+| Repetition 2 | 4 | 0 | 546.041 | 85,427 | 13,312 | 13,023 |
+
+Input totals include cached input. All eight calls used `gpt-6-astra`, medium,
+Codex CLI 0.160.0, with a 180-second deadline. Timing measures these calls, not a
+controlled comparison against the old pipeline's full runtime or monetary cost.
+The slowest first-replay call took 174.8 seconds, close to that deadline.
+
+[historical-results.json](historical-results.json) preserves the labels, scores,
+context-availability diagnostics and provenance without publishing the source
+article archive. Full local artifacts remain at
+`../experiments/historical/.news/historical/` relative to the clean worktree.
+The initial runner is retained at `replay-01/runner.py` and commit `aa2f189`;
+subsequent runner changes clarify accounting and reject null legacy assignments.
+Application code and task files stayed fixed throughout measurement. The
+comparison harness has six offline regression tests and was independently
+reviewed; the complete offline suite passed 215 tests before live measurement.
+
 ## Protocol
 
 - Use a read-only SQLite backup and copies of the two daily JSON snapshots.
