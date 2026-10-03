@@ -35,6 +35,7 @@ news run --input examples/day2.json
 
 Each command prints the run ID and path to its `briefing.md`. An identical input,
 strategy and prompt configuration reuses its accepted run without a model call.
+See the [generated day-two example](examples/briefing-day2.md).
 Re-render any accepted run entirely offline:
 
 ```sh
@@ -167,7 +168,8 @@ that a run will complete within account limits.
 
 The [16-case corpus](evals/README.md) is explicitly synthetic and independently
 labeled. Four additional longer holdout cases live in `evals/holdout.json`; run
-them with `--cases evals/holdout.json`. Repetitions reveal variation on those cases. They do not establish
+them with `--cases evals/holdout.json`. Repetitions reveal variation on those cases.
+They do not establish
 general real-news quality. See [the recorded comparison](evals/RESULTS.md) for
 the measured choice of default and remaining gaps.
 
@@ -177,6 +179,7 @@ For a new approach, create a Git worktree:
 git worktree add -b experiments/my-approach ../News-my-approach from-scratch/main
 ```
 
-Keep the corpus and model settings fixed and write a new task variant. Keep any tuning data separate from later
+Keep the corpus and model settings fixed and write a new task variant. Keep any
+tuning data separate from later
 holdout cases. Have another agent review failures and proposed changes before
 merging the small changes that earned their place.

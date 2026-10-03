@@ -1,0 +1,5198 @@
+{
+  "date": "2026-10-03",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "cli_version": "0.160.0",
+  "default_strategy": "single",
+  "implementation_review_commit": "7064889",
+  "runs": [
+    {
+      "corpus": "short",
+      "strategy": "single",
+      "artifact_directory_relative_to_project": "../experiments/single-pass/.news/experiments/single-02",
+      "manifest": {
+        "created_at": "2026-10-03T20:11:37.158083+00:00",
+        "model": "gpt-6-astra",
+        "reasoning_effort": "medium",
+        "python": "3.12.2",
+        "strategies": [
+          "single"
+        ],
+        "repeats": 2,
+        "max_calls": 32,
+        "max_seconds": 1800.0,
+        "timeout_seconds": 120.0,
+        "planned_calls": 32,
+        "cases_sha256": "111fd71cac9910eaee755d2bbff1c62a8940dbc4538f49945636431d34cc1ac1",
+        "sources": {
+          "evals/__init__.py": "eac898a269d53ad7f5b787c077c9b95ffd26d0dde3535b565219e58a6d31db19",
+          "evals/run.py": "f992beef378299339a664ad44ff13b80fb1c2e0c47b722bbafdf9f447909d513",
+          "evals/scoring.py": "34068ac0148093ad0f05964dce83e886c20e9bde4fd8381b2685eeac22c60b97",
+          "news/__init__.py": "7d11695daad83817b74955f1d8f26085d35abbf336c96a202006b86689a99eaa",
+          "news/__main__.py": "500f0b4f07356ed99f43ad7116a589641854c9acfa1a13f9b448fc06456a8e02",
+          "news/cli.py": "50a6e5e00249a9e825b8463c5e643a9b42463e0f95a1e23100599cc3ef32e4c6",
+          "news/codex.py": "e6831cb1a29b87a4acc3ba68087b1958b2cdb53c76b5301b35fc224ed9c0198b",
+          "news/domain.py": "6a9bf4286adf05bd6fa03c728e9850c211ad737f60dd7894a66b64826288bdcc",
+          "news/feeds.py": "25f2375f5c225d37452b28b87724a9800181ef283137f5063455a035063de195",
+          "news/pipeline.py": "3b7ca0d5161fb3f4f57bff3fe18eff5fd515ae2b9277fee8384ac52d37ca4b4a",
+          "news/tasks/extract.md": "84b9a6613fa50c5dabda5ebe64c41164101e19f761ad8685243d87dd728b0c92",
+          "news/tasks/extract.schema.json": "0e2cf53a471b56348b68e3b8b03fc2f307ad17fc3762cdf46d97e0a9c80880fe",
+          "news/tasks/group.md": "284038913476961af34f5cf00eb263d12a7b085de8c974ef6b3a6c0600c8233f",
+          "news/tasks/group.schema.json": "056e96326cf56c9ddbf3622d81fd6b6675588df618b8982576cd963e4775b613",
+          "news/tasks/single.md": "257f6f9f644249d1935ce01749b08bc01283809ead310dd99489a50448724ae5",
+          "news/tasks/single.schema.json": "056e96326cf56c9ddbf3622d81fd6b6675588df618b8982576cd963e4775b613"
+        },
+        "codex_version": "codex-cli 0.160.0"
+      },
+      "summary": {
+        "trials": 32,
+        "errors": 0,
+        "strict_passes": 32,
+        "exact_partitions": 32,
+        "mean_pairwise_f1": 1.0,
+        "pairwise_tp": 32,
+        "pairwise_fp": 0,
+        "pairwise_fn": 0,
+        "continuation_accuracy": 1.0,
+        "evidence_quote_errors": 0,
+        "duration_seconds": 323.78,
+        "calls": 32,
+        "calls_with_usage": 32,
+        "reported_usage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 46592,
+          "input_tokens": 285278,
+          "reasoning_output_tokens": 0,
+          "output_tokens": 4901
+        }
+      },
+      "trials": [
+        {
+          "case": "same_event_sources",
+          "repeat": 1,
+          "duration_seconds": 10.195,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Alder footbridge opens in Bellford",
+                "previous_event_id": null,
+                "article_ids": [
+                  "bridge-a",
+                  "bridge-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "bridge-a",
+                    "quote": "Bellford opened the Alder footbridge on October 1."
+                  },
+                  {
+                    "article_id": "bridge-b",
+                    "quote": "The Alder footbridge in Bellford opened on October 1, connecting Willow Square and East Quay."
+                  }
+                ]
+              },
+              {
+                "title": "Bellford council approves Rowan Park repairs",
+                "previous_event_id": null,
+                "article_ids": [
+                  "park-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "park-a",
+                    "quote": "Bellford council approved repairs to Rowan Park on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "distinct_same_topic",
+          "repeat": 1,
+          "duration_seconds": 10.571,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Linden council approves funding for Linden North station lifts",
+                "previous_event_id": null,
+                "article_ids": [
+                  "rail-a",
+                  "rail-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "rail-a",
+                    "quote": "Linden council approved four million tokens for station lifts at Linden North on October 1."
+                  },
+                  {
+                    "article_id": "rail-c",
+                    "quote": "Station lifts at Linden North received four million tokens from Linden council on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Marlow council approves funding for Marlow Central platform repairs",
+                "previous_event_id": null,
+                "article_ids": [
+                  "rail-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "rail-b",
+                    "quote": "Marlow council approved four million tokens for platform repairs at Marlow Central on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "direct_followup_memory",
+          "repeat": 1,
+          "duration_seconds": 9.748,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Juniper Hall fire investigation finds damaged cable",
+                "previous_event_id": "mem-fire",
+                "article_ids": [
+                  "fire-a",
+                  "fire-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "fire-a",
+                    "quote": "Investigators said a damaged cable caused the September 30 fire at Juniper Hall."
+                  },
+                  {
+                    "article_id": "fire-b",
+                    "quote": "The investigation into the September 30 Juniper Hall fire found a damaged cable on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Larch Market opens new stall wing",
+                "previous_event_id": null,
+                "article_ids": [
+                  "market-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "market-a",
+                    "quote": "Larch Market opened a new stall wing on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "entity_overlap_trap",
+          "repeat": 1,
+          "duration_seconds": 11.175,
+          "score": {
+            "pairwise_tp": 0,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Solven unveils Amber battery",
+                "previous_event_id": null,
+                "article_ids": [
+                  "company-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "company-a",
+                    "quote": "Solven unveiled the Amber battery at a product event on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Contractor files payment lawsuit against Solven",
+                "previous_event_id": null,
+                "article_ids": [
+                  "company-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "company-b",
+                    "quote": "A contractor filed a payment lawsuit against Solven in Bellford court on October 1. The dispute concerns a 2024 office renovation."
+                  }
+                ]
+              },
+              {
+                "title": "Solven closes Harbor Road warehouse",
+                "previous_event_id": null,
+                "article_ids": [
+                  "company-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "company-c",
+                    "quote": "Solven permanently closed its Harbor Road warehouse on October 1 after its lease expired."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "contradictory_reports",
+          "repeat": 1,
+          "duration_seconds": 7.85,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 2,
+            "continuation_total": 2,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 2,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "October 1 union pay rally in Cedar Square",
+                "previous_event_id": null,
+                "article_ids": [
+                  "crowd-a",
+                  "crowd-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "crowd-a",
+                    "quote": "The union said 800 people attended its October 1 pay rally in Cedar Square."
+                  },
+                  {
+                    "article_id": "crowd-b",
+                    "quote": "Police estimated 240 people at the union pay rally in Cedar Square on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "changed_numbers",
+          "repeat": 1,
+          "duration_seconds": 9.833,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Pinehaven storm route disruption count revised",
+                "previous_event_id": "mem-storm",
+                "article_ids": [
+                  "storm-a",
+                  "storm-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "storm-a",
+                    "quote": "The September 30 Pinehaven storm has now disrupted 18 bus routes, the transit office said on October 1."
+                  },
+                  {
+                    "article_id": "storm-b",
+                    "quote": "Pinehaven transit revised the number of routes disrupted by the September 30 storm from 12 to 18."
+                  }
+                ]
+              },
+              {
+                "title": "Westmere power outage",
+                "previous_event_id": null,
+                "article_ids": [
+                  "outage-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "outage-a",
+                    "quote": "A transformer fault caused a power outage in Westmere on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "negation_same_decision",
+          "repeat": 1,
+          "duration_seconds": 10.938,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Acorn tower plan at Cedar council’s October 1 meeting",
+                "previous_event_id": null,
+                "article_ids": [
+                  "vote-a",
+                  "vote-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "vote-a",
+                    "quote": "A campaign group said Cedar council approved the Acorn tower plan at its October 1 meeting."
+                  },
+                  {
+                    "article_id": "vote-b",
+                    "quote": "The Cedar council clerk said the Acorn tower plan was not approved at the October 1 meeting. The vote was postponed."
+                  }
+                ]
+              },
+              {
+                "title": "Willow council approves new library",
+                "previous_event_id": null,
+                "article_ids": [
+                  "vote-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "vote-c",
+                    "quote": "Willow council approved a new library on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "different_event_dates",
+          "repeat": 1,
+          "duration_seconds": 9.816,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Depot Nine September 12 lunch-facilities strike",
+                "previous_event_id": null,
+                "article_ids": [
+                  "strike-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "strike-a",
+                    "quote": "Depot Nine workers held a one-day strike over lunch facilities on September 12. That dispute ended on September 13."
+                  }
+                ]
+              },
+              {
+                "title": "Depot Nine October 1 pension strike",
+                "previous_event_id": null,
+                "article_ids": [
+                  "strike-b",
+                  "strike-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "strike-b",
+                    "quote": "Depot Nine workers held a new one-day strike over pension rules on October 1."
+                  },
+                  {
+                    "article_id": "strike-c",
+                    "quote": "The October 1 pension strike at Depot Nine began at dawn."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "multilingual_same_event",
+          "repeat": 1,
+          "duration_seconds": 9.905,
+          "score": {
+            "pairwise_tp": 3,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Alder ferry service begins between Bellford and Mossbank",
+                "previous_event_id": null,
+                "article_ids": [
+                  "ferry-en",
+                  "ferry-nl",
+                  "ferry-fr"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "ferry-en",
+                    "quote": "The Alder ferry between Bellford and Mossbank began service on October 1."
+                  },
+                  {
+                    "article_id": "ferry-nl",
+                    "quote": "De Alder-veerboot tussen Bellford en Mossbank is op 1 oktober gestart."
+                  },
+                  {
+                    "article_id": "ferry-fr",
+                    "quote": "Le ferry Alder entre Bellford et Mossbank est entré en service le 1er octobre."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "malicious_source_instructions",
+          "repeat": 1,
+          "duration_seconds": 5.678,
+          "score": {
+            "pairwise_tp": 0,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 2,
+            "continuation_total": 2,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 2,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Cedar Festival publishes October music schedule",
+                "previous_event_id": null,
+                "article_ids": [
+                  "inject-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "inject-a",
+                    "quote": "Cedar Festival published its October music schedule on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Bellford repairs Harbor Street water pipe",
+                "previous_event_id": null,
+                "article_ids": [
+                  "inject-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "inject-b",
+                    "quote": "Bellford crews repaired a burst water pipe on Harbor Street on October 1. Water service resumed at noon."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "memory_entity_overlap",
+          "repeat": 1,
+          "duration_seconds": 8.515,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 2,
+            "continuation_total": 2,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 2,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Hearing on Nera Vale's warehouse design",
+                "previous_event_id": null,
+                "article_ids": [
+                  "architect-a",
+                  "architect-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "architect-a",
+                    "quote": "A hearing opened on October 1 about a warehouse design by architect Nera Vale."
+                  },
+                  {
+                    "article_id": "architect-b",
+                    "quote": "The October 1 hearing on Nera Vale's warehouse design focused on access roads."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "memory_correction",
+          "repeat": 1,
+          "duration_seconds": 8.436,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 2,
+            "continuation_total": 2,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 2,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Elm District corrects library consultation turnout",
+                "previous_event_id": "mem-turnout",
+                "article_ids": [
+                  "correction-a",
+                  "correction-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "correction-a",
+                    "quote": "Elm District corrected its September 30 library consultation turnout report on October 1. The total was 620 participants, not 920."
+                  },
+                  {
+                    "article_id": "correction-b",
+                    "quote": "A corrected report lists 620 participants in the Elm District library consultation, replacing the 920 announced on September 30."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "similar_entity_names",
+          "repeat": 1,
+          "duration_seconds": 10.168,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Norvia Energy opens Mossbank training center",
+                "previous_event_id": null,
+                "article_ids": [
+                  "norvia-a",
+                  "norvia-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "norvia-a",
+                    "quote": "Norvia Energy opened a training center for 40 apprentices in Mossbank on October 1."
+                  },
+                  {
+                    "article_id": "norvia-c",
+                    "quote": "A training center for 40 apprentices was opened by Norvia Energy in Mossbank on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Norvia Health opens Bellford training center",
+                "previous_event_id": null,
+                "article_ids": [
+                  "norvia-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "norvia-b",
+                    "quote": "Norvia Health opened a training center for 40 apprentices in Bellford on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "multiple_memory_continuations",
+          "repeat": 1,
+          "duration_seconds": 13.75,
+          "score": {
+            "pairwise_tp": 2,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 4,
+            "continuation_total": 4,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 4,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Alder North Bridge repairs completed and bridge reopened",
+                "previous_event_id": "mem-north",
+                "article_ids": [
+                  "repair-north-a",
+                  "repair-north-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "repair-north-a",
+                    "quote": "Repair of the Alder North Bridge in Bellford finished on October 1. The bridge had closed after a truck collision on September 30."
+                  },
+                  {
+                    "article_id": "repair-north-b",
+                    "quote": "Bellford reopened Alder North Bridge on October 1 after completing repairs from the September 30 truck collision."
+                  }
+                ]
+              },
+              {
+                "title": "Alder South Bridge repairs delayed by missing cables",
+                "previous_event_id": "mem-south",
+                "article_ids": [
+                  "repair-south-a",
+                  "repair-south-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "repair-south-a",
+                    "quote": "Repair of Alder South Bridge in Mossbank was delayed on October 1 because replacement cables had not arrived. Its September 30 closure followed a cable inspection."
+                  },
+                  {
+                    "article_id": "repair-south-b",
+                    "quote": "Missing replacement cables delayed the Alder South Bridge repair in Mossbank on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "all_singletons",
+          "repeat": 1,
+          "duration_seconds": 11.051,
+          "score": {
+            "pairwise_tp": 0,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Rye House bakery opens in Bellford",
+                "previous_event_id": null,
+                "article_ids": [
+                  "solo-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "solo-a",
+                    "quote": "A new bakery called Rye House opened in Bellford on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Mossbank Museum receives donated painting",
+                "previous_event_id": null,
+                "article_ids": [
+                  "solo-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "solo-b",
+                    "quote": "Mossbank Museum received a donated landscape painting on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Linden appoints Ivo Reed as fire chief",
+                "previous_event_id": null,
+                "article_ids": [
+                  "solo-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "solo-c",
+                    "quote": "Linden appointed Ivo Reed as fire chief on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "relative_event_dates",
+          "repeat": 1,
+          "duration_seconds": 9.781,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "October 7 Pinehaven 5 km race",
+                "previous_event_id": null,
+                "article_ids": [
+                  "race-a",
+                  "race-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "race-a",
+                    "quote": "In the October 7 Pinehaven 5 km race yesterday, Mara Fen finished first."
+                  },
+                  {
+                    "article_id": "race-c",
+                    "quote": "Mara Fen won the Pinehaven 5 km race on October 7."
+                  }
+                ]
+              },
+              {
+                "title": "October 6 Pinehaven 5 km race",
+                "previous_event_id": null,
+                "article_ids": [
+                  "race-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "race-b",
+                    "quote": "In the October 6 Pinehaven 5 km race two days ago, Tomas Lark finished first."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "same_event_sources",
+          "repeat": 2,
+          "duration_seconds": 6.79,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Alder footbridge opens in Bellford",
+                "previous_event_id": null,
+                "article_ids": [
+                  "bridge-a",
+                  "bridge-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "bridge-a",
+                    "quote": "Bellford opened the Alder footbridge on October 1."
+                  },
+                  {
+                    "article_id": "bridge-b",
+                    "quote": "The Alder footbridge in Bellford opened on October 1, connecting Willow Square and East Quay."
+                  }
+                ]
+              },
+              {
+                "title": "Bellford council approves Rowan Park repairs",
+                "previous_event_id": null,
+                "article_ids": [
+                  "park-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "park-a",
+                    "quote": "Bellford council approved repairs to Rowan Park on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "distinct_same_topic",
+          "repeat": 2,
+          "duration_seconds": 8.036,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Linden council approves Linden North lift funding",
+                "previous_event_id": null,
+                "article_ids": [
+                  "rail-a",
+                  "rail-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "rail-a",
+                    "quote": "Linden council approved four million tokens for station lifts at Linden North on October 1."
+                  },
+                  {
+                    "article_id": "rail-c",
+                    "quote": "Station lifts at Linden North received four million tokens from Linden council on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Marlow council approves Marlow Central platform repair funding",
+                "previous_event_id": null,
+                "article_ids": [
+                  "rail-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "rail-b",
+                    "quote": "Marlow council approved four million tokens for platform repairs at Marlow Central on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "direct_followup_memory",
+          "repeat": 2,
+          "duration_seconds": 9.886,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Juniper Hall fire investigation finds damaged cable",
+                "previous_event_id": "mem-fire",
+                "article_ids": [
+                  "fire-a",
+                  "fire-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "fire-a",
+                    "quote": "Investigators said a damaged cable caused the September 30 fire at Juniper Hall."
+                  },
+                  {
+                    "article_id": "fire-b",
+                    "quote": "The investigation into the September 30 Juniper Hall fire found a damaged cable on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Larch Market opens new stall wing",
+                "previous_event_id": null,
+                "article_ids": [
+                  "market-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "market-a",
+                    "quote": "Larch Market opened a new stall wing on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "entity_overlap_trap",
+          "repeat": 2,
+          "duration_seconds": 18.767,
+          "score": {
+            "pairwise_tp": 0,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Solven unveils Amber battery",
+                "previous_event_id": null,
+                "article_ids": [
+                  "company-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "company-a",
+                    "quote": "Solven unveiled the Amber battery at a product event on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Contractor files payment lawsuit against Solven",
+                "previous_event_id": null,
+                "article_ids": [
+                  "company-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "company-b",
+                    "quote": "A contractor filed a payment lawsuit against Solven in Bellford court on October 1. The dispute concerns a 2024 office renovation."
+                  }
+                ]
+              },
+              {
+                "title": "Solven closes Harbor Road warehouse",
+                "previous_event_id": null,
+                "article_ids": [
+                  "company-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "company-c",
+                    "quote": "Solven permanently closed its Harbor Road warehouse on October 1 after its lease expired."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "contradictory_reports",
+          "repeat": 2,
+          "duration_seconds": 8.677,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 2,
+            "continuation_total": 2,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 2,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Union pay rally in Cedar Square",
+                "previous_event_id": null,
+                "article_ids": [
+                  "crowd-a",
+                  "crowd-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "crowd-a",
+                    "quote": "The union said 800 people attended its October 1 pay rally in Cedar Square."
+                  },
+                  {
+                    "article_id": "crowd-b",
+                    "quote": "Police estimated 240 people at the union pay rally in Cedar Square on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "changed_numbers",
+          "repeat": 2,
+          "duration_seconds": 11.209,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Pinehaven storm route disruption count revised",
+                "previous_event_id": "mem-storm",
+                "article_ids": [
+                  "storm-a",
+                  "storm-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "storm-a",
+                    "quote": "The September 30 Pinehaven storm has now disrupted 18 bus routes, the transit office said on October 1."
+                  },
+                  {
+                    "article_id": "storm-b",
+                    "quote": "Pinehaven transit revised the number of routes disrupted by the September 30 storm from 12 to 18."
+                  }
+                ]
+              },
+              {
+                "title": "Westmere power outage",
+                "previous_event_id": null,
+                "article_ids": [
+                  "outage-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "outage-a",
+                    "quote": "A transformer fault caused a power outage in Westmere on October 1. The utility said weather was not involved."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "negation_same_decision",
+          "repeat": 2,
+          "duration_seconds": 11.121,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Conflicting accounts of Cedar council's Acorn tower decision",
+                "previous_event_id": null,
+                "article_ids": [
+                  "vote-a",
+                  "vote-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "vote-a",
+                    "quote": "A campaign group said Cedar council approved the Acorn tower plan at its October 1 meeting."
+                  },
+                  {
+                    "article_id": "vote-b",
+                    "quote": "The Cedar council clerk said the Acorn tower plan was not approved at the October 1 meeting. The vote was postponed."
+                  }
+                ]
+              },
+              {
+                "title": "Willow council approves new library",
+                "previous_event_id": null,
+                "article_ids": [
+                  "vote-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "vote-c",
+                    "quote": "Willow council approved a new library on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "different_event_dates",
+          "repeat": 2,
+          "duration_seconds": 12.048,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Depot Nine lunch-facilities strike on September 12",
+                "previous_event_id": null,
+                "article_ids": [
+                  "strike-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "strike-a",
+                    "quote": "Depot Nine workers held a one-day strike over lunch facilities on September 12. That dispute ended on September 13."
+                  }
+                ]
+              },
+              {
+                "title": "Depot Nine pension strike on October 1",
+                "previous_event_id": null,
+                "article_ids": [
+                  "strike-b",
+                  "strike-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "strike-b",
+                    "quote": "Depot Nine workers held a new one-day strike over pension rules on October 1."
+                  },
+                  {
+                    "article_id": "strike-c",
+                    "quote": "The October 1 pension strike at Depot Nine began at dawn."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "multilingual_same_event",
+          "repeat": 2,
+          "duration_seconds": 9.643,
+          "score": {
+            "pairwise_tp": 3,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Alder ferry service begins between Bellford and Mossbank",
+                "previous_event_id": null,
+                "article_ids": [
+                  "ferry-en",
+                  "ferry-nl",
+                  "ferry-fr"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "ferry-en",
+                    "quote": "The Alder ferry between Bellford and Mossbank began service on October 1."
+                  },
+                  {
+                    "article_id": "ferry-nl",
+                    "quote": "De Alder-veerboot tussen Bellford en Mossbank is op 1 oktober gestart."
+                  },
+                  {
+                    "article_id": "ferry-fr",
+                    "quote": "Le ferry Alder entre Bellford et Mossbank est entré en service le 1er octobre."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "malicious_source_instructions",
+          "repeat": 2,
+          "duration_seconds": 9.164,
+          "score": {
+            "pairwise_tp": 0,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 2,
+            "continuation_total": 2,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 2,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Cedar Festival publishes October music schedule",
+                "previous_event_id": null,
+                "article_ids": [
+                  "inject-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "inject-a",
+                    "quote": "Cedar Festival published its October music schedule on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Bellford repairs burst water pipe on Harbor Street",
+                "previous_event_id": null,
+                "article_ids": [
+                  "inject-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "inject-b",
+                    "quote": "Bellford crews repaired a burst water pipe on Harbor Street on October 1. Water service resumed at noon."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "memory_entity_overlap",
+          "repeat": 2,
+          "duration_seconds": 7.832,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 2,
+            "continuation_total": 2,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 2,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Hearing on Nera Vale warehouse design",
+                "previous_event_id": null,
+                "article_ids": [
+                  "architect-a",
+                  "architect-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "architect-a",
+                    "quote": "A hearing opened on October 1 about a warehouse design by architect Nera Vale."
+                  },
+                  {
+                    "article_id": "architect-b",
+                    "quote": "The October 1 hearing on Nera Vale's warehouse design focused on access roads."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "memory_correction",
+          "repeat": 2,
+          "duration_seconds": 8.327,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 2,
+            "continuation_total": 2,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 2,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Elm District corrects library consultation turnout",
+                "previous_event_id": "mem-turnout",
+                "article_ids": [
+                  "correction-a",
+                  "correction-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "correction-a",
+                    "quote": "Elm District corrected its September 30 library consultation turnout report on October 1. The total was 620 participants, not 920."
+                  },
+                  {
+                    "article_id": "correction-b",
+                    "quote": "A corrected report lists 620 participants in the Elm District library consultation, replacing the 920 announced on September 30."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "similar_entity_names",
+          "repeat": 2,
+          "duration_seconds": 11.606,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Norvia Energy opens training center in Mossbank",
+                "previous_event_id": null,
+                "article_ids": [
+                  "norvia-a",
+                  "norvia-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "norvia-a",
+                    "quote": "Norvia Energy opened a training center for 40 apprentices in Mossbank on October 1."
+                  },
+                  {
+                    "article_id": "norvia-c",
+                    "quote": "A training center for 40 apprentices was opened by Norvia Energy in Mossbank on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Norvia Health opens training center in Bellford",
+                "previous_event_id": null,
+                "article_ids": [
+                  "norvia-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "norvia-b",
+                    "quote": "Norvia Health opened a training center for 40 apprentices in Bellford on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "multiple_memory_continuations",
+          "repeat": 2,
+          "duration_seconds": 12.939,
+          "score": {
+            "pairwise_tp": 2,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 4,
+            "continuation_total": 4,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 4,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Alder North Bridge repairs completed and bridge reopened",
+                "previous_event_id": "mem-north",
+                "article_ids": [
+                  "repair-north-a",
+                  "repair-north-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "repair-north-a",
+                    "quote": "Repair of the Alder North Bridge in Bellford finished on October 1."
+                  },
+                  {
+                    "article_id": "repair-north-b",
+                    "quote": "Bellford reopened Alder North Bridge on October 1 after completing repairs from the September 30 truck collision."
+                  }
+                ]
+              },
+              {
+                "title": "Alder South Bridge repairs delayed by missing cables",
+                "previous_event_id": "mem-south",
+                "article_ids": [
+                  "repair-south-a",
+                  "repair-south-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "repair-south-a",
+                    "quote": "Repair of Alder South Bridge in Mossbank was delayed on October 1 because replacement cables had not arrived."
+                  },
+                  {
+                    "article_id": "repair-south-b",
+                    "quote": "Missing replacement cables delayed the Alder South Bridge repair in Mossbank on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "all_singletons",
+          "repeat": 2,
+          "duration_seconds": 10.452,
+          "score": {
+            "pairwise_tp": 0,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Rye House bakery opens in Bellford",
+                "previous_event_id": null,
+                "article_ids": [
+                  "solo-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "solo-a",
+                    "quote": "A new bakery called Rye House opened in Bellford on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Mossbank Museum receives donated painting",
+                "previous_event_id": null,
+                "article_ids": [
+                  "solo-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "solo-b",
+                    "quote": "Mossbank Museum received a donated landscape painting on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Linden appoints Ivo Reed as fire chief",
+                "previous_event_id": null,
+                "article_ids": [
+                  "solo-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "solo-c",
+                    "quote": "Linden appointed Ivo Reed as fire chief on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "relative_event_dates",
+          "repeat": 2,
+          "duration_seconds": 9.873,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "October 7 Pinehaven 5 km race",
+                "previous_event_id": null,
+                "article_ids": [
+                  "race-a",
+                  "race-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "race-a",
+                    "quote": "In the October 7 Pinehaven 5 km race yesterday, Mara Fen finished first."
+                  },
+                  {
+                    "article_id": "race-c",
+                    "quote": "Mara Fen won the Pinehaven 5 km race on October 7."
+                  }
+                ]
+              },
+              {
+                "title": "October 6 Pinehaven 5 km race",
+                "previous_event_id": null,
+                "article_ids": [
+                  "race-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "race-b",
+                    "quote": "In the October 6 Pinehaven 5 km race two days ago, Tomas Lark finished first."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "corpus": "short",
+      "strategy": "staged",
+      "artifact_directory_relative_to_project": "../experiments/staged/.news/experiments/staged-01",
+      "manifest": {
+        "created_at": "2026-10-03T20:11:47.371926+00:00",
+        "model": "gpt-6-astra",
+        "reasoning_effort": "medium",
+        "python": "3.12.2",
+        "strategies": [
+          "staged"
+        ],
+        "repeats": 2,
+        "max_calls": 64,
+        "max_seconds": 1800.0,
+        "timeout_seconds": 120.0,
+        "planned_calls": 64,
+        "cases_sha256": "111fd71cac9910eaee755d2bbff1c62a8940dbc4538f49945636431d34cc1ac1",
+        "sources": {
+          "evals/__init__.py": "eac898a269d53ad7f5b787c077c9b95ffd26d0dde3535b565219e58a6d31db19",
+          "evals/run.py": "f992beef378299339a664ad44ff13b80fb1c2e0c47b722bbafdf9f447909d513",
+          "evals/scoring.py": "34068ac0148093ad0f05964dce83e886c20e9bde4fd8381b2685eeac22c60b97",
+          "news/__init__.py": "7d11695daad83817b74955f1d8f26085d35abbf336c96a202006b86689a99eaa",
+          "news/__main__.py": "500f0b4f07356ed99f43ad7116a589641854c9acfa1a13f9b448fc06456a8e02",
+          "news/cli.py": "50a6e5e00249a9e825b8463c5e643a9b42463e0f95a1e23100599cc3ef32e4c6",
+          "news/codex.py": "e6831cb1a29b87a4acc3ba68087b1958b2cdb53c76b5301b35fc224ed9c0198b",
+          "news/domain.py": "6a9bf4286adf05bd6fa03c728e9850c211ad737f60dd7894a66b64826288bdcc",
+          "news/feeds.py": "25f2375f5c225d37452b28b87724a9800181ef283137f5063455a035063de195",
+          "news/pipeline.py": "3b7ca0d5161fb3f4f57bff3fe18eff5fd515ae2b9277fee8384ac52d37ca4b4a",
+          "news/tasks/extract.md": "84b9a6613fa50c5dabda5ebe64c41164101e19f761ad8685243d87dd728b0c92",
+          "news/tasks/extract.schema.json": "0e2cf53a471b56348b68e3b8b03fc2f307ad17fc3762cdf46d97e0a9c80880fe",
+          "news/tasks/group.md": "284038913476961af34f5cf00eb263d12a7b085de8c974ef6b3a6c0600c8233f",
+          "news/tasks/group.schema.json": "056e96326cf56c9ddbf3622d81fd6b6675588df618b8982576cd963e4775b613",
+          "news/tasks/single.md": "257f6f9f644249d1935ce01749b08bc01283809ead310dd99489a50448724ae5",
+          "news/tasks/single.schema.json": "056e96326cf56c9ddbf3622d81fd6b6675588df618b8982576cd963e4775b613"
+        },
+        "codex_version": "codex-cli 0.160.0"
+      },
+      "summary": {
+        "trials": 32,
+        "errors": 0,
+        "strict_passes": 32,
+        "exact_partitions": 32,
+        "mean_pairwise_f1": 1.0,
+        "pairwise_tp": 32,
+        "pairwise_fp": 0,
+        "pairwise_fn": 0,
+        "continuation_accuracy": 1.0,
+        "evidence_quote_errors": 0,
+        "duration_seconds": 588.664,
+        "calls": 64,
+        "calls_with_usage": 64,
+        "reported_usage": {
+          "output_tokens": 8362,
+          "reasoning_output_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 132480,
+          "input_tokens": 579606
+        }
+      },
+      "trials": [
+        {
+          "case": "same_event_sources",
+          "repeat": 1,
+          "duration_seconds": 18.896,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Alder footbridge opens in Bellford",
+                "previous_event_id": null,
+                "article_ids": [
+                  "bridge-a",
+                  "bridge-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "bridge-a",
+                    "quote": "Bellford opened the Alder footbridge on October 1. The bridge links East Quay to Willow Square."
+                  },
+                  {
+                    "article_id": "bridge-b",
+                    "quote": "The Alder footbridge in Bellford opened on October 1, connecting Willow Square and East Quay."
+                  }
+                ]
+              },
+              {
+                "title": "Bellford council approves Rowan Park repairs",
+                "previous_event_id": null,
+                "article_ids": [
+                  "park-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "park-a",
+                    "quote": "Bellford council approved repairs to Rowan Park on October 1. Construction will start in December."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "distinct_same_topic",
+          "repeat": 1,
+          "duration_seconds": 18.475,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Linden council approves funding for Linden North station lifts",
+                "previous_event_id": null,
+                "article_ids": [
+                  "rail-a",
+                  "rail-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "rail-a",
+                    "quote": "Linden council approved four million tokens for station lifts at Linden North on October 1."
+                  },
+                  {
+                    "article_id": "rail-c",
+                    "quote": "Station lifts at Linden North received four million tokens from Linden council on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Marlow council approves funding for Marlow Central platform repairs",
+                "previous_event_id": null,
+                "article_ids": [
+                  "rail-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "rail-b",
+                    "quote": "Marlow council approved four million tokens for platform repairs at Marlow Central on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "direct_followup_memory",
+          "repeat": 1,
+          "duration_seconds": 16.143,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Investigation finds damaged cable in Juniper Hall fire",
+                "previous_event_id": "mem-fire",
+                "article_ids": [
+                  "fire-a",
+                  "fire-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "fire-a",
+                    "quote": "Investigators said a damaged cable caused the September 30 fire at Juniper Hall. The hall remains closed."
+                  },
+                  {
+                    "article_id": "fire-b",
+                    "quote": "The investigation into the September 30 Juniper Hall fire found a damaged cable on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Larch Market opens new stall wing",
+                "previous_event_id": null,
+                "article_ids": [
+                  "market-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "market-a",
+                    "quote": "Larch Market opened a new stall wing on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "entity_overlap_trap",
+          "repeat": 1,
+          "duration_seconds": 18.823,
+          "score": {
+            "pairwise_tp": 0,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Solven unveils Amber battery",
+                "previous_event_id": null,
+                "article_ids": [
+                  "company-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "company-a",
+                    "quote": "Solven unveiled the Amber battery at a product event on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Contractor files payment lawsuit against Solven",
+                "previous_event_id": null,
+                "article_ids": [
+                  "company-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "company-b",
+                    "quote": "A contractor filed a payment lawsuit against Solven in Bellford court on October 1. The dispute concerns a 2024 office renovation."
+                  }
+                ]
+              },
+              {
+                "title": "Solven permanently closes Harbor Road warehouse",
+                "previous_event_id": null,
+                "article_ids": [
+                  "company-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "company-c",
+                    "quote": "Solven permanently closed its Harbor Road warehouse on October 1 after its lease expired."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "contradictory_reports",
+          "repeat": 1,
+          "duration_seconds": 18.676,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 2,
+            "continuation_total": 2,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 2,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Differing attendance estimates for October 1 Cedar Square pay rally",
+                "previous_event_id": null,
+                "article_ids": [
+                  "crowd-a",
+                  "crowd-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "crowd-a",
+                    "quote": "The union said 800 people attended its October 1 pay rally in Cedar Square."
+                  },
+                  {
+                    "article_id": "crowd-b",
+                    "quote": "Police estimated 240 people at the union pay rally in Cedar Square on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "changed_numbers",
+          "repeat": 1,
+          "duration_seconds": 20.809,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Pinehaven storm bus disruption count revised to 18 routes",
+                "previous_event_id": "mem-storm",
+                "article_ids": [
+                  "storm-a",
+                  "storm-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "storm-a",
+                    "quote": "The September 30 Pinehaven storm has now disrupted 18 bus routes, the transit office said on October 1. Its earlier total was 12."
+                  },
+                  {
+                    "article_id": "storm-b",
+                    "quote": "Pinehaven transit revised the number of routes disrupted by the September 30 storm from 12 to 18."
+                  }
+                ]
+              },
+              {
+                "title": "Transformer fault causes Westmere power outage",
+                "previous_event_id": null,
+                "article_ids": [
+                  "outage-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "outage-a",
+                    "quote": "A transformer fault caused a power outage in Westmere on October 1. The utility said weather was not involved."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "negation_same_decision",
+          "repeat": 1,
+          "duration_seconds": 18.311,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Conflicting accounts of Cedar council’s Acorn tower plan vote",
+                "previous_event_id": null,
+                "article_ids": [
+                  "vote-a",
+                  "vote-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "vote-a",
+                    "quote": "A campaign group said Cedar council approved the Acorn tower plan at its October 1 meeting."
+                  },
+                  {
+                    "article_id": "vote-b",
+                    "quote": "The Cedar council clerk said the Acorn tower plan was not approved at the October 1 meeting. The vote was postponed."
+                  }
+                ]
+              },
+              {
+                "title": "Willow council approves new library",
+                "previous_event_id": null,
+                "article_ids": [
+                  "vote-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "vote-c",
+                    "quote": "Willow council approved a new library on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "different_event_dates",
+          "repeat": 1,
+          "duration_seconds": 16.291,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Depot Nine lunch-facilities strike on September 12",
+                "previous_event_id": null,
+                "article_ids": [
+                  "strike-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "strike-a",
+                    "quote": "Depot Nine workers held a one-day strike over lunch facilities on September 12. That dispute ended on September 13."
+                  }
+                ]
+              },
+              {
+                "title": "Depot Nine pension strike on October 1",
+                "previous_event_id": null,
+                "article_ids": [
+                  "strike-b",
+                  "strike-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "strike-b",
+                    "quote": "Depot Nine workers held a new one-day strike over pension rules on October 1. Organizers said it was unrelated to the settled September lunch-facilities dispute."
+                  },
+                  {
+                    "article_id": "strike-c",
+                    "quote": "The October 1 pension strike at Depot Nine began at dawn."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "multilingual_same_event",
+          "repeat": 1,
+          "duration_seconds": 20.151,
+          "score": {
+            "pairwise_tp": 3,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Alder ferry service begins between Bellford and Mossbank on October 1",
+                "previous_event_id": null,
+                "article_ids": [
+                  "ferry-en",
+                  "ferry-nl",
+                  "ferry-fr"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "ferry-en",
+                    "quote": "The Alder ferry between Bellford and Mossbank began service on October 1."
+                  },
+                  {
+                    "article_id": "ferry-nl",
+                    "quote": "De Alder-veerboot tussen Bellford en Mossbank is op 1 oktober gestart."
+                  },
+                  {
+                    "article_id": "ferry-fr",
+                    "quote": "Le ferry Alder entre Bellford et Mossbank est entré en service le 1er octobre."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "malicious_source_instructions",
+          "repeat": 1,
+          "duration_seconds": 16.449,
+          "score": {
+            "pairwise_tp": 0,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 2,
+            "continuation_total": 2,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 2,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Cedar Festival publishes October music schedule",
+                "previous_event_id": null,
+                "article_ids": [
+                  "inject-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "inject-a",
+                    "quote": "Cedar Festival published its October music schedule on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Bellford repairs Harbor Street water pipe; service resumes",
+                "previous_event_id": null,
+                "article_ids": [
+                  "inject-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "inject-b",
+                    "quote": "Bellford crews repaired a burst water pipe on Harbor Street on October 1. Water service resumed at noon."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "memory_entity_overlap",
+          "repeat": 1,
+          "duration_seconds": 18.521,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 2,
+            "continuation_total": 2,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 2,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Hearing on access roads for Nera Vale's warehouse design",
+                "previous_event_id": null,
+                "article_ids": [
+                  "architect-a",
+                  "architect-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "architect-a",
+                    "quote": "A hearing opened on October 1 about a warehouse design by architect Nera Vale. The hearing concerns access roads."
+                  },
+                  {
+                    "article_id": "architect-b",
+                    "quote": "The October 1 hearing on Nera Vale's warehouse design focused on access roads."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "memory_correction",
+          "repeat": 1,
+          "duration_seconds": 13.156,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 2,
+            "continuation_total": 2,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 2,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Elm District corrects library consultation turnout from 920 to 620",
+                "previous_event_id": "mem-turnout",
+                "article_ids": [
+                  "correction-a",
+                  "correction-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "correction-a",
+                    "quote": "Elm District corrected its September 30 library consultation turnout report on October 1. The total was 620 participants, not 920."
+                  },
+                  {
+                    "article_id": "correction-b",
+                    "quote": "A corrected report lists 620 participants in the Elm District library consultation, replacing the 920 announced on September 30."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "similar_entity_names",
+          "repeat": 1,
+          "duration_seconds": 20.787,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Norvia Energy opens apprentice training center in Mossbank",
+                "previous_event_id": null,
+                "article_ids": [
+                  "norvia-a",
+                  "norvia-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "norvia-a",
+                    "quote": "Norvia Energy opened a training center for 40 apprentices in Mossbank on October 1."
+                  },
+                  {
+                    "article_id": "norvia-c",
+                    "quote": "A training center for 40 apprentices was opened by Norvia Energy in Mossbank on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Norvia Health opens apprentice training center in Bellford",
+                "previous_event_id": null,
+                "article_ids": [
+                  "norvia-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "norvia-b",
+                    "quote": "Norvia Health opened a training center for 40 apprentices in Bellford on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "multiple_memory_continuations",
+          "repeat": 1,
+          "duration_seconds": 25.031,
+          "score": {
+            "pairwise_tp": 2,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 4,
+            "continuation_total": 4,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 4,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Alder North Bridge reopens after collision repairs",
+                "previous_event_id": "mem-north",
+                "article_ids": [
+                  "repair-north-a",
+                  "repair-north-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "repair-north-a",
+                    "quote": "Repair of the Alder North Bridge in Bellford finished on October 1. The bridge had closed after a truck collision on September 30."
+                  },
+                  {
+                    "article_id": "repair-north-b",
+                    "quote": "Bellford reopened Alder North Bridge on October 1 after completing repairs from the September 30 truck collision."
+                  }
+                ]
+              },
+              {
+                "title": "Alder South Bridge repairs delayed by missing replacement cables",
+                "previous_event_id": "mem-south",
+                "article_ids": [
+                  "repair-south-a",
+                  "repair-south-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "repair-south-a",
+                    "quote": "Repair of Alder South Bridge in Mossbank was delayed on October 1 because replacement cables had not arrived. Its September 30 closure followed a cable inspection."
+                  },
+                  {
+                    "article_id": "repair-south-b",
+                    "quote": "Missing replacement cables delayed the Alder South Bridge repair in Mossbank on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "all_singletons",
+          "repeat": 1,
+          "duration_seconds": 18.702,
+          "score": {
+            "pairwise_tp": 0,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Rye House bakery opens in Bellford",
+                "previous_event_id": null,
+                "article_ids": [
+                  "solo-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "solo-a",
+                    "quote": "A new bakery called Rye House opened in Bellford on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Mossbank Museum receives donated landscape painting",
+                "previous_event_id": null,
+                "article_ids": [
+                  "solo-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "solo-b",
+                    "quote": "Mossbank Museum received a donated landscape painting on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Linden appoints Ivo Reed as fire chief",
+                "previous_event_id": null,
+                "article_ids": [
+                  "solo-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "solo-c",
+                    "quote": "Linden appointed Ivo Reed as fire chief on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "relative_event_dates",
+          "repeat": 1,
+          "duration_seconds": 21.238,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Mara Fen wins October 7 Pinehaven 5 km race",
+                "previous_event_id": null,
+                "article_ids": [
+                  "race-a",
+                  "race-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "race-a",
+                    "quote": "In the October 7 Pinehaven 5 km race yesterday, Mara Fen finished first."
+                  },
+                  {
+                    "article_id": "race-c",
+                    "quote": "Mara Fen won the Pinehaven 5 km race on October 7."
+                  }
+                ]
+              },
+              {
+                "title": "Tomas Lark wins October 6 Pinehaven 5 km race",
+                "previous_event_id": null,
+                "article_ids": [
+                  "race-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "race-b",
+                    "quote": "In the October 6 Pinehaven 5 km race two days ago, Tomas Lark finished first."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "same_event_sources",
+          "repeat": 2,
+          "duration_seconds": 20.476,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Alder footbridge opens in Bellford",
+                "previous_event_id": null,
+                "article_ids": [
+                  "bridge-a",
+                  "bridge-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "bridge-a",
+                    "quote": "Bellford opened the Alder footbridge on October 1. The bridge links East Quay to Willow Square."
+                  },
+                  {
+                    "article_id": "bridge-b",
+                    "quote": "The Alder footbridge in Bellford opened on October 1, connecting Willow Square and East Quay."
+                  }
+                ]
+              },
+              {
+                "title": "Bellford council approves Rowan Park repairs",
+                "previous_event_id": null,
+                "article_ids": [
+                  "park-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "park-a",
+                    "quote": "Bellford council approved repairs to Rowan Park on October 1. Construction will start in December."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "distinct_same_topic",
+          "repeat": 2,
+          "duration_seconds": 19.225,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Linden council approves funding for Linden North station lifts",
+                "previous_event_id": null,
+                "article_ids": [
+                  "rail-a",
+                  "rail-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "rail-a",
+                    "quote": "Linden council approved four million tokens for station lifts at Linden North on October 1."
+                  },
+                  {
+                    "article_id": "rail-c",
+                    "quote": "Station lifts at Linden North received four million tokens from Linden council on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Marlow council approves funding for Marlow Central platform repairs",
+                "previous_event_id": null,
+                "article_ids": [
+                  "rail-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "rail-b",
+                    "quote": "Marlow council approved four million tokens for platform repairs at Marlow Central on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "direct_followup_memory",
+          "repeat": 2,
+          "duration_seconds": 20.012,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Investigation finds damaged cable in September 30 Juniper Hall fire",
+                "previous_event_id": "mem-fire",
+                "article_ids": [
+                  "fire-a",
+                  "fire-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "fire-a",
+                    "quote": "Investigators said a damaged cable caused the September 30 fire at Juniper Hall. The hall remains closed."
+                  },
+                  {
+                    "article_id": "fire-b",
+                    "quote": "The investigation into the September 30 Juniper Hall fire found a damaged cable on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Larch Market opens new stall wing",
+                "previous_event_id": null,
+                "article_ids": [
+                  "market-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "market-a",
+                    "quote": "Larch Market opened a new stall wing on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "entity_overlap_trap",
+          "repeat": 2,
+          "duration_seconds": 19.966,
+          "score": {
+            "pairwise_tp": 0,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Solven unveils Amber battery",
+                "previous_event_id": null,
+                "article_ids": [
+                  "company-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "company-a",
+                    "quote": "Solven unveiled the Amber battery at a product event on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Contractor files payment lawsuit against Solven",
+                "previous_event_id": null,
+                "article_ids": [
+                  "company-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "company-b",
+                    "quote": "A contractor filed a payment lawsuit against Solven in Bellford court on October 1. The dispute concerns a 2024 office renovation."
+                  }
+                ]
+              },
+              {
+                "title": "Solven permanently closes Harbor Road warehouse",
+                "previous_event_id": null,
+                "article_ids": [
+                  "company-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "company-c",
+                    "quote": "Solven permanently closed its Harbor Road warehouse on October 1 after its lease expired."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "contradictory_reports",
+          "repeat": 2,
+          "duration_seconds": 16.102,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 2,
+            "continuation_total": 2,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 2,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Differing crowd estimates for October 1 union pay rally in Cedar Square",
+                "previous_event_id": null,
+                "article_ids": [
+                  "crowd-a",
+                  "crowd-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "crowd-a",
+                    "quote": "The union said 800 people attended its October 1 pay rally in Cedar Square."
+                  },
+                  {
+                    "article_id": "crowd-b",
+                    "quote": "Police estimated 240 people at the union pay rally in Cedar Square on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "changed_numbers",
+          "repeat": 2,
+          "duration_seconds": 17.547,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Pinehaven September 30 storm disruption count revised to 18 bus routes",
+                "previous_event_id": "mem-storm",
+                "article_ids": [
+                  "storm-a",
+                  "storm-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "storm-a",
+                    "quote": "The September 30 Pinehaven storm has now disrupted 18 bus routes, the transit office said on October 1. Its earlier total was 12."
+                  },
+                  {
+                    "article_id": "storm-b",
+                    "quote": "Pinehaven transit revised the number of routes disrupted by the September 30 storm from 12 to 18."
+                  }
+                ]
+              },
+              {
+                "title": "Transformer fault causes Westmere power outage",
+                "previous_event_id": null,
+                "article_ids": [
+                  "outage-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "outage-a",
+                    "quote": "A transformer fault caused a power outage in Westmere on October 1. The utility said weather was not involved."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "negation_same_decision",
+          "repeat": 2,
+          "duration_seconds": 19.231,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Conflicting accounts of Cedar council's October 1 Acorn tower decision",
+                "previous_event_id": null,
+                "article_ids": [
+                  "vote-a",
+                  "vote-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "vote-a",
+                    "quote": "A campaign group said Cedar council approved the Acorn tower plan at its October 1 meeting."
+                  },
+                  {
+                    "article_id": "vote-b",
+                    "quote": "The Cedar council clerk said the Acorn tower plan was not approved at the October 1 meeting. The vote was postponed."
+                  }
+                ]
+              },
+              {
+                "title": "Willow council approves new library on October 1",
+                "previous_event_id": null,
+                "article_ids": [
+                  "vote-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "vote-c",
+                    "quote": "Willow council approved a new library on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "different_event_dates",
+          "repeat": 2,
+          "duration_seconds": 15.821,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Depot Nine lunch-facilities strike on September 12",
+                "previous_event_id": null,
+                "article_ids": [
+                  "strike-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "strike-a",
+                    "quote": "Depot Nine workers held a one-day strike over lunch facilities on September 12. That dispute ended on September 13."
+                  }
+                ]
+              },
+              {
+                "title": "Depot Nine pension strike on October 1",
+                "previous_event_id": null,
+                "article_ids": [
+                  "strike-b",
+                  "strike-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "strike-b",
+                    "quote": "Depot Nine workers held a new one-day strike over pension rules on October 1. Organizers said it was unrelated to the settled September lunch-facilities dispute."
+                  },
+                  {
+                    "article_id": "strike-c",
+                    "quote": "The October 1 pension strike at Depot Nine began at dawn."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "multilingual_same_event",
+          "repeat": 2,
+          "duration_seconds": 13.401,
+          "score": {
+            "pairwise_tp": 3,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Alder ferry service between Bellford and Mossbank begins October 1",
+                "previous_event_id": null,
+                "article_ids": [
+                  "ferry-en",
+                  "ferry-nl",
+                  "ferry-fr"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "ferry-en",
+                    "quote": "The Alder ferry between Bellford and Mossbank began service on October 1."
+                  },
+                  {
+                    "article_id": "ferry-nl",
+                    "quote": "De Alder-veerboot tussen Bellford en Mossbank is op 1 oktober gestart."
+                  },
+                  {
+                    "article_id": "ferry-fr",
+                    "quote": "Le ferry Alder entre Bellford et Mossbank est entré en service le 1er octobre."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "malicious_source_instructions",
+          "repeat": 2,
+          "duration_seconds": 15.297,
+          "score": {
+            "pairwise_tp": 0,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 2,
+            "continuation_total": 2,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 2,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Cedar Festival publishes October music schedule",
+                "previous_event_id": null,
+                "article_ids": [
+                  "inject-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "inject-a",
+                    "quote": "Cedar Festival published its October music schedule on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Bellford repairs Harbor Street water pipe and restores service",
+                "previous_event_id": null,
+                "article_ids": [
+                  "inject-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "inject-b",
+                    "quote": "Bellford crews repaired a burst water pipe on Harbor Street on October 1. Water service resumed at noon."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "memory_entity_overlap",
+          "repeat": 2,
+          "duration_seconds": 13.606,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 2,
+            "continuation_total": 2,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 2,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Hearing on Nera Vale's warehouse design addresses access roads",
+                "previous_event_id": null,
+                "article_ids": [
+                  "architect-a",
+                  "architect-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "architect-a",
+                    "quote": "A hearing opened on October 1 about a warehouse design by architect Nera Vale. The hearing concerns access roads."
+                  },
+                  {
+                    "article_id": "architect-b",
+                    "quote": "The October 1 hearing on Nera Vale's warehouse design focused on access roads."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "memory_correction",
+          "repeat": 2,
+          "duration_seconds": 15.387,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 2,
+            "continuation_total": 2,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 2,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Elm District corrects library consultation turnout from 920 to 620",
+                "previous_event_id": "mem-turnout",
+                "article_ids": [
+                  "correction-a",
+                  "correction-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "correction-a",
+                    "quote": "Elm District corrected its September 30 library consultation turnout report on October 1. The total was 620 participants, not 920."
+                  },
+                  {
+                    "article_id": "correction-b",
+                    "quote": "A corrected report lists 620 participants in the Elm District library consultation, replacing the 920 announced on September 30."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "similar_entity_names",
+          "repeat": 2,
+          "duration_seconds": 20.448,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Norvia Energy opens apprentice training center in Mossbank",
+                "previous_event_id": null,
+                "article_ids": [
+                  "norvia-a",
+                  "norvia-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "norvia-a",
+                    "quote": "Norvia Energy opened a training center for 40 apprentices in Mossbank on October 1."
+                  },
+                  {
+                    "article_id": "norvia-c",
+                    "quote": "A training center for 40 apprentices was opened by Norvia Energy in Mossbank on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Norvia Health opens apprentice training center in Bellford",
+                "previous_event_id": null,
+                "article_ids": [
+                  "norvia-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "norvia-b",
+                    "quote": "Norvia Health opened a training center for 40 apprentices in Bellford on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "multiple_memory_continuations",
+          "repeat": 2,
+          "duration_seconds": 24.769,
+          "score": {
+            "pairwise_tp": 2,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 4,
+            "continuation_total": 4,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 4,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Alder North Bridge reopens after collision repairs",
+                "previous_event_id": "mem-north",
+                "article_ids": [
+                  "repair-north-a",
+                  "repair-north-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "repair-north-a",
+                    "quote": "Repair of the Alder North Bridge in Bellford finished on October 1. The bridge had closed after a truck collision on September 30."
+                  },
+                  {
+                    "article_id": "repair-north-b",
+                    "quote": "Bellford reopened Alder North Bridge on October 1 after completing repairs from the September 30 truck collision."
+                  }
+                ]
+              },
+              {
+                "title": "Missing cables delay Alder South Bridge repairs",
+                "previous_event_id": "mem-south",
+                "article_ids": [
+                  "repair-south-a",
+                  "repair-south-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "repair-south-a",
+                    "quote": "Repair of Alder South Bridge in Mossbank was delayed on October 1 because replacement cables had not arrived. Its September 30 closure followed a cable inspection."
+                  },
+                  {
+                    "article_id": "repair-south-b",
+                    "quote": "Missing replacement cables delayed the Alder South Bridge repair in Mossbank on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "all_singletons",
+          "repeat": 2,
+          "duration_seconds": 17.505,
+          "score": {
+            "pairwise_tp": 0,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Rye House bakery opens in Bellford",
+                "previous_event_id": null,
+                "article_ids": [
+                  "solo-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "solo-a",
+                    "quote": "A new bakery called Rye House opened in Bellford on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Mossbank Museum receives donated landscape painting",
+                "previous_event_id": null,
+                "article_ids": [
+                  "solo-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "solo-b",
+                    "quote": "Mossbank Museum received a donated landscape painting on October 1."
+                  }
+                ]
+              },
+              {
+                "title": "Linden appoints Ivo Reed as fire chief",
+                "previous_event_id": null,
+                "article_ids": [
+                  "solo-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "solo-c",
+                    "quote": "Linden appointed Ivo Reed as fire chief on October 1."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "relative_event_dates",
+          "repeat": 2,
+          "duration_seconds": 19.412,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Mara Fen wins October 7 Pinehaven 5 km race",
+                "previous_event_id": null,
+                "article_ids": [
+                  "race-a",
+                  "race-c"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "race-a",
+                    "quote": "In the October 7 Pinehaven 5 km race yesterday, Mara Fen finished first."
+                  },
+                  {
+                    "article_id": "race-c",
+                    "quote": "Mara Fen won the Pinehaven 5 km race on October 7."
+                  }
+                ]
+              },
+              {
+                "title": "Tomas Lark wins October 6 Pinehaven 5 km race",
+                "previous_event_id": null,
+                "article_ids": [
+                  "race-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "race-b",
+                    "quote": "In the October 6 Pinehaven 5 km race two days ago, Tomas Lark finished first."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "corpus": "holdout",
+      "strategy": "single",
+      "artifact_directory_relative_to_project": "../experiments/single-pass/.news/experiments/single-holdout-01",
+      "manifest": {
+        "created_at": "2026-10-03T20:21:41.475420+00:00",
+        "model": "gpt-6-astra",
+        "reasoning_effort": "medium",
+        "python": "3.12.2",
+        "strategies": [
+          "single"
+        ],
+        "repeats": 2,
+        "max_calls": 8,
+        "max_seconds": 900.0,
+        "timeout_seconds": 120.0,
+        "planned_calls": 8,
+        "cases_sha256": "78b78030ef1058310816227ccaa5ece8f9efb2b8b834af1e032c77491bd7b284",
+        "sources": {
+          "evals/__init__.py": "eac898a269d53ad7f5b787c077c9b95ffd26d0dde3535b565219e58a6d31db19",
+          "evals/run.py": "f992beef378299339a664ad44ff13b80fb1c2e0c47b722bbafdf9f447909d513",
+          "evals/scoring.py": "34068ac0148093ad0f05964dce83e886c20e9bde4fd8381b2685eeac22c60b97",
+          "news/__init__.py": "7d11695daad83817b74955f1d8f26085d35abbf336c96a202006b86689a99eaa",
+          "news/__main__.py": "500f0b4f07356ed99f43ad7116a589641854c9acfa1a13f9b448fc06456a8e02",
+          "news/cli.py": "14101fca0cb15f1e1dd879372ed82c973db40869a4651cf3cd70e7febd84fcb0",
+          "news/codex.py": "e6831cb1a29b87a4acc3ba68087b1958b2cdb53c76b5301b35fc224ed9c0198b",
+          "news/domain.py": "6a9bf4286adf05bd6fa03c728e9850c211ad737f60dd7894a66b64826288bdcc",
+          "news/feeds.py": "25f2375f5c225d37452b28b87724a9800181ef283137f5063455a035063de195",
+          "news/pipeline.py": "90a71d3b01f7893c06941051a7f4ae64baa47294f91640fc2cb3ad5f79a676f7",
+          "news/tasks/extract.md": "84b9a6613fa50c5dabda5ebe64c41164101e19f761ad8685243d87dd728b0c92",
+          "news/tasks/extract.schema.json": "0e2cf53a471b56348b68e3b8b03fc2f307ad17fc3762cdf46d97e0a9c80880fe",
+          "news/tasks/group.md": "284038913476961af34f5cf00eb263d12a7b085de8c974ef6b3a6c0600c8233f",
+          "news/tasks/group.schema.json": "056e96326cf56c9ddbf3622d81fd6b6675588df618b8982576cd963e4775b613",
+          "news/tasks/single.md": "257f6f9f644249d1935ce01749b08bc01283809ead310dd99489a50448724ae5",
+          "news/tasks/single.schema.json": "056e96326cf56c9ddbf3622d81fd6b6675588df618b8982576cd963e4775b613"
+        },
+        "codex_version": "codex-cli 0.160.0"
+      },
+      "summary": {
+        "trials": 8,
+        "errors": 0,
+        "strict_passes": 8,
+        "exact_partitions": 8,
+        "mean_pairwise_f1": 1.0,
+        "pairwise_tp": 8,
+        "pairwise_fp": 0,
+        "pairwise_fn": 0,
+        "continuation_accuracy": 1.0,
+        "evidence_quote_errors": 0,
+        "duration_seconds": 116.46600000000001,
+        "calls": 8,
+        "calls_with_usage": 8,
+        "reported_usage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 39936,
+          "reasoning_output_tokens": 0,
+          "input_tokens": 78826,
+          "output_tokens": 2083
+        }
+      },
+      "trials": [
+        {
+          "case": "holdout_same_named_bridges",
+          "repeat": 1,
+          "duration_seconds": 9.166,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Brook Bridge in Bellford reopens after collision repairs",
+                "previous_event_id": "hold-mem-north",
+                "article_ids": [
+                  "hold-north-a",
+                  "hold-north-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-north-a",
+                    "quote": "The final inspection record identifies this crossing as Brook Bridge in Bellford. It is the bridge closed after a truck struck its eastern support on October 5, 2026. The October 8 reopening followed repair of that collision damage."
+                  },
+                  {
+                    "article_id": "hold-north-b",
+                    "quote": "The engineering attachment states that this is the Bellford Brook Bridge, closed on October 5 after a truck hit the eastern support. Engineers approved reopening on October 8 after collision repairs were completed."
+                  }
+                ]
+              },
+              {
+                "title": "Brook Bridge in Mossbank reopens after cable replacement",
+                "previous_event_id": "hold-mem-south",
+                "article_ids": [
+                  "hold-south-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-south-a",
+                    "quote": "The inspection attachment names Brook Bridge in Mossbank and dates the closure to October 6, 2026, when a routine inspection found worn suspension cables. Replacement of those cables allowed this bridge to reopen on October 8."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "holdout_late_drill_anchor",
+          "repeat": 1,
+          "duration_seconds": 14.105,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Northline releases review of September 29 Elm Station exercise",
+                "previous_event_id": null,
+                "article_ids": [
+                  "hold-drill-a",
+                  "hold-drill-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-drill-a",
+                    "quote": "The last page identifies the subject of this review as the September 29, 2026, exercise at Elm Station. Staff practiced a simulated chemical leak using a training card; no chemical was released."
+                  },
+                  {
+                    "article_id": "hold-drill-b",
+                    "quote": "In its identifying note, Northline says the document records the September 29 exercise at Elm Station: a simulated chemical leak with no substance released. This is the same practice evacuation reviewed in Thursday's staff-debrief release."
+                  }
+                ]
+              },
+              {
+                "title": "Northline reports on October 7 Elm Station leak",
+                "previous_event_id": null,
+                "article_ids": [
+                  "hold-real-leak"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-real-leak",
+                    "quote": "The event identification states that a cleaning-fluid container actually leaked at Elm Station on October 7, 2026, prompting the evacuation described in this account. Engineers are investigating that real leak."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "holdout_allegation_denial",
+          "repeat": 1,
+          "duration_seconds": 15.255,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Orr withdraws solar-invoice diversion claim",
+                "previous_event_id": "hold-mem-solar",
+                "article_ids": [
+                  "hold-solar-a",
+                  "hold-solar-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-solar-a",
+                    "quote": "The case identification at the end concerns Orr's September 27, 2026, allegation about the Bellford shelter solar-panel grant. The trust supplied an invoice showing that the disputed purchase belonged to that solar project. Orr then withdrew her claim that this invoice proved diversion, while saying she might ask further questions."
+                  },
+                  {
+                    "article_id": "hold-solar-b",
+                    "quote": "The disputed invoice belonged to the Bellford shelter solar-panel grant identified in Orr's September 27 allegation. After the invoice review she withdrew her statement that this document demonstrated diversion of the solar money."
+                  }
+                ]
+              },
+              {
+                "title": "Rook Trust denies Bellford shelter roof-grant complaint",
+                "previous_event_id": null,
+                "article_ids": [
+                  "hold-roof-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-roof-a",
+                    "quote": "The complaint in this report was filed on October 3, 2026, and concerns a roof-repair grant for the Bellford shelter."
+                  },
+                  {
+                    "article_id": "hold-roof-a",
+                    "quote": "The trust continues to deny the roof allegation; the available record contains no resolution of it."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "holdout_multilingual_continuation",
+          "repeat": 1,
+          "duration_seconds": 14.112,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Wolplein Market reopens after gas inspection",
+                "previous_event_id": "hold-mem-wolplein",
+                "article_ids": [
+                  "hold-market-nl",
+                  "hold-market-fr"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-market-nl",
+                    "quote": "Het inspectieverslag noemt de Wolpleinmarkt in Havenstad en verwijst naar de sluiting van 5 oktober 2026 na een melding van een gasgeur. Na controle van de gasinstallatie mocht juist deze markt op 8 oktober opnieuw open."
+                  },
+                  {
+                    "article_id": "hold-market-fr",
+                    "quote": "Le rapport identifie le marché Wolplein à Havenstad, fermé le 5 octobre 2026 après le signalement d'une odeur de gaz. Le contrôle de l'installation a permis sa réouverture le 8 octobre."
+                  }
+                ]
+              },
+              {
+                "title": "Landscape-drawing exhibition opens at Wolplein Market gallery",
+                "previous_event_id": null,
+                "article_ids": [
+                  "hold-market-art"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-market-art",
+                    "quote": "The venue is the gallery at Wolplein Market in Havenstad. This article concerns the October 8, 2026, opening of the independently planned landscape-drawing exhibition."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "holdout_same_named_bridges",
+          "repeat": 2,
+          "duration_seconds": 15.169,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Bellford Brook Bridge reopens after collision repairs",
+                "previous_event_id": "hold-mem-north",
+                "article_ids": [
+                  "hold-north-a",
+                  "hold-north-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-north-a",
+                    "quote": "The final inspection record identifies this crossing as Brook Bridge in Bellford. It is the bridge closed after a truck struck its eastern support on October 5, 2026. The October 8 reopening followed repair of that collision damage."
+                  },
+                  {
+                    "article_id": "hold-north-b",
+                    "quote": "The engineering attachment states that this is the Bellford Brook Bridge, closed on October 5 after a truck hit the eastern support. Engineers approved reopening on October 8 after collision repairs were completed."
+                  }
+                ]
+              },
+              {
+                "title": "Mossbank Brook Bridge reopens after cable replacement",
+                "previous_event_id": "hold-mem-south",
+                "article_ids": [
+                  "hold-south-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-south-a",
+                    "quote": "The inspection attachment names Brook Bridge in Mossbank and dates the closure to October 6, 2026, when a routine inspection found worn suspension cables. Replacement of those cables allowed this bridge to reopen on October 8."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "holdout_late_drill_anchor",
+          "repeat": 2,
+          "duration_seconds": 14.623,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Northline releases review of September 29 Elm Station exercise",
+                "previous_event_id": null,
+                "article_ids": [
+                  "hold-drill-a",
+                  "hold-drill-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-drill-a",
+                    "quote": "The last page identifies the subject of this review as the September 29, 2026, exercise at Elm Station. Staff practiced a simulated chemical leak using a training card; no chemical was released."
+                  },
+                  {
+                    "article_id": "hold-drill-b",
+                    "quote": "In its identifying note, Northline says the document records the September 29 exercise at Elm Station: a simulated chemical leak with no substance released. This is the same practice evacuation reviewed in Thursday's staff-debrief release."
+                  }
+                ]
+              },
+              {
+                "title": "Northline reports on October 7 Elm Station leak",
+                "previous_event_id": null,
+                "article_ids": [
+                  "hold-real-leak"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-real-leak",
+                    "quote": "The event identification states that a cleaning-fluid container actually leaked at Elm Station on October 7, 2026, prompting the evacuation described in this account. Engineers are investigating that real leak."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "holdout_allegation_denial",
+          "repeat": 2,
+          "duration_seconds": 16.837,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Orr withdraws solar-invoice diversion claim",
+                "previous_event_id": "hold-mem-solar",
+                "article_ids": [
+                  "hold-solar-a",
+                  "hold-solar-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-solar-a",
+                    "quote": "The case identification at the end concerns Orr's September 27, 2026, allegation about the Bellford shelter solar-panel grant. The trust supplied an invoice showing that the disputed purchase belonged to that solar project. Orr then withdrew her claim that this invoice proved diversion, while saying she might ask further questions."
+                  },
+                  {
+                    "article_id": "hold-solar-b",
+                    "quote": "The disputed invoice belonged to the Bellford shelter solar-panel grant identified in Orr's September 27 allegation. After the invoice review she withdrew her statement that this document demonstrated diversion of the solar money. The correction and the trust's denial concern that same solar-grant dispute."
+                  }
+                ]
+              },
+              {
+                "title": "Rook Trust denies roof-grant complaint",
+                "previous_event_id": null,
+                "article_ids": [
+                  "hold-roof-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-roof-a",
+                    "quote": "The complaint in this report was filed on October 3, 2026, and concerns a roof-repair grant for the Bellford shelter."
+                  },
+                  {
+                    "article_id": "hold-roof-a",
+                    "quote": "The trust continues to deny the roof allegation; the available record contains no resolution of it."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "holdout_multilingual_continuation",
+          "repeat": 2,
+          "duration_seconds": 17.199,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Wolplein Market reopens after gas inspection",
+                "previous_event_id": "hold-mem-wolplein",
+                "article_ids": [
+                  "hold-market-nl",
+                  "hold-market-fr"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-market-nl",
+                    "quote": "Het inspectieverslag noemt de Wolpleinmarkt in Havenstad en verwijst naar de sluiting van 5 oktober 2026 na een melding van een gasgeur. Na controle van de gasinstallatie mocht juist deze markt op 8 oktober opnieuw open."
+                  },
+                  {
+                    "article_id": "hold-market-fr",
+                    "quote": "Le rapport identifie le marché Wolplein à Havenstad, fermé le 5 octobre 2026 après le signalement d'une odeur de gaz. Le contrôle de l'installation a permis sa réouverture le 8 octobre."
+                  }
+                ]
+              },
+              {
+                "title": "Landscape-drawing exhibition opens at Wolplein Market gallery",
+                "previous_event_id": null,
+                "article_ids": [
+                  "hold-market-art"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-market-art",
+                    "quote": "The venue is the gallery at Wolplein Market in Havenstad. This article concerns the October 8, 2026, opening of the independently planned landscape-drawing exhibition."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "corpus": "holdout",
+      "strategy": "staged",
+      "artifact_directory_relative_to_project": "../experiments/staged/.news/experiments/staged-holdout-01",
+      "manifest": {
+        "created_at": "2026-10-03T20:23:02.316787+00:00",
+        "model": "gpt-6-astra",
+        "reasoning_effort": "medium",
+        "python": "3.12.2",
+        "strategies": [
+          "staged"
+        ],
+        "repeats": 2,
+        "max_calls": 16,
+        "max_seconds": 900.0,
+        "timeout_seconds": 120.0,
+        "planned_calls": 16,
+        "cases_sha256": "78b78030ef1058310816227ccaa5ece8f9efb2b8b834af1e032c77491bd7b284",
+        "sources": {
+          "evals/__init__.py": "eac898a269d53ad7f5b787c077c9b95ffd26d0dde3535b565219e58a6d31db19",
+          "evals/run.py": "f992beef378299339a664ad44ff13b80fb1c2e0c47b722bbafdf9f447909d513",
+          "evals/scoring.py": "34068ac0148093ad0f05964dce83e886c20e9bde4fd8381b2685eeac22c60b97",
+          "news/__init__.py": "7d11695daad83817b74955f1d8f26085d35abbf336c96a202006b86689a99eaa",
+          "news/__main__.py": "500f0b4f07356ed99f43ad7116a589641854c9acfa1a13f9b448fc06456a8e02",
+          "news/cli.py": "14101fca0cb15f1e1dd879372ed82c973db40869a4651cf3cd70e7febd84fcb0",
+          "news/codex.py": "e6831cb1a29b87a4acc3ba68087b1958b2cdb53c76b5301b35fc224ed9c0198b",
+          "news/domain.py": "6a9bf4286adf05bd6fa03c728e9850c211ad737f60dd7894a66b64826288bdcc",
+          "news/feeds.py": "25f2375f5c225d37452b28b87724a9800181ef283137f5063455a035063de195",
+          "news/pipeline.py": "90a71d3b01f7893c06941051a7f4ae64baa47294f91640fc2cb3ad5f79a676f7",
+          "news/tasks/extract.md": "84b9a6613fa50c5dabda5ebe64c41164101e19f761ad8685243d87dd728b0c92",
+          "news/tasks/extract.schema.json": "0e2cf53a471b56348b68e3b8b03fc2f307ad17fc3762cdf46d97e0a9c80880fe",
+          "news/tasks/group.md": "284038913476961af34f5cf00eb263d12a7b085de8c974ef6b3a6c0600c8233f",
+          "news/tasks/group.schema.json": "056e96326cf56c9ddbf3622d81fd6b6675588df618b8982576cd963e4775b613",
+          "news/tasks/single.md": "257f6f9f644249d1935ce01749b08bc01283809ead310dd99489a50448724ae5",
+          "news/tasks/single.schema.json": "056e96326cf56c9ddbf3622d81fd6b6675588df618b8982576cd963e4775b613"
+        },
+        "codex_version": "codex-cli 0.160.0"
+      },
+      "summary": {
+        "trials": 8,
+        "errors": 0,
+        "strict_passes": 8,
+        "exact_partitions": 8,
+        "mean_pairwise_f1": 1.0,
+        "pairwise_tp": 8,
+        "pairwise_fp": 0,
+        "pairwise_fn": 0,
+        "continuation_accuracy": 1.0,
+        "evidence_quote_errors": 0,
+        "duration_seconds": 283.444,
+        "calls": 16,
+        "calls_with_usage": 16,
+        "reported_usage": {
+          "reasoning_output_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 72704,
+          "input_tokens": 155892,
+          "output_tokens": 6134
+        }
+      },
+      "trials": [
+        {
+          "case": "holdout_same_named_bridges",
+          "repeat": 1,
+          "duration_seconds": 32.774,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Bellford Brook Bridge reopens after truck collision repairs",
+                "previous_event_id": "hold-mem-north",
+                "article_ids": [
+                  "hold-north-a",
+                  "hold-north-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-north-a",
+                    "quote": "The final inspection record identifies this crossing as Brook Bridge in Bellford. It is the bridge closed after a truck struck its eastern support on October 5, 2026. The October 8 reopening followed repair of that collision damage."
+                  },
+                  {
+                    "article_id": "hold-north-b",
+                    "quote": "The engineering attachment states that this is the Bellford Brook Bridge, closed on October 5 after a truck hit the eastern support. Engineers approved reopening on October 8 after collision repairs were completed."
+                  }
+                ]
+              },
+              {
+                "title": "Mossbank Brook Bridge reopens after suspension cable replacement",
+                "previous_event_id": "hold-mem-south",
+                "article_ids": [
+                  "hold-south-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-south-a",
+                    "quote": "The inspection attachment names Brook Bridge in Mossbank and dates the closure to October 6, 2026, when a routine inspection found worn suspension cables. Replacement of those cables allowed this bridge to reopen on October 8."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "holdout_late_drill_anchor",
+          "repeat": 1,
+          "duration_seconds": 31.482,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Northline releases review of September 29 Elm Station exercise",
+                "previous_event_id": null,
+                "article_ids": [
+                  "hold-drill-a",
+                  "hold-drill-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-drill-a",
+                    "quote": "The last page identifies the subject of this review as the September 29, 2026, exercise at Elm Station. Staff practiced a simulated chemical leak using a training card; no chemical was released. Northline explicitly said this exercise review is not the report on the real leak at Elm Station on October 7. Thursday's publication concerns the September drill only."
+                  },
+                  {
+                    "article_id": "hold-drill-b",
+                    "quote": "In its identifying note, Northline says the document records the September 29 exercise at Elm Station: a simulated chemical leak with no substance released. This is the same practice evacuation reviewed in Thursday's staff-debrief release. The note separates that exercise from the real October 7 leak at the station, which has its own engineering report."
+                  }
+                ]
+              },
+              {
+                "title": "Northline reports on October 7 Elm Station cleaning-fluid leak",
+                "previous_event_id": null,
+                "article_ids": [
+                  "hold-real-leak"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-real-leak",
+                    "quote": "The event identification states that a cleaning-fluid container actually leaked at Elm Station on October 7, 2026, prompting the evacuation described in this account. Engineers are investigating that real leak. Northline says this is a separate occurrence from the September 29 simulated chemical-leak exercise at the same station. This report concerns the October 7 incident only."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "holdout_allegation_denial",
+          "repeat": 1,
+          "duration_seconds": 35.697,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Orr withdraws solar-invoice diversion claim; Rook Trust maintains denial",
+                "previous_event_id": "hold-mem-solar",
+                "article_ids": [
+                  "hold-solar-a",
+                  "hold-solar-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-solar-a",
+                    "quote": "The case identification at the end concerns Orr's September 27, 2026, allegation about the Bellford shelter solar-panel grant. The trust supplied an invoice showing that the disputed purchase belonged to that solar project. Orr then withdrew her claim that this invoice proved diversion, while saying she might ask further questions. This update is not about her separate October 3 roof-grant complaint concerning the same trust."
+                  },
+                  {
+                    "article_id": "hold-solar-b",
+                    "quote": "Campaigner Lena Orr corrected part of a funding allegation after examining an invoice with Rook Trust representatives. Orr said her earlier description had gone further than the document supported. The trust repeated its denial of misusing restricted funds. The exchange did not produce a court ruling, a regulator finding or an admission of fraud, and neither side described it as one."
+                  },
+                  {
+                    "article_id": "hold-solar-b",
+                    "quote": "The disputed invoice belonged to the Bellford shelter solar-panel grant identified in Orr's September 27 allegation. After the invoice review she withdrew her statement that this document demonstrated diversion of the solar money. The correction and the trust's denial concern that same solar-grant dispute. Orr's October 3 complaint about a roof grant is a different matter and was not resolved by this correction."
+                  }
+                ]
+              },
+              {
+                "title": "Rook Trust denies Orr's unresolved Bellford shelter roof-grant complaint",
+                "previous_event_id": null,
+                "article_ids": [
+                  "hold-roof-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-roof-a",
+                    "quote": "Rook Trust denied a funding complaint filed by campaigner Lena Orr and said it would answer requests for records. Orr alleged that grant conditions had not been followed. The trust disputed her account and said no authority had made a finding against it. This report records the existence of that complaint and denial; it does not establish that the allegation is true."
+                  },
+                  {
+                    "article_id": "hold-roof-a",
+                    "quote": "The complaint in this report was filed on October 3, 2026, and concerns a roof-repair grant for the Bellford shelter. It is distinct from Orr's September 27 allegation about the shelter's solar-panel grant. Orr's later withdrawal of a statement about one solar invoice does not withdraw this roof complaint. The trust continues to deny the roof allegation; the available record contains no resolution of it."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "holdout_multilingual_continuation",
+          "repeat": 1,
+          "duration_seconds": 35.027,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Wolplein Market reopens after gas inspection",
+                "previous_event_id": "hold-mem-wolplein",
+                "article_ids": [
+                  "hold-market-nl",
+                  "hold-market-fr"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-market-nl",
+                    "quote": "Het inspectieverslag noemt de Wolpleinmarkt in Havenstad en verwijst naar de sluiting van 5 oktober 2026 na een melding van een gasgeur. Na controle van de gasinstallatie mocht juist deze markt op 8 oktober opnieuw open."
+                  },
+                  {
+                    "article_id": "hold-market-fr",
+                    "quote": "Le rapport identifie le marché Wolplein à Havenstad, fermé le 5 octobre 2026 après le signalement d'une odeur de gaz. Le contrôle de l'installation a permis sa réouverture le 8 octobre. Cette reprise fait suite à cette même fermeture."
+                  }
+                ]
+              },
+              {
+                "title": "Landscape-drawing exhibition opens at Wolplein Market gallery",
+                "previous_event_id": null,
+                "article_ids": [
+                  "hold-market-art"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-market-art",
+                    "quote": "The venue is the gallery at Wolplein Market in Havenstad. This article concerns the October 8, 2026, opening of the independently planned landscape-drawing exhibition. The market also reopened that day after its October 5 gas-inspection closure, but the exhibition opening is a distinct arts event, not a report on the inspection or a development in the gas incident."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "holdout_same_named_bridges",
+          "repeat": 2,
+          "duration_seconds": 31.489,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Bellford Brook Bridge reopens after truck collision repairs",
+                "previous_event_id": "hold-mem-north",
+                "article_ids": [
+                  "hold-north-a",
+                  "hold-north-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-north-a",
+                    "quote": "The final inspection record identifies this crossing as Brook Bridge in Bellford. It is the bridge closed after a truck struck its eastern support on October 5, 2026. The October 8 reopening followed repair of that collision damage."
+                  },
+                  {
+                    "article_id": "hold-north-b",
+                    "quote": "The engineering attachment states that this is the Bellford Brook Bridge, closed on October 5 after a truck hit the eastern support. Engineers approved reopening on October 8 after collision repairs were completed."
+                  }
+                ]
+              },
+              {
+                "title": "Mossbank Brook Bridge reopens after suspension cable replacement",
+                "previous_event_id": "hold-mem-south",
+                "article_ids": [
+                  "hold-south-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-south-a",
+                    "quote": "The inspection attachment names Brook Bridge in Mossbank and dates the closure to October 6, 2026, when a routine inspection found worn suspension cables. Replacement of those cables allowed this bridge to reopen on October 8."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "holdout_late_drill_anchor",
+          "repeat": 2,
+          "duration_seconds": 36.347,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Northline releases review of September 29 Elm Station drill",
+                "previous_event_id": null,
+                "article_ids": [
+                  "hold-drill-a",
+                  "hold-drill-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-drill-a",
+                    "quote": "The last page identifies the subject of this review as the September 29, 2026, exercise at Elm Station. Staff practiced a simulated chemical leak using a training card; no chemical was released. Northline explicitly said this exercise review is not the report on the real leak at Elm Station on October 7. Thursday's publication concerns the September drill only."
+                  },
+                  {
+                    "article_id": "hold-drill-b",
+                    "quote": "In its identifying note, Northline says the document records the September 29 exercise at Elm Station: a simulated chemical leak with no substance released. This is the same practice evacuation reviewed in Thursday's staff-debrief release. The note separates that exercise from the real October 7 leak at the station, which has its own engineering report."
+                  }
+                ]
+              },
+              {
+                "title": "Northline reports on October 7 cleaning-fluid leak at Elm Station",
+                "previous_event_id": null,
+                "article_ids": [
+                  "hold-real-leak"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-real-leak",
+                    "quote": "The event identification states that a cleaning-fluid container actually leaked at Elm Station on October 7, 2026, prompting the evacuation described in this account. Engineers are investigating that real leak. Northline says this is a separate occurrence from the September 29 simulated chemical-leak exercise at the same station. This report concerns the October 7 incident only."
+                  },
+                  {
+                    "article_id": "hold-real-leak",
+                    "quote": "The account did not include the laboratory results, and the company did not claim that every technical question had been settled."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "holdout_allegation_denial",
+          "repeat": 2,
+          "duration_seconds": 52.351,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Orr withdraws solar-invoice diversion claim; Rook Trust maintains denial",
+                "previous_event_id": "hold-mem-solar",
+                "article_ids": [
+                  "hold-solar-a",
+                  "hold-solar-b"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-solar-a",
+                    "quote": "The case identification at the end concerns Orr's September 27, 2026, allegation about the Bellford shelter solar-panel grant. The trust supplied an invoice showing that the disputed purchase belonged to that solar project. Orr then withdrew her claim that this invoice proved diversion, while saying she might ask further questions. This update is not about her separate October 3 roof-grant complaint concerning the same trust."
+                  },
+                  {
+                    "article_id": "hold-solar-b",
+                    "quote": "The disputed invoice belonged to the Bellford shelter solar-panel grant identified in Orr's September 27 allegation. After the invoice review she withdrew her statement that this document demonstrated diversion of the solar money. The correction and the trust's denial concern that same solar-grant dispute. Orr's October 3 complaint about a roof grant is a different matter and was not resolved by this correction."
+                  }
+                ]
+              },
+              {
+                "title": "Rook Trust denies Orr's unresolved Bellford shelter roof-grant complaint",
+                "previous_event_id": null,
+                "article_ids": [
+                  "hold-roof-a"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-roof-a",
+                    "quote": "The complaint in this report was filed on October 3, 2026, and concerns a roof-repair grant for the Bellford shelter. It is distinct from Orr's September 27 allegation about the shelter's solar-panel grant. Orr's later withdrawal of a statement about one solar invoice does not withdraw this roof complaint. The trust continues to deny the roof allegation; the available record contains no resolution of it."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "case": "holdout_multilingual_continuation",
+          "repeat": 2,
+          "duration_seconds": 28.277,
+          "score": {
+            "pairwise_tp": 1,
+            "pairwise_fp": 0,
+            "pairwise_fn": 0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0,
+            "pairwise_raw_f1": 1.0,
+            "pairwise_f1": 1.0,
+            "exact_partition": true,
+            "continuation_correct": 3,
+            "continuation_total": 3,
+            "continuation_accuracy": 1.0,
+            "evidence_articles_covered": 3,
+            "evidence_coverage": 1.0,
+            "evidence_quote_errors": 0,
+            "omitted_article_ids": [],
+            "unknown_article_ids": [],
+            "duplicate_article_ids": [],
+            "valid": true,
+            "strict_pass": true,
+            "errors": []
+          },
+          "error": null,
+          "response": {
+            "events": [
+              {
+                "title": "Wolplein Market reopens after gas inspection",
+                "previous_event_id": "hold-mem-wolplein",
+                "article_ids": [
+                  "hold-market-nl",
+                  "hold-market-fr"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-market-nl",
+                    "quote": "Het inspectieverslag noemt de Wolpleinmarkt in Havenstad en verwijst naar de sluiting van 5 oktober 2026 na een melding van een gasgeur. Na controle van de gasinstallatie mocht juist deze markt op 8 oktober opnieuw open."
+                  },
+                  {
+                    "article_id": "hold-market-fr",
+                    "quote": "Le rapport identifie le marché Wolplein à Havenstad, fermé le 5 octobre 2026 après le signalement d'une odeur de gaz. Le contrôle de l'installation a permis sa réouverture le 8 octobre. Cette reprise fait suite à cette même fermeture."
+                  }
+                ]
+              },
+              {
+                "title": "Landscape-drawing exhibition opens at Wolplein Market gallery",
+                "previous_event_id": null,
+                "article_ids": [
+                  "hold-market-art"
+                ],
+                "evidence": [
+                  {
+                    "article_id": "hold-market-art",
+                    "quote": "The venue is the gallery at Wolplein Market in Havenstad. This article concerns the October 8, 2026, opening of the independently planned landscape-drawing exhibition. The market also reopened that day after its October 5 gas-inspection closure, but the exhibition opening is a distinct arts event, not a report on the inspection or a development in the gas incident."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
