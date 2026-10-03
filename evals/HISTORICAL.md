@@ -30,6 +30,13 @@ evidence before seeing new results. It found seven supported conservative
 nonmatches and disputed all three positive exact-event labels. That seven-case
 subset can test false merges but cannot measure recall or overall accuracy.
 
+The same reviewer then froze twelve additional source-supported positive pairs,
+covering ten same-day matches and two cross-day developments. It did not inspect
+old assignments or new outputs to select or label them. Combined with the seven
+supported negatives, they form a selected 19-pair audit. These are agent-reviewed
+labels with shared articles, not independent statistical samples or human gold.
+The original ten labels remain visible separately.
+
 Old saved results came from multiple implementation versions. Live July 21–22
 assignments and later July 23 reconstruction experiments must be shown separately;
 neither should be presented as a fresh run of today's legacy checkout. Earlier
@@ -62,7 +69,9 @@ whole archive. Some review case names describe older revisions of rolling
 headlines. Liveblogs can contain multiple developments, while the rebuild assigns
 each captured item to one event. Empty descriptions provide only title evidence.
 
-The old system had a broader history and different retrieval. The rebuild's
+The old system had a broader history and different retrieval. None of its 5,421
+pre-period stories was inside the 14-day window before July 21, so this audit
+does not establish a recent-memory warm-start advantage for the old run. The rebuild's
 30-event memory can omit relevant predecessors even within these two days;
 missing candidates must be distinguished from an incorrect model decision.
 Same-day memory ties are ordered by generated event ID, so repetitions can expose

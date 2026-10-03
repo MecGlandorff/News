@@ -105,6 +105,11 @@ def test_baseline_uses_history_and_rejects_ambiguous_assignments(tmp_path):
     assert baseline["scored_cases"][0]["current_event"] == "100"
     assert baseline["runs"][0]["git_sha"] == "original-sha"
     with sqlite3.connect(tmp_path / "source-archive.db") as db:
+        db.execute("UPDATE occurrence_assignment_history SET story_id=NULL")
+    with pytest.raises(ValueError, match="no story assignment"):
+        historical.historical_baseline(tmp_path, [review])
+    with sqlite3.connect(tmp_path / "source-archive.db") as db:
+        db.execute("UPDATE occurrence_assignment_history SET story_id=100")
         db.execute("INSERT INTO occurrence_assignment_history VALUES ('o1', 34, 200)")
     with pytest.raises(ValueError, match="ambiguous or missing"):
         historical.historical_baseline(tmp_path, [review])

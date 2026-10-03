@@ -150,6 +150,8 @@ def historical_baseline(archive: Path, reviews: list[dict]) -> dict:
                 if len(rows) != 1:
                     raise ValueError("ambiguous or missing run-scoped historical assignment")
                 run_id, story_id = rows[0]
+                if story_id is None:
+                    raise ValueError("historical article has no story assignment")
                 runs.add(run_id)
                 assignments[(source.parent.name, article["id"])] = str(story_id)
         metadata = [
@@ -201,6 +203,14 @@ def evaluate(
             "created_at": datetime.now(timezone.utc).isoformat(),
             "model": codex.MODEL,
             "reasoning_effort": codex.REASONING_EFFORT,
+            "strategy": "single",
+            "archive_files": {
+                str(path.relative_to(archive)): hashlib.sha256(path.read_bytes()).hexdigest()
+                for path in [
+                    archive / "source-archive.db",
+                    archive / "evals/datasets/matching_reconstruction_review_2026-07-21_22.jsonl",
+                ]
+            },
             "source_files": {
                 str(path.relative_to(root)): hashlib.sha256(path.read_bytes()).hexdigest()
                 for path in sorted(paths)
@@ -277,7 +287,8 @@ def evaluate(
         )
         write(output / "report.json", report)
         print(
-            f"Replay {repeat}: {sum(row['correct'] for row in scores)}/{len(scores)} reviewed relations correct",
+            f"Replay {repeat}: {sum(row['correct'] for row in scores)}/{len(scores)} "
+            "legacy-label agreement",
             flush=True,
         )
     report["completed"] = True
