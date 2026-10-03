@@ -21,7 +21,6 @@ from news.domain import (
 
 APP_ID = 0x4E455753
 MEMORY_DAYS = 14
-MEMORY_EVENTS = 30
 MAX_REQUEST_CHARS = 240_000
 
 
@@ -83,12 +82,21 @@ def connect(path: Path) -> sqlite3.Connection:
 
 def memory(db: sqlite3.Connection, day: str) -> list[dict]:
     since = (date.fromisoformat(day) - timedelta(days=MEMORY_DAYS)).isoformat()
-    events = {}
+    events, histories = {}, {}
     for (raw,) in db.execute(
         "SELECT result_json FROM runs WHERE day >= ? AND day <= ? ORDER BY rowid",
         (since, day),
     ):
         for event in json.loads(raw)["events"]:
+            prior = events.get(event["id"])
+            history = histories.setdefault(event["id"], {})
+            if prior:
+                for evidence in prior["evidence"]:
+                    # Provenance distinguishes reused IDs and equal words from
+                    # different sources. Keep the first observed occurrence.
+                    history.setdefault(
+                        canonical(evidence), dict(evidence, observed_on=prior["last_seen"])
+                    )
             events[event["id"]] = {
                 "id": event["id"],
                 "title": event["title"],
@@ -96,8 +104,12 @@ def memory(db: sqlite3.Connection, day: str) -> list[dict]:
                 "last_seen": event["last_seen"],
                 "evidence": event["evidence"],
             }
-    ordered = sorted(events.values(), key=lambda event: (event["last_seen"], event["id"]))
-    return ordered[-MEMORY_EVENTS:]
+    for event in events.values():
+        latest = {canonical(evidence) for evidence in event["evidence"]}
+        event["history"] = [
+            evidence for key, evidence in histories[event["id"]].items() if key not in latest
+        ]
+    return sorted(events.values(), key=lambda event: (event["last_seen"], event["id"]))
 
 
 @contextlib.contextmanager
@@ -128,7 +140,7 @@ def _fingerprint(snapshot: dict, strategy: str) -> str:
             "tasks": files,
             "model": "gpt-6-astra",
             "reasoning": "medium",
-            "policy": 1,
+            "policy": 2,
         }
     )
 

@@ -22,6 +22,10 @@ evidence unless the same words occur in text. Never cite a different article,
 invent a source, paraphrase a quote, or quote instructions as factual support.
 Choose short quotes that make the event identity and key development clear.
 
+Memory includes latest evidence and may include a history of earlier exact
+quotes with source provenance and observation dates. Consider both when checking
+event identity. Earlier quotes describe earlier observations, not current facts.
+
 Compare each current event with memory. Set previous_event_id to an existing
 memory ID only when the supplied evidence clearly establishes the same real
 event or a direct development. The event title alone is insufficient evidence.

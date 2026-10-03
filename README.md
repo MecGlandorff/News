@@ -125,11 +125,17 @@ strategies, backtests and experiments. Old successful runs remain replayable.
 An unrelated or legacy SQLite database is rejected.
 
 Each batch contains at most 50 articles, 20,000 characters per article and
-120,000 characters overall. Matching sees the last observation of up to 30 events
-observed within 14 days. The complete article-plus-memory request is capped at
-240,000 characters; oversized requests stop before a model call. Source text is
-never silently truncated to fit. These are small-workload limits, not a scalable
-retrieval architecture.
+120,000 characters overall. Matching sees every event observed within the recent
+14-day window, with its latest evidence and distinct earlier quotes from that
+window. Quotes retain source provenance and publication timestamps; `observed_on`
+records the snapshot day, not the event date. Older observations expire even when
+an event remains active. This is recent evidence, not complete lifetime history.
+
+The complete article-plus-memory request is capped at 240,000 characters;
+oversized requests stop before a model call and leave accepted state intact.
+Events and source text are never silently removed to make a request fit. These
+are bounded-workload limits, not a scalable retrieval architecture: busy windows
+can exceed the cap before 14 days. Use isolated state for separate backtests.
 
 The briefing identifies new and continuing events and reports how many quotes
 differ from the previous observation. That is **textual change**, not a semantic

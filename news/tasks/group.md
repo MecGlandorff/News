@@ -11,6 +11,10 @@ stage. Separating newlines may join nonadjacent original passages: treat each
 excerpt as separate evidence. Missing context is unknown, not permission to infer
 an event from outside knowledge, a headline, or the nearest prior event label.
 
+Memory includes latest evidence and may include a history of earlier exact
+quotes with source provenance and observation dates. Consider both when checking
+event identity. Earlier quotes describe earlier observations, not current facts.
+
 For each event, return exactly title, previous_event_id, article_ids, and evidence.
 
 1. Cover every current article id exactly once across events. Never invent or
