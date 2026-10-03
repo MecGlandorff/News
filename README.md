@@ -9,6 +9,82 @@ This is the `from-scratch/main` rebuild. The previous implementation remains in
 Git history and the original checkout. This version uses a new database; it does
 not import the old database or reproduce every old feature.
 
+## Experimental durable story trajectories
+
+This branch adds a separate prototype for **ongoing stories with distinct
+developments, sources, corrections and unresolved questions**. The existing
+`run` command below remains available for comparison. The prototype has not yet
+earned promotion through independent live evaluation.
+
+```sh
+python -m news story-run --input examples/day1.json --state .news/story-demo
+python -m news story-run --input examples/day2.json --state .news/story-demo
+python -m news story STORY_ID --state .news/story-demo
+python -m news story STORY_ID --state .news/story-demo --as-of 2026-10-01
+```
+
+Each run writes a daily Markdown briefing linking to complete dated views of
+the stories it touches. `story` renders every accepted observation of that story
+offline. Dates are **observed on** dates: a report captured later can describe an
+earlier occurrence. The source's stated occurrence date belongs in its quoted
+evidence and summary, not an invented timestamp.
+
+A story means a named ongoing matter, such as a particular court case or an
+incident and its investigation. Related developments receive distinct stable
+event IDs inside that story. Repeated reporting of one occurrence retains its
+event ID. Sharing a person, organization or broad topic alone does not establish
+story identity. Uncertain event identity is explicitly kept separate.
+
+Events contain attributed observations. Each observation explains a source-backed
+new development, additional reporting, correction, disagreement or unclear
+change. Corrections and disagreements preserve both assertions with exact source
+pointers; contradictory first reports and a later correction plus continued
+disagreement can coexist within one event. A nullable unresolved question must
+be supported by that observation's quotes. These are semantic model judgments,
+not facts established by exact-string validation. Earlier dated questions remain
+in the timeline; a later answer must be stated with its evidence. There is no
+automatic claim that an unanswered question has been resolved.
+
+The separate state contains `journal.sqlite3`, with an immutable accepted-run
+journal and a disposable SQLite FTS5 index of **full captured source text**.
+Capture identities include the complete article and capture day, so reused IDs,
+URLs, changed publication dates and revised text retain distinct provenance.
+The index is rebuilt from the accepted journal before each run. It has no age
+cutoff, and as-of retrieval excludes future captures. This straightforward
+prototype favors auditable state over indexing speed on a very large archive.
+
+Retrieval uses up to 64 lexical terms from each current title and full text,
+prioritizing title terms and rarer archive terms. It retrieves three captures per
+article by default, plus recent captures of the same URL. This supplies candidates,
+not automatic story links. A selected story supplies its origin, latest
+observation, matching history, and recorded corrections, disagreements and sourced
+unresolved questions. The full captured text of their evidence is included.
+`--hits-per-article` adjusts the retrieval breadth; it must be 1–10. Lexical search
+can miss paraphrases, translations or weakly named connections. Retrieval recall
+must be evaluated separately from model decisions.
+
+The canonical request is capped at 180,000 characters by default (at most 240,000
+with `--max-context-chars`). If retained context cannot fit, the run stops before
+the model call and keeps diagnostics. It does not silently remove origins or
+corrections. Long or busy stories can reach this limit; use smaller batches and
+inspect the recorded selection. There is one Codex call, no automatic retry.
+
+`runs/<id>/` retains `input.json`, `retrieval.json` (queries, selected sources,
+omissions and request size), raw `decision.json`, accepted `result.json`,
+`briefing.md`, and `stories/<story_id>.md`. Transport artifacts live in `model/`.
+Failures retain `failure.json`; only a row in the journal establishes acceptance.
+Source/reference checks and all render writes succeed before that transaction
+commits. Repeating the same snapshot, code, task and retrieval settings reuses its
+accepted result without a model call. It restores that run's original story view,
+including its same-day boundary, rather than introducing later observations.
+
+Offline tests cover the representation, retrieval, provenance and failure
+boundaries. They cannot establish good story grouping, meaningful summaries or
+correct attribution of correction versus disagreement. Those require independent
+source-only judgments and review of actual reader-facing timelines, including
+quiet gaps beyond 14 days. Broad historical corpora and semantic questions stay
+outside the application and ordinary tests.
+
 ## Start
 
 Use Python 3.12+ on macOS or Linux and an authenticated Codex CLI. The transport

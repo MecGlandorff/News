@@ -9,7 +9,7 @@ from pathlib import Path
 from urllib.error import URLError
 from xml.etree.ElementTree import ParseError
 
-from news import feeds, pipeline
+from news import feeds, pipeline, trajectory
 from news.domain import TIMEZONE
 
 
@@ -29,6 +29,18 @@ def parser() -> argparse.ArgumentParser:
     replay = commands.add_parser("replay", help="render a saved run without model or network calls")
     replay.add_argument("run_id")
     replay.add_argument("--state", type=Path, default=Path(".news"))
+    story_run = commands.add_parser("story-run", help="experimental durable story trajectories")
+    story_run.add_argument("--input", type=Path, required=True)
+    story_run.add_argument("--state", type=Path, default=Path(".news/trajectories"))
+    story_run.add_argument("--timeout", type=float, default=180)
+    story_run.add_argument(
+        "--max-context-chars", type=int, default=trajectory.DEFAULT_CONTEXT_CHARS
+    )
+    story_run.add_argument("--hits-per-article", type=int, default=3)
+    story = commands.add_parser("story", help="render a complete accepted story without AI calls")
+    story.add_argument("story_id")
+    story.add_argument("--state", type=Path, default=Path(".news/trajectories"))
+    story.add_argument("--as-of", help="include observations through this capture day (YYYY-MM-DD)")
     return root
 
 
@@ -67,6 +79,27 @@ def main(argv: list[str] | None = None) -> int:
                     indent=2,
                 )
             )
+        elif args.command == "story-run":
+            result, reused = trajectory.run(
+                json.loads(args.input.read_text()),
+                args.state,
+                timeout=args.timeout,
+                max_context_chars=args.max_context_chars,
+                hits_per_article=args.hits_per_article,
+            )
+            print(
+                json.dumps(
+                    {
+                        "run_id": result["run_id"],
+                        "reused": reused,
+                        "stories": [item["id"] for item in result["stories"]],
+                        "briefing": str(args.state / "runs" / result["run_id"] / "briefing.md"),
+                    },
+                    indent=2,
+                )
+            )
+        elif args.command == "story":
+            print(trajectory.story(args.state, args.story_id, as_of=args.as_of), end="")
         else:
             print(pipeline.replay(args.state, args.run_id), end="")
         return 0
