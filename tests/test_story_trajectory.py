@@ -1,9 +1,10 @@
 import json
+import sqlite3
 from copy import deepcopy
 
 import pytest
 
-from news import cli, trajectory
+from news import trajectory
 
 
 def source(
@@ -555,7 +556,7 @@ def test_context_budget_fails_before_call_with_diagnostics_and_journal_intact(mo
     assert diagnostic["within_budget"] is False and diagnostic["selection"]
 
 
-@pytest.mark.parametrize("failure", ["model", "write", "validation"])
+@pytest.mark.parametrize("failure", ["model", "write", "validation", "render", "commit"])
 def test_failed_run_never_changes_accepted_timeline(model, monkeypatch, tmp_path, failure):
     _, replies = model
     first, _ = trajectory.run(snapshot("2026-01-01", source("a", "Dock permit issued.")), tmp_path)
@@ -564,6 +565,31 @@ def test_failed_run_never_changes_accepted_timeline(model, monkeypatch, tmp_path
         replies.append(RuntimeError("deadline expired"))
     elif failure == "validation":
         replies.append(lambda payload: {"stories": []})
+    elif failure == "render":
+
+        def failed_render(value):
+            raise OSError("story write unavailable")
+
+        monkeypatch.setattr(trajectory, "render_story", failed_render)
+    elif failure == "commit":
+        original_connect = trajectory.connect
+
+        def failed_commit(path):
+            db = original_connect(path)
+            inserted = False
+
+            def authorize(operation, first, second, database, trigger):
+                nonlocal inserted
+                if operation == sqlite3.SQLITE_INSERT and first == "runs":
+                    inserted = True
+                if operation == sqlite3.SQLITE_TRANSACTION and first == "COMMIT" and inserted:
+                    return sqlite3.SQLITE_DENY
+                return sqlite3.SQLITE_OK
+
+            db.set_authorizer(authorize)
+            return db
+
+        monkeypatch.setattr(trajectory, "connect", failed_commit)
     else:
         original = trajectory._write_json
 
@@ -573,10 +599,11 @@ def test_failed_run_never_changes_accepted_timeline(model, monkeypatch, tmp_path
             original(path, value)
 
         monkeypatch.setattr(trajectory, "_write_json", broken)
-    with pytest.raises((ValueError, OSError, RuntimeError)):
+    with pytest.raises((ValueError, OSError, RuntimeError, sqlite3.DatabaseError)):
         trajectory.run(
             snapshot("2026-01-02", source("b", "Dock permit appealed.", day="2026-01-02")), tmp_path
         )
+    monkeypatch.undo()
     assert (
         count_runs(tmp_path) == 1
         and trajectory.story(tmp_path, first["stories"][0]["id"]) == before
@@ -611,17 +638,6 @@ def test_render_escapes_untrusted_text_and_marks_capture_dates_not_event_dates(m
     assert "\\[malicious\\]" in text and "\\*\\*Notice\\*\\*" in text
 
 
-def test_cli_story_run_and_offline_story_view(model, tmp_path, capsys):
-    path = tmp_path / "input.json"
-    path.write_text(json.dumps(snapshot("2026-01-01", source("a", "Dock permit issued."))))
-    state = tmp_path / "state"
-    assert cli.main(["story-run", "--input", str(path), "--state", str(state)]) == 0
-    report = json.loads(capsys.readouterr().out)
-    assert cli.main(["story", report["stories"][0], "--state", str(state)]) == 0
-    assert "Dock permit issued" in capsys.readouterr().out
-    assert len(model[0]) == 1
-
-
 def test_missing_story_state_does_not_create_files(tmp_path):
     with pytest.raises(ValueError, match="no story"):
         trajectory.story(tmp_path, "unknown")
@@ -636,3 +652,41 @@ def test_chronology_and_lock_are_checked_before_model(model, tmp_path):
     with trajectory.state_lock(tmp_path), pytest.raises(ValueError, match="another run"):
         trajectory.run(snapshot("2026-03-01", source("c", "Dock permit appealed.")), tmp_path)
     assert len(calls) == 1
+
+
+@pytest.mark.parametrize(
+    "options",
+    [
+        {"timeout": 0},
+        {"timeout": 1801},
+        {"timeout": float("nan")},
+        {"timeout": float("inf")},
+        {"max_context_chars": 0},
+        {"max_context_chars": 240001},
+        {"max_context_chars": True},
+        {"hits_per_article": 0},
+        {"hits_per_article": 11},
+        {"hits_per_article": True},
+    ],
+)
+def test_invalid_run_limits_fail_before_model_or_state(model, tmp_path, options):
+    with pytest.raises(ValueError):
+        trajectory.run(
+            snapshot("2026-01-01", source("a", "Dock permit issued.")), tmp_path, **options
+        )
+    assert model[0] == [] and list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize("database", ["unrelated", "future_version"])
+def test_other_database_is_untouched_before_model(model, tmp_path, database):
+    path = tmp_path / "journal.sqlite3"
+    with sqlite3.connect(path) as db:
+        db.execute("CREATE TABLE private_data (value TEXT)")
+        db.execute("INSERT INTO private_data VALUES ('keep')")
+        if database == "future_version":
+            db.execute(f"PRAGMA application_id = {trajectory.APP_ID}")
+            db.execute("PRAGMA user_version = 999")
+    before = path.read_bytes()
+    with pytest.raises(ValueError):
+        trajectory.run(snapshot("2026-01-01", source("a", "Dock permit issued.")), tmp_path)
+    assert path.read_bytes() == before and model[0] == []

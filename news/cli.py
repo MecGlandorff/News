@@ -9,7 +9,7 @@ from pathlib import Path
 from urllib.error import URLError
 from xml.etree.ElementTree import ParseError
 
-from news import feeds, pipeline, trajectory
+from news import feeds, trajectory
 from news.domain import TIMEZONE
 
 
@@ -21,25 +21,15 @@ def parser() -> argparse.ArgumentParser:
     capture.add_argument("--day", default=datetime.now(TIMEZONE).date().isoformat())
     capture.add_argument("--max-per-feed", type=int, default=10)
     capture.add_argument("--output", type=Path, required=True)
-    run = commands.add_parser("run", help="build event memory and a Markdown briefing")
+    run = commands.add_parser("run", help="update sourced stories and write a Markdown briefing")
     run.add_argument("--input", type=Path, required=True)
     run.add_argument("--state", type=Path, default=Path(".news"))
-    run.add_argument("--strategy", choices=["single", "staged"], default="single")
     run.add_argument("--timeout", type=float, default=180, help="seconds per Codex call")
-    replay = commands.add_parser("replay", help="render a saved run without model or network calls")
-    replay.add_argument("run_id")
-    replay.add_argument("--state", type=Path, default=Path(".news"))
-    story_run = commands.add_parser("story-run", help="experimental durable story trajectories")
-    story_run.add_argument("--input", type=Path, required=True)
-    story_run.add_argument("--state", type=Path, default=Path(".news/trajectories"))
-    story_run.add_argument("--timeout", type=float, default=180)
-    story_run.add_argument(
-        "--max-context-chars", type=int, default=trajectory.DEFAULT_CONTEXT_CHARS
-    )
-    story_run.add_argument("--hits-per-article", type=int, default=3)
+    run.add_argument("--max-context-chars", type=int, default=trajectory.DEFAULT_CONTEXT_CHARS)
+    run.add_argument("--hits-per-article", type=int, default=3)
     story = commands.add_parser("story", help="render a complete accepted story without AI calls")
     story.add_argument("story_id")
-    story.add_argument("--state", type=Path, default=Path(".news/trajectories"))
+    story.add_argument("--state", type=Path, default=Path(".news"))
     story.add_argument("--as-of", help="include observations through this capture day (YYYY-MM-DD)")
     return root
 
@@ -62,24 +52,6 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(report, indent=2), file=sys.stderr)
             print(args.output)
         elif args.command == "run":
-            result, reused = pipeline.run(
-                json.loads(args.input.read_text()),
-                args.state,
-                strategy=args.strategy,
-                timeout=args.timeout,
-            )
-            print(
-                json.dumps(
-                    {
-                        "run_id": result["run_id"],
-                        "reused": reused,
-                        "events": len(result["events"]),
-                        "briefing": str(args.state / "runs" / result["run_id"] / "briefing.md"),
-                    },
-                    indent=2,
-                )
-            )
-        elif args.command == "story-run":
             result, reused = trajectory.run(
                 json.loads(args.input.read_text()),
                 args.state,
@@ -98,10 +70,8 @@ def main(argv: list[str] | None = None) -> int:
                     indent=2,
                 )
             )
-        elif args.command == "story":
-            print(trajectory.story(args.state, args.story_id, as_of=args.as_of), end="")
         else:
-            print(pipeline.replay(args.state, args.run_id), end="")
+            print(trajectory.story(args.state, args.story_id, as_of=args.as_of), end="")
         return 0
     except (ValueError, OSError, RuntimeError, sqlite3.Error, URLError, ParseError) as exc:
         print(f"news: {exc}", file=sys.stderr)
@@ -109,5 +79,7 @@ def main(argv: list[str] | None = None) -> int:
             print(note, file=sys.stderr)
         return 1
     except KeyboardInterrupt:
-        print("news: interrupted; accepted event memory was not partially written", file=sys.stderr)
+        print(
+            "news: interrupted; accepted story journal was not partially written", file=sys.stderr
+        )
         return 130

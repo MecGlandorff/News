@@ -5,6 +5,7 @@ import os
 import signal
 import sys
 import time
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -12,14 +13,30 @@ import pytest
 from news import codex
 
 RESULT = {
-    "events": [
+    "stories": [
         {
+            "story_id": None,
             "title": "Bridge closure",
-            "previous_event_id": None,
-            "article_ids": ["a1"],
-            "evidence": [{"article_id": "a1", "quote": "The bridge closed."}],
+            "events": [
+                {
+                    "event_id": None,
+                    "title": "Bridge closure",
+                    "identity_uncertain": False,
+                    "continuity_evidence": [],
+                    "observations": [
+                        {
+                            "change": "new_development",
+                            "summary": "The bridge closed.",
+                            "unresolved": None,
+                            "article_ids": ["a1"],
+                            "evidence": [{"capture_id": "c-a1", "quote": "The bridge closed."}],
+                            "comparison_evidence": [],
+                        }
+                    ],
+                }
+            ],
         }
-    ],
+    ]
 }
 PAYLOAD = {
     "day": "2026-10-01",
@@ -31,9 +48,12 @@ PAYLOAD = {
             "published_at": "2026-10-01T12:00:00Z",
             "title": "Bridge closure",
             "text": "The bridge closed.",
+            "capture_id": "c-a1",
+            "observed_on": "2026-10-01",
         }
     ],
-    "memory": [],
+    "stories": [],
+    "prior_sources": [],
 }
 
 
@@ -73,7 +93,7 @@ def test_success_sends_stdin_and_archives_configuration(tmp_path, fake_codex):
         + "{'input_tokens': 120, 'cached_input_tokens': 20, 'output_tokens': 40}}))\n"
     )
     directory = tmp_path / "call"
-    result = codex.run_task("single", PAYLOAD, directory, executable=executable)
+    result = codex.run_task("trajectory", PAYLOAD, directory, executable=executable)
 
     assert result == RESULT
     assert json.loads((directory / "input.json").read_text()) == PAYLOAD
@@ -95,7 +115,7 @@ def test_success_sends_stdin_and_archives_configuration(tmp_path, fake_codex):
     assert received["cwd"] != str(Path.cwd())
     assert not Path(received["cwd"]).exists()
     assert (directory / "schema.json").read_text() == (
-        codex.TASKS_DIR / "single.schema.json"
+        codex.TASKS_DIR / "trajectory.schema.json"
     ).read_text()
     saved = metadata(directory)
     assert saved["status"] == "ok"
@@ -115,7 +135,7 @@ def test_article_content_never_becomes_a_shell_command(tmp_path, fake_codex):
     payload = {"article": f"$(touch {marker}) `touch {marker}`; --output-last-message bad; café"}
     executable = fake_codex(write_result())
     directory = tmp_path / "call with spaces"
-    codex.run_task("single", payload, directory, executable=executable)
+    codex.run_task("trajectory", payload, directory, executable=executable)
     received = json.loads((directory / "received.json").read_text())
     assert json.dumps(payload, ensure_ascii=False) in received["prompt"]
     assert payload["article"] not in received["argv"]
@@ -128,7 +148,7 @@ def test_nonzero_exit_rejects_even_a_valid_final_and_retains_diagnostics(tmp_pat
     )
     directory = tmp_path / "call"
     with pytest.raises(codex.CodexError, match="status 7"):
-        codex.run_task("single", PAYLOAD, directory, executable=executable)
+        codex.run_task("trajectory", PAYLOAD, directory, executable=executable)
     assert "service failed" in (directory / "stderr.txt").read_text()
     assert json.loads((directory / "final.json").read_text()) == RESULT
     assert metadata(directory)["status"] == "failed"
@@ -138,7 +158,7 @@ def test_nonzero_exit_rejects_even_a_valid_final_and_retains_diagnostics(tmp_pat
 def test_missing_executable_still_has_request_and_failure_artifacts(tmp_path):
     directory = tmp_path / "call"
     with pytest.raises(codex.CodexError, match="executable not found"):
-        codex.run_task("single", PAYLOAD, directory, executable=str(tmp_path / "missing"))
+        codex.run_task("trajectory", PAYLOAD, directory, executable=str(tmp_path / "missing"))
     assert (directory / "prompt.md").is_file()
     assert (directory / "schema.json").is_file()
     assert (directory / "config.json").is_file()
@@ -154,7 +174,7 @@ def test_missing_executable_still_has_request_and_failure_artifacts(tmp_path):
 def test_missing_or_empty_final_is_a_failure(tmp_path, fake_codex, body):
     directory = tmp_path / "call"
     with pytest.raises(codex.CodexError, match="no final output"):
-        codex.run_task("single", PAYLOAD, directory, executable=fake_codex(body))
+        codex.run_task("trajectory", PAYLOAD, directory, executable=fake_codex(body))
     assert metadata(directory)["status"] == "failed"
 
 
@@ -169,7 +189,7 @@ def test_missing_or_empty_final_is_a_failure(tmp_path, fake_codex, body):
 def test_malformed_json_is_rejected_and_preserved(tmp_path, fake_codex, body):
     directory = tmp_path / "call"
     with pytest.raises(codex.CodexError, match="not valid UTF-8 JSON"):
-        codex.run_task("single", PAYLOAD, directory, executable=fake_codex(body))
+        codex.run_task("trajectory", PAYLOAD, directory, executable=fake_codex(body))
     assert (directory / "final.json").stat().st_size > 0
     assert metadata(directory)["status"] == "failed"
 
@@ -179,38 +199,39 @@ def test_malformed_json_is_rejected_and_preserved(tmp_path, fake_codex, body):
     [
         [],
         {},
-        {"events": "wrong type"},
-        {"events": [], "extra": True},
-        {"events": [{"title": "Missing fields"}]},
-        {"events": [{**RESULT["events"][0], "previous_event_id": 5}]},
-        {"events": [{**RESULT["events"][0], "article_ids": []}]},
-        {"events": [{**RESULT["events"][0], "evidence": []}]},
-        {"events": [{**RESULT["events"][0], "title": ""}]},
-        {"events": [{**RESULT["events"][0], "evidence": [{"article_id": "a1", "quote": ""}]}]},
+        {"stories": "wrong type"},
+        {"stories": [], "extra": True},
+        {"stories": [{"title": "Missing fields"}]},
+        {"stories": [{**RESULT["stories"][0], "story_id": 5}]},
+        {"stories": [{**RESULT["stories"][0], "events": []}]},
+        {"stories": [{**RESULT["stories"][0], "title": ""}]},
     ],
 )
 def test_schema_mismatch_is_rejected(tmp_path, fake_codex, result):
     directory = tmp_path / "call"
     with pytest.raises(codex.CodexError, match="violates schema"):
-        codex.run_task("single", PAYLOAD, directory, executable=fake_codex(write_result(result)))
+        codex.run_task(
+            "trajectory", PAYLOAD, directory, executable=fake_codex(write_result(result))
+        )
     assert metadata(directory)["status"] == "failed"
 
 
 def test_empty_batch_response_is_allowed(tmp_path, fake_codex):
     result = codex.run_task(
-        "single",
-        {"articles": [], "memory": []},
+        "trajectory",
+        {"articles": [], "stories": [], "prior_sources": []},
         tmp_path / "call",
-        executable=fake_codex(write_result({"events": []})),
+        executable=fake_codex(write_result({"stories": []})),
     )
-    assert result == {"events": []}
+    assert result == {"stories": []}
 
 
 def test_shape_validation_does_not_claim_source_validation(tmp_path, fake_codex):
     # Semantic validation belongs to the caller, which retains original articles.
-    invented = {"events": [{**RESULT["events"][0], "article_ids": ["unknown"]}]}
+    invented = deepcopy(RESULT)
+    invented["stories"][0]["events"][0]["observations"][0]["article_ids"] = ["unknown"]
     result = codex.run_task(
-        "single",
+        "trajectory",
         PAYLOAD,
         tmp_path / "call",
         executable=fake_codex(write_result(invented)),
@@ -223,12 +244,14 @@ def test_existing_artifacts_are_never_reused_or_overwritten(tmp_path, fake_codex
     directory.mkdir()
     (directory / "final.json").write_text("old result")
     with pytest.raises(FileExistsError):
-        codex.run_task("single", PAYLOAD, directory, executable=fake_codex(write_result()))
+        codex.run_task("trajectory", PAYLOAD, directory, executable=fake_codex(write_result()))
     assert (directory / "final.json").read_text() == "old result"
     assert not (directory / "received.json").exists()
 
 
-@pytest.mark.parametrize("task", ["../single", "", "unknown", "single.md"])
+@pytest.mark.parametrize(
+    "task", ["../trajectory", "", "unknown", "trajectory.md", "single", "extract", "group"]
+)
 def test_only_known_task_names_are_allowed(tmp_path, task):
     with pytest.raises(ValueError, match="Unknown task"):
         codex.run_task(task, PAYLOAD, tmp_path / "call")
@@ -238,14 +261,14 @@ def test_only_known_task_names_are_allowed(tmp_path, task):
 @pytest.mark.parametrize("timeout", [0, -1, float("inf"), float("nan")])
 def test_timeout_must_be_finite_and_positive(tmp_path, timeout):
     with pytest.raises(ValueError, match="finite positive"):
-        codex.run_task("single", PAYLOAD, tmp_path / "call", timeout=timeout)
+        codex.run_task("trajectory", PAYLOAD, tmp_path / "call", timeout=timeout)
     assert not (tmp_path / "call").exists()
 
 
 def test_unknown_usage_is_not_reported_as_zero(tmp_path, fake_codex):
     directory = tmp_path / "call"
     executable = fake_codex(write_result() + "print('partial non-JSON')\nprint('[]')")
-    codex.run_task("single", PAYLOAD, directory, executable=executable)
+    codex.run_task("trajectory", PAYLOAD, directory, executable=executable)
     assert metadata(directory)["usage"] is None
     assert metadata(directory)["turn_usage"] == []
     assert "partial non-JSON" in (directory / "events.jsonl").read_text()
@@ -261,7 +284,7 @@ def test_usage_sums_completed_turns_and_preserves_original_records(tmp_path, fak
         for record in records
     )
     directory = tmp_path / "call"
-    codex.run_task("single", PAYLOAD, directory, executable=fake_codex(body))
+    codex.run_task("trajectory", PAYLOAD, directory, executable=fake_codex(body))
     saved = metadata(directory)
     assert saved["turn_usage"] == records
     assert saved["usage"] == {"input_tokens": 15, "output_tokens": 6, "cached_input_tokens": 2}
@@ -271,7 +294,7 @@ def test_missing_task_asset_is_recorded_as_failed_setup(tmp_path, monkeypatch):
     monkeypatch.setattr(codex, "TASKS_DIR", tmp_path / "missing-tasks")
     directory = tmp_path / "call"
     with pytest.raises(codex.CodexError, match="task failed"):
-        codex.run_task("single", PAYLOAD, directory)
+        codex.run_task("trajectory", PAYLOAD, directory)
     assert metadata(directory)["status"] == "failed"
     assert (directory / "input.json").is_file()
 
@@ -293,7 +316,7 @@ def test_timeout_kills_descendants_and_retains_partial_output(tmp_path, fake_cod
     )
     directory = tmp_path / "call"
     with pytest.raises(codex.CodexError, match="timed out"):
-        codex.run_task("single", PAYLOAD, directory, timeout=0.6, executable=executable)
+        codex.run_task("trajectory", PAYLOAD, directory, timeout=0.6, executable=executable)
     saved = metadata(directory)
     assert saved["status"] == "failed"
     assert saved["exit_code"] == -signal.SIGTERM
@@ -310,6 +333,6 @@ def test_timeout_escalates_when_direct_process_ignores_sigterm(tmp_path, fake_co
     executable = fake_codex("signal.signal(signal.SIGTERM, signal.SIG_IGN)\ntime.sleep(30)")
     directory = tmp_path / "call"
     with pytest.raises(codex.CodexError, match="timed out"):
-        codex.run_task("single", PAYLOAD, directory, timeout=0.4, executable=executable)
+        codex.run_task("trajectory", PAYLOAD, directory, timeout=0.4, executable=executable)
     assert metadata(directory)["duration_seconds"] < 5
     assert metadata(directory)["exit_code"] != 0

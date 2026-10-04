@@ -1,19 +1,29 @@
 import json
+from pathlib import Path
 
 import pytest
 
 from news.cli import main
 
 
-def test_cli_run_and_offline_replay(snapshot, fake_model, tmp_path, capsys):
+def test_cli_run_and_offline_story(snapshot, fake_model, tmp_path, capsys):
     source = tmp_path / "articles.json"
     source.write_text(json.dumps(snapshot))
     state = tmp_path / "state"
     assert main(["run", "--input", str(source), "--state", str(state)]) == 0
     result = json.loads(capsys.readouterr().out)
-    assert result["events"] == 1 and not result["reused"]
-    assert main(["replay", result["run_id"], "--state", str(state)]) == 0
+    assert len(result["stories"]) == 1 and not result["reused"]
+    assert Path(result["briefing"]).is_file()
+    assert main(["story", result["stories"][0], "--state", str(state)]) == 0
     assert "Brook bridge" in capsys.readouterr().out
+    assert main(["run", "--input", str(source), "--state", str(state)]) == 0
+    assert json.loads(capsys.readouterr().out)["reused"]
+    assert len(fake_model) == 1
+
+    assert (
+        main(["story", result["stories"][0], "--state", str(state), "--as-of", "2026-09-30"]) == 1
+    )
+    assert "unknown story ID at this observation date" in capsys.readouterr().err
     assert len(fake_model) == 1
 
 
@@ -50,7 +60,9 @@ def test_capture_is_separate_from_ai(snapshot, monkeypatch, tmp_path, capsys):
     config.write_text("[]")
     output = tmp_path / "capture.json"
     monkeypatch.setattr("news.cli.feeds.fetch", lambda *args, **kwargs: (snapshot, {"feeds": []}))
-    monkeypatch.setattr("news.pipeline.run_task", lambda *args, **kwargs: pytest.fail("model used"))
+    monkeypatch.setattr(
+        "news.trajectory.run_task", lambda *args, **kwargs: pytest.fail("model used")
+    )
     assert main(["fetch", "--feeds", str(config), "--output", str(output)]) == 0
     assert json.loads(output.read_text()) == snapshot
     assert "feeds" in capsys.readouterr().err
@@ -68,9 +80,19 @@ def test_model_failure_points_to_preserved_artifacts(snapshot, tmp_path, monkeyp
     def fail(*args, **kwargs):
         raise RuntimeError("service unavailable")
 
-    monkeypatch.setattr("news.pipeline.run_task", fail)
+    monkeypatch.setattr("news.trajectory.run_task", fail)
     assert main(["run", "--input", str(source), "--state", str(tmp_path / "state")]) == 1
     output = capsys.readouterr().err
     assert "service unavailable" in output
     assert "Run artifacts:" in output
     assert list((tmp_path / "state" / "runs").glob("*/failure.json"))
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [["story-run"], ["replay", "old-run"], ["run", "--input", "unused", "--strategy", "staged"]],
+)
+def test_retired_workflows_are_not_public_commands(arguments):
+    with pytest.raises(SystemExit) as exc:
+        main(arguments)
+    assert exc.value.code == 2

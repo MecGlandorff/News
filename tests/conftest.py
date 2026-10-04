@@ -21,37 +21,45 @@ def snapshot():
 
 
 @pytest.fixture
-def decision(snapshot):
-    article = snapshot["articles"][0]
-    return {
-        "events": [
-            {
-                "title": article["title"],
-                "previous_event_id": None,
-                "article_ids": [article["id"]],
-                "evidence": [{"article_id": article["id"], "quote": article["text"]}],
-            }
-        ]
-    }
-
-
-@pytest.fixture
 def fake_model(monkeypatch):
+    """A structurally valid first observation; not a semantic model substitute."""
     calls = []
 
     def call(task, payload, directory, **kwargs):
+        assert task == "trajectory"
         calls.append(deepcopy(payload))
         return {
-            "events": [
+            "stories": [
                 {
+                    "story_id": None,
                     "title": article["title"],
-                    "previous_event_id": payload["memory"][0]["id"] if payload["memory"] else None,
-                    "article_ids": [article["id"]],
-                    "evidence": [{"article_id": article["id"], "quote": article["text"]}],
+                    "events": [
+                        {
+                            "event_id": None,
+                            "title": article["title"],
+                            "identity_uncertain": False,
+                            "continuity_evidence": [],
+                            "observations": [
+                                {
+                                    "change": "new_development",
+                                    "summary": article["text"],
+                                    "unresolved": None,
+                                    "article_ids": [article["id"]],
+                                    "evidence": [
+                                        {
+                                            "capture_id": article["capture_id"],
+                                            "quote": article["text"],
+                                        }
+                                    ],
+                                    "comparison_evidence": [],
+                                }
+                            ],
+                        }
+                    ],
                 }
                 for article in payload["articles"]
             ]
         }
 
-    monkeypatch.setattr("news.pipeline.run_task", call)
+    monkeypatch.setattr("news.trajectory.run_task", call)
     return calls

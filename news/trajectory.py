@@ -1,6 +1,7 @@
-"""Experimental durable stories: one accepted journal, one rebuildable full-text index."""
+"""Durable stories: one accepted journal, one rebuildable full-text index."""
 
 import contextlib
+import fcntl
 import json
 import re
 import sqlite3
@@ -21,7 +22,6 @@ from news.domain import (
     validate_input,
     validate_schema,
 )
-from news.pipeline import state_lock
 
 APP_ID = 0x4E54524A
 DEFAULT_CONTEXT_CHARS = 180_000
@@ -38,6 +38,20 @@ NOTICE = (
     "Quotes are checked against captured text, not verified as true. "
     "Observed on dates record capture, not when an event happened."
 )
+
+
+@contextlib.contextmanager
+def state_lock(state: Path):
+    state.mkdir(parents=True, exist_ok=True)
+    with (state / "run.lock").open("a") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise ValueError("another run is using this state directory") from exc
+        try:
+            yield
+        finally:
+            fcntl.flock(lock, fcntl.LOCK_UN)
 
 
 def capture(article: dict, day: str) -> dict:

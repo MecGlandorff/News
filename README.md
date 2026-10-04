@@ -1,156 +1,61 @@
 # News
 
-A small local news system: capture articles, group concrete events, remember
-continuing events, and write a Markdown briefing with exact source quotations.
-The AI work runs through **Codex CLI, GPT-6 Astra, medium reasoning**. There is no
-OpenAI SDK integration or service to deploy.
+Capture news sources, follow ongoing stories through distinct developments, and
+write a Markdown briefing with a dated, sourced timeline for each story.
+AI processing uses **Codex exec, GPT-6 Astra, medium reasoning**. There is one
+workflow, one accepted-run SQLite journal, and no service to deploy.
 
-This is the `from-scratch/main` rebuild. The previous implementation remains in
-Git history and the original checkout. This version uses a new database; it does
-not import the old database or reproduce every old feature.
-
-## Experimental durable story trajectories
-
-This branch adds a separate prototype for **ongoing stories with distinct
-developments, sources, corrections and unresolved questions**. The existing
-`run` command below remains available for comparison. The prototype has not yet
-earned promotion through independent live evaluation.
-
-This `experiments/story-schema` branch tests a narrower decoding constraint with
-the same result fields, prompt, transport and runtime validator. Its nested
-schema branches require a new story to contain new event identities and empty
-prior continuity evidence; every event in an existing story requires at least
-one continuity reference. An existing story may still gain a distinct new event.
-The schema uses nested `anyOf` and shared definitions, as supported by the
-[official Structured Outputs guide](https://developers.openai.com/api/docs/guides/structured-outputs#supported-schemas).
-This moves existing structural rules into the supplied schema. It does **not**
-prevent a semantic false merge supported by an irrelevant but exact quote, or
-establish that a summary such as `Placeholder` is meaningful. The runtime guard
-remains necessary for capture IDs, quote spans, coverage and story/event references.
-Offline tests preserve those limitations explicitly. No live benefit is claimed
-until the frozen-payload comparison and independent timeline review are complete.
-
-```sh
-python -m news story-run --input examples/day1.json --state .news/story-demo
-python -m news story-run --input examples/day2.json --state .news/story-demo
-python -m news story STORY_ID --state .news/story-demo
-python -m news story STORY_ID --state .news/story-demo --as-of 2026-10-01
-```
-
-Each run writes a daily Markdown briefing linking to complete dated views of
-the stories it touches. `story` renders every accepted observation of that story
-offline. Dates are **observed on** dates: a report captured later can describe an
-earlier occurrence. The source's stated occurrence date belongs in its quoted
-evidence and summary, not an invented timestamp.
-
-A story means a named ongoing matter, such as a particular court case or an
-incident and its investigation. Related developments receive distinct stable
-event IDs inside that story. Repeated reporting of one occurrence retains its
-event ID. Sharing a person, organization or broad topic alone does not establish
-story identity. Uncertain event identity is explicitly kept separate.
-
-Events contain attributed observations. Each observation explains a source-backed
-new development, additional reporting, correction, disagreement or unclear
-change. Corrections and disagreements preserve both assertions with exact source
-pointers; contradictory first reports and a later correction plus continued
-disagreement can coexist within one event. A nullable unresolved question must
-be supported by that observation's quotes. These are semantic model judgments,
-not facts established by exact-string validation. Earlier dated questions remain
-in the timeline; a later answer must be stated with its evidence. There is no
-automatic claim that an unanswered question has been resolved.
-
-The separate state contains `journal.sqlite3`, with an immutable accepted-run
-journal and a disposable SQLite FTS5 index of **full captured source text**.
-Capture identities include the complete article and capture day, so reused IDs,
-URLs, changed publication dates and revised text retain distinct provenance.
-The index is rebuilt from the accepted journal before each run. It has no age
-cutoff, and as-of retrieval excludes future captures. This straightforward
-prototype favors auditable state over indexing speed on a very large archive.
-
-Retrieval uses up to 64 lexical terms from each current title and full text,
-prioritizing title terms and rarer archive terms. It retrieves three captures per
-article by default, plus recent captures of the same URL. This supplies candidates,
-not automatic story links. A selected story supplies its origin, latest
-observation, matching history, and recorded corrections, disagreements and sourced
-unresolved questions. The full captured text of their evidence is included.
-`--hits-per-article` adjusts the retrieval breadth; it must be 1–10. Lexical search
-can miss paraphrases, translations or weakly named connections. Retrieval recall
-must be evaluated separately from model decisions.
-
-The canonical request is capped at 180,000 characters by default (at most 240,000
-with `--max-context-chars`). If retained context cannot fit, the run stops before
-the model call and keeps diagnostics. It does not silently remove origins or
-corrections. Long or busy stories can reach this limit; use smaller batches and
-inspect the recorded selection. There is one Codex call, no automatic retry.
-
-`runs/<id>/` retains `input.json`, `retrieval.json` (queries, selected sources,
-omissions and request size), raw `decision.json`, accepted `result.json`,
-`briefing.md`, and `stories/<story_id>.md`. Transport artifacts live in `model/`.
-Failures retain `failure.json`; only a row in the journal establishes acceptance.
-Source/reference checks and all render writes succeed before that transaction
-commits. Repeating the same snapshot, code, task and retrieval settings reuses its
-accepted result without a model call. It restores that run's original story view,
-including its same-day boundary, rather than introducing later observations.
-
-Offline tests cover the representation, retrieval, provenance and failure
-boundaries. They cannot establish good story grouping, meaningful summaries or
-correct attribution of correction versus disagreement. Those require independent
-source-only judgments and review of actual reader-facing timelines, including
-quiet gaps beyond 14 days. Broad historical corpora and semantic questions stay
-outside the application and ordinary tests.
+This branch is a clean candidate awaiting independent review, not a promoted
+release. Earlier implementations and research remain on their experiment branches;
+see [the experiment index](EXPERIMENTS.md). Use a fresh state directory: this
+workflow does not import the old event database.
 
 ## Start
 
-Use Python 3.12+ on macOS or Linux and an authenticated Codex CLI. The transport
-has been tested with **Codex CLI 0.160.0**. It uses explicit isolation settings
-and strict configuration validation; unsupported CLI versions fail visibly.
+Use Python 3.12+ on macOS or Linux, SQLite with FTS5, and an authenticated Codex CLI.
+The transport was exercised with Codex CLI 0.160.0. It validates strict isolation
+settings; incompatible CLI versions fail visibly.
 
 ```sh
 python3.12 -m venv .venv
 source .venv/bin/activate
-python -m pip install -r requirements-dev.txt
+python -m pip install -e .
 codex login status
+news run --input examples/day1.json --state .news/demo
+news run --input examples/day2.json --state .news/demo
 ```
 
-If needed, run `codex login`. The program uses the CLI's existing authentication;
-model runs consume the usage associated with that account. It does not copy
-authentication files or place credentials in the repository.
+The example articles are invented. Each `run` prints its run ID, story IDs and
+the path to `briefing.md`. The briefing links to complete dated pages for the
+stories it touches. Runs use your Codex account's model usage; authentication
+files are not copied into the project. There is at most one model call per batch
+attempt and no automatic retry.
 
-Run the two-day **invented** example:
+Read a story offline, optionally as known on a particular capture day:
 
 ```sh
-news run --input examples/day1.json
-news run --input examples/day2.json
+news story STORY_ID --state .news/demo
+news story STORY_ID --state .news/demo --as-of 2026-10-01
 ```
 
-Each command prints the run ID and path to its `briefing.md`. An identical input,
-strategy and prompt configuration reuses its accepted run without a model call.
-See the [generated day-two example](examples/briefing-day2.md).
-Re-render any accepted run entirely offline:
+`python -m news` exposes the same commands as `news`.
+
+## Capture sources
+
+Edit `feeds.json`, then fetch a snapshot separately from model processing:
 
 ```sh
-news replay RUN_ID
-```
-
-## Capture news
-
-Edit `feeds.json`, then capture a dated snapshot. The editorial timezone is
-Europe/Brussels. Fetching is separate from AI processing, so every experiment can
-use the same captured source text.
-
-```sh
-news fetch --day 2026-10-03 --max-per-feed 5 --output .news/articles-2026-10-03.json
+news fetch --day 2026-10-03 --max-per-feed 3 --output .news/articles-2026-10-03.json
 news run --input .news/articles-2026-10-03.json
 ```
 
-Choose the desired date; feed archives usually expose only recent items. `fetch`
-uses RSS/Atom descriptions or embedded content, not an article-page scraper.
-Missing dates, empty descriptions and invalid items are counted in the fetch
-report. Any failed feed aborts capture instead of silently returning a partial
-snapshot. Existing snapshot files are never overwritten. An empty capture is an
-error, not an empty successful briefing.
+Choose the intended date. Fetching selects that publication day in the
+Europe/Brussels timezone; feeds usually expose only recent items. It reads
+RSS/Atom descriptions or embedded content, not article web pages. Its report
+counts invalid items, date exclusions, duplicates and configured-limit omissions.
+A failed feed aborts capture. Existing snapshot files are never overwritten.
 
-You can supply captured full article text yourself in the same input format:
+You can also supply captured source text directly:
 
 ```json
 {
@@ -166,116 +71,85 @@ You can supply captured full article text yourself in the same input format:
 }
 ```
 
-IDs and URLs must be unique within the snapshot. Every article needs a timezone-
-aware publication timestamp and source text. An article is assigned to one event;
-multi-event digests should be split into articles before processing.
+IDs and URLs must be unique within a batch. Publication timestamps need a
+timezone and cannot fall after the capture day. Older published articles are
+allowed in supplied snapshots. Each article is assigned once; split multi-event
+digests into source records before processing.
 
-## How it works
+## Stories and evidence
 
-```text
-dated article snapshot + recent event memory
-  -> versioned task file -> codex exec -> structured decision
-  -> schema, coverage, exact-quote and reference checks
-  -> one SQLite transaction -> deterministic Markdown
-```
+A story is a named ongoing matter: for example, an incident and its investigation
+or a particular court case. Separate developments have stable event identities
+within the story. Repeated reporting of one occurrence keeps that event identity.
+Sharing an actor or broad topic does not by itself establish continuity.
 
-`single` makes one Codex call per batch. `staged` first selects exact evidence,
-then groups events from that evidence; its final quotes must match both the
-selected text and the original articles. To compare it in its own memory:
+Attributed observations explain new developments, additional reporting,
+corrections, disagreement or unclear change. Corrections and disagreements retain
+the compared assertions and their source pointers. Unresolved questions remain
+in their dated observations; later answers need their own sourced explanation.
 
-```sh
-news run --input examples/day1.json --strategy staged --state .news/staged-demo
-```
+**Observed on** means capture date, not occurrence date. Publication times and
+source-stated event dates stay separate. A captured version is identified by its
+complete article and capture day, preserving revised text and reused IDs or URLs.
 
-All application model calls use `gpt-6-astra` with medium reasoning. Prompts and
-JSON schemas live in `news/tasks/`. Codex runs in a temporary directory with a
-read-only sandbox, disabled browsing/tools and personal configuration discovery,
-and no project instructions. Source text is passed through stdin as data. See
-[the official exec documentation](https://developers.openai.com/codex/noninteractive).
-One host-skill-discovery isolation flag is experimental in the tested CLI; its
-warning is retained in call diagnostics.
-
-The program rejects missing articles, duplicate assignments, unknown memory IDs,
-nonexact quotations and malformed responses before changing event memory. Failed
-calls are not retried automatically. The default deadline is 180 seconds per
-call (`--timeout`); timeout and interruption terminate the subprocess group.
+Schema, coverage, exact-quote and reference checks run before acceptance. They
+cannot establish that a summary is true, a cited quote supports its claim, or a
+story link is meaningful. The model's judgments still need reader review.
 
 ## State and limits
 
-Runtime files live under `.news/` and are ignored by Git:
+The default state directory is `.news/`. It contains:
 
-- `memory.sqlite3`: one append-only table of accepted inputs and results.
-- `runs/<id>/`: captured input, accepted result and briefing, or a failure record.
-- Each call subdirectory: complete prompt, input, schema, configuration, JSONL
-  events, stderr, final response, duration and reported token usage.
+- `journal.sqlite3`: accepted inputs and decisions, plus a disposable FTS5 index
+  of full captured source text. Only a journal row establishes acceptance.
+- `runs/<id>/`: `input.json`, retrieval diagnostics, raw decision, materialized
+  result, `briefing.md`, and `stories/<id>.md` as known at that run.
+- `runs/<id>/model/`: exact prompt, schema, configuration, raw output, diagnostics,
+  timing and reported usage. Failed attempts retain `failure.json`.
 
-One process may update a state directory at a time. New observations must arrive
-in chronological order. Use a separate `--state` directory for alternative
-strategies, backtests and experiments. Old successful runs remain replayable.
-An unrelated or legacy SQLite database is rejected.
+New batches must be chronological; one process may update a state directory at
+a time. Validation and rendering complete inside the acceptance transaction.
+Failed artifacts may exist without an accepted journal row. An identical snapshot,
+code, task and retrieval configuration reuses its accepted result without another
+model call and restores that run's original dated view. Code/task changes alter
+this reuse key; use separate state for comparisons. No database migration occurs.
 
-Each batch contains at most 50 articles, 20,000 characters per article and
-120,000 characters overall. Matching sees every event observed within the recent
-14-day window, with its latest evidence and distinct earlier quotes from that
-window. Quotes retain source provenance and publication timestamps; `observed_on`
-records the snapshot day, not the event date. Older observations expire even when
-an event remains active. This is recent evidence, not complete lifetime history.
+Retrieval has no age cutoff. It rebuilds and compacts the index from the journal
+before each run, excludes future captures, and uses up to 64 lexical terms per
+article. By default it selects three matches plus recent versions of the same
+URL. A selected story supplies its origin, latest observation, relevant history,
+corrections, disagreements and recorded unresolved questions. Diagnostics expose
+selection and omissions. Lexical search can miss weakly named links or paraphrases.
 
-The complete article-plus-memory request is capped at 240,000 characters;
-oversized requests stop before a model call and leave accepted state intact.
-Events and source text are never silently removed to make a request fit. These
-are bounded-workload limits, not a scalable retrieval architecture: busy windows
-can exceed the cap before 14 days. Use isolated state for separate backtests.
+Hard input limits are 50 articles per batch, 20,000 characters per article and
+120,000 characters per snapshot. The complete retained request is limited to
+180,000 characters by default; `--max-context-chars` permits at most 240,000.
+`--hits-per-article` accepts 1–10. Oversized context stops before a model call;
+origins or corrections are not silently trimmed to fit. Start with small batches
+and inspect the saved diagnostics; an article-count limit alone cannot guarantee
+that a busy story's history fits.
 
-The briefing identifies new and continuing events and reports how many quotes
-differ from the previous observation. That is **textual change**, not a semantic
-novelty judgment. Labels and continuity are model interpretations. Exact quotes
-prove that text occurs in the captured source; they do not prove truth, relevance,
-independent corroboration or the correctness of the label. The first version
-does not generate confidence scores, source-agreement verdicts or PDFs.
+The default deadline is 180 seconds (`--timeout`, 1–1800). Large batches have
+timed out in experiments. Timeouts and interruptions stop the subprocess group;
+the program neither retries nor splits a failed batch automatically.
 
-## Tests and experiments
+Full journal projection and index rebuilding remain a bounded-workload design.
+The simulated 17,478-capture storage probe measured a median 2.47 seconds for the
+reviewed compacting retrieval, but its 50-article request exceeded the context
+cap; one fixed 10-article query fit. Those synthetic identity assignments measure
+storage/retrieval cost, not story quality or a general capacity guarantee.
+
+## Development
 
 ```sh
+python -m pip install -r requirements-dev.txt
 pytest -q
 ruff check .
 ruff format --check .
 ```
 
-Ordinary tests are offline. They exercise real fake-CLI subprocesses, timeouts,
-bad output, source validation, transactional memory, replay, feed parsing, the
-CLI, and the independent evaluation scorer. CI runs the same checks without
-Codex login or model access.
-
-Live comparisons are explicit and run from the source checkout:
-
-```sh
-python -m evals.run --strategy single staged --repeats 2 \
-  --max-calls 96 --max-seconds 1800 --timeout 120 \
-  --output .news/experiments/comparison-01
-```
-
-The output directory must be new. The runner records source hashes, CLI/model
-configuration, the corpus, each raw response, failures, timing and reported usage.
-Rejected responses remain measurable; they cannot count as successful trials.
-It never updates application memory. Exit status 1 means a failed trial or an
-incomplete experiment, not lost artifacts. Budgets are ceilings, not guarantees
-that a run will complete within account limits.
-
-The [16-case corpus](evals/README.md) is explicitly synthetic and independently
-labeled. Four additional longer holdout cases live in `evals/holdout.json`; run
-them with `--cases evals/holdout.json`. Repetitions reveal variation on those cases.
-They do not establish
-general real-news quality. See [the recorded comparison](evals/RESULTS.md) for
-the measured choice of default and remaining gaps.
-
-For a new approach, create a Git worktree:
-
-```sh
-git worktree add -b experiments/my-approach ../News-my-approach from-scratch/main
-```
-
-Keep the corpus and model settings fixed and write a new task variant. Keep any
-tuning data separate from later
-holdout cases. Have another agent review failures and proposed changes before
-merging the small changes that earned their place.
+Ordinary tests are offline. They exercise fake-CLI subprocesses, timeouts,
+feed/input validation, story identity, provenance, corrections and disagreement,
+dated rendering, retrieval and transaction failures. CI runs the same checks.
+Live research runners, frozen corpora and failed outputs are preserved separately
+in [the experiment index](EXPERIMENTS.md); they are not alternative product paths.
