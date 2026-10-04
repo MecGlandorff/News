@@ -1,9 +1,13 @@
 # News rebuild
 
-Build a small local news system: articles -> source-grounded events -> persistent
-event memory -> a Markdown briefing. Codex exec powers AI processing with
-`gpt-6-astra` and medium reasoning. The user explicitly authorized a from-scratch
-implementation, experiments with subagents, and extensive tests.
+Build a small local news system: articles -> ongoing stories -> distinct
+developments -> dated source observations -> a Markdown briefing. Codex exec
+powers AI processing with `gpt-6-astra` and medium reasoning. The user explicitly
+authorized a from-scratch implementation, experiments with subagents, and
+extensive tests.
+
+Evaluate useful story evolution beyond two weeks, including corrections and
+unresolved questions. Selected matching cases are not overall system accuracy.
 
 Prefer a few direct functions and standard-library modules. Add an abstraction
 only after two real callers need it. Keep prompts and JSON schemas in files.

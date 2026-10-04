@@ -5,9 +5,11 @@ write a Markdown briefing with a dated, sourced timeline for each story.
 AI processing uses **Codex exec, GPT-6 Astra, medium reasoning**. There is one
 workflow, one accepted-run SQLite journal, and no service to deploy.
 
-This branch is a clean candidate awaiting independent review, not a promoted
-release. Earlier implementations and research remain on their experiment branches;
-see [the experiment index](EXPERIMENTS.md). Use a fresh state directory: this
+This rebuild is the **primary system under test**. Evaluations support specific
+memory and identity improvements; overall story quality remains unproven.
+Earlier implementations and research remain on their experiment branches;
+see [measured results and remaining gaps](EVALUATION.md) and
+[the experiment index](EXPERIMENTS.md). Use a fresh state directory: this
 workflow does not import the old event database.
 
 ## Start
@@ -21,21 +23,22 @@ python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e .
 codex login status
-news run --input examples/day1.json --state .news/demo
-news run --input examples/day2.json --state .news/demo
+news run --input examples/day1.json --state .news/story-demo
+news run --input examples/day2.json --state .news/story-demo
 ```
 
 The example articles are invented. Each `run` prints its run ID, story IDs and
 the path to `briefing.md`. The briefing links to complete dated pages for the
 stories it touches. Runs use your Codex account's model usage; authentication
-files are not copied into the project. There is at most one model call per batch
-attempt and no automatic retry.
+files are not copied into the project. Each batch attempt starts at most one Codex CLI
+invocation; the application does not retry. Codex may reconnect internally, as
+recorded in its raw logs. An interrupted invocation may not report token usage.
 
 Read a story offline, optionally as known on a particular capture day:
 
 ```sh
-news story STORY_ID --state .news/demo
-news story STORY_ID --state .news/demo --as-of 2026-10-01
+news story STORY_ID --state .news/story-demo
+news story STORY_ID --state .news/story-demo --as-of 2026-10-01
 ```
 
 `python -m news` exposes the same commands as `news`.
@@ -141,7 +144,7 @@ the program neither retries nor splits a failed batch automatically.
 
 Full journal projection and index rebuilding remain a bounded-workload design.
 The simulated 17,478-capture storage probe measured a median 2.47 seconds for the
-reviewed compacting retrieval, but its 50-article request exceeded the context
+earlier compaction prototype, but its 50-article request exceeded the context
 cap; one fixed 10-article query fit. Those synthetic identity assignments measure
 storage/retrieval cost, not story quality or a general capacity guarantee.
 
