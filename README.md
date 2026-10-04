@@ -73,8 +73,9 @@ You can also supply captured source text directly:
 
 IDs and URLs must be unique within a batch. Publication timestamps need a
 timezone and cannot fall after the capture day. Older published articles are
-allowed in supplied snapshots. Each article is assigned once; split multi-event
-digests into source records before processing.
+allowed in supplied snapshots. Each article is assigned once, so a multi-event
+digest cannot be assigned independently to several events. Prefer individual
+source articles; the application does not split digests or create fragment provenance.
 
 ## Stories and evidence
 
@@ -108,7 +109,8 @@ The default state directory is `.news/`. It contains:
   timing and reported usage. Failed attempts retain `failure.json`.
 
 New batches must be chronological; one process may update a state directory at
-a time. Validation and rendering complete inside the acceptance transaction.
+a time. Validation completes before the acceptance transaction; inserting the
+accepted run and rendering its outputs occur inside that transaction.
 Failed artifacts may exist without an accepted journal row. An identical snapshot,
 code, task and retrieval configuration reuses its accepted result without another
 model call and restores that run's original dated view. Code/task changes alter
@@ -122,8 +124,9 @@ corrections, disagreements and recorded unresolved questions. Diagnostics expose
 selection and omissions. Lexical search can miss weakly named links or paraphrases.
 
 Hard input limits are 50 articles per batch, 20,000 characters per article and
-120,000 characters per snapshot. The complete retained request is limited to
-180,000 characters by default; `--max-context-chars` permits at most 240,000.
+120,000 characters per snapshot. The compact canonical retained JSON payload is
+limited to 180,000 characters by default; `--max-context-chars` permits at most
+240,000. This count excludes the fixed task/schema and serialization whitespace.
 `--hits-per-article` accepts 1–10. Oversized context stops before a model call;
 origins or corrections are not silently trimmed to fit. Start with small batches
 and inspect the saved diagnostics; an article-count limit alone cannot guarantee
