@@ -163,7 +163,15 @@ def retrieve(db: sqlite3.Connection, snapshot: dict, *, hits_per_article: int = 
                     source["story_id"],
                     source["event_id"],
                     source["observed_on"],
-                    source["title"],
+                    # Generated labels aid recall across source languages. They
+                    # are search hints, never captured evidence or identity proof.
+                    " ".join(
+                        (
+                            source["title"],
+                            stories[source["story_id"]]["title"],
+                            stories[source["story_id"]]["events"][source["event_id"]]["title"],
+                        )
+                    ),
                     source["text"],
                 )
                 for key, source in sources.items()

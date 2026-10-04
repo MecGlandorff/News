@@ -99,6 +99,55 @@ def test_existing_story_can_contain_a_distinct_new_event_with_an_anchor(current,
     trajectory.validate(payload(current, prior), value)
 
 
+@pytest.mark.parametrize("existing_story", [False, True])
+@pytest.mark.parametrize("uncertain", [False, True])
+def test_new_event_preserves_both_identity_judgments(current, prior, existing_story, uncertain):
+    value = result(
+        current,
+        story_id=prior["story_id"] if existing_story else None,
+        continuity=[reference(prior)] if existing_story else [],
+    )
+    value["stories"][0]["events"][0]["identity_uncertain"] = uncertain
+    validate_schema("trajectory", value)
+    trajectory.validate(payload(current, prior), value)
+
+
+@pytest.mark.parametrize("uncertain", [False, True])
+def test_existing_event_reuse_requires_a_certain_identity(current, prior, uncertain):
+    value = result(
+        current,
+        story_id=prior["story_id"],
+        event_id=prior["event_id"],
+        continuity=[reference(prior)],
+    )
+    event = value["stories"][0]["events"][0]
+    event["identity_uncertain"] = uncertain
+    event["observations"] = [observation(current, "unclear")]
+    if uncertain:
+        with pytest.raises(ValueError, match="output does not match its schema"):
+            validate_schema("trajectory", value)
+    else:
+        validate_schema("trajectory", value)
+        trajectory.validate(payload(current, prior), value)
+
+
+@pytest.mark.parametrize("event_id", [None, "e-closure"])
+@pytest.mark.parametrize("violation", ["missing_uncertainty", "non_boolean", "extra_field"])
+def test_each_continuing_event_branch_remains_closed_and_typed(current, prior, event_id, violation):
+    value = result(
+        current, story_id=prior["story_id"], event_id=event_id, continuity=[reference(prior)]
+    )
+    event = value["stories"][0]["events"][0]
+    if violation == "missing_uncertainty":
+        del event["identity_uncertain"]
+    elif violation == "non_boolean":
+        event["identity_uncertain"] = 0
+    else:
+        event["confidence"] = 1
+    with pytest.raises(ValueError, match="output does not match its schema"):
+        validate_schema("trajectory", value)
+
+
 @pytest.mark.parametrize("violation", ["existing_event", "prior_continuity"])
 def test_new_story_cannot_adopt_existing_event_or_prior_continuity(current, prior, violation):
     value = result(current)
@@ -176,6 +225,22 @@ def test_structural_checks_do_not_detect_semantic_false_merge_or_placeholder_sum
     value["stories"][0]["events"][0]["observations"][0]["summary"] = "Placeholder"
     validate_schema("trajectory", value)
     trajectory.validate(payload(current, unrelated), value)
+
+
+def test_false_certainty_with_an_exact_anchor_is_still_not_semantic_proof(prior):
+    unrelated = article("train", "A train arrived at the station.")
+    value = result(
+        unrelated,
+        story_id=prior["story_id"],
+        event_id=prior["event_id"],
+        continuity=[reference(prior)],
+    )
+    event = value["stories"][0]["events"][0]
+    event["observations"] = [observation(unrelated, "unclear")]
+    # A false certainty flag and an exact dock quote still pass structural
+    # validation. Source entailment and event relevance require semantic review.
+    validate_schema("trajectory", value)
+    trajectory.validate(payload(unrelated, prior), value)
 
 
 def test_runtime_guard_still_checks_the_anchor_capture_and_exact_quote(current, prior):

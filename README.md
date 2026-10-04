@@ -102,7 +102,8 @@ story link is meaningful. The model's judgments still need reader review.
 The default state directory is `.news/`. It contains:
 
 - `journal.sqlite3`: accepted inputs and decisions, plus a disposable FTS5 index
-  of full captured source text. Only a journal row establishes acceptance.
+  of full captured source text and generated story/event titles. Only a journal
+  row establishes acceptance.
 - `runs/<id>/`: `input.json`, retrieval diagnostics, raw decision, materialized
   result, `briefing.md`, and `stories/<id>.md` as known at that run.
 - `runs/<id>/model/`: exact prompt, schema, configuration, raw output, diagnostics,
@@ -122,6 +123,8 @@ article. By default it selects three matches plus recent versions of the same
 URL. A selected story supplies its origin, latest observation, relevant history,
 corrections, disagreements and recorded unresolved questions. Diagnostics expose
 selection and omissions. Lexical search can miss weakly named links or paraphrases.
+Generated titles add search vocabulary but are not captured evidence. A wrong
+title can retrieve unrelated material; quote validation does not prove relevance.
 
 Hard input limits are 50 articles per batch, 20,000 characters per article and
 120,000 characters per snapshot. The compact canonical retained JSON payload is

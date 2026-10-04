@@ -127,6 +127,16 @@
       }
     },
     "continuing_event": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/new_event_in_story"
+        },
+        {
+          "$ref": "#/$defs/existing_event"
+        }
+      ]
+    },
+    "new_event_in_story": {
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -138,11 +148,7 @@
       ],
       "properties": {
         "event_id": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "minLength": 1
+          "type": "null"
         },
         "title": {
           "type": "string",
@@ -151,6 +157,48 @@
         },
         "identity_uncertain": {
           "type": "boolean"
+        },
+        "continuity_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/quote"
+          }
+        },
+        "observations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/observation"
+          }
+        }
+      }
+    },
+    "existing_event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "title",
+        "identity_uncertain",
+        "continuity_evidence",
+        "observations"
+      ],
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "identity_uncertain": {
+          "type": "boolean",
+          "enum": [
+            false
+          ]
         },
         "continuity_evidence": {
           "type": "array",
