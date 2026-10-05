@@ -120,6 +120,7 @@ def test_success_sends_stdin_and_archives_configuration(tmp_path, fake_codex):
     saved = metadata(directory)
     assert saved["status"] == "ok"
     assert saved["exit_code"] == 0
+    assert saved["process_started"] is True
     assert saved["error"] is None
     assert saved["duration_seconds"] > 0
     assert saved["usage"] == {
@@ -168,6 +169,20 @@ def test_missing_executable_still_has_request_and_failure_artifacts(tmp_path):
     assert saved["status"] == "failed"
     assert saved["usage"] is None
     assert saved["exit_code"] is None
+    assert saved["process_started"] is False
+
+
+def test_os_launch_failure_is_not_counted_as_a_started_model(tmp_path, monkeypatch):
+    def denied(*args, **kwargs):
+        raise PermissionError("simulated launch denial")
+
+    monkeypatch.setattr(codex.subprocess, "Popen", denied)
+    directory = tmp_path / "call"
+    with pytest.raises(codex.CodexError, match="launch denial"):
+        codex.run_task("trajectory", PAYLOAD, directory, executable=sys.executable)
+    saved = metadata(directory)
+    assert "argv" in saved and saved["process_started"] is False
+    assert saved["usage"] is None
 
 
 @pytest.mark.parametrize("body", ["pass", "final.touch()"])

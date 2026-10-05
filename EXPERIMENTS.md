@@ -18,6 +18,7 @@ remaining reader gaps; cleanup does not erase the earlier evidence.
 | Generated-label retrieval | `6baaa70`, `experiments/story-retrieval` | `evals/RETRIEVAL_EXPERIMENT.md`; 91 fixed-context comparisons, alternative queries, capacity checks and preserved originals |
 | Clean release candidate | `ff4e6ae`, `experiments/release-candidate` | `CANDIDATE_RESULTS.md`; promotion withheld after unsupported occurrence certainty survived passing identity checks |
 | Document versus occurrence identity | `75729b5`, `experiments/occurrence-prompt` | `OCCURRENCE_RESULTS.md`, `occurrence-results.json`; matched prompt trials, preserved incomplete replay, fresh complete repeat and newly reviewed source challenge |
+| Daily capture, recovery and routine preparation | `experiments/dogfood-routines` | `.news/live-smoke/`, `.news/live-reviewed/`, `.news/validation/` and `.news/final-review.*`; operational checks, raw feeds, bounded model runs and independent review |
 
 From the primary `News-worktrees/from-scratch` checkout, these local experiment
 worktrees are under its sibling `News-worktrees/experiments/` directory. `.news`
@@ -42,3 +43,34 @@ reader-facing outputs against frozen source questions.
 The index comparison originally ran against unmodified `bd1bc6d`. Reproduction
 must use that baseline as documented in its separate `REPRODUCTION.md`; invoking
 the old probe against an already optimized checkout would contaminate its control.
+
+## Dogfooding operations, 2026-10-05
+
+The daily wrapper retains source versions, freezes small chronological batches,
+reconciles acceptance from the story journal, and reports partial coverage and
+unknown usage. It does not change the story task, schema or retrieval algorithm.
+The application now has 1,955 physical Python lines in eight modules. All 228
+offline tests and Ruff checks passed. Separate reviews covered the source
+collector, launch accounting, recovery, dates, provenance and simplicity.
+
+Two explicitly bounded live checks used the configured NOS, BBC and Guardian
+feeds and `gpt-6-astra` with medium reasoning:
+
+| Check | Captured versions | Accepted / pending batches | Known input / output tokens | Run seconds |
+| --- | ---: | --- | --- | ---: |
+| Initial wrapper, batch size 3, one-call ceiling | 96 | 1 / 31 | 10,119 / 524 | 21.160302 |
+| Reviewed wrapper, batch size 8, one-call ceiling | 97 | 1 / 12 | 11,012 / 1,245 | 33.741413 |
+
+Each check made one CLI invocation, reported its usage, and stopped at its
+declared budget with an explicitly partial briefing. The sources changed between
+captures; these are operational checks, not a controlled quality comparison.
+The reviewed check preserved all 97 source versions' text, URLs and publication
+timestamps, all raw feed hashes, processing-ID mappings and dated output links.
+Its `report.json` SHA-256 is
+`31b5b1c674ddb66985981e75629aef42426c1dd1642b88da31f0e871636f8dad`.
+
+The [routine setup](DOGFOOD.md) is prepared for daily 18:00 and Sunday 10:00 in
+Europe/Brussels. Scheduling is not activated: this session cannot control the
+Codex app or access a supported local scheduling tool. End-to-end execution from
+the scheduled-task environment remains unverified. Story-quality limitations in
+`EVALUATION.md` remain open.

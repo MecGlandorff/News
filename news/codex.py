@@ -140,6 +140,7 @@ def run_task(
         "timeout_seconds": timeout,
         "status": "failed",
         "exit_code": None,
+        "process_started": False,
         "error": None,
         "usage": None,
     }
@@ -215,6 +216,7 @@ def run_task(
                     encoding="utf-8",
                     start_new_session=os.name == "posix",
                 )
+                metadata["process_started"] = True
                 try:
                     process.communicate(input=prompt, timeout=timeout)
                 except subprocess.TimeoutExpired as exc:

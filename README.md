@@ -43,6 +43,27 @@ news story STORY_ID --state .news/story-demo --as-of 2026-10-01
 
 `python -m news` exposes the same commands as `news`.
 
+## Daily dogfooding
+
+The daily runner collects available RSS versions, freezes a queue of small batches,
+and calls the same story workflow with persistent memory:
+
+```sh
+.venv/bin/python -m news daily --state .news/dogfood
+```
+
+Open `.news/dogfood/latest.md` or `index.md`, and keep reader feedback in
+`.news/dogfood/feedback.md`. Default limits are 8 articles per batch, 12 batch
+attempts per invocation and 360 seconds per model call. Failed batches stop the
+queue; the next invocation resumes its oldest pending input. Accepted inputs are
+recognized from the journal even after a code change, so a scheduling retry does
+not repeat them. Experiments require separate state.
+
+The [dogfooding guide](DOGFOOD.md) contains daily and weekly Codex routine prompts,
+the selected schedule, source limitations and independent evaluation rules.
+The prompts are prepared; scheduling still requires activation in the desktop app.
+This command adds operational capture and reporting, not a new quality result.
+
 ## Capture sources
 
 Edit `feeds.json`, then fetch a snapshot separately from model processing:

@@ -9,7 +9,7 @@ from pathlib import Path
 from urllib.error import URLError
 from xml.etree.ElementTree import ParseError
 
-from news import feeds, trajectory
+from news import daily, feeds, trajectory
 from news.domain import TIMEZONE
 
 
@@ -27,6 +27,15 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--timeout", type=float, default=180, help="seconds per Codex call")
     run.add_argument("--max-context-chars", type=int, default=trajectory.DEFAULT_CONTEXT_CHARS)
     run.add_argument("--hits-per-article", type=int, default=3)
+    scheduled = commands.add_parser("daily", help="capture feeds and process a durable daily queue")
+    scheduled.add_argument("--feeds", type=Path, default=Path("feeds.json"))
+    scheduled.add_argument("--state", type=Path, default=Path(".news/dogfood"))
+    scheduled.add_argument("--batch-size", type=int, default=8)
+    scheduled.add_argument("--max-batches", type=int, default=12)
+    scheduled.add_argument("--timeout", type=float, default=360)
+    mode = scheduled.add_mutually_exclusive_group()
+    mode.add_argument("--collect-only", action="store_true")
+    mode.add_argument("--resume-only", action="store_true")
     story = commands.add_parser("story", help="render a complete accepted story without AI calls")
     story.add_argument("story_id")
     story.add_argument("--state", type=Path, default=Path(".news"))
@@ -70,6 +79,18 @@ def main(argv: list[str] | None = None) -> int:
                     indent=2,
                 )
             )
+        elif args.command == "daily":
+            report = daily.run(
+                None if args.resume_only else json.loads(args.feeds.read_text()),
+                args.state,
+                batch_size=args.batch_size,
+                max_batches=args.max_batches,
+                timeout=args.timeout,
+                collect_only=args.collect_only,
+                resume_only=args.resume_only,
+            )
+            print(json.dumps(report, indent=2, ensure_ascii=False))
+            return 0 if report["status"] == "complete" else 1
         else:
             print(trajectory.story(args.state, args.story_id, as_of=args.as_of), end="")
         return 0
