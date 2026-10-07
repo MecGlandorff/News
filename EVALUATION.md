@@ -5,11 +5,63 @@ correctness, simplicity and reader reviews. This advances the initial `27929e6`
 baseline using measured memory and identity improvements. The substantive reader
 gaps below remain open; overall story-evolution quality is not established.
 
-The evaluated application is `c6c6bbc`, byte-identical to the application in
+The earlier story-evolution evaluation used `c6c6bbc`, byte-identical to the application in
 experiment `75729b5`. It has **1,288 physical Python lines in seven modules**,
 26 prompt lines and 278 schema lines. All **171 offline tests**, Ruff checks and
-format checks passed. Separate reviews covered correctness, simplicity, failure
+format checks passed at that stage. Separate reviews covered correctness, simplicity, failure
 handling and the integration. These checks do not establish model correctness.
+
+## Source integrity, 2026-10-07
+
+Candidate `d3b63e2` adds namespace-aware RSS parsing, exact `title`/`text`
+evidence, and a separate coherence check before acceptance. Its application is
+2,109 physical Python lines across eight modules; 309 offline tests and Ruff
+checks pass. The experiment and independent Astra/max review are retained in
+[`experiments/source-integrity-20261007`](https://github.com/MecGlandorff/News/tree/experiments/source-integrity-20261007/evals/source-integrity-20261007).
+
+- Replaying all nine frozen feed files recovered all 135 Guardian descriptions,
+  preserved other metadata and all 154 NOS/BBC versions, and recovered two
+  additional revisions. This tests parsing and queue selection, not story quality.
+- The reviewer rejected the exact original ship/cat decision and its later
+  contaminated continuation; a valid control was accepted. A fresh candidate
+  proposal correctly separated ships and cats, but its full batch was rejected
+  for insufficiently supported reuse of a different Yemen event. The complete
+  regression batch and subsequent cat continuation therefore remain unavailable.
+  The fresh baseline happened to separate ship/cat correctly: the old error is
+  not deterministic, and these trials cannot estimate its frequency.
+- On the two available fresh cases, both arms preserved four required story
+  connections and nine separations with the competing sources present; four
+  explicitly scored event separations also agreed. Ambiguous events are unscored.
+- Headline evidence restored headline-dependent core information in all four
+  old and three fresh cases. The baseline already mentioned a sale in the Boots
+  case; the candidate additionally cited the chain, £7bn price and Canadian buyer.
+  The candidate also inferred that named
+  defendant Matthew Wright was the unnamed former Southern Water boss; that
+  identification is not established by the snippets. Preserve this error as a
+  future general claim-grounding regression, not a case-specific patch.
+- The original 19-day case was unavailable because baseline preparation failed
+  reference validation. A separately frozen, output-informed five-call follow-up
+  built common history automatically without edited assignments. Both arms then
+  connected the May 18 outcome to the older Musk lawsuit and kept a competing
+  OpenAI lawsuit separate: five positive and four negative story pairs, plus one
+  same-event pair, agreed. This is one conditional continuity check, not an
+  independent replication or an improvement over baseline on this case.
+
+The main campaign used 19 calls: 263,505 input tokens, 12,599 output tokens and
+363.082 summed CLI seconds. The separate follow-up used five calls: 68,873 input,
+2,178 output and 66.305 seconds. All 24 reported usage; cached input is included
+in input totals. Coding/review-agent usage is separate. Failed preparation and
+rejected batches remain in these totals. Different completed workloads and cache
+use prevent treating these totals as a controlled speed or cost comparison.
+All 844 frozen production files remained unchanged.
+
+Promotion supports bounded dogfooding with automatic prevention, richer source
+evidence and preserved failures. It does not establish general story accuracy,
+complete successful replay of the ship/cat batch, or automatic repair of old
+accepted memory. The reviewer checks grouping, not every claim's entailment.
+It can reject an entire batch, and a long story can exceed its full-history cap.
+There is no manual repair path. The default daily ceiling is now 24 calls across
+12 batches, sharing 360 seconds per proposal/review pair.
 
 ## What the comparisons establish
 

@@ -19,6 +19,7 @@ remaining reader gaps; cleanup does not erase the earlier evidence.
 | Clean release candidate | `ff4e6ae`, `experiments/release-candidate` | `CANDIDATE_RESULTS.md`; promotion withheld after unsupported occurrence certainty survived passing identity checks |
 | Document versus occurrence identity | `75729b5`, `experiments/occurrence-prompt` | `OCCURRENCE_RESULTS.md`, `occurrence-results.json`; matched prompt trials, preserved incomplete replay, fresh complete repeat and newly reviewed source challenge |
 | Daily capture, recovery and routine preparation | `experiments/dogfood-routines` | `.news/live-smoke/`, `.news/live-reviewed/`, `.news/validation/` and `.news/final-review.*`; operational checks, raw feeds, bounded model runs and independent review |
+| RSS provenance and automatic story coherence | `d3b63e2`, `experiments/source-integrity-20261007` | `evals/source-integrity-20261007/`; source-only labels, independent review, 19-call main campaign, separate five-call follow-up, failed preparation and rejected full regression batch; raw audit bundle |
 
 From the primary `News-worktrees/from-scratch` checkout, these local experiment
 worktrees are under its sibling `News-worktrees/experiments/` directory. `.news`
