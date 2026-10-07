@@ -24,20 +24,23 @@ def snapshot(day, *articles):
     return {"day": day, "articles": list(articles)}
 
 
-def ref(article, quote=None):
+def ref(article, quote=None, *, field=None):
     return {
         "capture_id": article["capture_id"],
-        "quote": article["text"] if quote is None else quote,
+        "quote": article[field or "text"] if quote is None else quote,
+        **({"field": field} if field is not None else {}),
     }
 
 
-def observation(article, *, change="new_development", comparison=(), quote=None, unresolved=None):
+def observation(
+    article, *, change="new_development", comparison=(), quote=None, unresolved=None, field=None
+):
     return {
         "change": change,
-        "summary": quote or article["text"],
+        "summary": quote or article[field or "text"],
         "unresolved": unresolved,
         "article_ids": [article["id"]],
-        "evidence": [ref(article, quote)],
+        "evidence": [ref(article, quote, field=field)],
         "comparison_evidence": list(comparison),
     }
 
@@ -89,6 +92,13 @@ def model(monkeypatch):
     replies = []
 
     def run(task, payload, directory, **options):
+        if task == "coherence":
+            return {
+                "stories": [
+                    {"story_index": i, "verdict": "supported", "reason": "Fixture review."}
+                    for i, _ in enumerate(payload["decision"]["stories"])
+                ]
+            }
         assert task == "trajectory"
         calls.append(deepcopy(payload))
         reply = replies.pop(0) if replies else fresh
@@ -320,6 +330,326 @@ def test_retrospective_correction_compares_distinct_spans_in_one_current_capture
         tmp_path,
     )
     assert result["stories"][0]["events"][0]["observations"][0]["change"] == "correction"
+
+
+def test_current_and_prior_headline_quotes_keep_exact_fields_and_attribution(model, tmp_path):
+    calls, replies = model
+    old_quote = "dock permit was issued on January 2"
+    replies.append(
+        lambda payload: decision(
+            event(observation(payload["articles"][0], quote=old_quote, field="title"))
+        )
+    )
+    old = source(
+        "original",
+        "The application had been debated for several years.",
+        day="2026-01-19",
+        title="The dock permit was issued on January 2.",
+        publisher="Agency A",
+    )
+    first, _ = trajectory.run(snapshot("2026-01-20", old), tmp_path)
+
+    def correction(payload):
+        earlier = payload["prior_sources"][0]
+        return decision(
+            event(
+                observation(
+                    payload["articles"][0],
+                    change="correction",
+                    field="title",
+                    comparison=[ref(earlier, old_quote, field="title")],
+                ),
+                event_id=first["stories"][0]["events"][0]["id"],
+                continuity=[ref(earlier, old_quote, field="title")],
+            ),
+            story_id=first["stories"][0]["id"],
+        )
+
+    replies.append(correction)
+    current = source(
+        "revision",
+        "The agency is responsible for local construction permits.",
+        day="2026-01-21",
+        title="Correction: the dock permit was issued on January 3.",
+        publisher="Agency A",
+    )
+    result, _ = trajectory.run(snapshot("2026-01-22", current), tmp_path)
+    payload = calls[-1]
+    for captured, original in (
+        (payload["articles"][0], current),
+        (payload["prior_sources"][0], old),
+    ):
+        assert {key: captured[key] for key in original} == original
+    value = result["stories"][0]["events"][0]["observations"][0]
+    for references in (
+        value["evidence"],
+        value["comparison_evidence"],
+        value["continuity_evidence"],
+    ):
+        assert references[0]["field"] == "title"
+        assert references[0]["source"] == "Agency A"
+    assert value["evidence"][0]["quote"] == current["title"]
+    assert value["comparison_evidence"][0]["quote"] == old_quote
+    rendered = trajectory.render_daily(result)
+    assert rendered.count(" · Headline") == 2
+    assert "published 2026-01-19" in rendered and "published 2026-01-21" in rendered
+    assert "observed on 2026-01-22" in rendered and "> " + current["title"] in rendered
+    assert "January 2" in rendered and "January 3" in rendered
+    assert "Reported correction" in trajectory.story(tmp_path, first["stories"][0]["id"])
+
+    for role in ("evidence", "comparison_evidence", "continuity_evidence"):
+        invalid = correction(payload)
+        item = invalid["stories"][0]["events"][0]
+        references = item[role] if role == "continuity_evidence" else item["observations"][0][role]
+        references[0]["field"] = "text"
+        with pytest.raises(ValueError, match="exact span of the selected field"):
+            trajectory.validate(payload, invalid)
+
+
+def test_retrospective_correction_can_compare_distinct_headline_and_body_claims(model, tmp_path):
+    _, replies = model
+    replies.append(
+        lambda payload: decision(
+            event(
+                observation(
+                    payload["articles"][0],
+                    change="correction",
+                    field="title",
+                    comparison=[ref(payload["articles"][0], field="text")],
+                )
+            )
+        )
+    )
+    result, _ = trajectory.run(
+        snapshot(
+            "2026-01-01",
+            source(
+                "a",
+                "We previously reported ten injuries in the dock accident.",
+                title="Correction: two injuries in the dock accident.",
+            ),
+        ),
+        tmp_path,
+    )
+    value = result["stories"][0]["events"][0]["observations"][0]
+    assert value["evidence"][0]["field"] == "title"
+    assert value["comparison_evidence"][0]["field"] == "text"
+    rendered = trajectory.render_daily(result)
+    assert " · Headline" in rendered and " · Article text" in rendered
+    assert "> Correction: two injuries" in rendered and "> We previously reported ten" in rendered
+
+
+@pytest.mark.parametrize("anchor_field", ["title", "text"])
+def test_reference_rendering_keeps_field_provenance_and_deduplicates_legacy_text(
+    model, tmp_path, anchor_field
+):
+    _, replies = model
+    statement = "The dock permit was issued."
+    first, _ = trajectory.run(
+        snapshot("2026-01-01", source("a", statement, title=statement)), tmp_path
+    )
+
+    def update(payload):
+        value = continuing(payload)
+        value["stories"][0]["events"][0]["continuity_evidence"] = [
+            ref(payload["prior_sources"][0], field=anchor_field)
+        ]
+        return value
+
+    replies.append(update)
+    result, _ = trajectory.run(
+        snapshot("2026-01-02", source("b", "The dock permit is confirmed.", day="2026-01-02")),
+        tmp_path,
+    )
+    assert first["stories"][0]["events"][0]["observations"][0]["evidence"][0]["field"] == "text"
+    rendered = trajectory.render_daily(result)
+    assert rendered.count("> " + statement) == (2 if anchor_field == "title" else 1)
+    assert rendered.count(" · Headline") == (1 if anchor_field == "title" else 0)
+
+
+def test_body_only_legacy_journal_remains_readable_and_unchanged(tmp_path):
+    article = trajectory.capture(source("a", "The dock permit was issued."), "2026-01-01")
+    payload = {"day": "2026-01-01", "articles": [article], "prior_sources": [], "stories": []}
+    value = fresh(payload)
+    trajectory.validate(payload, value)
+    legacy = trajectory._materialize(payload, value, "legacy-run")
+    evidence = legacy["stories"][0]["events"][0]["observations"][0]["evidence"][0]
+    del evidence["field"]
+    original_json = trajectory.canonical(legacy)
+    with trajectory.connect(tmp_path / "journal.sqlite3") as db:
+        with db:
+            db.execute(
+                "INSERT INTO runs VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    "legacy-run",
+                    "legacy-fingerprint",
+                    payload["day"],
+                    "2026-01-01T09:00:00Z",
+                    trajectory.canonical(payload),
+                    original_json,
+                ),
+            )
+        retrieved, _ = trajectory.retrieve(
+            db,
+            snapshot("2026-01-02", source("b", "The dock permit is confirmed.", day="2026-01-02")),
+        )
+        historical = retrieved["stories"][0]["events"][0]["history"][0]["evidence"][0]
+        assert "field" not in historical
+        assert historical["quote"] == article["text"]
+        assert db.execute("SELECT result_json FROM runs").fetchone()[0] == original_json
+    rendered = trajectory.story(tmp_path, legacy["stories"][0]["id"])
+    assert f"Capture `{article['capture_id']}`\n\n> {article['text']}" in rendered
+    assert " · Headline" not in rendered and " · Article text" not in rendered
+
+
+def test_projection_keeps_headline_anchors_distinct_and_merges_legacy_body_anchors(tmp_path):
+    statement = "The dock permit was issued."
+    with trajectory.connect(tmp_path / "journal.sqlite3") as db:
+        for index, field in enumerate((None, None, "text", "title"), start=1):
+            day = f"2026-01-0{index}"
+            payload, _ = trajectory.retrieve(
+                db, snapshot(day, source(str(index), statement, title=statement, day=day))
+            )
+            if index == 1:
+                value = fresh(payload)
+            else:
+                old_story = payload["stories"][0]
+                old_event = old_story["events"][0]
+                earlier = next(item for item in payload["prior_sources"] if item["id"] == "1")
+                value = decision(
+                    event(
+                        observation(
+                            payload["articles"][0],
+                            change="additional_reporting",
+                            comparison=[ref(earlier)],
+                        ),
+                        event_id=old_event["id"],
+                        continuity=[ref(earlier, field=field)],
+                    ),
+                    story_id=old_story["id"],
+                )
+            trajectory.validate(payload, value)
+            result = trajectory._materialize(payload, value, f"run-{index}")
+            saved_event = result["stories"][0]["events"][0]
+            if index <= 2:
+                # Seed old journal records with references from before field selection.
+                for item in saved_event["continuity_evidence"]:
+                    item.pop("field")
+                for item in saved_event["observations"]:
+                    for role in ("evidence", "comparison_evidence", "continuity_evidence"):
+                        for reference in item[role]:
+                            reference.pop("field")
+            with db:
+                db.execute(
+                    "INSERT INTO runs VALUES (?, ?, ?, ?, ?, ?)",
+                    (
+                        result["run_id"],
+                        f"fingerprint-{index}",
+                        day,
+                        day + "T09:00:00Z",
+                        trajectory.canonical(payload),
+                        trajectory.canonical(result),
+                    ),
+                )
+            _, stories = trajectory.project(db)
+            projected = next(iter(stories[result["stories"][0]["id"]]["events"].values()))
+            anchors = projected["continuity_evidence"]
+            assert len(anchors) == (0, 1, 1, 2)[index - 1]
+        assert "field" not in anchors[0]
+        assert anchors[1]["field"] == "title"
+        assert anchors[0]["quote"] == anchors[1]["quote"] == statement
+
+
+@pytest.mark.parametrize(
+    ("field", "quoted", "message"),
+    [
+        ("text", "The dock permit was issued.", "exact span"),
+        (None, "The dock permit was issued.", "exact span"),
+        ("title", "The application was debated for years.", "exact span"),
+        ("title", "The Dock permit was issued.", "exact span"),
+        ("title", "The dock permit issued.", "exact span"),
+        ("headline", "The dock permit was issued.", "schema"),
+    ],
+)
+def test_wrong_field_and_nonexact_headline_quotes_leave_no_accepted_run(
+    model, tmp_path, field, quoted, message
+):
+    _, replies = model
+    replies.append(
+        lambda payload: decision(
+            event(observation(payload["articles"][0], quote=quoted, field=field))
+        )
+    )
+    with pytest.raises(ValueError, match=message):
+        trajectory.run(
+            snapshot(
+                "2026-01-01",
+                source(
+                    "a",
+                    "The application was debated for years.",
+                    title="The dock permit was issued.",
+                ),
+            ),
+            tmp_path,
+        )
+    assert count_runs(tmp_path) == 0
+
+
+@pytest.mark.parametrize("role", ["evidence", "comparison_evidence"])
+@pytest.mark.parametrize(
+    ("first_field", "second_field"), [(None, "text"), ("title", "title"), ("title", "text")]
+)
+def test_duplicate_assertions_cannot_use_field_selectors_to_evade_validation(
+    model, tmp_path, role, first_field, second_field
+):
+    _, replies = model
+    statement = "The dock permit was issued."
+
+    def duplicate(payload):
+        article = payload["articles"][0]
+        item = observation(article, change="unclear", quote="The agency published details.")
+        item[role] = [
+            ref(article, statement, field=first_field),
+            ref(article, statement, field=second_field),
+        ]
+        return decision(event(item))
+
+    replies.append(duplicate)
+    with pytest.raises(ValueError, match="duplicate evidence reference"):
+        trajectory.run(
+            snapshot(
+                "2026-01-01",
+                source("a", statement + " The agency published details.", title=statement),
+            ),
+            tmp_path,
+        )
+    assert count_runs(tmp_path) == 0
+
+
+@pytest.mark.parametrize(
+    ("evidence_field", "comparison_field"),
+    [("title", "title"), ("title", "text"), ("text", "title"), (None, "text"), (None, "title")],
+)
+def test_self_comparison_cannot_switch_between_headline_and_body(
+    model, tmp_path, evidence_field, comparison_field
+):
+    _, replies = model
+    replies.append(
+        lambda payload: decision(
+            event(
+                observation(
+                    payload["articles"][0],
+                    change="correction",
+                    field=evidence_field,
+                    comparison=[ref(payload["articles"][0], field=comparison_field)],
+                )
+            )
+        )
+    )
+    statement = "The dock permit was issued."
+    with pytest.raises(ValueError, match="an assertion cannot be compared with itself"):
+        trajectory.run(snapshot("2026-01-01", source("a", statement, title=statement)), tmp_path)
+    assert count_runs(tmp_path) == 0
 
 
 def test_reused_ids_urls_and_revision_dates_keep_distinct_capture_provenance(model, tmp_path):

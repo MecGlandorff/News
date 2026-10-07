@@ -123,7 +123,7 @@ def run_task(
     quotes and memory references against the original input before persistence.
     No credentials are read, copied, or stored by this module.
     """
-    if task != "trajectory":
+    if task not in {"trajectory", "coherence"}:
         raise ValueError(f"Unknown task: {task!r}")
     if not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("timeout must be a finite positive number")

@@ -69,23 +69,54 @@
   },
   "$defs": {
     "quote": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "capture_id",
-        "quote"
-      ],
-      "properties": {
-        "capture_id": {
-          "type": "string",
-          "minLength": 1
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "capture_id",
+            "field",
+            "quote"
+          ],
+          "properties": {
+            "capture_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "field": {
+              "type": "string",
+              "enum": [
+                "title",
+                "text"
+              ]
+            },
+            "quote": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            }
+          }
         },
-        "quote": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 2000
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "capture_id",
+            "quote"
+          ],
+          "properties": {
+            "capture_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "quote": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            }
+          }
         }
-      }
+      ]
     },
     "new_event": {
       "type": "object",

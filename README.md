@@ -30,8 +30,9 @@ news run --input examples/day2.json --state .news/story-demo
 The example articles are invented. Each `run` prints its run ID, story IDs and
 the path to `briefing.md`. The briefing links to complete dated pages for the
 stories it touches. Runs use your Codex account's model usage; authentication
-files are not copied into the project. Each batch attempt starts at most one Codex CLI
-invocation; the application does not retry. Codex may reconnect internally, as
+files are not copied into the project. Each batch attempt starts at most two Codex CLI
+invocations: a proposal and a separate story-coherence review. The application
+does not retry. Codex may reconnect internally, as
 recorded in its raw logs. An interrupted invocation may not report token usage.
 
 Read a story offline, optionally as known on a particular capture day:
@@ -54,7 +55,8 @@ and calls the same story workflow with persistent memory:
 
 Open `.news/dogfood/latest.md` or `index.md`, and keep reader feedback in
 `.news/dogfood/feedback.md`. Default limits are 8 articles per batch, 12 batch
-attempts per invocation and 360 seconds per model call. Failed batches stop the
+attempts per invocation (at most 24 model calls), with a shared 360-second deadline
+for each proposal and review. Failed or rejected batches stop the
 queue; the next invocation resumes its oldest pending input. Accepted inputs are
 recognized from the journal even after a code change, so a scheduling retry does
 not repeat them. Experiments require separate state.
@@ -75,7 +77,8 @@ news run --input .news/articles-2026-10-03.json
 
 Choose the intended date. Fetching selects that publication day in the
 Europe/Brussels timezone; feeds usually expose only recent items. It reads
-RSS/Atom descriptions or embedded content, not article web pages. Its report
+RSS/Atom descriptions or embedded content, not article web pages. Namespace-aware
+fields prevent media credits from replacing article descriptions. The report
 counts invalid items, date exclusions, duplicates and configured-limit omissions.
 A failed feed aborts capture. Existing snapshot files are never overwritten.
 
@@ -117,9 +120,23 @@ in their dated observations; later answers need their own sourced explanation.
 source-stated event dates stay separate. A captured version is identified by its
 complete article and capture day, preserving revised text and reused IDs or URLs.
 
-Schema, coverage, exact-quote and reference checks run before acceptance. They
-cannot establish that a summary is true, a cited quote supports its claim, or a
-story link is meaningful. The model's judgments still need reader review.
+Evidence identifies the exact `title` or `text` field; old references without a
+field remain body-text references. Headlines are attributed source claims, not
+independent corroboration. Citations label the field and retain publication and
+observation dates.
+
+Schema, coverage, exact-quote and reference checks run before acceptance. A
+separate model call then checks whether the proposed events belong to the same
+source-supported matter. For reused stories it receives every accepted event and
+original source, including history omitted from the proposal's retrieval context.
+Any unsupported, uncertain, incomplete or failed review rejects the whole batch
+before journal insertion. Both outputs remain available for diagnosis.
+
+This is an automatic semantic check, not a guarantee of factual accuracy or
+correct grouping. It checks stories touched by the proposal, not the entire old
+archive, and does not repair old accepted assignments. Reader feedback should
+lead to general mechanisms and frozen regression tests; never manually patch
+story assignments, the journal or generated briefings.
 
 ## State and limits
 
@@ -130,8 +147,9 @@ The default state directory is `.news/`. It contains:
   row establishes acceptance.
 - `runs/<id>/`: `input.json`, retrieval diagnostics, raw decision, materialized
   result, `briefing.md`, and `stories/<id>.md` as known at that run.
-- `runs/<id>/model/`: exact prompt, schema, configuration, raw output, diagnostics,
-  timing and reported usage. Failed attempts retain `failure.json`.
+- `runs/<id>/model/` and `review/`: each call's exact prompt, schema, configuration,
+  raw output, diagnostics, timing and reported usage. `review-input.json` and
+  `review.json` retain the semantic check. Failed attempts retain `failure.json`.
 
 New batches must be chronological; one process may update a state directory at
 a time. Validation completes before the acceptance transaction; inserting the
@@ -154,12 +172,16 @@ Hard input limits are 50 articles per batch, 20,000 characters per article and
 120,000 characters per snapshot. The compact canonical retained JSON payload is
 limited to 180,000 characters by default; `--max-context-chars` permits at most
 240,000. This count excludes the fixed task/schema and serialization whitespace.
-`--hits-per-article` accepts 1–10. Oversized context stops before a model call;
-origins or corrections are not silently trimmed to fit. Start with small batches
+`--hits-per-article` accepts 1–10. The same cap applies separately to the full
+review payload, including the proposed decision. Oversized context stops before
+that call; the proposal may already have incurred usage. Histories are never
+silently trimmed to fit. One long story can exceed the review cap even in a
+single-article batch; smaller batches cannot always unblock it. Start with small batches
 and inspect the saved diagnostics; an article-count limit alone cannot guarantee
 that a busy story's history fits.
 
-The default deadline is 180 seconds (`--timeout`, 1–1800). Large batches have
+The default shared proposal/review deadline is 180 seconds (`--timeout`, 1–1800).
+The daily command defaults to 360 seconds per batch. Large batches have
 timed out in experiments. Timeouts and interruptions stop the subprocess group;
 the program neither retries nor splits a failed batch automatically.
 

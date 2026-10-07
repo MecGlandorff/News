@@ -217,15 +217,16 @@ def test_failure_stops_queue_and_next_invocation_preserves_failed_artifacts(
     calls = []
 
     def fail_second(task, payload, directory, **kwargs):
-        calls.append(payload)
+        calls.append(task)
+        failing = task == "trajectory" and calls.count("trajectory") == 2
         directory.mkdir()
         metadata = {
             "process_started": True,
             "duration_seconds": 1,
-            "usage": None if len(calls) == 2 else {"input_tokens": 100, "output_tokens": 20},
+            "usage": None if failing else {"input_tokens": 100, "output_tokens": 20},
         }
         (directory / "metadata.json").write_text(json.dumps(metadata))
-        if len(calls) == 2:
+        if failing:
             raise RuntimeError("simulated connection failure")
         return normal(task, payload, directory, **kwargs)
 
@@ -233,15 +234,16 @@ def test_failure_stops_queue_and_next_invocation_preserves_failed_artifacts(
     first = daily.run([], tmp_path, batch_size=1)
     assert first["status"] == "failed"
     assert first["accepted_batches"] == 1 and first["pending_batches"] == 2
-    assert len(first["attempts"]) == first["model_invocations"] == 2
+    assert len(first["attempts"]) == 2
+    assert first["model_invocations"] == 3
     assert first["unknown_usage_invocations"] == 1
-    assert first["known_usage"] == {"input_tokens": 100, "output_tokens": 20}
+    assert first["known_usage"] == {"input_tokens": 200, "output_tokens": 40}
     failed = list((tmp_path / "memory" / "runs").glob("*/failure.json"))
     assert len(failed) == 1
     failure_bytes = failed[0].read_bytes()
     second = daily.run(None, tmp_path, resume_only=True)
     assert second["status"] == "complete" and second["accepted_batches"] == 2
-    assert len(calls) == 4  # failed batch retried once in a separate invocation
+    assert len(calls) == 7  # failed batch retried once, then two proposal/review pairs
     assert failed[0].read_bytes() == failure_bytes
     assert len(fake_model) == 3
 
@@ -326,14 +328,31 @@ def test_capture_failure_receipt_immediately_points_to_unqueued_raw_files(
 
 
 @pytest.mark.parametrize("defect", ["malformed", "missing", "unreadable", "missing flag"])
+@pytest.mark.parametrize("damaged_task", ["trajectory", "coherence", "both"])
 def test_accepted_result_survives_unavailable_diagnostics(
-    poll, fake_model, tmp_path, monkeypatch, defect
+    poll, fake_model, tmp_path, monkeypatch, defect, damaged_task
 ):
     normal, read = trajectory.run_task, daily._read
+    damaged_directories = {
+        "trajectory": {"model"},
+        "coherence": {"review"},
+        "both": {"model", "review"},
+    }[damaged_task]
 
     def bad_diagnostics(task, payload, directory, **kwargs):
         result = normal(task, payload, directory, **kwargs)
         metadata = directory / "metadata.json"
+        metadata.write_text(
+            json.dumps(
+                {
+                    "process_started": True,
+                    "usage": {"input_tokens": 100, "output_tokens": 20},
+                    "duration_seconds": 1,
+                }
+            )
+        )
+        if directory.name not in damaged_directories:
+            return result
         if defect == "malformed":
             metadata.write_text("{")
         elif defect == "missing":
@@ -343,7 +362,11 @@ def test_accepted_result_survives_unavailable_diagnostics(
         return result
 
     def denied(path):
-        if defect == "unreadable" and path.name == "metadata.json":
+        if (
+            defect == "unreadable"
+            and path.name == "metadata.json"
+            and path.parent.name in damaged_directories
+        ):
             raise PermissionError("simulated diagnostic read denial")
         return read(path)
 
@@ -351,8 +374,15 @@ def test_accepted_result_survives_unavailable_diagnostics(
     monkeypatch.setattr(daily, "_read", denied)
     report = daily.run([], tmp_path)
     assert report["status"] == "partial" and report["accepted_batches"] == 1
-    assert len(report["attempts"]) == report["unknown_launch_attempts"] == 1
-    assert report["model_invocations"] == 0 and report["known_usage"] == {}
+    assert len(report["attempts"]) == 1
+    assert report["unknown_launch_attempts"] == len(damaged_directories)
+    assert report["model_invocations"] == 2 - len(damaged_directories)
+    assert report["known_usage"] == (
+        {} if damaged_task == "both" else {"input_tokens": 100, "output_tokens": 20}
+    )
+    calls = report["attempts"][0]["calls"]
+    assert [call["task"] for call in calls] == ["trajectory", "coherence"]
+    assert sum(call["process_started"] is None for call in calls) == len(damaged_directories)
     assert report["attempts"][0]["diagnostic_error"]
     assert "Brook bridge" in Path(report["briefing"]).read_text()
     assert len(daily._accepted(tmp_path / "memory")) == 1
@@ -371,6 +401,137 @@ def test_failed_model_keeps_attempt_when_diagnostics_are_malformed(
     assert report["status"] == "failed" and "original processing failure" in report["error"]
     assert len(report["attempts"]) == report["unknown_launch_attempts"] == 1
     assert report["pending_batches"] == 1 and report["accepted_batches"] == 0
+
+
+def write_call_metadata(directory, usage, *, process_started=True):
+    directory.mkdir(exist_ok=True)
+    (directory / "metadata.json").write_text(
+        json.dumps(
+            {
+                "process_started": process_started,
+                "usage": usage,
+                "duration_seconds": 1,
+            }
+        )
+    )
+
+
+def test_two_calls_are_counted_and_reusing_the_result_costs_nothing(
+    poll, fake_model, tmp_path, monkeypatch
+):
+    normal = trajectory.run_task
+
+    def tracked(task, payload, directory, **kwargs):
+        write_call_metadata(directory, {"input_tokens": 100, "output_tokens": 20})
+        return normal(task, payload, directory, **kwargs)
+
+    monkeypatch.setattr(trajectory, "run_task", tracked)
+    report = daily.run([], tmp_path)
+    assert report["status"] == "complete" and report["accepted_batches"] == 1
+    assert report["model_invocations"] == 2
+    assert report["unknown_usage_invocations"] == report["unknown_launch_attempts"] == 0
+    assert report["known_usage"] == {"input_tokens": 200, "output_tokens": 40}
+    attempt = report["attempts"][0]
+    assert [call["task"] for call in attempt["calls"]] == ["trajectory", "coherence"]
+    assert attempt["model_seconds"] == 2
+    batch = daily._queue(tmp_path, manifests(tmp_path))[0]
+    result, reused = daily._attempt(batch, tmp_path, 30)
+    assert result["run_id"] == attempt["run_id"] and reused["status"] == "reused"
+    assert reused["model_invocations"] == 0 and reused["usage"] is None
+    assert reused["calls"] == [] and len(fake_model) == 1
+
+
+@pytest.mark.parametrize("damaged_task", ["trajectory", "coherence"])
+def test_invalid_usage_preserves_known_launch_and_other_call_usage(
+    poll, tmp_path, monkeypatch, damaged_task
+):
+    normal = trajectory.run_task
+
+    def tracked(task, payload, directory, **kwargs):
+        usage = {"input_tokens": -1} if task == damaged_task else {"input_tokens": 100}
+        write_call_metadata(directory, usage)
+        return normal(task, payload, directory, **kwargs)
+
+    monkeypatch.setattr(trajectory, "run_task", tracked)
+    report = daily.run([], tmp_path)
+    assert report["status"] == "partial" and report["accepted_batches"] == 1
+    assert report["model_invocations"] == 2 and report["unknown_launch_attempts"] == 0
+    assert report["unknown_usage_invocations"] == 1
+    assert report["known_usage"] == {"input_tokens": 100}
+    assert all(call["process_started"] for call in report["attempts"][0]["calls"])
+
+
+def test_rejected_review_counts_both_calls_without_accepting_the_batch(
+    poll, fake_model, tmp_path, monkeypatch
+):
+    normal = trajectory.run_task
+
+    def reject(task, payload, directory, **kwargs):
+        write_call_metadata(directory, {"input_tokens": 100})
+        result = normal(task, payload, directory, **kwargs)
+        if task == "coherence":
+            result["stories"][0].update(verdict="unsupported", reason="Unrelated matters.")
+        return result
+
+    monkeypatch.setattr(trajectory, "run_task", reject)
+    report = daily.run([], tmp_path)
+    assert report["status"] == "failed" and "coherence review rejected" in report["error"]
+    assert report["accepted_batches"] == 0 and report["pending_batches"] == 1
+    assert report["model_invocations"] == 2 and report["known_usage"] == {"input_tokens": 200}
+    assert report["unknown_usage_invocations"] == report["unknown_launch_attempts"] == 0
+    assert daily._accepted(tmp_path / "memory") == {} and len(fake_model) == 1
+    artifact = tmp_path / report["attempts"][0]["artifact"]
+    assert (
+        json.loads((artifact / "review.json").read_text())["stories"][0]["verdict"] == "unsupported"
+    )
+
+
+@pytest.mark.parametrize("timeout_task", ["trajectory", "coherence"])
+def test_timeout_counts_started_calls_and_preserves_available_usage(
+    poll, tmp_path, monkeypatch, timeout_task
+):
+    normal = trajectory.run_task
+
+    def timeout(task, payload, directory, **kwargs):
+        write_call_metadata(directory, None if task == timeout_task else {"input_tokens": 100})
+        if task == timeout_task:
+            raise TimeoutError("simulated CLI deadline")
+        return normal(task, payload, directory, **kwargs)
+
+    monkeypatch.setattr(trajectory, "run_task", timeout)
+    report = daily.run([], tmp_path)
+    assert report["status"] == "failed" and "simulated CLI deadline" in report["error"]
+    assert report["accepted_batches"] == 0 and report["pending_batches"] == 1
+    assert report["model_invocations"] == (1 if timeout_task == "trajectory" else 2)
+    assert report["unknown_usage_invocations"] == 1 and report["unknown_launch_attempts"] == 0
+    assert report["known_usage"] == ({} if timeout_task == "trajectory" else {"input_tokens": 100})
+    assert daily._accepted(tmp_path / "memory") == {}
+
+
+def test_deadline_exhausted_before_review_does_not_count_an_unlaunched_call(
+    poll, tmp_path, monkeypatch
+):
+    normal = trajectory.run_task
+
+    class ModelClock:
+        values = iter((100, 131))
+
+        @staticmethod
+        def monotonic():
+            return next(ModelClock.values)
+
+    def tracked(task, payload, directory, **kwargs):
+        assert task == "trajectory"
+        write_call_metadata(directory, {"input_tokens": 100})
+        return normal(task, payload, directory, **kwargs)
+
+    monkeypatch.setattr(trajectory, "time", ModelClock)
+    monkeypatch.setattr(trajectory, "run_task", tracked)
+    report = daily.run([], tmp_path, timeout=30)
+    assert report["status"] == "failed" and "deadline exhausted" in report["error"]
+    assert report["model_invocations"] == 1 and report["known_usage"] == {"input_tokens": 100}
+    assert report["unknown_launch_attempts"] == report["unknown_usage_invocations"] == 0
+    assert [call["task"] for call in report["attempts"][0]["calls"]] == ["trajectory"]
 
 
 def test_clock_reversal_and_unmanaged_memory_fail_before_model(

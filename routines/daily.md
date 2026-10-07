@@ -15,8 +15,10 @@ Run this command once:
 ```
 
 Use the existing authenticated Codex CLI and fixed `gpt-6-astra` / medium settings.
-The ceiling is 12 batch attempts, each with at most one news-model CLI invocation
-and a 360-second deadline. Preserve the capture, pending backlog, accepted journal
+The ceiling is 12 batch attempts and 24 news-model CLI invocations. Each batch has
+a proposal and an independent coherence review within one shared 360-second
+deadline. An unsupported or uncertain grouping remains unaccepted automatically.
+Preserve the capture, pending backlog, accepted journal
 and failed artifacts. Do not loop, retry a failed batch, invoke an extra resume
 run, rebuild memory, change settings or increase a limit to make the run finish.
 If another writer is active or a prerequisite is missing, report that condition

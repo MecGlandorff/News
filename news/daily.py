@@ -3,6 +3,7 @@
 import contextlib
 import hashlib
 import json
+import math
 import sqlite3
 import time
 import uuid
@@ -149,6 +150,46 @@ def _protocol():
     }
 
 
+def _call_diagnostics(directory, task, state):
+    call = {
+        "task": task,
+        "artifact": str(directory.relative_to(state)),
+        "process_started": None,
+        "usage": None,
+        "duration_seconds": None,
+    }
+    try:
+        metadata = _read(directory / "metadata.json")
+        if not isinstance(metadata, dict):
+            raise ValueError("model metadata is not an object")
+    except (OSError, ValueError, TypeError) as exc:
+        call["diagnostic_error"] = str(exc)
+        return call
+    errors = []
+    if type(metadata.get("process_started")) is bool:
+        call["process_started"] = metadata["process_started"]
+    else:
+        errors.append("model metadata has no reliable process_started flag")
+    usage = metadata.get("usage")
+    if usage is not None and (
+        not isinstance(usage, dict)
+        or any(type(value) is not int or value < 0 for value in usage.values())
+    ):
+        errors.append("model metadata has invalid usage")
+    else:
+        call["usage"] = usage
+    seconds = metadata.get("duration_seconds")
+    if seconds is not None and (
+        type(seconds) not in (int, float) or not math.isfinite(seconds) or seconds < 0
+    ):
+        errors.append("model metadata has invalid duration")
+    else:
+        call["duration_seconds"] = seconds
+    if errors:
+        call["diagnostic_error"] = "; ".join(errors)
+    return call
+
+
 def _attempt(batch, state, timeout):
     memory = state / "memory"
     before = set((memory / "runs").glob("*"))
@@ -159,7 +200,10 @@ def _attempt(batch, state, timeout):
         "status": "failed",
         "error": None,
         "artifact": None,
+        "calls": [],
         "model_invocations": 0,
+        "unknown_usage_invocations": 0,
+        "unknown_launch_attempts": 0,
         "usage": None,
     }
     result = None
@@ -183,24 +227,41 @@ def _attempt(batch, state, timeout):
             if directory is not None:
                 attempt["artifact"] = str(directory.relative_to(state))
                 # A reused result has no new launch or usage to charge to this invocation.
-                if attempt["status"] != "reused" and ((directory / "model").exists() or result):
-                    model = _read(directory / "model" / "metadata.json")
-                    if (
-                        not isinstance(model, dict)
-                        or type(model.get("process_started")) is not bool
-                    ):
-                        raise ValueError("model metadata has no reliable process_started flag")
-                    usage = model.get("usage")
-                    if usage is not None and (
-                        not isinstance(usage, dict)
-                        or any(type(value) is not int or value < 0 for value in usage.values())
-                    ):
-                        raise ValueError("model metadata has invalid usage")
-                    attempt["model_invocations"] = int(model["process_started"])
-                    attempt["usage"] = usage
-                    attempt["model_seconds"] = model.get("duration_seconds")
+                if attempt["status"] != "reused":
+                    for name, task in (("model", "trajectory"), ("review", "coherence")):
+                        if (directory / name).exists() or result:
+                            attempt["calls"].append(
+                                _call_diagnostics(directory / name, task, state)
+                            )
         except (OSError, ValueError, TypeError) as exc:
             attempt["diagnostic_error"] = str(exc)
+            attempt["unknown_launch_attempts"] += 1
+        for call in attempt["calls"]:
+            attempt["model_invocations"] += int(call["process_started"] is True)
+            attempt["unknown_launch_attempts"] += int(call["process_started"] is None)
+            attempt["unknown_usage_invocations"] += int(
+                call["process_started"] is True and call["usage"] is None
+            )
+            if call["usage"] is not None:
+                attempt["usage"] = attempt["usage"] or {}
+                for key, value in call["usage"].items():
+                    attempt["usage"][key] = attempt["usage"].get(key, 0) + value
+        seconds = [
+            call["duration_seconds"]
+            for call in attempt["calls"]
+            if call["duration_seconds"] is not None
+        ]
+        if seconds:
+            attempt["model_seconds"] = sum(seconds)
+        errors = [attempt["diagnostic_error"]] if attempt.get("diagnostic_error") else []
+        errors.extend(
+            f"{call['task']}: {call['diagnostic_error']}"
+            for call in attempt["calls"]
+            if call.get("diagnostic_error")
+        )
+        if errors:
+            attempt["diagnostic_error"] = "; ".join(errors)
+        if attempt["unknown_launch_attempts"]:
             attempt["invocation_status_uncertain"] = True
         attempt["duration_seconds"] = round(time.monotonic() - started, 6)
     return result, attempt
@@ -240,7 +301,7 @@ def _briefing(report, results):
         f"{report['pending_batches'] if report['pending_batches'] is not None else 'Unknown'} pending. "
         f"{report['model_invocations']} confirmed model invocations; "
         f"{report['unknown_usage_invocations']} with unknown usage; "
-        f"{report['unknown_launch_attempts']} attempts with unknown launch status."
+        f"{report['unknown_launch_attempts']} call attempts with unknown launch status."
     )
     return "\n".join(lines).rstrip() + "\n"
 
@@ -416,11 +477,8 @@ def run(
                 )
             for attempt in report["attempts"]:
                 report["model_invocations"] += attempt["model_invocations"]
-                report["unknown_launch_attempts"] += int(
-                    attempt.get("invocation_status_uncertain", False)
-                )
-                if attempt["model_invocations"] and attempt["usage"] is None:
-                    report["unknown_usage_invocations"] += 1
+                report["unknown_launch_attempts"] += attempt["unknown_launch_attempts"]
+                report["unknown_usage_invocations"] += attempt["unknown_usage_invocations"]
                 for key, value in (attempt["usage"] or {}).items():
                     report["known_usage"][key] = report["known_usage"].get(key, 0) + value
                 if attempt.get("diagnostic_error"):

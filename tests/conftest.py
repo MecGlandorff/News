@@ -21,11 +21,28 @@ def snapshot():
 
 
 @pytest.fixture
-def fake_model(monkeypatch):
+def supported_coherence():
+    """Explicit supported judgments for operational tests, not semantic evaluation."""
+
+    def review(payload):
+        return {
+            "stories": [
+                {"story_index": index, "verdict": "supported", "reason": "Offline test fixture."}
+                for index, _ in enumerate(payload["decision"]["stories"])
+            ]
+        }
+
+    return review
+
+
+@pytest.fixture
+def fake_model(monkeypatch, supported_coherence):
     """A structurally valid first observation; not a semantic model substitute."""
     calls = []
 
     def call(task, payload, directory, **kwargs):
+        if task == "coherence":
+            return supported_coherence(payload)
         assert task == "trajectory"
         calls.append(deepcopy(payload))
         return {

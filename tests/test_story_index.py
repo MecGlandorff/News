@@ -8,7 +8,7 @@ from news.domain import canonical
 
 
 @pytest.fixture
-def indexed_state(monkeypatch, tmp_path):
+def indexed_state(monkeypatch, tmp_path, supported_coherence):
     articles = [
         {
             "id": f"source-{number}",
@@ -23,6 +23,8 @@ def indexed_state(monkeypatch, tmp_path):
     ]
 
     def fake_model(task, payload, directory, **options):
+        if task == "coherence":
+            return supported_coherence(payload)
         return {
             "stories": [
                 {

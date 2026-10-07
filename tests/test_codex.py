@@ -264,6 +264,23 @@ def test_existing_artifacts_are_never_reused_or_overwritten(tmp_path, fake_codex
     assert not (directory / "received.json").exists()
 
 
+def test_coherence_uses_its_own_prompt_and_output_contract(tmp_path, fake_codex):
+    verdict = {
+        "stories": [{"story_index": 0, "verdict": "unsupported", "reason": "Different matters."}]
+    }
+    directory = tmp_path / "review"
+    result = codex.run_task(
+        "coherence",
+        {"input": PAYLOAD, "decision": RESULT},
+        directory,
+        executable=fake_codex(write_result(verdict)),
+    )
+    assert result == verdict
+    received = json.loads((directory / "received.json").read_text())
+    assert "separate reviewer" in received["prompt"]
+    assert "Different matters." not in received["prompt"]
+
+
 @pytest.mark.parametrize(
     "task", ["../trajectory", "", "unknown", "trajectory.md", "single", "extract", "group"]
 )

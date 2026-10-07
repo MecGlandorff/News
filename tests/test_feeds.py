@@ -51,6 +51,138 @@ def test_atom_xhtml_does_not_join_words():
     assert articles[0]["text"] == "Bridge closed. Road diverted."
 
 
+def test_frozen_rss_media_content_does_not_replace_article_description():
+    data = (Path(__file__).parent / "fixtures" / "guardian-media-content.xml").read_bytes()
+    articles, stats = feeds.parse_feed(
+        data, "The Guardian", "https://www.theguardian.com/world/rss", "2026-10-05", 5
+    )
+    assert articles[0]["text"] == (
+        "After Guardian investigation uncovered drone strike that killed 12 civilians and "
+        "injured many more, seven-year-old Abdiqadir Salah underwent vital operation in "
+        "Mogadishu On the rickshaw ride to the hospital, Marian Haji Abdi Guled felt a mixture "
+        "of joy and apprehension: the day they had been waiting for had finally arrived. "
+        "Almost a year earlier, her then seven-year-old son, Abdiqadir Salah, had been "
+        "seriously injured, alongside his two siblings, in what a Guardian investigation "
+        "found was a US drone strike on the village of Jamaame in Somalia that killed at "
+        "least 12 civilians, including eight children. Continue reading..."
+    )
+    assert sum(stats.values()) == 0
+
+
+def test_rss_content_encoded_prefers_full_body_and_retains_html_boundaries():
+    data = b"""<rss xmlns:body="http://purl.org/rss/1.0/modules/content/">
+    <channel><item><title>Bridge report</title><link>https://example.test/a</link>
+    <pubDate>Thu, 01 Oct 2026 08:00:00 GMT</pubDate><description>Short summary.</description>
+    <body:encoded><![CDATA[<p>Bridge closed.</p><p>Road diverted.</p>]]></body:encoded>
+    </item></channel></rss>"""
+    articles, stats = feeds.parse_feed(data, "Source", "https://example.test", "2026-10-01", 5)
+    assert articles[0]["text"] == "Bridge closed. Road diverted."
+    assert sum(stats.values()) == 0
+
+
+@pytest.mark.parametrize("content", ["", "  ", "&lt;p&gt; &lt;/p&gt;", "<p> </p>"])
+def test_empty_rss_content_encoded_falls_back_to_description(content):
+    data = f"""<rss xmlns:body="http://purl.org/rss/1.0/modules/content/">
+    <channel><item><title>Bridge report</title><link>https://example.test/a</link>
+    <pubDate>Thu, 01 Oct 2026 08:00:00 GMT</pubDate>
+    <body:encoded>{content}</body:encoded><description>Bridge closed.</description>
+    </item></channel></rss>""".encode()
+    articles, stats = feeds.parse_feed(data, "Source", "https://example.test", "2026-10-01", 5)
+    assert articles[0]["text"] == "Bridge closed."
+    assert sum(stats.values()) == 0
+
+
+@pytest.mark.parametrize(
+    "content_type,content,expected",
+    [
+        ("text", "Bridge closed.", "Bridge closed."),
+        ("html", "&lt;p&gt;Bridge closed.&lt;/p&gt;", "Bridge closed."),
+        ("text", "", "Road diverted."),
+        ("xhtml", '<div xmlns="http://www.w3.org/1999/xhtml"><p> </p></div>', "Road diverted."),
+    ],
+)
+def test_atom_supported_content_and_empty_body_fallback(content_type, content, expected):
+    data = f"""<feed xmlns="http://www.w3.org/2005/Atom"><entry>
+    <title>Bridge report</title><link href="https://example.test/a"/>
+    <updated>2026-10-01T08:00:00Z</updated><summary>Road diverted.</summary>
+    <content type="{content_type}">{content}</content></entry></feed>""".encode()
+    articles, stats = feeds.parse_feed(data, "Source", "https://example.test", "2026-10-01", 5)
+    assert articles[0]["text"] == expected
+    assert articles[0]["published_at"] == "2026-10-01T08:00:00+00:00"
+    assert sum(stats.values()) == 0
+
+
+@pytest.mark.parametrize("namespace", ["http://search.yahoo.com/mrss/", "urn:foreign"])
+@pytest.mark.parametrize("field", ["encoded", "content", "description", "summary"])
+def test_foreign_body_lookalikes_are_ignored(namespace, field):
+    data = f"""<feed xmlns="http://www.w3.org/2005/Atom" xmlns:other="{namespace}"><entry>
+    <title>Bridge report</title><link href="https://example.test/a"/>
+    <published>2026-10-01T08:00:00Z</published>
+    <other:{field}>Unrelated media text.</other:{field}><summary>Bridge closed.</summary>
+    </entry></feed>""".encode()
+    articles, stats = feeds.parse_feed(data, "Source", "https://example.test", "2026-10-01", 5)
+    assert articles[0]["text"] == "Bridge closed."
+    assert sum(stats.values()) == 0
+
+
+def test_media_content_alone_is_not_an_article_body():
+    data = b"""<rss xmlns:media="http://search.yahoo.com/mrss/"><channel><item>
+    <title>Bridge report</title><link>https://example.test/a</link>
+    <pubDate>Thu, 01 Oct 2026 08:00:00 GMT</pubDate>
+    <media:content><media:credit>A photographer</media:credit></media:content>
+    </item></channel></rss>"""
+    articles, stats = feeds.parse_feed(data, "Source", "https://example.test", "2026-10-01", 5)
+    assert articles == []
+    assert stats == {"invalid": 1, "outside_day": 0, "duplicates": 0, "over_limit": 0}
+
+
+def test_foreign_metadata_lookalikes_do_not_shadow_rss_fields():
+    data = b"""<rss xmlns:other="http://search.yahoo.com/mrss/">
+    <channel><item><other:title>Media title</other:title><title>Bridge report</title>
+    <other:link>https://example.test/image</other:link><link>https://example.test/a</link>
+    <other:pubDate>Thu, 01 Jan 2026 08:00:00 GMT</other:pubDate>
+    <pubDate>Thu, 01 Oct 2026 08:00:00 GMT</pubDate><description>Bridge closed.</description>
+    </item></channel></rss>"""
+    articles, stats = feeds.parse_feed(data, "Source", "https://example.test", "2026-10-01", 5)
+    assert len(articles) == 1
+    assert articles[0]["title"] == "Bridge report"
+    assert articles[0]["url"] == "https://example.test/a"
+    assert articles[0]["published_at"] == "2026-10-01T08:00:00+00:00"
+    assert sum(stats.values()) == 0
+
+
+def test_atom_link_ignores_foreign_href_and_prefers_alternate():
+    data = b"""<feed xmlns="http://www.w3.org/2005/Atom" xmlns:other="urn:foreign"><entry>
+    <other:title>Media title</other:title><title>Bridge report</title>
+    <other:link href="https://example.test/image"/><link rel="self" href="/feed-entry"/>
+    <link rel="alternate" href="/a?utm_source=rss"/>
+    <other:published>2026-01-01T08:00:00Z</other:published>
+    <published>2026-10-01T08:00:00Z</published><updated>2026-10-02T08:00:00Z</updated>
+    <summary>Bridge closed.</summary></entry></feed>"""
+    articles, stats = feeds.parse_feed(data, "Source", "https://example.test", "2026-10-01", 5)
+    assert len(articles) == 1
+    assert articles[0]["title"] == "Bridge report"
+    assert articles[0]["url"] == "https://example.test/a"
+    assert articles[0]["published_at"] == "2026-10-01T08:00:00+00:00"
+    assert sum(stats.values()) == 0
+
+
+def test_rss_one_fields_and_dublin_core_date_are_supported():
+    data = b"""<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns="http://purl.org/rss/1.0/" xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:other="urn:foreign"><item><title>Bridge report</title>
+    <link>https://example.test/a</link><description>Bridge closed.</description>
+    <other:date>2026-01-01T08:00:00Z</other:date><dc:date>2026-10-01T08:00:00Z</dc:date>
+    </item></rdf:RDF>"""
+    articles, stats = feeds.parse_feed(data, "Source", "https://example.test", "2026-10-01", 5)
+    assert len(articles) == 1
+    assert articles[0]["title"] == "Bridge report"
+    assert articles[0]["text"] == "Bridge closed."
+    assert articles[0]["url"] == "https://example.test/a"
+    assert articles[0]["published_at"] == "2026-10-01T08:00:00+00:00"
+    assert sum(stats.values()) == 0
+
+
 @pytest.mark.parametrize("encoding", ["utf-8", "utf-16", "utf-16-le", "utf-16-be"])
 def test_dtd_is_rejected_independent_of_encoding(encoding):
     declaration = encoding.replace("-le", "le").replace("-be", "be")

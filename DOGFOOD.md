@@ -39,12 +39,20 @@ These are the daily defaults. Capture and processing can also be separated:
 `--collect-only` freezes available sources with zero model calls. `--resume-only`
 processes frozen pending batches without fetching feeds. An ordinary invocation
 captures sources once and works through pending batches chronologically. The
-shown command permits at most 12 batch attempts, with at most one Codex CLI
-invocation
-per attempt, using `gpt-6-astra` with medium reasoning and a 360-second deadline.
+shown command permits at most 12 batch attempts and 24 Codex CLI invocations:
+each attempt proposes stories and independently reviews their coherence, using
+`gpt-6-astra` with medium reasoning and a shared 360-second batch deadline.
 Processing stops at the first failed batch and does not automatically retry it within
 the invocation. Codex may reconnect internally; CLI invocations are not a count
 of backend attempts. Leave pending work for a later invocation.
+
+An unsupported or uncertain grouping is rejected automatically before acceptance.
+The report counts proposal and reviewer calls separately, preserving known token
+usage even if the other call's usage is unavailable. Review failures stop the
+queue with both outputs retained. The check covers touched stories and their
+complete supplied history; it does not retroactively repair the old archive.
+Never edit accepted assignments or generated outputs to clear a failure. Diagnose
+it in an experiment using frozen inputs and an improved general mechanism.
 
 Daily capture keeps all valid items currently exposed by the configured feeds,
 including older publication dates. It reads RSS/Atom text, not full article web

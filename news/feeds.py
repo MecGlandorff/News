@@ -18,6 +18,12 @@ from news.domain import TIMEZONE, digest, valid_day, valid_url, validate_input
 
 MAX_FEED_BYTES = 2_000_000
 
+# ElementTree expanded-name prefixes for the supported feed vocabularies.
+_RSS = "{http://purl.org/rss/1.0/}"
+_ATOM = "{http://www.w3.org/2005/Atom}"
+_CONTENT = "{http://purl.org/rss/1.0/modules/content/}"
+_DC = "{http://purl.org/dc/elements/1.1/}"
+
 
 class _NoDTD(ET.TreeBuilder):
     def doctype(self, name, public_id, system_id):
@@ -66,15 +72,20 @@ def normalize_url(value: str) -> str:
     )
 
 
-def _child_text(entry: ET.Element, *names: str) -> str:
-    for name in names:
+def _child_text(entry: ET.Element, *tags: str, strip_html: bool = False) -> str:
+    """Read supported expanded names in preference order, skipping empty text."""
+    for tag in tags:
         for child in entry:
-            if child.tag.rsplit("}", 1)[-1] == name:
+            if child.tag == tag:
                 if len(child):
-                    return (child.text or "") + "".join(
+                    value = (child.text or "") + "".join(
                         ET.tostring(node, encoding="unicode") for node in child
                     )
-                return "".join(child.itertext()).strip()
+                else:
+                    value = "".join(child.itertext())
+                value = plain_text(value) if strip_html else value.strip()
+                if value:
+                    return value
     return ""
 
 
@@ -88,21 +99,28 @@ def _entries(data: bytes) -> list[ET.Element]:
 
 
 def _article(entry: ET.Element, source: str, base_url: str) -> dict:
-    title = plain_text(_child_text(entry, "title"))
-    body = plain_text(_child_text(entry, "encoded", "content", "description", "summary"))
-    link = _child_text(entry, "link")
+    title = _child_text(entry, "title", f"{_RSS}title", f"{_ATOM}title", strip_html=True)
+    body = _child_text(
+        entry,
+        f"{_CONTENT}encoded",
+        f"{_ATOM}content",
+        "description",
+        f"{_RSS}description",
+        f"{_ATOM}summary",
+        strip_html=True,
+    )
+    link = _child_text(entry, "link", f"{_RSS}link")
     if not link:
         link = next(
             (
                 node.get("href", "")
                 for node in entry
-                if node.tag.rsplit("}", 1)[-1] == "link"
-                and node.get("rel", "alternate") == "alternate"
+                if node.tag == f"{_ATOM}link" and node.get("rel", "alternate") == "alternate"
             ),
             "",
         )
     url = normalize_url(urljoin(base_url, link)) if link else ""
-    raw_date = _child_text(entry, "pubDate", "published", "date", "updated")
+    raw_date = _child_text(entry, "pubDate", f"{_ATOM}published", f"{_DC}date", f"{_ATOM}updated")
     try:
         timestamp = datetime.fromisoformat(raw_date.replace("Z", "+00:00"))
     except ValueError:

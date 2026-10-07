@@ -5,6 +5,7 @@ import fcntl
 import json
 import re
 import sqlite3
+import time
 import unicodedata
 import uuid
 from datetime import datetime, timezone
@@ -127,7 +128,10 @@ def project(db: sqlite3.Connection, *, as_of: str | None = None, through_run: st
                     identity_uncertain=event["identity_uncertain"],
                 )
                 for reference in event["continuity_evidence"]:
-                    if reference not in previous["continuity_evidence"]:
+                    if not any(
+                        _reference_identity(reference) == _reference_identity(existing)
+                        for existing in previous["continuity_evidence"]
+                    ):
                         previous["continuity_evidence"].append(reference)
                 for observation in event["observations"]:
                     previous["observations"].append(dict(observation, order=order))
@@ -300,13 +304,20 @@ def retrieve(db: sqlite3.Connection, snapshot: dict, *, hits_per_article: int = 
     return payload, diagnostics
 
 
+def _reference_identity(item: dict) -> tuple[str, str, str]:
+    return item["capture_id"], item.get("field", "text"), item["quote"]
+
+
 def _references(items: list[dict], allowed: dict) -> set[str]:
     seen, captures = set(), set()
     for item in items:
-        key, span = item["capture_id"], item["quote"]
+        key, field, span = _reference_identity(item)
         _text(span, "evidence quote", 2000)
-        if key not in allowed or span not in allowed[key]["text"]:
-            raise ValueError("evidence must quote an exact span of a supplied allowed capture")
+        if key not in allowed or span not in allowed[key][field]:
+            raise ValueError(
+                "evidence must quote an exact span of the selected field in a supplied allowed capture"
+            )
+        # Repeating the same words in a title and body is still one assertion.
         if (key, span) in seen:
             raise ValueError("duplicate evidence reference")
         seen.add((key, span))
@@ -389,6 +400,7 @@ def validate(payload: dict, decision: dict) -> None:
                 evidence_pairs = {
                     (item["capture_id"], item["quote"]) for item in observation["evidence"]
                 }
+                # A field selector must not turn identical wording into a change.
                 if any(
                     (item["capture_id"], item["quote"]) in evidence_pairs
                     for item in observation["comparison_evidence"]
@@ -417,6 +429,7 @@ def _materialize(payload: dict, decision: dict, run_id: str) -> dict:
         return [
             dict(
                 item,
+                field=item.get("field", "text"),
                 article_id=sources[item["capture_id"]]["id"],
                 **{
                     key: sources[item["capture_id"]][key]
@@ -470,10 +483,13 @@ def _quoted(items: list[dict]) -> list[str]:
     for item in items:
         source = _markdown(" ".join(item["source"].split()))
         url = quote(item["url"], safe=":/?=&%#@+;,-._~")
+        location = ""
+        if "field" in item:
+            location = " · " + {"title": "Headline", "text": "Article text"}[item["field"]]
         lines.extend(
             [
                 f"[{source}](<{url}>) · published {item['published_at']} · observed on {item['observed_on']}",
-                f"Capture `{item['capture_id']}`",
+                f"Capture `{item['capture_id']}`{location}",
                 "",
             ]
         )
@@ -504,14 +520,14 @@ def _observation(observation: dict) -> list[str]:
         lines.extend(["Compared assertion (preserved with its attribution):", ""])
         lines.extend(_quoted(observation["comparison_evidence"]))
     shown = {
-        (item["capture_id"], item["quote"])
+        _reference_identity(item)
         for field in ("evidence", "comparison_evidence")
         for item in observation[field]
     }
     anchors = [
         item
         for item in observation["continuity_evidence"]
-        if (item["capture_id"], item["quote"]) not in shown
+        if _reference_identity(item) not in shown
     ]
     if anchors:
         lines.extend(["Earlier source supporting this story/event link:", ""])
@@ -591,6 +607,8 @@ def run(
     files = [
         TASKS / "trajectory.md",
         TASKS / "trajectory.schema.json",
+        TASKS / "coherence.md",
+        TASKS / "coherence.schema.json",
         Path(__file__),
         Path(__file__).with_name("domain.py"),
         Path(__file__).with_name("codex.py"),
@@ -630,11 +648,31 @@ def run(
                 raise ValueError(
                     "retrieved context exceeds request budget; use a smaller input batch"
                 )
+            model_started = time.monotonic()
             decision = run_task(
                 "trajectory", payload, directory / "model", timeout=timeout, executable=executable
             )
             _write_json(directory / "decision.json", decision)
             validate(payload, decision)
+            review_sources, review_stories = project(db, as_of=snapshot["day"])
+            review_payload = coherence_payload(payload, decision, review_sources, review_stories)
+            _write_json(directory / "review-input.json", review_payload)
+            if len(canonical(review_payload)) > max_context_chars:
+                raise ValueError("story coherence review exceeds request budget")
+            remaining = timeout - (time.monotonic() - model_started)
+            if remaining <= 0:
+                raise ValueError("batch deadline exhausted before story coherence review")
+            review = run_task(
+                "coherence",
+                review_payload,
+                directory / "review",
+                timeout=remaining,
+                executable=executable,
+            )
+            _write_json(directory / "review.json", review)
+            if time.monotonic() - model_started > timeout:
+                raise ValueError("batch deadline exhausted during story coherence review")
+            validate_coherence(decision, review)
             result = _materialize(payload, decision, run_id)
             # Insert and render inside one transaction. No accepted observation
             # survives a model, validation, artifact or commit failure.
@@ -661,7 +699,47 @@ def run(
                 pass
             exc.add_note(f"Run artifacts: {directory}")
             raise
-        return result, False
+    return result, False
+
+
+def validate_coherence(decision: dict, review: dict) -> None:
+    """A separate semantic judgment must cover every proposed story before acceptance."""
+    validate_schema("coherence", review)
+    for item in review["stories"]:
+        _text(item["reason"], "coherence reason", 1200)
+    indices = [item["story_index"] for item in review["stories"]]
+    if len(indices) != len(set(indices)) or set(indices) != set(range(len(decision["stories"]))):
+        raise ValueError("coherence review must cover every proposed story exactly once")
+    failures = [
+        f"story {item['story_index']}: {item['verdict']} — {item['reason']}"
+        for item in review["stories"]
+        if item["verdict"] != "supported"
+    ]
+    if failures:
+        raise ValueError("story coherence review rejected the batch: " + "; ".join(failures))
+
+
+def coherence_payload(payload: dict, decision: dict, sources: dict, stories: dict) -> dict:
+    """Review all accepted events/sources of reused stories, not just retrieved excerpts."""
+    reused = {item["story_id"] for item in decision["stories"] if item["story_id"] is not None}
+    existing = []
+    for key in sorted(reused):
+        story_item = stories[key]
+        existing.append(
+            {name: value for name, value in story_item.items() if name != "events"}
+            | {"events": list(story_item["events"].values())}
+        )
+    return {
+        "input": {
+            "day": payload["day"],
+            "articles": payload["articles"],
+            "stories": existing,
+            "prior_sources": [
+                sources[key] for key in sorted(sources) if sources[key]["story_id"] in reused
+            ],
+        },
+        "decision": decision,
+    }
 
 
 def story(state: Path, story_id: str, *, as_of: str | None = None) -> str:
