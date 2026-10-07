@@ -1,0 +1,13 @@
+{
+  "day": "2026-10-02",
+  "articles": [
+    {
+      "id": "bridge-reopening",
+      "source": "Synthetic City News",
+      "url": "https://example.test/bridge-reopening",
+      "published_at": "2026-10-02T11:00:00Z",
+      "title": "Brook bridge reopens after repairs",
+      "text": "The Brook bridge in Bergen reopened on Friday after repairs following Thursday's truck collision. Inspectors approved the reopening after replacing the damaged barrier."
+    }
+  ]
+}

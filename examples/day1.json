@@ -1,0 +1,21 @@
+{
+  "day": "2026-10-01",
+  "articles": [
+    {
+      "id": "bridge-closure",
+      "source": "Synthetic City News",
+      "url": "https://example.test/bridge-closure",
+      "published_at": "2026-10-01T08:00:00Z",
+      "title": "Brook bridge closes in Bergen",
+      "text": "The Brook bridge in Bergen closed on Thursday after a truck collision. Inspectors said the bridge would remain closed until repairs were complete."
+    },
+    {
+      "id": "bridge-traffic",
+      "source": "Synthetic Local Radio",
+      "url": "https://example.test/bridge-traffic",
+      "published_at": "2026-10-01T09:00:00Z",
+      "title": "Traffic diverted after collision at Brook bridge",
+      "text": "Traffic was diverted on Thursday after a truck struck the Brook bridge in Bergen. The bridge was closed for inspections."
+    }
+  ]
+}

@@ -1,286 +1,207 @@
 # News
 
-## Source-Grounded Event Memory
+Capture news sources, follow ongoing stories through distinct developments, and
+write a Markdown briefing with a dated, sourced timeline for each story.
+AI processing uses **Codex exec, GPT-6 Astra, medium reasoning**. There is one
+workflow, one accepted-run SQLite journal, and no service to deploy.
 
-Most AI news tools summarize the article in front of them. **News** builds a local, source-grounded memory of real-world events: what happened today, what changed since the previous run, which sources support it, and where uncertainty remains.
+This rebuild is the **primary system under test**. Evaluations support specific
+memory and identity improvements; overall story quality remains unproven.
+Earlier implementations and research remain on their experiment branches;
+see [measured results and remaining gaps](EVALUATION.md) and
+[the experiment index](EXPERIMENTS.md). Use a fresh state directory: this
+workflow does not import the old event database.
 
-It is a local-first intelligence briefing system with RSS ingestion, structured LLM stages, SQLite event memory, evidence-span validation, story-match verification, run observability, Markdown briefings, and newspaper-style PDFs.
+## Start
 
-```text
-Source -> Article -> Claim -> Story Arc -> Story Delta -> Briefing
-```
+Use Python 3.12+ on macOS or Linux, SQLite with FTS5, and an authenticated Codex CLI.
+The transport was exercised with Codex CLI 0.160.0. It validates strict isolation
+settings; incompatible CLI versions fail visibly.
 
-> **Status:** Active development. The Phase 3 foundation is implemented: append-only article occurrences, stored-snapshot replay, conservative claim/span verification, source metadata, run-scoped observability, bounded exact-response caching, evidence-gated story/arc matching, executable acceptance-gate evals, and claim-backed source support/divergence. The matching reconstruction passed; a fresh daily run series and real reviewed claim cases remain the gate before Phase 4.
-
-## Why It Exists
-
-- **Product idea:** source-grounded event memory, not another RSS summary feed.
-- **System design:** explicit pipeline from source to article to claim to story delta to briefing.
-- **AI discipline:** structured model outputs, prompt versions, schema validation, cache keys, and fallbacks.
-- **Trust layer:** only near-verbatim claims are accepted deterministically. Quantity, unit, direction, and negation mismatches are rejected; every other paraphrase goes through a cached `gpt-5.4-nano` verifier that defaults to reject.
-- **Temporal memory:** story observations preserve what the system knew yesterday so today's briefing can explain movement.
-- **Observability:** `runs` and `llm_calls` record model usage, cache hits, schema failures, scraper counts, claim metrics, latency, tokens, and estimated cost.
-- **Regression posture:** the pytest suite covers scraper behavior, source seeding, caching, tracking, claims, observability, CLI behavior, and PDF output.
-
-The flagship outcome is an intelligence-style briefing with status, confidence, source agreement, dispute labels, deltas, source links, and optional evidence spans.
-
-## Product Snapshot
-
-| Capability | What it does today |
-|---|---|
-| Story memory | Groups articles into continuing event arcs and compares against recent history |
-| Daily delta | Writes "what changed today" instead of repeating generic summaries |
-| Claim grounding | Uses `gpt-5.4-nano` with full article text when available; saves claims only when the evidence span is in the article and a hybrid deterministic + LLM-verifier gate decides the span supports the claim |
-| Source support | Counts distinct source identities with `source_id` first and source-name fallback |
-| Claim-backed agreement | Current-day claims support agreement; seven days of older claims are dated context only. Exact/similar multi-source support and precise number/date/status/attribution divergence are compared without claiming source independence |
-| Story and arc matching | Retrieves candidates from article evidence, asks pinned `gpt-5.4-mini-2026-03-17` for strict structured decisions at `low` reasoning, and applies a deterministic fail-closed evidence gate. Same story and same named arc are separate decisions |
-| Local database | Keeps append-only occurrence snapshots plus derived stories, observations, claims, sources, run history, LLM calls, and bounded exact-response cache rows in SQLite |
-| Outputs | Publishes Markdown briefings, digest files, and newspaper-style PDFs |
-| Inspectability | Includes ADRs, failure modes, model behavior docs, database queries, pipeline diagrams, and a claim-quality eval harness |
-
-## Outputs
-
-- [Recent generated Markdown briefing](briefings/briefing_20260511_2134.md)
-- [Curated sample intelligence brief](sample_outputs/intelligence_brief.md)
-- [Briefing archive](briefings/)
-- [Newspaper archive](newspapers/)
-
-The archives intentionally retain historical generated behavior. The curated sample is the best compact showcase of the intended story-card shape.
-
-## Sample Story Card
-
-Trimmed from [sample_outputs/intelligence_brief.md](sample_outputs/intelligence_brief.md):
-
-> ### COVERAGE DECREASING US troop presence in Germany
-> _Geopolitics & War / USA Politics - importance 3.9 - 7 sources - latest reported 2026-05-03 13:39 UTC_
->
-> **Status:** Escalating | **Confidence:** High | **Source agreement:** Broad | **Dispute:** None
->
-> **What changed today:** Trump's announced 5,000-troop withdrawal became a wider threat to cut further, while Dutch officials and senior Republicans warned that deterrence and US operational reach could suffer.
->
-> **Evidence:** BBC News reports that Germany troop cuts send the wrong signal to Russia; NOS quotes Dutch concern about keeping "het hoofd koel"; de Volkskrant notes congressional limits on removing many troops.
->
-> _Sources: The Guardian, Al Jazeera, de Volkskrant, NOS, BBC News._
-
-This is not a single-article summary. It is produced by story tracking, temporal memory, claim grounding, source aggregation, and briefing generation.
-
-## How It Works
-
-The run starts in `src/run.py` and moves through these stages:
-
-```text
-RSS feeds
-  -> src/sources.py      seed configured sources into SQLite
-  -> src/scraper.py      fetch RSS, normalize URLs, filter dates, deduplicate URLs
-  -> src/classifier.py   classify theme, story_label, and importance
-  -> src/tracker/occurrences.py preserve source snapshots and replay metadata
-  -> src/tracker/        retrieve and judge same-day, cross-day, and named-arc candidates
-  -> src/tracker/matching/ enforce grounded anchors, conflicts, and fail-closed ambiguity
-  -> src/claims/         optionally extract validated claims and evidence spans
-  -> src/briefing/       select stories and generate briefing cards
-  -> src/digest.py       write local digest Markdown
-  -> src/rendering/newspaper.py render the PDF from the same briefing package
-  -> src/observability/  record run totals, model calls, cache hits, and tokens
-```
-
-For the detailed code-path audit, read [docs/how-it-works.md](docs/how-it-works.md).
-
-For the SQLite inspection guide, read [docs/database-guide.md](docs/database-guide.md).
-
-## Story Memory
-
-The tracker keeps a compact local memory of each event:
-
-- canonical story label
-- first seen and last seen dates
-- daily source count and importance average
-- trend signal: `new`, `up`, `steady`, or `down`
-- linked articles and observations per day
-- generated summary and `delta_summary` for the next run
-
-Evidence-gated matching is enabled by default before memory is reused:
-
-```bash
-python -m src.run
-```
-
-The matcher builds compact profiles from classifier labels, RSS titles and
-descriptions, and recent source-grounded memory. Deterministic retrieval supplies a
-small candidate set; pinned `gpt-5.4-mini-2026-03-17` judges same-story or same-arc
-semantics with strict JSON Schema; and a deterministic gate verifies shared anchors,
-conflicts, container type, and ambiguity. Exact URL duplicates are the narrow
-deterministic acceptance. Weak, conflicting, malformed, or multiply accepted cases
-remain a new story or arc.
-
-Matching does not fetch article bodies. Missing RSS evidence can therefore cause an
-honest false split instead of a guessed merge. Decisions are auditable in
-`same_day_match_decisions`, `story_match_decisions`, and `story_arc_decisions`. Use
-`--no-verify-story-matches` only for comparison with the legacy label-first path.
-
-## Source Grounding
-
-Claim extraction is optional:
-
-```bash
-python -m src.run --show-evidence
-```
-
-When enabled, the claim layer extracts:
-
-- `claim_text`
-- `claim_type`
-- `entities`
-- `evidence_span`
-- `confidence`
-
-A claim is saved only if its `evidence_span` appears in the bounded article input **and** the claim passes a versioned derivability policy:
-
-1. Missing quantities or explicit negation, direction, or unit conflicts are rejected without an LLM call.
-2. A normalized near-verbatim claim contained in the span is accepted deterministically.
-3. Every other paraphrase, including entity-overlap and anaphoric cases, goes to the cached verifier. Malformed output, uncertainty, and network failures reject the claim.
-
-The validation-policy version is part of claim cache reuse, so tightening local rules cannot silently reuse claims accepted under an older policy. Claim input is capped at 20,000 characters and truncation is reported.
-
-Run totals are exposed in `--pipeline-report` as `Claim cheap accepts`, `Claim verifier calls`, `Claim verifier accepts`, and `Claim verifier rejects`. See [docs/adr/0013-claim-evidence-derivability.md](docs/adr/0013-claim-evidence-derivability.md).
-
-With `--show-evidence`, the scraper fetches full article pages and claim extraction uses title, RSS description, and full article text when available. If full-text extraction fails, claims fall back to title and description.
-
-To compare RSS-only claim quality against full-text evidence-run quality:
-
-```bash
-python -m evals.run_claim_quality_eval
-```
-
-The eval records expected-claim coverage, evidence validity, duplicate claims, token usage, latency, and estimated cost. See [evals/README.md](evals/README.md).
-
-## Setup
-
-Create a virtual environment and install dependencies:
-
-```bash
+```sh
 python3.12 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+python -m pip install -e .
+codex login status
+news run --input examples/day1.json --state .news/story-demo
+news run --input examples/day2.json --state .news/story-demo
 ```
 
-For tests:
+The example articles are invented. Each `run` prints its run ID, story IDs and
+the path to `briefing.md`. The briefing links to complete dated pages for the
+stories it touches. Runs use your Codex account's model usage; authentication
+files are not copied into the project. Each batch attempt starts at most two Codex CLI
+invocations: a proposal and a separate story-coherence review. The application
+does not retry. Codex may reconnect internally, as
+recorded in its raw logs. An interrupted invocation may not report token usage.
 
-```bash
-pip install -r requirements-dev.txt
-pytest
+Read a story offline, optionally as known on a particular capture day:
+
+```sh
+news story STORY_ID --state .news/story-demo
+news story STORY_ID --state .news/story-demo --as-of 2026-10-01
 ```
 
-Copy `.env.example` to `.env` and add your OpenAI API key, or export it for the current shell:
+`python -m news` exposes the same commands as `news`.
 
-```bash
-export OPENAI_API_KEY="your-api-key"
+## Daily dogfooding
+
+The daily runner collects available RSS versions, freezes a queue of small batches,
+and calls the same story workflow with persistent memory:
+
+```sh
+.venv/bin/python -m news daily --state .news/dogfood
 ```
 
-`OPENAI_API_KEY` is required for classification, story tracking, claim extraction when enabled, and briefing generation. Running the pipeline makes OpenAI API calls and may incur API costs.
+Open `.news/dogfood/latest.md` or `index.md`, and keep reader feedback in
+`.news/dogfood/feedback.md`. Default limits are 8 articles per batch, 12 batch
+attempts per invocation (at most 24 model calls), with a shared 360-second deadline
+for each proposal and review. Failed or rejected batches stop the
+queue; the next invocation resumes its oldest pending input. Accepted inputs are
+recognized from the journal even after a code change, so a scheduling retry does
+not repeat them. Experiments require separate state.
 
-Model choices and the story lookback window live in [src/config.py](src/config.py). RSS feeds live in [src/scraper.py](src/scraper.py).
+The [dogfooding guide](DOGFOOD.md) contains daily and weekly Codex routine prompts,
+the selected schedule, source limitations and independent evaluation rules.
+The prompts are prepared; scheduling still requires activation in the desktop app.
+This command adds operational capture and reporting, not a new quality result.
 
-## Usage
+## Capture sources
 
-Run the full pipeline:
+Edit `feeds.json`, then fetch a snapshot separately from model processing:
 
-```bash
-python -m src.run
+```sh
+news fetch --day 2026-10-03 --max-per-feed 3 --output .news/articles-2026-10-03.json
+news run --input .news/articles-2026-10-03.json
 ```
 
-Useful options:
+Choose the intended date. Fetching selects that publication day in the
+Europe/Brussels timezone; feeds usually expose only recent items. It reads
+RSS/Atom descriptions or embedded content, not article web pages. Namespace-aware
+fields prevent media credits from replacing article descriptions. The report
+counts invalid items, date exclusions, duplicates and configured-limit omissions.
+A failed feed aborts capture. Existing snapshot files are never overwritten.
 
-```bash
-python -m src.run --max-per-source 5
-python -m src.run --date 2026-05-07
-python -m src.run --date 2026-05-07 --include-undated
-python -m src.run --top-developments 5
-python -m src.run --show-evidence
-python -m src.run --fetch-article-text
-python -m src.run --no-verify-story-matches
-python -m src.run --pipeline-report
-python -m src.run --replay 2026-05-07
-python -m src.run --db-off
-python -m src.run --skip-digest
-python -m src.run --skip-briefing
-python -m src.run --skip-pdf
+You can also supply captured source text directly:
+
+```json
+{
+  "day": "2026-10-01",
+  "articles": [{
+    "id": "a1",
+    "source": "Example News",
+    "url": "https://example.test/bridge",
+    "published_at": "2026-10-01T08:00:00Z",
+    "title": "Bridge closes",
+    "text": "The Brook bridge closed after a truck collision."
+  }]
+}
 ```
 
-Notes:
+IDs and URLs must be unique within a batch. Publication timestamps need a
+timezone and cannot fall after the capture day. Older published articles are
+allowed in supplied snapshots. Each article is assigned once, so a multi-event
+digest cannot be assigned independently to several events. Prefer individual
+source articles; the application does not split digests or create fragment provenance.
 
-- `--today` is a backwards-compatible alias for `--date`.
-- `--include-undated` only affects date-filtered runs; it keeps feed items with missing or unparseable published dates under the selected run date.
-- `--db-off` uses a temporary SQLite database/cache and leaves `data/stories.db` untouched.
-- `--show-evidence` fetches article bodies for claim extraction and falls back to RSS title/description when body text is unavailable.
-- `--fetch-article-text` fetches article bodies even when evidence extraction is disabled.
-- Evidence-gated matching is on by default and does not require `--show-evidence`; `--no-verify-story-matches` selects the legacy comparison path.
-- `--pipeline-report` prints run totals, scraper counts, claim metrics, model tokens, latency, and estimated EUR cost after success or failure.
-- `--replay DATE` makes no network calls. It transactionally rebuilds derived tracking state from that date forward using stored occurrence, classification, and assignment snapshots, and fails before changing state if a required snapshot is missing.
-- `--replay` cannot be combined with `--date`/`--today` or `--db-off`.
+## Stories and evidence
 
-Example audit run:
+A story is a named ongoing matter: for example, an incident and its investigation
+or a particular court case. Separate developments have stable event identities
+within the story. Repeated reporting of one occurrence keeps that event identity.
+Sharing an actor or broad topic does not by itself establish continuity.
 
-```bash
-python -m src.run --date 2026-05-07 --fetch-article-text --show-evidence --pipeline-report
+Attributed observations explain new developments, additional reporting,
+corrections, disagreement or unclear change. Corrections and disagreements retain
+the compared assertions and their source pointers. Unresolved questions remain
+in their dated observations; later answers need their own sourced explanation.
+
+**Observed on** means capture date, not occurrence date. Publication times and
+source-stated event dates stay separate. A captured version is identified by its
+complete article and capture day, preserving revised text and reused IDs or URLs.
+
+Evidence identifies the exact `title` or `text` field; old references without a
+field remain body-text references. Headlines are attributed source claims, not
+independent corroboration. Citations label the field and retain publication and
+observation dates.
+
+Schema, coverage, exact-quote and reference checks run before acceptance. A
+separate model call then checks whether the proposed events belong to the same
+source-supported matter. For reused stories it receives every accepted event and
+original source, including history omitted from the proposal's retrieval context.
+Any unsupported, uncertain, incomplete or failed review rejects the whole batch
+before journal insertion. Both outputs remain available for diagnosis.
+
+This is an automatic semantic check, not a guarantee of factual accuracy or
+correct grouping. It checks stories touched by the proposal, not the entire old
+archive, and does not repair old accepted assignments. Reader feedback should
+lead to general mechanisms and frozen regression tests; never manually patch
+story assignments, the journal or generated briefings.
+
+## State and limits
+
+The default state directory is `.news/`. It contains:
+
+- `journal.sqlite3`: accepted inputs and decisions, plus a disposable FTS5 index
+  of full captured source text and generated story/event titles. Only a journal
+  row establishes acceptance.
+- `runs/<id>/`: `input.json`, retrieval diagnostics, raw decision, materialized
+  result, `briefing.md`, and `stories/<id>.md` as known at that run.
+- `runs/<id>/model/` and `review/`: each call's exact prompt, schema, configuration,
+  raw output, diagnostics, timing and reported usage. `review-input.json` and
+  `review.json` retain the semantic check. Failed attempts retain `failure.json`.
+
+New batches must be chronological; one process may update a state directory at
+a time. Validation completes before the acceptance transaction; inserting the
+accepted run and rendering its outputs occur inside that transaction.
+Failed artifacts may exist without an accepted journal row. An identical snapshot,
+code, task and retrieval configuration reuses its accepted result without another
+model call and restores that run's original dated view. Code/task changes alter
+this reuse key; use separate state for comparisons. No database migration occurs.
+
+Retrieval has no age cutoff. It rebuilds and compacts the index from the journal
+before each run, excludes future captures, and uses up to 64 lexical terms per
+article. By default it selects three matches plus recent versions of the same
+URL. A selected story supplies its origin, latest observation, relevant history,
+corrections, disagreements and recorded unresolved questions. Diagnostics expose
+selection and omissions. Lexical search can miss weakly named links or paraphrases.
+Generated titles add search vocabulary but are not captured evidence. A wrong
+title can retrieve unrelated material; quote validation does not prove relevance.
+
+Hard input limits are 50 articles per batch, 20,000 characters per article and
+120,000 characters per snapshot. The compact canonical retained JSON payload is
+limited to 180,000 characters by default; `--max-context-chars` permits at most
+240,000. This count excludes the fixed task/schema and serialization whitespace.
+`--hits-per-article` accepts 1–10. The same cap applies separately to the full
+review payload, including the proposed decision. Oversized context stops before
+that call; the proposal may already have incurred usage. Histories are never
+silently trimmed to fit. One long story can exceed the review cap even in a
+single-article batch; smaller batches cannot always unblock it. Start with small batches
+and inspect the saved diagnostics; an article-count limit alone cannot guarantee
+that a busy story's history fits.
+
+The default shared proposal/review deadline is 180 seconds (`--timeout`, 1–1800).
+The daily command defaults to 360 seconds per batch. Large batches have
+timed out in experiments. Timeouts and interruptions stop the subprocess group;
+the program neither retries nor splits a failed batch automatically.
+
+Full journal projection and index rebuilding remain a bounded-workload design.
+The simulated 17,478-capture storage probe measured a median 2.47 seconds for the
+earlier compaction prototype, but its 50-article request exceeded the context
+cap; one fixed 10-article query fit. Those synthetic identity assignments measure
+storage/retrieval cost, not story quality or a general capacity guarantee.
+
+## Development
+
+```sh
+python -m pip install -r requirements-dev.txt
+pytest -q
+ruff check .
+ruff format --check .
 ```
 
-## Local Data
-
-Generated runtime data is intentionally local:
-
-- `data/stories.db`: SQLite occurrence snapshots, derived story memory, claims, source metadata, runs, LLM call logs, and exact LLM response cache rows.
-- `data/daily/`: JSON snapshots of classified articles for each run date.
-- `run_artifacts/`: Markdown run reports written from observability rows.
-- `output/`: generated digest Markdown and scratch outputs.
-- `briefings/`: generated Markdown briefings intended to be browsed or published.
-- `newspapers/`: generated newspaper-style PDFs intended to be browsed or published.
-
-The `claims` and `claim_extractions` tables are created lazily. A database from runs without `--show-evidence` can therefore contain story and article tables without claim tables.
-
-## Documentation
-
-Start with [docs/README.md](docs/README.md).
-
-Core docs:
-
-- [How the project works](docs/how-it-works.md)
-- [Database guide](docs/database-guide.md)
-- [Architecture reference](docs/architecture.md)
-- [Model behavior](docs/model-behavior.md)
-- [Evaluation plan](docs/evaluation.md)
-- [Evaluation harnesses](evals/README.md)
-- [Failure modes](docs/failure-modes.md)
-- [Architecture decision records](docs/adr/)
-
-## Current Limitations
-
-- Article deduplication is URL-based; content fingerprinting across syndicated copies is planned.
-- Evidence-gated matching is precision-first and can over-split when a feed retains only a thin headline or when several candidates clear the gate. It does not fetch body text at matching time, and there is no semantic decision cache. Disabling it restores the less safe legacy label-first path.
-- Claim extraction is cached and evidence-validated; the derivability gate is deterministic-first and falls back to a `gpt-5.4-nano` verifier for paraphrase-style claims. Evidence runs use fetched full text when available, and RSS-vs-full-text quality can be compared with `evals.run_claim_quality_eval`.
-- Source metadata is seeded and attached to new articles; deterministic source support uses `source_id` first.
-- Evidence-mode source agreement is claim-backed for current-day exact and conservative similar-claim support. Precise number, date, status, and attribution differences produce source-divergence notes. It does not infer source independence or confirmed contradiction.
-- Historical claims are available to evidence briefings for seven editorial days but are explicitly context-only and cannot strengthen current agreement.
-- The editorial day is `Europe/Brussels`; stored timestamps remain UTC.
-- EUR cost estimates use explicitly maintained pricing and a static USD-to-EUR rate.
-- Scraper duplicate/failure counts are surfaced in `--pipeline-report`.
-- The project has no hosted UI; the core artifact is local Markdown/PDF plus SQLite memory.
-
-## Roadmap
-
-**Phase 1 - Ingestion and classification: done.**
-Multi-source RSS scraping, URL normalization, URL deduplication, and cached article classification.
-
-**Phase 2 - Story memory and claim grounding: done.**
-Canonical labels, same-day grouping, recent-history matching, daily observations, delta summaries, structured claim extraction, and evidence-span validation.
-
-**Phase 3 - Source modeling and observability: implementation complete, fresh review series pending.**
-Source metadata, occurrence-backed evidence, stored-snapshot replay, run-scoped observability, bounded caching, conservative derivability, claim-backed agreement/source divergence, and evidence-gated matching have shipped. The [saved-snapshot matching reconstruction](evals/reports/phase3_matching_reconstruction_2026-07-23.md) selected `low` reasoning with zero reviewed corrupting accepts and 80% recall on five scorable positives; one multiple-candidate continuation stayed fail-closed. The remaining [Phase 3 closure review](docs/phase3-closure-plan.md) is a fresh daily run series plus real claim-verifier and source-comparison review.
-
-**Phase 4 - Evaluation and hardening: later.**
-Only after Phase 3's real-case review should deeper citation, temporal, story-matching, and source-divergence evals make the system more autonomous.
-
-Out of scope for now: real-time push, multi-user accounts, social signals, paid-source ingestion, cloud deployment, Kubernetes, Terraform, or a heavy frontend.
-
-## License
-
-MIT. See [LICENSE](LICENSE).
+Ordinary tests are offline. They exercise fake-CLI subprocesses, timeouts,
+feed/input validation, story identity, provenance, corrections and disagreement,
+dated rendering, retrieval and transaction failures. CI runs the same checks.
+Live research runners, frozen corpora and failed outputs are preserved separately
+in [the experiment index](EXPERIMENTS.md); they are not alternative product paths.
