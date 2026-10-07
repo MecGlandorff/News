@@ -1,0 +1,35 @@
+{
+  "max_news_cli_calls": 5,
+  "parent_calls": 19,
+  "total_campaign_ceiling": 24,
+  "classification": "Output-informed protocol amendment; not a fresh independent replication or a causal claim that the candidate fixes the original preparation error.",
+  "reason": "The original C01 baseline preparation failed structural reference validation. It remains failed and C01 remains unavailable in the main campaign. No current C01 outcome was seen.",
+  "order": [
+    "One candidate run of the identical second-prior snapshot from a copy of the unchanged first accepted baseline row (at most2calls).",
+    "Only after acceptance: one baseline current run, then one candidate current run, from identical copies of that complete accepted history (at most3calls)."
+  ],
+  "stopping": "No retry, source/label edits, prompt edits or manual assignments. Any preparation/coverage failure leaves the dependent comparison unavailable. Unspent calls stay unspent.",
+  "timeout_seconds_per_run": 360,
+  "context": "Same original frozen C01 cards and source-only labels; hits_per_article=10 and exact prior/current coverage and equal author payload assertions remain in the original worker.",
+  "frozen_files": {
+    "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/C01-prior-0.json": "4d79db3507378fccea12c08dfb506d275576d30082885b3820a06aa802781849",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/C01-prior-1.json": "97b31139aad29f52f3d8881a6781dff860bd914c0dd9103e9cd1a63b7f78907c",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/C01.json": "6bc2bd0b16411a62ac4d698f50e71e223293e42032ac6b43cb9b66ceab272e5c",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/C02-prior-0.json": "c718c68c9a6a370f3ee1236517f49f94f740830bf089de6dcbdecf82fa427db1",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/C02.json": "0b3b7e60e798213038cfef216a14708230eb1132364f8344d5edaf608b028268",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/C03.json": "4adad016260c1645f87f727aa5343205ab765ff65f7bf2e17689fce9818a3eac",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/headlines.json": "20a3ca09b09ce6a845b0433907d8b6b95db98c8bda3b6120477f46f3c425eca5",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/inherited-bad-original-input.json": "dfc14c0a3c2eba8dc97464686a6e6c2509f79d6d3acc07a473969d2c07ec49f4",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/inherited-bad.json": "d4ad53505795cba591be35c5fbfe88da7fbdb2e20ccd60b9b7618e91ac230555",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/observed-bad-original-input.json": "af8906f0bf106e9b7024d6c930fa56ce7fc231df37cafa430903f633f481a6f8",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/observed-bad.json": "43f9aef1da0e3b09be1547bd9187b4e68d82228284503d9059e1799e302e6cd1",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/positive-control-original-input.json": "d02ec7b9fdd577241e5ae711a65a3268025183e0a4213415b810c78b939cf546",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/positive-control.json": "b0a1a0d2f448a447e9f02d292c6912d91f52acb7a235bff5d8d7a162488aceb6",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/ship-cat.json": "6743e4b92bea9fd1d00cb8c3e771cb467fff0100e8c1eb872294778e22a26322",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/fresh-sources/labels.json": "4aa941c26aa8cb2236c4b43d86dd3d69fd0e3eb70773e0d23960c2da4442fe5e",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/fresh-sources/sources.json": "9a0b7f81291280716a1e02f83da03719983df7c2f7a6551728b60490a5d3f329",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/fresh-sources/protocol.md": "51e25e93e7413f462eb4ce7f659b1ff8d9100b20447e8a795de4608eb72edd51",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/cat-followup.json": "c31acaa9248dbf4a454e4c3c772dd069dbd517220a43253c314da7f9a5f5b848",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/calls.json": "2097aa799634baf8666cef74a2644b2d617b5c981b03408a61fc71c6da7b56cc"
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "reviewer": "Astra/max independent read-only final review",
+  "implementation_commit": "d3b63e2",
+  "limitations": "Targeted source-labeled pilot; semantic readings are output-aware. Supplement is an output-informed protocol amendment. No overall accuracy inference.",
+  "freeze_checks": {
+    ".news/source-integrity/code-freeze.json": {
+      "entries": 24,
+      "mismatches": [],
+      "sha256": "fd238380c01971872fe9525405c7c98a33b170101aaccd01ad6c311c69dee8ec"
+    },
+    ".news/source-integrity/followup/code-freeze.json": {
+      "entries": 26,
+      "mismatches": [],
+      "sha256": "5ed49212af03bbe63e61f70c8c2a30207572730aa05d1688959ed8f07b4258ff"
+    }
+  },
+  "parser_bridge": {
+    "final_sha256": "38f361e689abc95cb5d3cd1b0a15cb6c4a27e79b017eef1f7b961f4fd944b550",
+    "reconstructed_audited_sha256": "13ec7e550ba5e6cb6746f2f92f592880c915b079799cd78a35eb315c4c1071eb",
+    "ast_equal_excluding_positions": true,
+    "reconstruction": "Replace exactly one single-line Atom link condition by the same condition split before and, with 16 spaces indentation. No other bytes change.",
+    "audit_sha256": "3f76ea4bdfa7b0e2d0eb9e69e55c47ae0fb567d70cc184aa8afc331abf44d217",
+    "guardian_poll_entries_recovered": 135,
+    "non_guardian_poll_articles_unchanged": 154,
+    "original_new_versions": [
+      97,
+      80,
+      82
+    ],
+    "candidate_new_versions": [
+      97,
+      81,
+      83
+    ]
+  },
+  "campaigns": {
+    "main": {
+      "calls": 19,
+      "tasks": {
+        "coherence": 7,
+        "trajectory": 12
+      },
+      "usage": {
+        "input_tokens": 263505,
+        "cached_input_tokens": 13568,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 12599,
+        "reasoning_output_tokens": 767
+      },
+      "unknown_usage": 0,
+      "sum_call_metadata_seconds": 363.037398,
+      "calls_sha256": "2097aa799634baf8666cef74a2644b2d617b5c981b03408a61fc71c6da7b56cc",
+      "original_verification": {
+        "files": 844,
+        "changed": []
+      }
+    },
+    "supplement": {
+      "calls": 5,
+      "tasks": {
+        "trajectory": 3,
+        "coherence": 2
+      },
+      "usage": {
+        "input_tokens": 68873,
+        "cached_input_tokens": 7040,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2178,
+        "reasoning_output_tokens": 122
+      },
+      "unknown_usage": 0,
+      "sum_call_metadata_seconds": 66.295393,
+      "calls_sha256": "d2be4f5fe34fe993a22a0250139f1b030e2f549a1f45d9e81f2aa389e0687737",
+      "original_verification": {
+        "files": 844,
+        "changed": []
+      }
+    }
+  },
+  "paired_source_checks": {
+    "C02": {
+      "campaign": "main",
+      "identical_actual_author_payloads": true,
+      "current_cards": 4,
+      "prior_cards": 1,
+      "all_source_fields_equal_frozen_pack": true
+    },
+    "C03": {
+      "campaign": "main",
+      "identical_actual_author_payloads": true,
+      "current_cards": 3,
+      "prior_cards": 0,
+      "all_source_fields_equal_frozen_pack": true
+    },
+    "C01": {
+      "campaign": "supplement",
+      "identical_actual_author_payloads": true,
+      "current_cards": 2,
+      "prior_cards": 4,
+      "all_source_fields_equal_frozen_pack": true
+    }
+  },
+  "source_hashes": {
+    "sources.json": "9a0b7f81291280716a1e02f83da03719983df7c2f7a6551728b60490a5d3f329",
+    "labels.json": "4aa941c26aa8cb2236c4b43d86dd3d69fd0e3eb70773e0d23960c2da4442fe5e",
+    "protocol.md": "51e25e93e7413f462eb4ce7f659b1ff8d9100b20447e8a795de4608eb72edd51"
+  },
+  "observed_limitations": [
+    {
+      "case": "ship-cat-candidate",
+      "run": "3e3e6afab34641c7a3d2f34b844a02ec",
+      "status": "unaccepted",
+      "diagnosis": "Correct ship/cat separation in proposal; unrelated Yemen event reuse rejected as uncertain. Complete batch and candidate follow-up unavailable."
+    },
+    {
+      "case": "C01-main",
+      "status": "unavailable",
+      "diagnosis": "Baseline second preparation structural failure; not replaced by the supplemental result."
+    },
+    {
+      "case": "C03-candidate",
+      "run": "a822359565cf441d9cb1645f391363ba",
+      "status": "accepted_with_unsupported_role_identification",
+      "diagnosis": "Summary identifies Matthew Wright as former Southern Water boss. Frozen title says former boss among four; text names Wright among four, without establishing that apposition."
+    }
+  ]
+}

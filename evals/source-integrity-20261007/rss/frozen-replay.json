@@ -1,0 +1,1244 @@
+{
+  "scope": "All nine raw feed files from three frozen polls, actual collect and daily _capture; no model/story processing.",
+  "parser_sha256": "13ec7e550ba5e6cb6746f2f92f592880c915b079799cd78a35eb315c4c1071eb",
+  "script_sha256": "e630abdad7fc9d111f5bcf6fd3e582f606645bff4b35e5ecc2a0666a81551eab",
+  "input_sha256": {
+    "/Users/mrgreen/Desktop/AI/News-worktrees/from-scratch/news/feeds.py": "737cb805f29e6606596198032ee231c62b46f2b9057ef00c6938a223d5961f36",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/from-scratch/.news/dogfood/captures/00000001-20261005T193432871175Z-e868be11/manifest.json": "2cd356319bd9e883ed666f84755496b9a8448bc0a35a94b76122ee91c995e835",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/from-scratch/.news/dogfood/captures/00000001-20261005T193432871175Z-e868be11/feeds/collection.json": "50fb6353a7d5543517f771ab04885f5b658063a998bf5870673093c5e966a08d",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/from-scratch/.news/dogfood/captures/00000001-20261005T193432871175Z-e868be11/feeds/feed-001.xml": "db6c55ab73b71f3f98907a791a47438dccf2062d42c21f3747d47e66dccf1604",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/from-scratch/.news/dogfood/captures/00000001-20261005T193432871175Z-e868be11/feeds/feed-002.xml": "d8bf5137b0a54f71b98e822dcf8d0e20631e6291ac3cf299c626f2c64574dc8a",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/from-scratch/.news/dogfood/captures/00000001-20261005T193432871175Z-e868be11/feeds/feed-003.xml": "58762a2cf7ef2fcd38081b343a8f037dda4d6d7f787c80d76917f95c9dab7f99",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/from-scratch/.news/dogfood/captures/00000002-20261006T203933778026Z-23f18d97/manifest.json": "ecadc7db872e1d8b3acc61c5ab48ba388bb8dfa0f686e66dd97683cbaf0e7820",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/from-scratch/.news/dogfood/captures/00000002-20261006T203933778026Z-23f18d97/feeds/collection.json": "9e28d2229aa713f52e8daa0f6b46c9ddad76a1a258ee816ea3281c278f1e1607",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/from-scratch/.news/dogfood/captures/00000002-20261006T203933778026Z-23f18d97/feeds/feed-001.xml": "ca24629ed4ebe56d8b52480b5f4419461154989497b16af4ea3c39d2acb8e3f7",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/from-scratch/.news/dogfood/captures/00000002-20261006T203933778026Z-23f18d97/feeds/feed-002.xml": "23d32dcb7a672b50b360de5d617ec1efdc6cdf37c0b2133a550f830aba8f565f",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/from-scratch/.news/dogfood/captures/00000002-20261006T203933778026Z-23f18d97/feeds/feed-003.xml": "7d356a2c05da6e83d8b9f567ef36b22c2716810d5ca4084c3f6ac3bdd2dbbf53",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/from-scratch/.news/dogfood/captures/00000003-20261007T172559125623Z-7cb1bdee/manifest.json": "44c8a31d61b9de1fb0479a4ebf9e7bc5a77a09fe545d8327396a1558da479a19",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/from-scratch/.news/dogfood/captures/00000003-20261007T172559125623Z-7cb1bdee/feeds/collection.json": "390028286e73763fbe434fc6e6be16362456f3b873927da66b2cc6525fdc64f8",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/from-scratch/.news/dogfood/captures/00000003-20261007T172559125623Z-7cb1bdee/feeds/feed-001.xml": "9b70c3130f595f51916446772501ec7e50aeec90fd5481bce8ef50c99ff15a1d",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/from-scratch/.news/dogfood/captures/00000003-20261007T172559125623Z-7cb1bdee/feeds/feed-002.xml": "ea264d96efbb3513fbd98797b3bffb9daf72edc5c0435d091376a5a9b5b16de5",
+    "/Users/mrgreen/Desktop/AI/News-worktrees/from-scratch/.news/dogfood/captures/00000003-20261007T172559125623Z-7cb1bdee/feeds/feed-003.xml": "d9e43d0fbf9c2af17644de5439918f92ed45d1eb64c57afc0ee080cebd12ddb1"
+  },
+  "polls": [
+    {
+      "original_capture": "00000001-20261005T193432871175Z-e868be11",
+      "candidate_capture": "00000001-20261005T193432871175Z-b0e248cd",
+      "captured_articles": 97,
+      "original_new_versions": 97,
+      "candidate_new_versions": 97,
+      "guardian_bodies": [
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/01/british-sikh-activist-jagtar-singh-johal-released-delhi-jail-india",
+          "original_digest": "ab7ba2e13b7ba2d93eee17f2a22d4edf3afc719784147183c6fb692ef522a642",
+          "candidate_digest": "0268feedf2ee0353fd0aa147fd17276970ec7d2b4e97b1982f841c3c840b4097",
+          "description_text_sha256": "cd15817eb941b8153496fc36bc542540d3b4514061ea3147d2cef86792adf523",
+          "description_characters": 633,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/02/indian-pilot-smit-machchhar-recalls-flydubai-cockpit-attack",
+          "original_digest": "5107652afc7e871a5ff12002324f0125448cfc2b9f946c22b7b0c69c8345ffe9",
+          "candidate_digest": "8c5ecb96c9b83830532419d5a97243ce52428aa2f4403559f62162b8d00b98ff",
+          "description_text_sha256": "5d36b3207b038968302393dfac0130aa2b46e152f3e8c355ed5cb34f828b0545",
+          "description_characters": 556,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/global-development/2026/oct/02/row-erupts-over-cairo-mural-depicting-tutankhamun-and-nefertiti-with-dark-skin",
+          "original_digest": "e54b2474b2e1c8d83540536b4d3aa69febd6f293c7b13e5965b188432159aea2",
+          "candidate_digest": "0b2353923673763cf0969466d8c2c15b74c7333b0ed191d2dc89fc9ce9fa9ff4",
+          "description_text_sha256": "537c45dc71b5707b69164725f5f85c1b27b2dbd00f98ba17086d8ab1261a380b",
+          "description_characters": 588,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/environment/2026/oct/02/weather-tracker-eastern-spain-torrential-rain-flooding-nepal-landslides",
+          "original_digest": "cb64e422116a76ee07c3f78f3f70a8171f87032d55be812c8b5221ce5ad3083b",
+          "candidate_digest": "202d86f4b1a0b4d4eed2edfbf2e73a228a8d34285c96a53796740522a1649415",
+          "description_text_sha256": "8bf95589136b8454e6a883e24ac93a5026eb1ec605718b961aa2aac3d50da46d",
+          "description_characters": 809,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/02/india-cockroach-movement-protests-mumbai-changes-voter-roll",
+          "original_digest": "c6b20de47dc6d5a137e1edd2b29469a4fade52e81be3f4d6dc55d9d5dbe1a3eb",
+          "candidate_digest": "1118418e6acdcb6278f6b1758f9d8433ca7a8a38016a32fbf61bb734a452aab5",
+          "description_text_sha256": "a6390b20c54f3168b1aa58af9c78f7ba33be9b402078581f15df38681e2262ca",
+          "description_characters": 570,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/03/north-korea-launches-ballistic-missile-after-seoul-demands-apology-over-wounded-soldiers",
+          "original_digest": "cedf227ed646d382bae8456f03433eeff0bab3a95c81fabf3e61ed740c6fe2d7",
+          "candidate_digest": "46eb643ba4997ce18dfc64c7cc8c2b4f61a1684f08395d4c674f4a899627de31",
+          "description_text_sha256": "c8e78c657c6fb22f1e97973f1e23fd209db622c464350c22be9b77b194f0f7a6",
+          "description_characters": 587,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/03/libyan-unity-talks-warlord-son-linked-drone-attack-khalifa-haftar",
+          "original_digest": "5671f2cfdee583c147c675f18e57c6ec68604b8cecda59f029c26d42bfddb170",
+          "candidate_digest": "0929636444f91f6d83b15b545756d7805550d3463088b15054557f0e6d390faf",
+          "description_text_sha256": "d1cd61eafb003d5af0694fa03443ccc0dd855631562e204347f41343d3d8206b",
+          "description_characters": 658,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/business/2026/oct/04/uk-car-industry-trade-off-china-made-in-europe-laws",
+          "original_digest": "fd01a8b0c0bcf25c71a0946d7b7caa445e37a9f9cd7b313db9dd66de175c9db8",
+          "candidate_digest": "73053233783472700e253751d802842d8e46e22d822dc69283210bee71d12222",
+          "description_text_sha256": "3355d4bf9166aff1880827478b26d98fb9bfaa3860837675241e16de014e1925",
+          "description_characters": 529,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/2026/oct/04/marine-arrested-japan-suspicion-murder",
+          "original_digest": "6f130ec53724f87bcfd0704dcc4304a994934dec1e94a61e3a5b02df6d76def9",
+          "candidate_digest": "c211a6de5cefb3a5793279a03ce8a46c4c0ff2117f3ccf1e401b1dde1a9d6052",
+          "description_text_sha256": "4aa91c1e137c682d7d8e5dd9a993cb6521262e5ecd368d534828c7e8d6ce1fb0",
+          "description_characters": 462,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/04/egyptian-journalist-faces-terrorism-charges-entire-newsroom-detained-matsadaash-press-freedom",
+          "original_digest": "3da0b5c67f70659455497b7ceba96fcb80b5c378f7dc06f09d8e84c545e33631",
+          "candidate_digest": "cf8a710715e974b2f69e5eb4495227243524b14e0e36a97ad45a0155d6f91f70",
+          "description_text_sha256": "ee38e31db1e8b50e86c175fe99daa576fcc795524e2480af21bc289378d01cb7",
+          "description_characters": 591,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/ng-interactive/2026/oct/04/brazil-presidential-election-2026-first-round-live-results",
+          "original_digest": "c7ccdc65471196a40b51aae89d0abe3c66630216e57c93346e742ed6f309ffb0",
+          "candidate_digest": "024e819bf22ce87125e14f9b7912f223b12fcde46aa75b361d0284e9fe5c77a8",
+          "description_text_sha256": "4761f5d33a53065651a7a2e4fa9eeb2083cdaf2857392cd05acbe715bc1f6a1c",
+          "description_characters": 418,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/science/2026/oct/05/skull-fractures-suggest-servants-of-egypts-ancient-kings-were-sacrificed",
+          "original_digest": "dfd786f4a55af108f8671a801052cd08fd0dafbba31442f3276a5104790b7f91",
+          "candidate_digest": "111ce4ea661c96c1dd48eb1649698236cb3dd59bd5f2aaaee8ef849fcb804132",
+          "description_text_sha256": "af95d52036e9f77b964f29ed0eafe2d5b814e388ba198fc150d3b9fa07898894",
+          "description_characters": 458,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/california-woman-arrested-and-accused-of-spying-on-taiwan-presidents-son-for-china",
+          "original_digest": "fac6c76869b1d9098aaaf5b1183f9fff134896b6a3d77083fdbdb809b506285c",
+          "candidate_digest": "133d95f4031700bf31eb3fbb3f21aa8eecc3e3d7011ff8e325b3078873564e7f",
+          "description_text_sha256": "0674548bb6ecd5046a51898ae4803d451cf79a195f644423b5c1448c7f2bf744",
+          "description_characters": 592,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/2026/oct/05/extreme-heat-warnings-southern-california",
+          "original_digest": "07a7ea039d08b2d7aad2b87f75456ed5171a746f3c39e0347ec833eeefdf81fe",
+          "candidate_digest": "67da59317fb8f890455f1d0b4ccd95c50b687118484de0ef4842c508c9759727",
+          "description_text_sha256": "30b49907b9d80469f7d15d33fda1757d4ec35324a72c0593916d6c3b412244da",
+          "description_characters": 1395,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/music/2026/oct/05/sass-jordan-canadian-rock-singer-songwriter-dies-aged-65",
+          "original_digest": "a082b827f5f201cc5d34a0d45603b57fa29f2ca793edce76f6cd459195c27377",
+          "candidate_digest": "fb0921f271a6a212255f31a0088e1909f3b92f73777dc3242c5f2191d7d5db87",
+          "description_text_sha256": "c4cfbcfbaebc43832f1dbd8c7558a92ff6d47fabcf0f5271fa2807379089ef29",
+          "description_characters": 512,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/quebec-election-separatist-government-parti-quebecois-referendum",
+          "original_digest": "bab1fd71781f45c7959a2254a3b7bac1de6606353b671f8934cddb002641ca88",
+          "candidate_digest": "bb6d3621d441644cb325a98bb051c77e9cf4c8c0ddcbade89862ce2eebf7e709",
+          "description_text_sha256": "1bf874f1cdb7d9c5a9d5532656d0adbc68154c49c5524db7f41a10ba65c5acb5",
+          "description_characters": 561,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/australia-news/2026/oct/05/mixed-start-for-pre-cop-as-just-two-non-pacific-leaders-accept-australian-invitation-to-climate-summit",
+          "original_digest": "c97ff62df8f5e28fb1a353b227a2bff94bdf505bffb12b161777b27694b8aa40",
+          "candidate_digest": "76a758720fb5af6da7181cde2180e3c96f9922abfca999c2cf5ecf2e51ec5d4b",
+          "description_text_sha256": "54f2a3acc764ef155ffe5b4fe774e7ee5bcafcb721da194080df2a6e56618735",
+          "description_characters": 1017,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/global-development/2026/oct/05/guardian-readers-fundraising-somalian-boy-injured-in-us-strike-surgery-abdiqadir-salah",
+          "original_digest": "dcdad044c4617803c627d02336877b0b609a649ba634354e50add644d123fde5",
+          "candidate_digest": "0f0f2b449b6feaedfcb17ec7db03e682f4d2c404e1c8fb4b95b28c2e26191e03",
+          "description_text_sha256": "9f43d6903711f2af7b497aa2132e04c109353f3782765b90b9ffda523446088e",
+          "description_characters": 629,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/australia-news/2026/oct/06/greens-pitch-zohran-mamdani-style-251bn-plan-to-nationalise-200-coles-and-woolworths-supermarkets",
+          "original_digest": "5688e7ab10cfccdddfb630c618e4e8161cd479f399fd248db9828389a4ccdd72",
+          "candidate_digest": "b0df5866ee898754bc81c31cc134032e4627ff8b8aaa5e5a99e90efda57c29aa",
+          "description_text_sha256": "18b7109b39786b88beb0fa4b9079c1a018c95b0110103502358b867365d28429",
+          "description_characters": 747,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/australia-news/2026/oct/06/australian-leaders-condemn-pro-palestine-vigils-planned-for-7-october-anniversary-amid-jewish-commemorations",
+          "original_digest": "15ab3ac40c40b259c1d36330b3d151ab57238892de52d2d6065555fe84602e38",
+          "candidate_digest": "f430607ccf068a9c243d3cf9596358c5846dd2cf4660b105c4bdbc60a966f25a",
+          "description_text_sha256": "2d6cbced74cb2d9cc40c94e994e17a949ea580cf081da1f9a5ef9bf6f97473db",
+          "description_characters": 604,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/australia-news/2026/oct/06/openai-must-explain-action-taken-to-stop-ai-hacking-australians-private-data-chair-of-federal-inquiry-says",
+          "original_digest": "c1d1c095385561f63053cb9802d0102c8a17fc8b4fc4e1409c2f16492ce092f4",
+          "candidate_digest": "25f623656c54c0f2ce8dbb99f3816fff2b8498815e2756c758fff63aa82a43ed",
+          "description_text_sha256": "e68affe8177c675567c20354134529fcc4def2a2cf055b8974f70a0ba53b92e5",
+          "description_characters": 851,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/australia-news/2026/oct/06/poor-australians-war-veterans-buried-unmarked-graves",
+          "original_digest": "2838eb200f41796792c9dc113b2bd49c5ee404e7117f062d61f58c620bd7778a",
+          "candidate_digest": "1a8b1b67fd3776c47b0f70dab526baa1c170f9b1798aacdd0ca7b9876b214107",
+          "description_text_sha256": "38a87e871170ce572480af4af91e98813decee910c73c09270d20f05fbc707b5",
+          "description_characters": 759,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/iran-oil-minister-resigns-economic-crisis",
+          "original_digest": "60aad537d698cf4c71fe84dbec971cbd5db0c7838d71e8e43bae5b940c779f94",
+          "candidate_digest": "35dbfa6475e4dd9c716a5ed927461e414bd56971f0b785dbf5466730b36691af",
+          "description_text_sha256": "747da8cf1555d6b063897cdb81a991b552eb913483604d3f8333573da3df71e1",
+          "description_characters": 586,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/jailed-imran-khan-march-on-islamabad-pakistan",
+          "original_digest": "470af0753f4b152b0ee451b1c8762e8eaf5025c6103d471b8f9e8026990dab15",
+          "candidate_digest": "829df29d4091c6753c3a1fa2c1de1f10cd38c5d8452b2c991786eef0df36e009",
+          "description_text_sha256": "dee418601beabb2d1a6f60bc7ad401856a2010700c21745cef239b4d09ca2b07",
+          "description_characters": 469,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/yemen-air-campaign-houthis-saudi-led-coalition",
+          "original_digest": "4d662d0e9b08fc45a7efa1b6c0838d2c9f3deaada61d959df2364418cbeb091c",
+          "candidate_digest": "2b77652d37b49d249d3eeaae5ba8c743b12fa9cfed86759141f8c713fd31e913",
+          "description_text_sha256": "c7a16f20092378f5ed3681e5c42219f26e300b966ddb19a466faf13807fed098",
+          "description_characters": 594,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/russia-lab-worker-possibly-dies-of-plague-siberia-quarantine-measures-irkutsk",
+          "original_digest": "2085705c3679050d2beb7061cfd394e596a5f5fc34e879180abf7050a92213d2",
+          "candidate_digest": "b5abdfedd1b0b9a7acdb269ee9f9b0c7be6b03634e4fd9598250c2af0c725c48",
+          "description_text_sha256": "247827e3b929c02ada20113e1e084b7c5ae63b698c026280d160afc85f0df2d1",
+          "description_characters": 547,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/news/audio/2026/oct/05/why-did-us-withdraw-bombers-from-raf-fairford-the-latest",
+          "original_digest": "ef7737f37e23d2b8c9cfb55bdf3ab9c129ddf481b9758c6002493b06f508f29f",
+          "candidate_digest": "44e3d4f39abf457ceeb2b1b5ae229d81236a2e247e78244f67ceb84f8141f6ef",
+          "description_text_sha256": "35d606f68ce9c09e153c34fed2063d47dabd3e9fb29a3a4612ef7ffc957fe611",
+          "description_characters": 579,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/schoolboy-loses-hand-police-stun-grenade-french-school-protests",
+          "original_digest": "35619c60c6550091543bfe44bb8d09bde6321b5ac25b94486693224bf18355cf",
+          "candidate_digest": "57e26ff6ec381ffce8463b3476aaa43a1dfe730b965b585edd6288a3d7e789fd",
+          "description_text_sha256": "211d2ae958ebbce14e233c488f93879ba31da30a4cf24bd5e8f48adfff6766df",
+          "description_characters": 606,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/live/2026/oct/05/europe-spain-pedro-sanchez-election-housing-france-school-protests-ukraine-russia-latest-news-updates",
+          "original_digest": "320009153b45133ef747816c07c89dd2e9d056a24dfce8105707126e4e831281",
+          "candidate_digest": "92aa5a171e039944e8da1444919ddbafa22e2a710a6db50e3787f9935b05ee0b",
+          "description_text_sha256": "f88dfef9df36c832476190dadfea32734aba248fb7fd6ff4898f84a18602739f",
+          "description_characters": 1014,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/flavio-bolsonaro-brazilian-presidency-election-shock-first-round-victory",
+          "original_digest": "5115c9416d417b48eba36f0e7593c4693a12ece2a85c8ea3de6f4485c38e39f2",
+          "candidate_digest": "792b1f79a6426718a34caf5c45f29734e6c70522b121b11677982aa4bb16ad0e",
+          "description_text_sha256": "de077c982a1c80df0f081a781ad52ab89e486c5ec871ea11665cf0791e173946",
+          "description_characters": 724,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/uk-news/2026/oct/05/glasgow-city-council-reaches-pay-deal-with-union-to-avert-fire-and-rehire-plan",
+          "original_digest": "0520abe877a936c172da77225947df951f72bfc919cb8352a1c887fd48cc24c4",
+          "candidate_digest": "8e344c3e80eb3fe55147a3b806a6381b861a866541bcf49ee0cc09bc3d646105",
+          "description_text_sha256": "7aa46b1c73d5e2f64c4e9a906234d313b6170edb52adf01ba03ef09d23964c2c",
+          "description_characters": 507,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/norway-temporary-ban-smart-glasses-public-places",
+          "original_digest": "7ad63834353a6dfade799252445206ed03e7cd9a9e055ee3ad99413def29370c",
+          "candidate_digest": "f89a68681620bf56d082ef3f60407c99ba4a2e26db4f677524baa20b02483c27",
+          "description_text_sha256": "57e4d479f4e3c535287f8671226b7d21063ab13d87543f886a964fee787508a6",
+          "description_characters": 534,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/2026/oct/05/medical-flight-crash-massachusetts-death-toll",
+          "original_digest": "767978131801d7de71afef104aee84daa475199779926d00b7c0bc2e4e54a0c2",
+          "candidate_digest": "6ac6e0a58f974819af2e79666ef1a51a9788cbc270ed956bb83b50f3a133dd7b",
+          "description_text_sha256": "4a652de0f04cb111f7be78e39b09f0d2f41bf35836688fc29ef6335968e03c45",
+          "description_characters": 518,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/politics/live/2026/oct/05/tory-party-conference-labour-reform-planning-economy-business-latest-news-updates",
+          "original_digest": "ffa79091c6e1e5b1def7fa0282e232ba60c7e943b64a4b3bb1184a0722780562",
+          "candidate_digest": "5bb79f3b2db0e5c66f6138a428a78986e834d3779a5b1dfac75dfce5a294b181",
+          "description_text_sha256": "ad50bc4580d03aaf92008942052838a6a6b9f8bf051aae91e8b8bf0bd5df208a",
+          "description_characters": 887,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/uk-threatens-to-expel-israeli-diplomats-after-closing-of-east-jerusalem-consulate",
+          "original_digest": "00a3fbde3f2ba3c569fb267d9eab25caddacd9f6cab5c891a8c5297cab6d798e",
+          "candidate_digest": "85eb45f3900840d6ebba4008bf59b07b57001daef37968cee3c555598fe3f70f",
+          "description_text_sha256": "fd4274e3c3db557293c61f02a09661b7124c9b4cad49e6d6ba024d4750b78d14",
+          "description_characters": 540,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/flydubai-co-pilot-originally-planned-attack-for-july-investigators-believe",
+          "original_digest": "fd6827c9e8337cd7154e52165f229ff918ec6757abde536605cfac7b8b9953de",
+          "candidate_digest": "978e43893a9c368b7cab1807115d5db81d2192147f51cd902cd5c04343da10e5",
+          "description_text_sha256": "21c2459b9706b169a4e1287043af22439a537b7f110f78767d93ee91f57a1dc1",
+          "description_characters": 642,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/2026/oct/05/no-10-says-raf-fairford-safe-us-withdraws-bombers-from-base",
+          "original_digest": "d6b3370550009dcc8cc09a31f9a17909a1e35fa8fe84e53dbbc5c4fb0f8f03f0",
+          "candidate_digest": "40447c6990c0659747549bb3f5ade3a139d85971cda9844677073bf89057cc70",
+          "description_text_sha256": "44fa80c853c9ca25b7cc2aee2e0689c750788646db0c314a28717ab391d9550f",
+          "description_characters": 578,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/2026/oct/05/deaths-school-bus-rollover-crash-florida",
+          "original_digest": "d1a800e9103465bb18891c915f8de4fbd7049aa3a3efe1b1e1703ede18d3f5de",
+          "candidate_digest": "a8ddd2705472e3e98b22f63769367e125c7532978b2ed5a2fd5dce24f0181197",
+          "description_text_sha256": "6674017d7528b86b2103a7025e18928afc51bf186302de2fe081c738b76c0f0d",
+          "description_characters": 600,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/2026/oct/05/pepsico-gatorade-recall-undeclared-dyes",
+          "original_digest": "8c9c91b520e299c42befb93e7dd24038ae9c908da6556a3979ecaf7bcac4e1ca",
+          "candidate_digest": "1706230ff248cb50f2079d1c3267c1702453b2d4ab51067da8cf418088c53a2f",
+          "description_text_sha256": "2eb2471b183ba719be9e416805a623bd13e72db5ef71ac39526410065b637c34",
+          "description_characters": 657,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/uk-news/2026/oct/05/andrew-mountbatten-windsor-court-action-police-epstein-raids",
+          "original_digest": "5e040793df6012c736e29c1e3ff069088b5f688d8a995ab2c4f7707fea74fe40",
+          "candidate_digest": "60a0915f20fe13858c379327aa298a42323e22f8bdc01acc20959cc1f8aa6c5c",
+          "description_text_sha256": "0ccc5ce77c663f52baeb38f373c7f77c9423d7a2a78e47563da0d5c64662910c",
+          "description_characters": 694,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/brazil-election-bolsonaro-lula",
+          "original_digest": "9594690d506cb8f5467676944612d127f774dc351ea7f1b6c9a085d07fddc24a",
+          "candidate_digest": "ee1b530c5194e24e569f8395ef956e31a026a264b821acd2ebaf38c2e9ab11fd",
+          "description_text_sha256": "c247f067cd4c12417c1c0b7dadfbbbaa613bd10536d2cbc5809add354f8f55e6",
+          "description_characters": 577,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/politics/2026/oct/05/tories-are-united-behind-badenoch-but-mps-want-focus-on-economy-over-culture-wars-to-win-back-voters",
+          "original_digest": "8af630e4df305be2f34834537d3893b535da87ec012aa8d26c803765088c185f",
+          "candidate_digest": "ec634a420b1919eb82c4125ce917ecddb0565d47eb5995a137c8f957f503c800",
+          "description_text_sha256": "62da42a0dabc734889e2ee0ffe7617a6439cd555c62aefcac02aaef7d21bc7a6",
+          "description_characters": 429,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/politics/2026/oct/05/green-party-england-wales-zionism-racism-vote-europe-germany",
+          "original_digest": "cce8df849ec451c06ddd4f552d1aac2d1db20c5d5d0cc40b5b64fe05048f870c",
+          "candidate_digest": "e47bf7bcbdbea394d2ee83d5523ddd5363daba5528de9e99e6914e5722677781",
+          "description_text_sha256": "9f783b85b81b794d83d4ed8276c21a4e976b4590651f32ad5085273047ff52cc",
+          "description_characters": 575,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/2026/oct/05/steve-hilton-campaign-ad-backlash",
+          "original_digest": "ac7021788deca415c2d8ac076cdde4cae5b1f5f441f2c07e18c9532efa02398a",
+          "candidate_digest": "ffd264c752823d39eda957f095581290b50b66cd6dbaa60ccff46ebec60fc1c9",
+          "description_text_sha256": "9b88d5bd6d651ab126e297c06f23cd11d2c2f714993b587ac7bab9689d47348f",
+          "description_characters": 762,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/live/2026/oct/05/donald-trump-nebraska-midterms-republicans-white-house-media-latest-news-updates",
+          "original_digest": "38c48aa5dc4066df1331f73b2759cd12a41f658638e451cc3cb786847f56f0d9",
+          "candidate_digest": "7f8115628a0bf4d3a98bb85fd0203fe4c0e2df374f6a094f6566153151bed4aa",
+          "description_text_sha256": "106bc1c1a1478bcf8bc13a65e088e15e54cd6e0eb15bb5719e7e8fa0dc691964",
+          "description_characters": 737,
+          "other_fields_unchanged": true
+        }
+      ],
+      "added_version_selection": [],
+      "removed_version_selection": [],
+      "fetch_exact_day": [
+        {
+          "source": "NOS",
+          "accepted": 20,
+          "stats": {
+            "invalid": 0,
+            "outside_day": 0,
+            "duplicates": 0,
+            "over_limit": 0
+          }
+        },
+        {
+          "source": "BBC News",
+          "accepted": 30,
+          "stats": {
+            "invalid": 0,
+            "outside_day": 2,
+            "duplicates": 0,
+            "over_limit": 0
+          }
+        },
+        {
+          "source": "The Guardian",
+          "accepted": 35,
+          "stats": {
+            "invalid": 0,
+            "outside_day": 10,
+            "duplicates": 0,
+            "over_limit": 0
+          }
+        }
+      ]
+    },
+    {
+      "original_capture": "00000002-20261006T203933778026Z-23f18d97",
+      "candidate_capture": "00000002-20261006T203933778026Z-14ee0667",
+      "captured_articles": 95,
+      "original_new_versions": 80,
+      "candidate_new_versions": 81,
+      "guardian_bodies": [
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/01/british-sikh-activist-jagtar-singh-johal-released-delhi-jail-india",
+          "original_digest": "ab7ba2e13b7ba2d93eee17f2a22d4edf3afc719784147183c6fb692ef522a642",
+          "candidate_digest": "0268feedf2ee0353fd0aa147fd17276970ec7d2b4e97b1982f841c3c840b4097",
+          "description_text_sha256": "cd15817eb941b8153496fc36bc542540d3b4514061ea3147d2cef86792adf523",
+          "description_characters": 633,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/02/indian-pilot-smit-machchhar-recalls-flydubai-cockpit-attack",
+          "original_digest": "5107652afc7e871a5ff12002324f0125448cfc2b9f946c22b7b0c69c8345ffe9",
+          "candidate_digest": "8c5ecb96c9b83830532419d5a97243ce52428aa2f4403559f62162b8d00b98ff",
+          "description_text_sha256": "5d36b3207b038968302393dfac0130aa2b46e152f3e8c355ed5cb34f828b0545",
+          "description_characters": 556,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/environment/2026/oct/02/weather-tracker-eastern-spain-torrential-rain-flooding-nepal-landslides",
+          "original_digest": "cb64e422116a76ee07c3f78f3f70a8171f87032d55be812c8b5221ce5ad3083b",
+          "candidate_digest": "202d86f4b1a0b4d4eed2edfbf2e73a228a8d34285c96a53796740522a1649415",
+          "description_text_sha256": "8bf95589136b8454e6a883e24ac93a5026eb1ec605718b961aa2aac3d50da46d",
+          "description_characters": 809,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/02/india-cockroach-movement-protests-mumbai-changes-voter-roll",
+          "original_digest": "c6b20de47dc6d5a137e1edd2b29469a4fade52e81be3f4d6dc55d9d5dbe1a3eb",
+          "candidate_digest": "1118418e6acdcb6278f6b1758f9d8433ca7a8a38016a32fbf61bb734a452aab5",
+          "description_text_sha256": "a6390b20c54f3168b1aa58af9c78f7ba33be9b402078581f15df38681e2262ca",
+          "description_characters": 570,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/business/2026/oct/04/uk-car-industry-trade-off-china-made-in-europe-laws",
+          "original_digest": "fd01a8b0c0bcf25c71a0946d7b7caa445e37a9f9cd7b313db9dd66de175c9db8",
+          "candidate_digest": "73053233783472700e253751d802842d8e46e22d822dc69283210bee71d12222",
+          "description_text_sha256": "3355d4bf9166aff1880827478b26d98fb9bfaa3860837675241e16de014e1925",
+          "description_characters": 529,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/2026/oct/04/marine-arrested-japan-suspicion-murder",
+          "original_digest": "6f130ec53724f87bcfd0704dcc4304a994934dec1e94a61e3a5b02df6d76def9",
+          "candidate_digest": "c211a6de5cefb3a5793279a03ce8a46c4c0ff2117f3ccf1e401b1dde1a9d6052",
+          "description_text_sha256": "4aa91c1e137c682d7d8e5dd9a993cb6521262e5ecd368d534828c7e8d6ce1fb0",
+          "description_characters": 462,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/04/egyptian-journalist-faces-terrorism-charges-entire-newsroom-detained-matsadaash-press-freedom",
+          "original_digest": "3da0b5c67f70659455497b7ceba96fcb80b5c378f7dc06f09d8e84c545e33631",
+          "candidate_digest": "cf8a710715e974b2f69e5eb4495227243524b14e0e36a97ad45a0155d6f91f70",
+          "description_text_sha256": "ee38e31db1e8b50e86c175fe99daa576fcc795524e2480af21bc289378d01cb7",
+          "description_characters": 591,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/science/2026/oct/05/skull-fractures-suggest-servants-of-egypts-ancient-kings-were-sacrificed",
+          "original_digest": "dfd786f4a55af108f8671a801052cd08fd0dafbba31442f3276a5104790b7f91",
+          "candidate_digest": "111ce4ea661c96c1dd48eb1649698236cb3dd59bd5f2aaaee8ef849fcb804132",
+          "description_text_sha256": "af95d52036e9f77b964f29ed0eafe2d5b814e388ba198fc150d3b9fa07898894",
+          "description_characters": 458,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/2026/oct/05/extreme-heat-warnings-southern-california",
+          "original_digest": "07a7ea039d08b2d7aad2b87f75456ed5171a746f3c39e0347ec833eeefdf81fe",
+          "candidate_digest": "67da59317fb8f890455f1d0b4ccd95c50b687118484de0ef4842c508c9759727",
+          "description_text_sha256": "30b49907b9d80469f7d15d33fda1757d4ec35324a72c0593916d6c3b412244da",
+          "description_characters": 1395,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/global-development/2026/oct/05/guardian-readers-fundraising-somalian-boy-injured-in-us-strike-surgery-abdiqadir-salah",
+          "original_digest": "dcdad044c4617803c627d02336877b0b609a649ba634354e50add644d123fde5",
+          "candidate_digest": "0f0f2b449b6feaedfcb17ec7db03e682f4d2c404e1c8fb4b95b28c2e26191e03",
+          "description_text_sha256": "9f43d6903711f2af7b497aa2132e04c109353f3782765b90b9ffda523446088e",
+          "description_characters": 629,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/jailed-imran-khan-march-on-islamabad-pakistan",
+          "original_digest": "470af0753f4b152b0ee451b1c8762e8eaf5025c6103d471b8f9e8026990dab15",
+          "candidate_digest": "829df29d4091c6753c3a1fa2c1de1f10cd38c5d8452b2c991786eef0df36e009",
+          "description_text_sha256": "dee418601beabb2d1a6f60bc7ad401856a2010700c21745cef239b4d09ca2b07",
+          "description_characters": 469,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/uk-threatens-to-expel-israeli-diplomats-after-closing-of-east-jerusalem-consulate",
+          "original_digest": "00a3fbde3f2ba3c569fb267d9eab25caddacd9f6cab5c891a8c5297cab6d798e",
+          "candidate_digest": "85eb45f3900840d6ebba4008bf59b07b57001daef37968cee3c555598fe3f70f",
+          "description_text_sha256": "fd4274e3c3db557293c61f02a09661b7124c9b4cad49e6d6ba024d4750b78d14",
+          "description_characters": 540,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/flydubai-co-pilot-originally-planned-attack-for-july-investigators-believe",
+          "original_digest": "fd6827c9e8337cd7154e52165f229ff918ec6757abde536605cfac7b8b9953de",
+          "candidate_digest": "978e43893a9c368b7cab1807115d5db81d2192147f51cd902cd5c04343da10e5",
+          "description_text_sha256": "21c2459b9706b169a4e1287043af22439a537b7f110f78767d93ee91f57a1dc1",
+          "description_characters": 642,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/brazil-election-bolsonaro-lula",
+          "original_digest": "9594690d506cb8f5467676944612d127f774dc351ea7f1b6c9a085d07fddc24a",
+          "candidate_digest": "fcb75d72c4c00948d3089147fb1ab566a39dd5247b6f4d976800661035ff2f59",
+          "description_text_sha256": "abbb6b5d99143c5bb2d1d13cf3e4b12c3d9f816ad79cdfc476ca29f9a6b23664",
+          "description_characters": 571,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/saudi-forces-recapture-key-areas-strait-houthis-yemen",
+          "original_digest": "64b9ef628ff14ee589e3e6ecfbc8c635a93dd156724615f5276a9d50e33c00eb",
+          "candidate_digest": "ffb272ecb88669f78e905586bc32efb97468455fb25665d986f4d507af200ef4",
+          "description_text_sha256": "51302ef4757627d03fa7f2ac33cd6819810fcd430e2d4fd922476c5947420dac",
+          "description_characters": 691,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/flavio-bolsonaro-brazilian-presidency-election-shock-first-round-victory",
+          "original_digest": "64719a56785e405989be9269cd3bd86f6e7fbe01b394a1fd296198a1a1b59208",
+          "candidate_digest": "e7844fad508a7c8a0d25e36dad5c28d9fa9775eaa5bab363bb8a61d1d4080b60",
+          "description_text_sha256": "de077c982a1c80df0f081a781ad52ab89e486c5ec871ea11665cf0791e173946",
+          "description_characters": 724,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/06/oil-tankers-south-korea-russia-ukraine-war",
+          "original_digest": "6c122075b7988ddf4abb83fc45b942917b6490fc24f5a6589dcd7d8428c9593d",
+          "candidate_digest": "48369523bfbbefa8a000fa6defdea87f02352ae91fdc9a4828fbb6c69157ea6c",
+          "description_text_sha256": "f4fb5f4f95200d63dfa9ffd4b872134c9514b7a7382024532ddce212889e248c",
+          "description_characters": 600,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/global-development/2026/oct/06/ethiopia-tigray-conflict-tplf-rebels-forcibly-recruit-boys-war-crimes",
+          "original_digest": "6f79ced3305f2fa829929f6ea0f4d78a4ee0bbad7821469396859fc740024365",
+          "candidate_digest": "1d674d2e6383b57021cf7c70c13a279023eb8994e8b0fe29cba73b4ab66ac8c2",
+          "description_text_sha256": "a02908e765c28fc8f29c616e7ac2eb876420afa9fc77262cd1ceeb872e961493",
+          "description_characters": 598,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/this-is-india-asian-games-winners-success",
+          "original_digest": "52d2d6cd3b4ddf4d654066d7e9081c7e793b697fd9ce6d6eb5e7eecc1a541458",
+          "candidate_digest": "beea2a6e5598e95eb2b75c956ca252ce1a0720e2381a8d2d86173e7e187369e3",
+          "description_text_sha256": "9b18e0ec49c62e83f52288c82e412a818cee41f904b551cedc41a8b11d9da3e2",
+          "description_characters": 813,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/06/keeping-up-with-the-bolsonaros-flavios-surprise-first-round-election-win-heralds-rise-of-a-political-dynasty",
+          "original_digest": "4bf120e06f1488299c8834e55463bb35273ee8827d2fe4e4fdbd6fcbde3110e6",
+          "candidate_digest": "73188180940e72a7fd9c846eb68a3d692cd06695dcc96288f4411385ce8ff367",
+          "description_text_sha256": "8a8b10147ab57a7d7259f375f43c7f1c9ee7f715f12d4caddb48560d1f3a9240",
+          "description_characters": 683,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/media/2026/oct/06/richard-morecroft-veteran-abc-news-presenter-dies-age-70-after-cancer-diagnosis",
+          "original_digest": "0381e9c97bdf67cf418328eb4d04128469f8a2e384f7b600acf6186b027203cb",
+          "candidate_digest": "5730222f975d78d73fdc00e43da1f9c5e3361f621d76a19df341640857049900",
+          "description_text_sha256": "f0c18a8bb5d79cb15694da8fb48947008265eb54641f22dda5abde4cacf5b20d",
+          "description_characters": 480,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/technology/2026/oct/06/openai-delivers-a-mea-culpa-to-the-australian-government-in-person-but-answers-still-elude",
+          "original_digest": "235ffa3cf1698613d311817c97ad644928082cb04fa6b621cbbee6793b5c5e80",
+          "candidate_digest": "c4e0be93e185338c37d1453f7ee88a5e57c4cdeea8c6a05e091f13ed6ef596ce",
+          "description_text_sha256": "b23de57d3fe29f3805b7662017713f392052d3992a68d1e716eeb3c3b4d74b3d",
+          "description_characters": 804,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/australia-news/2026/oct/06/agreement-to-transition-away-from-fossil-fuels-not-open-for-renegotiation-pacific-leader-tells-pre-cop",
+          "original_digest": "a028fc4df58f3875583b7258f5347094906450f3db8b68aff0a5887c069de099",
+          "candidate_digest": "bd0a86bbe9884f57f47caa8ff38dc7c6942a3ae9de18498554771eee2d207dd6",
+          "description_text_sha256": "0b6189426968c7efad1db80bc45a41011e44e35904a2beba8e8821e4548b18c5",
+          "description_characters": 665,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/uk-news/2026/oct/06/argentina-to-stop-falkland-islands-exploiting-offshore-oilfields-sovereignty",
+          "original_digest": "0ebb47bc134c002b6fcf2516726c9c60c2007c3a03de8875987f8ff7439984ab",
+          "candidate_digest": "34e187c32d6cb42c5c3848314194f6517709e95f64900859e8c90d403e0ed63d",
+          "description_text_sha256": "4b5a22801da4feb56748ea2d49684f80c42109b6dbced605816ef19142a990ca",
+          "description_characters": 586,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/2026/oct/06/us-israel-far-right-conference",
+          "original_digest": "3fa040d7e8e775a5d444ab452b0294c4536ca6fecaafd39d1e496db03f821552",
+          "candidate_digest": "fd85ec5d20fc1812fa2b1ae4849be4eddf7647baf5b110a7b57a967dddfbb0f6",
+          "description_text_sha256": "463f0f88c0686395ed6b5b4bfa5b7397ed6fec2f3b7aaf89278fa5e399c00bf1",
+          "description_characters": 758,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/06/kenya-first-ebola-case-death-drc",
+          "original_digest": "635a98c4c810a52d1dbf43efd98335c93f8281df1d43831f207efbe64b094fdc",
+          "candidate_digest": "72da13609158036598de74b4e99388a2ceaa26155e7804229eaf5e9fe9dc7000",
+          "description_text_sha256": "ab21e6741120b17d20da6209632d16b5dd7eea4c3feba9b59cba4f8b6343cfc5",
+          "description_characters": 651,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/australia-news/2026/oct/07/coalition-migration-policy-reaction-universities-students-economy-india-ntwnfb",
+          "original_digest": "554a04e450551ea0b2e60c10e8dc9cf384d70eb98dcdcb52fde74cad7db2c7f0",
+          "candidate_digest": "a261b02fb95e5b6da4a2588eaae09bf58a16232c82ef9f6160d312706254edcf",
+          "description_text_sha256": "4e3cc3a6ffe77762bbb18324fc1c8429808d848c6f99a564fd69fb6d64818052",
+          "description_characters": 794,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/australia-news/2026/oct/07/nsw-health-people-buried-unmarked-grave-minister-failings-families",
+          "original_digest": "bdd7da847b02bc43ff7540c0b41657f0e6898b95fb4f118c089a0ef05fbfbfdc",
+          "candidate_digest": "68dc5aee9fafd00e86eda8dcb7c2512299e147ff3df9412b95e8bdc4a5eac486",
+          "description_text_sha256": "bbd00f951473c7cc5ef8a33d539e9cd7f5a369e38620d8553eaf31320ff47408",
+          "description_characters": 787,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/06/eu-plans-15-year-probation-period-new-member-states-viktor-orban",
+          "original_digest": "92b59628c5276ec4deeb8282d975f414b0e6658bcc78c407e074781fe43e2ad0",
+          "candidate_digest": "44f53c357e222354f59fdbcfbc5e0c1b7b039fe5268aff7bbed07b397d2fba52",
+          "description_text_sha256": "a2c2e97add4d71d903a5f6f8a9cc45a56080143b19801ccb48fee44a555242e3",
+          "description_characters": 683,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/06/germany-afd-first-far-right-tobias-rausch-speaker-since-war",
+          "original_digest": "05e7524f2e9d5c4fbd0ef3d4ad79da60460218df21b7519f785e7fd4a3c12cd1",
+          "candidate_digest": "6e7ba1b2d2e0930619abb7671a80b1624af0109d648285122bdbd9d31863e17d",
+          "description_text_sha256": "a764930553726791915a6ddc34928a9ca6803575b1734616554e7f138db750ee",
+          "description_characters": 441,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/06/french-student-protests-barricades-paris-police",
+          "original_digest": "39faf696c5ddbaaefadfcd6d53e1fa5fb6e46235cd2f2beda27214591ae2204a",
+          "candidate_digest": "89bc98f65598c13a80ed34487df34a34bcf0b023c782407923479a6ce04bf9cc",
+          "description_text_sha256": "d15e975b960e703e5b5d85b250d148554724f01c9eaea57f0cb7d4f3d602eb39",
+          "description_characters": 549,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/artanddesign/2026/oct/06/greek-prime-minister-pledges-to-ramp-up-efforts-to-regain-parthenon-marbles",
+          "original_digest": "5669a87fbacec037f2532a74ca2408781cb1663b5f97ab5907475791214ccfe5",
+          "candidate_digest": "1ccc30091c5c32a92cdc2b7827ebc72c5001d0d283d56d01d262fc0e1dac921d",
+          "description_text_sha256": "cca26af1cf6ca0e49dc1bcb51631d4a0a3e49fd27c49900eab2560f6f9f43105",
+          "description_characters": 550,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/06/outcry-in-trinidad-and-tobago-after-passing-of-police-bill-that-could-threaten-press-freedom",
+          "original_digest": "83f931e3d2b726c2e24a0ac9ba06dd2c94c7c5f83cd3d3d896b2ae8f01e95202",
+          "candidate_digest": "5f6600dea859d29ea969ecbae205b2d85011f2c3eec65b99acecab6317d17b80",
+          "description_text_sha256": "7799408991b9c2da197e9a82efa0cf7df3677ebf071fb18a910db3413cdfb0aa",
+          "description_characters": 521,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/politics/2026/oct/06/badenoch-british-iron-dome-plan-tory-press-release",
+          "original_digest": "70529a0e9fa98f479886154c7a9874af9b9383a41636e1d559393f6c6dcfa9fe",
+          "candidate_digest": "40c8e109975301cbe7172ea83d4ecc34ec1745df036807332815f4226fa9654a",
+          "description_text_sha256": "bddcfd0b6ae67f55e8fc54124af86d3101a303dd1c072cfaf32405899dc1555c",
+          "description_characters": 519,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/technology/2026/oct/06/google-datacentres-finland-temporary-halt-environmental-impact-assessment",
+          "original_digest": "f4bca5f0a9d8f3d97055e2bd95e02cd7013dba32d90d3394bc299f95275e04ea",
+          "candidate_digest": "1752f95f3873807fedd9abb06a32349e3dad7e76bb4529d539a260951ece980a",
+          "description_text_sha256": "1540b6150bca5a8261546968703839c66e6fa8fe91b5191c15511ed3b2a442b6",
+          "description_characters": 504,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/2026/oct/06/trump-fbi-ice-la-protesters",
+          "original_digest": "015b610d2885467502d96d892de263f3087fd1b5074c0824f520a24ed14da0f3",
+          "candidate_digest": "9680ff25addd781068502a365d9441cdd11483145c6391c77e7c5d77fa3fc248",
+          "description_text_sha256": "58a72fac755686dae825247558e1ab8d11cc365f3d11135dabe817b4ae690363",
+          "description_characters": 617,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/uk-news/2026/oct/06/british-man-arrested-over-suspected-raf-fairford-terrorism-plot",
+          "original_digest": "08307fdbe3e9e96dad02847af96703491c3e6444e614c6c0b7698a2902804ae2",
+          "candidate_digest": "09cec26ea458e30c2682ed5cb8d575d55f9e7f2120d8cb942223c743a61d1d21",
+          "description_text_sha256": "8886d46ef9a8da4d0e08146080d8093b46193ad279623abe03dbc88410cb233b",
+          "description_characters": 472,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/politics/2026/oct/06/labour-figures-rule-out-working-with-greens-after-zionism-is-racism-vote",
+          "original_digest": "751118ccf23d9f30559b33914278ed7f09a814362f3e663dc1f7fe006b6957cb",
+          "candidate_digest": "d88fa2f0c459603db8bfa6faf002658dd922573c6acf4e50a2ce97dce9e03674",
+          "description_text_sha256": "c9298a1b8b204c9318c3016e811fd24ece325d732b69d587eeded3ba26451fd9",
+          "description_characters": 505,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/2026/oct/06/california-couple-charged-child-abuse-surrogacy",
+          "original_digest": "223a403cb0396ca956027bb1c62d931250f4a2dacec7cdc9489f846a799d923c",
+          "candidate_digest": "5e863c7a18a876fb5f1274cd24644e6e87b7b3e97e3184caa8c4bcd1feb611cd",
+          "description_text_sha256": "7bae608cff3794f5be9d499489aa518c2d83bd0020745e61b0a7dbc749b2475c",
+          "description_characters": 453,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/education/2026/oct/06/cambridge-university-academics-jason-arday-death-investigation-inadequate",
+          "original_digest": "d82294a029e978d523b6e706d95c433e82c4ecffbb507ec48d061540799c93a4",
+          "candidate_digest": "c72ec17d5b4b89af819476cf406bb3b3a324a07fe9029d206c2112d68a9be9fc",
+          "description_text_sha256": "a973fd2423f02d0cc8a95e3da97e9d650a789e5ad833a064bd653a5e3fae6649",
+          "description_characters": 704,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/2026/oct/06/sally-yates-cornell-investigation",
+          "original_digest": "bee873ddcbfb07aa066920cdd29d9c94153239c686acfe9d363053213528629b",
+          "candidate_digest": "e3e9d97235ffc79ae137a63ba340e940820eaa1e6f1c627fb6fadabe73495b9a",
+          "description_text_sha256": "a0064123f5bf89ef481585ceb18b81c967f1f0e221c7364d0f76a8a8d5a3ae52",
+          "description_characters": 734,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/money/2026/oct/06/chancellor-plans-major-intervention-to-help-poorer-uk-households-with-rising-energy-bills",
+          "original_digest": "3f2dd7cc045928bde2e242e6432335c0e34d9a3b14570aad125b0af9161fc01e",
+          "candidate_digest": "01153e4de5f23c9bd205f52d85f6097c6e24f51fa8a1acde0d3c4d0f58f99d5b",
+          "description_text_sha256": "4b5cba2eea79c30a0ca1e277daa21f99b24d27de699fb86d07099fea93e9bf32",
+          "description_characters": 547,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/06/trauma-of-7-october-israel-survivors-three-years-hamas-after-attacks",
+          "original_digest": "8d6a45a66382066cd38b29aa4570e73e6e3925046c1080a70beea48adab31a9b",
+          "candidate_digest": "fd91b855018763650ae65c28f2b5e799d1526d294016c39d031678cf11f91d89",
+          "description_text_sha256": "b44633b9bccc4d9f18ae6616160662e4791d16131a022fdd3a0ca78170202191",
+          "description_characters": 687,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/media/2026/oct/06/disney-trump-abc-fcc",
+          "original_digest": "4d673a0932ae8a50186b24e89e2fc5d4f4a2b6a4ec64ff2c91abc7778b6ada6e",
+          "candidate_digest": "0cdc309b9f2118868c7953a855d28fbc5f83ab6eee6df5fcbd160a8d390c562d",
+          "description_text_sha256": "7ef5f71e2de9cff188922e0eec81f366cd25c65618cfc36fb8b7145e2d9e104d",
+          "description_characters": 652,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/live/2026/oct/06/donald-trump-ads-diesel-baltimore-midterms-media-latest-news-updates",
+          "original_digest": "32f326c9b5310520e20caa533c895edd02e788bd971d5fb3dbdd49ad9729926f",
+          "candidate_digest": "5500e2f3572bc6c46809364cec9018ef877efd51257ba8f6a368567d5233c0e4",
+          "description_text_sha256": "6604065a4186ff76eacc4c035e09d99508916eff3426edd85a12e583d3371c78",
+          "description_characters": 532,
+          "other_fields_unchanged": true
+        }
+      ],
+      "added_version_selection": [
+        "https://www.theguardian.com/world/2026/oct/05/brazil-election-bolsonaro-lula"
+      ],
+      "removed_version_selection": [],
+      "fetch_exact_day": [
+        {
+          "source": "NOS",
+          "accepted": 20,
+          "stats": {
+            "invalid": 0,
+            "outside_day": 0,
+            "duplicates": 0,
+            "over_limit": 0
+          }
+        },
+        {
+          "source": "BBC News",
+          "accepted": 27,
+          "stats": {
+            "invalid": 0,
+            "outside_day": 2,
+            "duplicates": 1,
+            "over_limit": 0
+          }
+        },
+        {
+          "source": "The Guardian",
+          "accepted": 29,
+          "stats": {
+            "invalid": 0,
+            "outside_day": 16,
+            "duplicates": 0,
+            "over_limit": 0
+          }
+        }
+      ]
+    },
+    {
+      "original_capture": "00000003-20261007T172559125623Z-7cb1bdee",
+      "candidate_capture": "00000003-20261007T172559125623Z-b7dbae3d",
+      "captured_articles": 97,
+      "original_new_versions": 82,
+      "candidate_new_versions": 83,
+      "guardian_bodies": [
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/01/british-sikh-activist-jagtar-singh-johal-released-delhi-jail-india",
+          "original_digest": "ab7ba2e13b7ba2d93eee17f2a22d4edf3afc719784147183c6fb692ef522a642",
+          "candidate_digest": "0268feedf2ee0353fd0aa147fd17276970ec7d2b4e97b1982f841c3c840b4097",
+          "description_text_sha256": "cd15817eb941b8153496fc36bc542540d3b4514061ea3147d2cef86792adf523",
+          "description_characters": 633,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/02/indian-pilot-smit-machchhar-recalls-flydubai-cockpit-attack",
+          "original_digest": "5107652afc7e871a5ff12002324f0125448cfc2b9f946c22b7b0c69c8345ffe9",
+          "candidate_digest": "8c5ecb96c9b83830532419d5a97243ce52428aa2f4403559f62162b8d00b98ff",
+          "description_text_sha256": "5d36b3207b038968302393dfac0130aa2b46e152f3e8c355ed5cb34f828b0545",
+          "description_characters": 556,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/environment/2026/oct/02/weather-tracker-eastern-spain-torrential-rain-flooding-nepal-landslides",
+          "original_digest": "cb64e422116a76ee07c3f78f3f70a8171f87032d55be812c8b5221ce5ad3083b",
+          "candidate_digest": "202d86f4b1a0b4d4eed2edfbf2e73a228a8d34285c96a53796740522a1649415",
+          "description_text_sha256": "8bf95589136b8454e6a883e24ac93a5026eb1ec605718b961aa2aac3d50da46d",
+          "description_characters": 809,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/02/india-cockroach-movement-protests-mumbai-changes-voter-roll",
+          "original_digest": "c6b20de47dc6d5a137e1edd2b29469a4fade52e81be3f4d6dc55d9d5dbe1a3eb",
+          "candidate_digest": "1118418e6acdcb6278f6b1758f9d8433ca7a8a38016a32fbf61bb734a452aab5",
+          "description_text_sha256": "a6390b20c54f3168b1aa58af9c78f7ba33be9b402078581f15df38681e2262ca",
+          "description_characters": 570,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/04/egyptian-journalist-faces-terrorism-charges-entire-newsroom-detained-matsadaash-press-freedom",
+          "original_digest": "3da0b5c67f70659455497b7ceba96fcb80b5c378f7dc06f09d8e84c545e33631",
+          "candidate_digest": "cf8a710715e974b2f69e5eb4495227243524b14e0e36a97ad45a0155d6f91f70",
+          "description_text_sha256": "ee38e31db1e8b50e86c175fe99daa576fcc795524e2480af21bc289378d01cb7",
+          "description_characters": 591,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/science/2026/oct/05/skull-fractures-suggest-servants-of-egypts-ancient-kings-were-sacrificed",
+          "original_digest": "dfd786f4a55af108f8671a801052cd08fd0dafbba31442f3276a5104790b7f91",
+          "candidate_digest": "111ce4ea661c96c1dd48eb1649698236cb3dd59bd5f2aaaee8ef849fcb804132",
+          "description_text_sha256": "af95d52036e9f77b964f29ed0eafe2d5b814e388ba198fc150d3b9fa07898894",
+          "description_characters": 458,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/global-development/2026/oct/05/guardian-readers-fundraising-somalian-boy-injured-in-us-strike-surgery-abdiqadir-salah",
+          "original_digest": "dcdad044c4617803c627d02336877b0b609a649ba634354e50add644d123fde5",
+          "candidate_digest": "0f0f2b449b6feaedfcb17ec7db03e682f4d2c404e1c8fb4b95b28c2e26191e03",
+          "description_text_sha256": "9f43d6903711f2af7b497aa2132e04c109353f3782765b90b9ffda523446088e",
+          "description_characters": 629,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/jailed-imran-khan-march-on-islamabad-pakistan",
+          "original_digest": "470af0753f4b152b0ee451b1c8762e8eaf5025c6103d471b8f9e8026990dab15",
+          "candidate_digest": "829df29d4091c6753c3a1fa2c1de1f10cd38c5d8452b2c991786eef0df36e009",
+          "description_text_sha256": "dee418601beabb2d1a6f60bc7ad401856a2010700c21745cef239b4d09ca2b07",
+          "description_characters": 469,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/global-development/2026/oct/06/ethiopia-tigray-conflict-tplf-rebels-forcibly-recruit-boys-war-crimes",
+          "original_digest": "6f79ced3305f2fa829929f6ea0f4d78a4ee0bbad7821469396859fc740024365",
+          "candidate_digest": "1d674d2e6383b57021cf7c70c13a279023eb8994e8b0fe29cba73b4ab66ac8c2",
+          "description_text_sha256": "a02908e765c28fc8f29c616e7ac2eb876420afa9fc77262cd1ceeb872e961493",
+          "description_characters": 598,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/05/this-is-india-asian-games-winners-success",
+          "original_digest": "52d2d6cd3b4ddf4d654066d7e9081c7e793b697fd9ce6d6eb5e7eecc1a541458",
+          "candidate_digest": "beea2a6e5598e95eb2b75c956ca252ce1a0720e2381a8d2d86173e7e187369e3",
+          "description_text_sha256": "9b18e0ec49c62e83f52288c82e412a818cee41f904b551cedc41a8b11d9da3e2",
+          "description_characters": 813,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/06/former-un-food-agency-official-fao-benjamin-davis-hunger-gaza",
+          "original_digest": "a57f49af39fed2d37f2f8e61e2d4ff4aeb25568dc0410facd28d394cb78d8f63",
+          "candidate_digest": "dd59d0a0cbedb21df561a26b21c7de1631db3d5d854eb74538fab86647ca2def",
+          "description_text_sha256": "8138b82da902dccd303b5104f2914565554b588e06110de4e8dcbc5cc12b1dc2",
+          "description_characters": 695,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/2026/oct/06/us-israel-far-right-conference",
+          "original_digest": "3fa040d7e8e775a5d444ab452b0294c4536ca6fecaafd39d1e496db03f821552",
+          "candidate_digest": "fd85ec5d20fc1812fa2b1ae4849be4eddf7647baf5b110a7b57a967dddfbb0f6",
+          "description_text_sha256": "463f0f88c0686395ed6b5b4bfa5b7397ed6fec2f3b7aaf89278fa5e399c00bf1",
+          "description_characters": 758,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/06/kenya-first-ebola-case-death-drc",
+          "original_digest": "635a98c4c810a52d1dbf43efd98335c93f8281df1d43831f207efbe64b094fdc",
+          "candidate_digest": "72da13609158036598de74b4e99388a2ceaa26155e7804229eaf5e9fe9dc7000",
+          "description_text_sha256": "ab21e6741120b17d20da6209632d16b5dd7eea4c3feba9b59cba4f8b6343cfc5",
+          "description_characters": 651,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/06/outcry-in-trinidad-and-tobago-after-passing-of-police-bill-that-could-threaten-press-freedom",
+          "original_digest": "83f931e3d2b726c2e24a0ac9ba06dd2c94c7c5f83cd3d3d896b2ae8f01e95202",
+          "candidate_digest": "5f6600dea859d29ea969ecbae205b2d85011f2c3eec65b99acecab6317d17b80",
+          "description_text_sha256": "7799408991b9c2da197e9a82efa0cf7df3677ebf071fb18a910db3413cdfb0aa",
+          "description_characters": 521,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/06/trauma-of-7-october-israel-survivors-three-years-hamas-after-attacks",
+          "original_digest": "8d6a45a66382066cd38b29aa4570e73e6e3925046c1080a70beea48adab31a9b",
+          "candidate_digest": "c0674e30d4e0d8ca25ed3c65c66d7712b4f05f43c2d032ff215b1c68c63d99a8",
+          "description_text_sha256": "a59cd56f79dc5b005c96ce3a6424dc8a23e6a77f93e8392539b0c8c9222337e6",
+          "description_characters": 688,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/06/israeli-settlers-beat-press-photographer-as-soldiers-watch-in-west-bank",
+          "original_digest": "dea8e5a185d2ab3d17be8da15853866588e016297db295d9e8169630e0104a23",
+          "candidate_digest": "87d10acca482356e36bb202b7bb448a9450f76449009581e193e71180f25ecfd",
+          "description_text_sha256": "6eb5a63f4a401a15e5e08b6afa60c26651a00bf347862946fcac93a371f2ebfc",
+          "description_characters": 601,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/06/tumbler-ridge-shooting-arrest-washington",
+          "original_digest": "26412f32698f5ca88f8474ec0301ad9088d1aa8c68a6f65e1118c2b7e2bcdaff",
+          "candidate_digest": "339fa5108ee8d1ebd37371223b83e85c305757ed4110df0b5a92fd599d681411",
+          "description_text_sha256": "cd737b4b993b12ab8d5376fc0aa7c3625bf8b9f8cb62613871f05e68e66f24d3",
+          "description_characters": 543,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/07/new-zealand-greenhouse-gas-record-high-threatening-catastrophic-glacier-melts-climate",
+          "original_digest": "78463e08a6bf5fa91844146c8f1ca07b2f42ab2464f9e2ff907dec59ca3cf161",
+          "candidate_digest": "30e74a207dd1bb9212078f09b1f87a84d0cf7c89d8b69bfda8bedf838df43642",
+          "description_text_sha256": "9992a811e203798990d3666986016f4d9d27ddc521574c5afa2b2f1819746ec6",
+          "description_characters": 588,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/business/2026/oct/07/eu-negotiators-head-to-china-hoping-to-curb-cheap-imports-of-hybrid-electric-cars",
+          "original_digest": "096dff21e0d90d00ee27b8db335b0253666d19cec876e2c36c78776b001f34cc",
+          "candidate_digest": "9b91b700cd4a190184f058ecf9f2551ccd4c15b2012e2857c7dd6b4393619b3f",
+          "description_text_sha256": "dc150c94fa39822d8133c4c58231b8e675ac9729c4f1875abed1d3aa1df9a096",
+          "description_characters": 543,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/07/flydubai-attack-investigation-widens-as-alleged-hijackers-training-in-new-zealand-scrutinised-ntwnfb",
+          "original_digest": "1e9b58cbf326e8ed4709c7931952fb2db0f5f7ea0e7a7febd0916e0d2f2224bc",
+          "candidate_digest": "0c0e0b3cb8416dedc27ec87401485107fd14f79e51da416b815eeffd9271371a",
+          "description_text_sha256": "f4a09e69b896666ff1059698a5b8bdce433191f55d4a0f2af3b62b2000d32aa4",
+          "description_characters": 634,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/australia-news/2026/oct/07/beau-lamarre-condon-trial-friend-nicole-harvell-no-mention-jesse-baird-before-alleged-murders-ntwnfb",
+          "original_digest": "188f52ad7ea14122f884179b7efc1e9b479ea682569b5b83116785f9524628e9",
+          "candidate_digest": "52452f8c420b4791747d2f7df0d5c0e7a337026268980404b798c175b5327a28",
+          "description_text_sha256": "98d859c1e1a9b4a09020e670613b0078b40103d01e18e1076210841ece8d75b5",
+          "description_characters": 457,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/australia-news/2026/oct/07/angus-taylor-coalition-immigration-policy-not-fully-costed-ntwnfb",
+          "original_digest": "e126d92c9f71f1b9414c9c634ebb1fe8b9fdb1ed1cda60d631eef9ea9c81f2eb",
+          "candidate_digest": "022a633bf15216a5ba9d9de7f18d3a882b331ae5197de96aaf8a0d67a75149ad",
+          "description_text_sha256": "8c5008dc2e7a41d12fa08b2125c5bb511cd89bbacc9a542f8e6f24cdf460205c",
+          "description_characters": 713,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/australia-news/2026/oct/07/mount-pleasant-hunter-valley-coalmine-high-court-ruling-community-advocates",
+          "original_digest": "ae22b2bbb21c33be8b2a7e810ddbbeeb0d386b48da17751a86d11c6b48461339",
+          "candidate_digest": "d2aade48327ebaff9f0702e567860caee88c9890ac0c08648f44729836131703",
+          "description_text_sha256": "4a7d2ce0bc1b7723c660e544b1068abd93ddacd1a7dafa0651178395a77dd2c7",
+          "description_characters": 663,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/07/quebec-election-canada-separatists-analysis",
+          "original_digest": "4b101bf3faa8879e8f6f9519289028bb95901e39074b87ac76e733bbaf5065d0",
+          "candidate_digest": "6a06cdf3d45e4eb5f58c610b4dd77190f20b14a9db4b0141c614cef689589d4b",
+          "description_text_sha256": "1fe75dddf41d8c2791c24a2bb08bfda3927f0c5c6da41f0f20168283ff88dfc1",
+          "description_characters": 755,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/07/flavio-bolsonaro-advance-brazil-election-jolt-climate-campaigners",
+          "original_digest": "4eae1d5b53462e92d7ef16484894a60fea1811f0ec83572c50e5535378a256d0",
+          "candidate_digest": "841a42f34fd4697b66e7bfab0139faf3bbf27fbbd796668e7dc9b5d32d06126f",
+          "description_text_sha256": "96f7689b86c5c3a38b386e2f3836b4c36f56d7007405f050239feb0045196917",
+          "description_characters": 609,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/07/cemil-tugay-mayor-izmir-defects-akp-erdogan-turkey",
+          "original_digest": "c946d0b8b5392fea00ce903ca3f61c732aec7d947d25b6e6d4ab2863a277ca48",
+          "candidate_digest": "f1b4c036191d68df2159f6848cafef52264f9ca428b42b15f35acee301fd90a0",
+          "description_text_sha256": "bc05acd0ef505517959985aa4eee65741c4546eceda623871a4aed45f2f9c816",
+          "description_characters": 493,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/environment/2026/oct/08/overseas-albanese-sees-the-very-definition-of-climate-injustice-but-at-home-he-still-wants-coal",
+          "original_digest": "8dab62f4e3ef3208b45ad9fc4b6bfd43f28cffd2a46b8b19d08e70c7c899a557",
+          "candidate_digest": "e73ec9130180a01be41d44a448918a8bf6fabfad5c4b3269fc58c9664c0b62d9",
+          "description_text_sha256": "469016f2c152b8d106f25cee3d17e2b8cae8947e197066a11f4f972b5be9b8f3",
+          "description_characters": 649,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/07/could-the-uk-really-rejoin-the-eu",
+          "original_digest": "bf4b32e5bb130d9a7cb6cf2d05b57531044574717f2154d06d4e3403d1ee4d5a",
+          "candidate_digest": "e551d39fba4d14c0784e8e395fc39ab12942838917d66204c8ce3ad382753c0c",
+          "description_text_sha256": "3acb213e788a71191df8dce5cad89259bea290f867425cda3a3caf3cda15b34c",
+          "description_characters": 824,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/07/satellite-images-attack-jets-china-military-facility-laos",
+          "original_digest": "6eccfc2ccf4714f0eec9551f5e1839658742662b048bf11a51e89d24c7d5c759",
+          "candidate_digest": "485c35898c7797d0fd35914cfacab5c143d92afa43c5b90b9b00bac346dc876f",
+          "description_text_sha256": "a70e8bdc96d6f6edf3b57069b9ae5ffc474a4a04bd0b672aa7364c044e016538",
+          "description_characters": 529,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/australia-news/2026/oct/08/australia-pill-abortion-restrictions-pharmacies-ntwnfb",
+          "original_digest": "6fb43d94d55e2149043ef8663cc87c6a1caa04f0666f244feb015770229e55d1",
+          "candidate_digest": "53cb6e7a38ba8fc5366f5ea4ff8410c9fa646ac475423a6316b428676039a254",
+          "description_text_sha256": "78dd424e4a9add4e07e16ccf9c1df77c5d697d288a5619b500339bd552f843ba",
+          "description_characters": 655,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/07/flavio-bolsonaro-vows-to-re-democratise-brazil-election",
+          "original_digest": "10da66a5836b04102e775e04a28428a58004303d995343afce9432b11c7fba18",
+          "candidate_digest": "00ed294de8f5d1199b4dac44603a6d5c4ec8f083f9418ecf6468fdf8c961e2d1",
+          "description_text_sha256": "4fc67cd56132c49c9360090a0e0ef063fa452e97ecac830f8c87c71aa53f8ce1",
+          "description_characters": 617,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/07/uk-consulate-east-jerusalem-prepares-close-israel",
+          "original_digest": "b760769434ac31ea60f48bdc0a9139367dedc9971612d0cb1aafe8648c1c8be7",
+          "candidate_digest": "3403d2731c01195e145c607d89953267026659ab21c3b0a8674c19af261f477c",
+          "description_text_sha256": "0b8e8290faf551731efd87fb9bf5d319ae9f15708c45fa030218db1113211bcc",
+          "description_characters": 681,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/07/french-police-suspend-use-stun-grenades-high-school-protester-loses-hand",
+          "original_digest": "20112b81c0e6bd68916d9ef869711ddaa2e7e9e311860dc466bcaacac236c0a7",
+          "candidate_digest": "b7c7f3914f334f061c3105930c866e9e4dfef1545c73cf75af8aa15ffade9342",
+          "description_text_sha256": "7b3392f3574c95ca48204ad5dc932ea0fb4a5dd6870555b11696189eb9b7b57d",
+          "description_characters": 744,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/2026/oct/07/rabid-raccoon-case-los-angeles",
+          "original_digest": "f9f46f99b17b25eca456516fd7e46f1aee3d0034cadd9d67a2e4e3c12ed19e29",
+          "candidate_digest": "7f4e15e80cd66935eb52e5fe010d51122f78a779321e65e2d3dd5ffcad4ecd6b",
+          "description_text_sha256": "7eb2595d4f78d8dc4334d35974f6c5fd6ea502cdf2a3a91a725655ab52c9b56d",
+          "description_characters": 542,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/07/ukraine-accuses-russia-of-bombing-apartment-block-as-birthday-gift-for-putin",
+          "original_digest": "236964b5fffda77ef3c572ecc41f65a37d27f7055cf903bbbc16ae05e99aadee",
+          "candidate_digest": "ea7036f0de4f6e3ae02a877d060e3dce43dd7c9387e1589e2891f1442518c33e",
+          "description_text_sha256": "f3e08a40cb4f63bec663327c2d1ac00cbc090a125ccd340d31ec914d75cf6235",
+          "description_characters": 560,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/business/2026/oct/07/labour-worst-parliament-living-standards-thinktank-analysis",
+          "original_digest": "9390c59a1decbafbbb92b16ee09eae2a934ed1f3e4894da791e48e2f4f00fd6c",
+          "candidate_digest": "ea9498d0c873f44a18f35548a2a2c75bd9b1ef8dd6eaeb7c2fe0cc2166a9f92f",
+          "description_text_sha256": "c9049566de83367d28298b2fd53024e023eabd1efff8d76d43874ccdd3bd9a6c",
+          "description_characters": 443,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/2026/oct/07/ken-paxton-trumps-iran-war-gas-prices-republicans",
+          "original_digest": "d7ba27fa09209d0894690a24e48ef2984983a08c5601b47d560c77a22c5d2bc4",
+          "candidate_digest": "c04fd083ff3ac3b6d132127edae8268170f9127511c95a0c5212eea7e6bd5772",
+          "description_text_sha256": "e4b5e0b8174fde1f41c4f40e614dde9f943862e130d57736e1c1bbe91bc88fb4",
+          "description_characters": 646,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/uk-news/2026/oct/07/man-pleads-guilty-sexual-assault-woman-drugged-husband",
+          "original_digest": "e69b67f362409c0c06ca6de757cee975811c5addd32a01d04ce620a39bf2a897",
+          "candidate_digest": "2d114d12820d16e01076a1eba27e22ac4730e9aa3fc1612baac0bba4c87b00ce",
+          "description_text_sha256": "2e0dd365e1bf734d9f80e2f54a47418079d88f513fc5448c2b54394aaba25dec",
+          "description_characters": 448,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/law/2026/oct/07/two-men-freed-indefinite-sentences-for-public-protection-ipp",
+          "original_digest": "e9588a83b0677874c882620b891b0eeac67639686fa51e646ba885beb7468b50",
+          "candidate_digest": "d7e587b888e6ca70dc0afa0944edf1286b6ff3dd3ad689a4b9a9593d87e874b8",
+          "description_text_sha256": "16078b2ddb43586fba46b6fa69d74c56e3f1c6fa733730e16d80328774f9ec36",
+          "description_characters": 558,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/news/2026/oct/07/billionaire-quit-uk-wealth-tax-resident-monaco-super-rich-exodus",
+          "original_digest": "d9daf0c3f675d305319c9a16fc443535feed6b5db893884fa816c7aa53e8a65a",
+          "candidate_digest": "19e736b780bb3dfbe45aa629cf4a17a9114df62b7255b48e9926a434691c1a26",
+          "description_text_sha256": "78d33f0d7673dfaca83edba8d535bcd177de0fe2dba408b5b31683a66052f57c",
+          "description_characters": 728,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/politics/2026/oct/07/reform-clears-officials-breaking-party-funding-laws-despite-police-investigation",
+          "original_digest": "53f999bae8885998bcfd0e95df6b0dc77765d9565a88f9ce9da562d2bd51c8ec",
+          "candidate_digest": "df2cbe488fc249d712985214f24c0a993fbfed3d9eb6917d705df3227701a430",
+          "description_text_sha256": "4f04875370e2b3fc6c440602bd09c39b093af5e2851f71b720405645335001f5",
+          "description_characters": 450,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/live/2026/oct/07/donald-trump-gavin-newsom-california-la-san-diego-iran-republicans-democrats-us-politics-latest-news-updates",
+          "original_digest": "3f1ac913094f142128707057dd753b0fd69c7acbdfc9acefe8d3fa8b7b078c9f",
+          "candidate_digest": "d0f5be78b4e06fdf06b88d31dec8ea84743b5d0a899c8a6bda60663804d98fb8",
+          "description_text_sha256": "1501851b92b15814c95fc4184940bc44f80c4cd5a0a7561a9ef94384be046e88",
+          "description_characters": 1140,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/2026/oct/07/trump-comments-los-angeles-san-diego",
+          "original_digest": "635209d6b9ab2b54ff6fa99ff937ae4564665de1233e937979a15cbf88a64a2a",
+          "candidate_digest": "950a77d7d575e2af46419e427f667482ef8e89468bc07727eea30cfa1216cd15",
+          "description_text_sha256": "c91abd833bff02c799b00a3c04a65be9816dfe88ccfefa7fd1700f7cdd7aff59",
+          "description_characters": 918,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/us-news/live/2026/oct/07/christa-pike-lawyers-live-updates-tennessee-execution",
+          "original_digest": "fc78f8610bc07a80ccdcdd299cfcc62947690c68d27e432fadcdb2181cf90f71",
+          "candidate_digest": "3bfad14a1aa2aeaf56ba2437d9028807002846747771c678a160736c715e65d8",
+          "description_text_sha256": "afd92c6f589bbe1cf65d47ce4362e9915001db0f889912490d02aba849fa49ea",
+          "description_characters": 557,
+          "other_fields_unchanged": true
+        },
+        {
+          "url": "https://www.theguardian.com/world/live/2026/oct/07/russia-ukraine-war-zelenskyy-putin-france-protests-europe-latest-news-updates",
+          "original_digest": "99e19529980753d1ace3308223b22d6b34fd2285b187d7910a0ac5dab3569807",
+          "candidate_digest": "70b174642bb73026004020a0902599455cce892933a5a997e78476f662109119",
+          "description_text_sha256": "80afdfad8491e27eae7f7a30ec4e6a809277b9f5b302faf9dbf75ec24ba4b1dd",
+          "description_characters": 1027,
+          "other_fields_unchanged": true
+        }
+      ],
+      "added_version_selection": [
+        "https://www.theguardian.com/world/2026/oct/06/trauma-of-7-october-israel-survivors-three-years-hamas-after-attacks"
+      ],
+      "removed_version_selection": [],
+      "fetch_exact_day": [
+        {
+          "source": "NOS",
+          "accepted": 20,
+          "stats": {
+            "invalid": 0,
+            "outside_day": 0,
+            "duplicates": 0,
+            "over_limit": 0
+          }
+        },
+        {
+          "source": "BBC News",
+          "accepted": 29,
+          "stats": {
+            "invalid": 0,
+            "outside_day": 2,
+            "duplicates": 2,
+            "over_limit": 0
+          }
+        },
+        {
+          "source": "The Guardian",
+          "accepted": 29,
+          "stats": {
+            "invalid": 0,
+            "outside_day": 16,
+            "duplicates": 0,
+            "over_limit": 0
+          }
+        }
+      ]
+    }
+  ],
+  "guardian_items_checked": 135,
+  "guardian_bodies_recovered": 135,
+  "non_guardian_articles_unchanged": 154,
+  "original_inputs_unchanged": true,
+  "network_calls": 0,
+  "model_calls": 0
+}

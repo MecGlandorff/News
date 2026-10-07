@@ -1,0 +1,613 @@
+{
+  "schema_version": 1,
+  "pack_id": "fresh-source-integrity-20261007",
+  "frozen_at_utc": "2026-10-07T21:14:23.143739+00:00",
+  "source_only": true,
+  "synthetic_source_count": 0,
+  "archive": {
+    "path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/historical/.news/historical/source-archive.db",
+    "sha256": "0cf6e2cd67b5edb578878403474a21c85fc6df0bde4267db7a7a77ce2294a610",
+    "read_mode": "SQLite URI mode=ro",
+    "selected_table": "article_occurrences",
+    "selected_columns": [
+      "occurrence_id",
+      "article_id",
+      "editorial_date",
+      "source",
+      "language",
+      "title",
+      "description",
+      "body_text",
+      "url",
+      "published_at",
+      "content_hash",
+      "retrieval_status",
+      "captured_at"
+    ]
+  },
+  "input_definition": {
+    "path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/news/domain.py",
+    "sha256": "29b28e5deeec7afd3df4a85f04972b667b8b5d55f984e9176eb459f1afd4a7dc",
+    "read_purpose": "Article field names, timestamp requirements and input size limits only."
+  },
+  "normalization": {
+    "title": "Original title, not prepended to text. Title remains a separate evidence field.",
+    "text": "Use body_text if nonempty, otherwise description. HTMLParser(convert_charrefs=True); newline on p/div/h1/h2/h3/li/br start and p/div/h1/h2/h3/li end; collapse whitespace within each nonempty line; keep text and Continue reading boilerplate. No editorial paraphrase, truncation, article retrieval, or URL-derived facts.",
+    "published_at": "email.utils.parsedate_to_datetime(raw published_at).isoformat(); no replacement with editorial_date or captured_at.",
+    "hash_canonicalization": "SHA-256 of UTF-8 json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(comma,colon))."
+  },
+  "cases": [
+    {
+      "id": "C01",
+      "as_of_day": "2026-05-18",
+      "prior_source_ids": [
+        "occ-3600",
+        "occ-3602",
+        "occ-4397",
+        "occ-4956"
+      ],
+      "current_source_ids": [
+        "occ-12956",
+        "occ-12961"
+      ],
+      "prior_groups": [
+        {
+          "day": "2026-04-27",
+          "source_ids": [
+            "occ-3600",
+            "occ-3602"
+          ]
+        },
+        {
+          "day": "2026-04-29",
+          "source_ids": [
+            "occ-4397",
+            "occ-4956"
+          ]
+        }
+      ],
+      "request_count": 1
+    },
+    {
+      "id": "C02",
+      "as_of_day": "2026-04-30",
+      "prior_source_ids": [
+        "occ-3589"
+      ],
+      "current_source_ids": [
+        "occ-4125",
+        "occ-4902",
+        "occ-4903",
+        "occ-5707"
+      ],
+      "prior_groups": [
+        {
+          "day": "2026-04-27",
+          "source_ids": [
+            "occ-3589"
+          ]
+        }
+      ],
+      "request_count": 1,
+      "composition_note": "The current set deliberately combines source reports captured April 28–30, as of April 30; all original publication and archive editorial dates are retained. This is a bounded grouping case, not an exact replay of one historical daily feed."
+    },
+    {
+      "id": "C03",
+      "as_of_day": "2026-07-22",
+      "prior_source_ids": [],
+      "current_source_ids": [
+        "occ-17587",
+        "occ-17589",
+        "occ-17590"
+      ],
+      "prior_groups": [],
+      "request_count": 1
+    }
+  ],
+  "source_versions": [
+    {
+      "id": "occ-3600",
+      "synthetic": false,
+      "provenance": {
+        "archive_path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/historical/.news/historical/source-archive.db",
+        "table": "article_occurrences",
+        "primary_key": {
+          "occurrence_id": 3600
+        },
+        "raw_record_sha256": "1f0a0a4268d07b30fe1e6c090b387e5eeaade2860328ee11ae448a825e6cb4e9",
+        "normalized_article_sha256": "93375f95c82d7d2188db13c98d26557ccdfeaed73a4f0b5b78cdd678c38a33d8"
+      },
+      "raw_record": {
+        "occurrence_id": 3600,
+        "article_id": "9ed0fb7faaeba0ed",
+        "editorial_date": "2026-04-27",
+        "source": "BBC News",
+        "language": "",
+        "title": "Why Elon Musk and Sam Altman are fighting over OpenAI in $130bn damages lawsuit",
+        "description": "Musk, who co-founded the company that created ChatGPT with Altman, wants more than $130bn in damages.",
+        "body_text": "",
+        "url": "https://www.bbc.com/news/videos/ckger3y52k2o?at_medium=RSS&at_campaign=rss",
+        "published_at": "Mon, 27 Apr 2026 14:12:09 GMT",
+        "content_hash": "6614978a44a0e76302f60fd2d1793ab7bde854b5ffea0277c3d7709abb0fdc40",
+        "retrieval_status": "legacy_metadata_only",
+        "captured_at": "2026-07-21 20:26:58"
+      },
+      "article": {
+        "id": "occ-3600",
+        "source": "BBC News",
+        "url": "https://www.bbc.com/news/videos/ckger3y52k2o?at_medium=RSS&at_campaign=rss",
+        "published_at": "2026-04-27T14:12:09+00:00",
+        "title": "Why Elon Musk and Sam Altman are fighting over OpenAI in $130bn damages lawsuit",
+        "text": "Musk, who co-founded the company that created ChatGPT with Altman, wants more than $130bn in damages."
+      }
+    },
+    {
+      "id": "occ-3602",
+      "synthetic": false,
+      "provenance": {
+        "archive_path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/historical/.news/historical/source-archive.db",
+        "table": "article_occurrences",
+        "primary_key": {
+          "occurrence_id": 3602
+        },
+        "raw_record_sha256": "dc4cd2479eb394e92752af20d0ce76eb4a98864fb05ead9456b08ba7d8fe928b",
+        "normalized_article_sha256": "a5982a8387935ea571358a4e4eb4f8e0ecaa9abfbe337a719f7c0d122cbbb0c5"
+      },
+      "raw_record": {
+        "occurrence_id": 3602,
+        "article_id": "b9a1af600fa68ccd",
+        "editorial_date": "2026-04-27",
+        "source": "The Guardian",
+        "language": "",
+        "title": "Altman apologizes after OpenAI failed to alert police before fatal Canada shooting",
+        "description": "<p>OpenAI said the company had identified an account using abuse-detection efforts, but determined at the time it didn’t meet threshold for legal referral</p><p>The head of OpenAI has written a letter apologizing that his company didn’t alert law enforcement about the online behavior of a person who shot and killed eight people in Tumbler Ridge, British Columbia.</p><p>In the letter posted on Friday, <a href=\"https://www.theguardian.com/technology/sam-altman\">Sam Altman</a> expressed his deepest condolences to the entire community.</p> <a href=\"https://www.theguardian.com/us-news/2026/apr/25/altman-apologizes-after-openai-failed-to-alert-police-before-fatal-canada-shooting\">Continue reading...</a>",
+        "body_text": "",
+        "url": "https://www.theguardian.com/us-news/2026/apr/25/altman-apologizes-after-openai-failed-to-alert-police-before-fatal-canada-shooting",
+        "published_at": "Sat, 25 Apr 2026 02:13:21 GMT",
+        "content_hash": "3e42ccccef872e71913fcc8489f51601013f5e59ca000b55dbed38da62da75d0",
+        "retrieval_status": "legacy_metadata_only",
+        "captured_at": "2026-07-21 20:26:58"
+      },
+      "article": {
+        "id": "occ-3602",
+        "source": "The Guardian",
+        "url": "https://www.theguardian.com/us-news/2026/apr/25/altman-apologizes-after-openai-failed-to-alert-police-before-fatal-canada-shooting",
+        "published_at": "2026-04-25T02:13:21+00:00",
+        "title": "Altman apologizes after OpenAI failed to alert police before fatal Canada shooting",
+        "text": "OpenAI said the company had identified an account using abuse-detection efforts, but determined at the time it didn’t meet threshold for legal referral\nThe head of OpenAI has written a letter apologizing that his company didn’t alert law enforcement about the online behavior of a person who shot and killed eight people in Tumbler Ridge, British Columbia.\nIn the letter posted on Friday, Sam Altman expressed his deepest condolences to the entire community.\nContinue reading..."
+      }
+    },
+    {
+      "id": "occ-4397",
+      "synthetic": false,
+      "provenance": {
+        "archive_path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/historical/.news/historical/source-archive.db",
+        "table": "article_occurrences",
+        "primary_key": {
+          "occurrence_id": 4397
+        },
+        "raw_record_sha256": "a42dac891cc6e0e6242a422cf2caf4affac46d13e080a76c86553e68e7117025",
+        "normalized_article_sha256": "cc523f6736e5be7a32efca4e17f858f08ab599d74a2a616774827d365db63c78"
+      },
+      "raw_record": {
+        "occurrence_id": 4397,
+        "article_id": "aa254d9fd888e541",
+        "editorial_date": "2026-04-29",
+        "source": "NOS",
+        "language": "",
+        "title": "Wat staat op het spel in zaak van Musk tegen Altman over ChatGPT-maker OpenAI?",
+        "description": "<p>Twee opblaasbare bokszakken staan begin deze week buiten de rechtbank in de Amerikaanse staat Californië. Daarop staan de hoofden van twee mannen die de komende weken in de rechtszaal hun strijd zullen uitvechten: Elon Musk en Sam Altman.</p>\r\n        <p>Musk is de man achter automaker Tesla, ruimtevaartbedrijf SpaceX, het sociale medium X en het AI-bedrijf xAI. Hij is de rijkste persoon op aarde met een geschat vermogen dat in de honderden miljarden dollars loopt.</p>\r\n        <p>Altman is het gezicht van OpenAI, het bedrijf achter het AI-tekstprogramma ChatGPT. De ontstaansgeschiedenis en groei van het bedrijf staan centraal in de rechtszaak die Musk tegen hem is gestart.</p>\r\n        <p>Musk beweert dat hij door Altman is misleid toen hij in de beginjaren van OpenAI geld doneerde.</p>\r\n        <h2>OpenAI als onderzoeksbedrijf</h2>\r\n        <p>Musk en Altman kennen elkaar uit het Amerikaanse techwereldje in Californië. Ze hadden in het begin een goede relatie en bespraken de zorgen rond kunstmatige intelligentie (AI). Ze waren het erover eens dat de technologie goed moet uitpakken voor de mensheid.</p>\r\n        <p>Na maandenlange gesprekken hierover richtten ze in 2015 samen OpenAI op. De organisatie beschrijft zichzelf als een \"non-profit onderzoeksbedrijf op het gebied van kunstmatige intelligentie\". Het plan was om te werken aan AI-technologie die \"goed voor ons allemaal\" is, zonder het doel om winst te maken.</p>\r\n        <p>Musk werd een van de belangrijkste geldschieters van OpenAI. Tot september 2020 doneerde hij ongeveer 38 miljoen euro. OpenAI gebruikte het geld onder meer om personeel te betalen, de huur te betalen en om computerrekenkracht te kopen die nodig is om AI-technologie te ontwikkelen.</p>\r\n        <p>Tien jaar na de oprichting van OpenAI, laten de protesten bij de rechtbank van begin deze week zien dat deze vraag wie profiteert van AI nog steeds speelt. Gaat de mensheid profiteren van AI-technologie, of zijn dat vooral een paar rijken uit de techwereld? Demonstranten spreken zich daarbij niet alleen uit tegen Musk en Altman, maar ook tegen AI-technologie in het algemeen.</p>\r\n        <h2>Musk: OpenAI heeft belofte gebroken</h2>\r\n        <p>Musk zegt dat hij zijn geld doneerde omdat OpenAI een organisatie zou blijven die AI-technologie ontwikkelde die ten goede zou komen aan de hele mensheid en geen winst zou maken. \"Zonder die wezenlijke beloften, zou Musk niet aan OpenAI hebben bijgedragen\", schrijven zijn advocaten.</p>\r\n        <p>Die belofte is gebroken, zegt Musk. In 2018 richtte OpenAI een commercieel bedrijfsonderdeel op. Andere bedrijven kunnen daarin geld investeren, in de hoop dat terug te verdienen. OpenAI doet dat omdat het beseft dat alleen donaties niet genoeg geld opleveren om de doelen te halen.</p>\r\n        <p>Altman en OpenAI wisten of hadden moeten weten dat Musk zijn geld doneerde voor OpenAI's oorspronkelijke doel en \"niet om investeerders rijker te maken\", zegt Musk. Volgens hem heeft Altman zijn geld voor non-profit gebruikt om OpenAI te veranderen \"in een commerciële gigant gericht op winst\" en heeft ook Altman zelf daar veel geld mee verdiend.</p>\r\n        <h2>OpenAI: Musk wilde macht</h2>\r\n        <p>OpenAI zegt dat er helemaal geen harde afspraken waren over de donaties van Musk. Bovendien was Musk zelf betrokken bij de gesprekken over een nieuw op winst gericht bedrijfsonderdeel, zegt OpenAI.</p>\r\n        <p>In die periode wilde Musk volgens OpenAI de macht over dit nieuwe bedrijfsonderdeel hebben. Altman zou dit hebben geweigerd. Daarna zou Musk hebben geprobeerd om OpenAI onderdeel te maken van zijn autobedrijf Tesla. Ook dat mislukte, schrijft OpenAI, waarna Musk in februari 2018 opstapte uit het bestuur van OpenAI. Een halfjaar later werd het op winst gerichte bedrijfsonderdeel opgericht.</p>\r\n        <p>In de jaren daarna ontving OpenAI 3 miljard dollar aan investeringen van Microsoft. Dat was nog voordat het bedrijf bekend werd bij het grote publiek. Dat gebeurde pas nadat OpenAI eind 2022 het AI-tekstprogramma ChatGPT uitbracht. Het wordt gezien als een <a href=\"https://nos.nl/artikel/2455837-schrijvende-ai-populair-we-bevinden-ons-op-een-kantelpunt\">belangrijk moment</a> in de aandacht voor allerlei vormen van kunstmatige intelligentie.</p>\r\n        <p>Volgens OpenAI voert Musk de rechtszaak uit eigen belang, omdat hij begin 2023 een eigen AI-bedrijf oprichtte: xAI. Dit bedrijf is onder meer de ontwikkelaar van ChatGPT-concurrent Grok. Een jaar geleden werd het bedrijf eigenaar van het sociale medium X, en In februari werd xAI onderdeel van Musks ruimtevaartbedrijf SpaceX.</p>\r\n        <h2>Persoonlijk en zakelijk gevecht</h2>\r\n        <p>Dat maakt de rechtszaak niet alleen een persoonlijke ruzie tussen Musk en Altman, maar ook een zakelijke gevecht. SpaceX en OpenAI hebben allebei plannen voor een beursgang.</p>\r\n        <p>Met de rechtszaak wil Musk bereiken dat OpenAI's aanpassing naar een op winst gericht bedrijf wordt teruggedraaid. Ook wil hij dat \"alle onrechtmatig verkregen winst\" terechtkomt bij het non-profitonderdeel van OpenAI.</p>\r\n        <p>Musk vraagt niet om een specifiek bedrag, maar liet de onrechtmatig verkregen winst eerder schatten op 78 miljard tot 134 miljard dollar. Het gaat waarschijnlijk weken duren voordat de rechter een oordeel velt. Als dat is gebeurd, gaat de zaak verder over welke oplossing daar goed bij past.</p>",
+        "body_text": "",
+        "url": "https://nos.nl/l/2612416",
+        "published_at": "Wed, 29 Apr 2026 16:25:56 +0200",
+        "content_hash": "8d011d80ff4d3b1fb524458f68587c33d89e17bbb147f859c72d88c24a187639",
+        "retrieval_status": "legacy_metadata_only",
+        "captured_at": "2026-07-21 20:26:58"
+      },
+      "article": {
+        "id": "occ-4397",
+        "source": "NOS",
+        "url": "https://nos.nl/l/2612416",
+        "published_at": "2026-04-29T16:25:56+02:00",
+        "title": "Wat staat op het spel in zaak van Musk tegen Altman over ChatGPT-maker OpenAI?",
+        "text": "Twee opblaasbare bokszakken staan begin deze week buiten de rechtbank in de Amerikaanse staat Californië. Daarop staan de hoofden van twee mannen die de komende weken in de rechtszaal hun strijd zullen uitvechten: Elon Musk en Sam Altman.\nMusk is de man achter automaker Tesla, ruimtevaartbedrijf SpaceX, het sociale medium X en het AI-bedrijf xAI. Hij is de rijkste persoon op aarde met een geschat vermogen dat in de honderden miljarden dollars loopt.\nAltman is het gezicht van OpenAI, het bedrijf achter het AI-tekstprogramma ChatGPT. De ontstaansgeschiedenis en groei van het bedrijf staan centraal in de rechtszaak die Musk tegen hem is gestart.\nMusk beweert dat hij door Altman is misleid toen hij in de beginjaren van OpenAI geld doneerde.\nOpenAI als onderzoeksbedrijf\nMusk en Altman kennen elkaar uit het Amerikaanse techwereldje in Californië. Ze hadden in het begin een goede relatie en bespraken de zorgen rond kunstmatige intelligentie (AI). Ze waren het erover eens dat de technologie goed moet uitpakken voor de mensheid.\nNa maandenlange gesprekken hierover richtten ze in 2015 samen OpenAI op. De organisatie beschrijft zichzelf als een \"non-profit onderzoeksbedrijf op het gebied van kunstmatige intelligentie\". Het plan was om te werken aan AI-technologie die \"goed voor ons allemaal\" is, zonder het doel om winst te maken.\nMusk werd een van de belangrijkste geldschieters van OpenAI. Tot september 2020 doneerde hij ongeveer 38 miljoen euro. OpenAI gebruikte het geld onder meer om personeel te betalen, de huur te betalen en om computerrekenkracht te kopen die nodig is om AI-technologie te ontwikkelen.\nTien jaar na de oprichting van OpenAI, laten de protesten bij de rechtbank van begin deze week zien dat deze vraag wie profiteert van AI nog steeds speelt. Gaat de mensheid profiteren van AI-technologie, of zijn dat vooral een paar rijken uit de techwereld? Demonstranten spreken zich daarbij niet alleen uit tegen Musk en Altman, maar ook tegen AI-technologie in het algemeen.\nMusk: OpenAI heeft belofte gebroken\nMusk zegt dat hij zijn geld doneerde omdat OpenAI een organisatie zou blijven die AI-technologie ontwikkelde die ten goede zou komen aan de hele mensheid en geen winst zou maken. \"Zonder die wezenlijke beloften, zou Musk niet aan OpenAI hebben bijgedragen\", schrijven zijn advocaten.\nDie belofte is gebroken, zegt Musk. In 2018 richtte OpenAI een commercieel bedrijfsonderdeel op. Andere bedrijven kunnen daarin geld investeren, in de hoop dat terug te verdienen. OpenAI doet dat omdat het beseft dat alleen donaties niet genoeg geld opleveren om de doelen te halen.\nAltman en OpenAI wisten of hadden moeten weten dat Musk zijn geld doneerde voor OpenAI's oorspronkelijke doel en \"niet om investeerders rijker te maken\", zegt Musk. Volgens hem heeft Altman zijn geld voor non-profit gebruikt om OpenAI te veranderen \"in een commerciële gigant gericht op winst\" en heeft ook Altman zelf daar veel geld mee verdiend.\nOpenAI: Musk wilde macht\nOpenAI zegt dat er helemaal geen harde afspraken waren over de donaties van Musk. Bovendien was Musk zelf betrokken bij de gesprekken over een nieuw op winst gericht bedrijfsonderdeel, zegt OpenAI.\nIn die periode wilde Musk volgens OpenAI de macht over dit nieuwe bedrijfsonderdeel hebben. Altman zou dit hebben geweigerd. Daarna zou Musk hebben geprobeerd om OpenAI onderdeel te maken van zijn autobedrijf Tesla. Ook dat mislukte, schrijft OpenAI, waarna Musk in februari 2018 opstapte uit het bestuur van OpenAI. Een halfjaar later werd het op winst gerichte bedrijfsonderdeel opgericht.\nIn de jaren daarna ontving OpenAI 3 miljard dollar aan investeringen van Microsoft. Dat was nog voordat het bedrijf bekend werd bij het grote publiek. Dat gebeurde pas nadat OpenAI eind 2022 het AI-tekstprogramma ChatGPT uitbracht. Het wordt gezien als een belangrijk moment in de aandacht voor allerlei vormen van kunstmatige intelligentie.\nVolgens OpenAI voert Musk de rechtszaak uit eigen belang, omdat hij begin 2023 een eigen AI-bedrijf oprichtte: xAI. Dit bedrijf is onder meer de ontwikkelaar van ChatGPT-concurrent Grok. Een jaar geleden werd het bedrijf eigenaar van het sociale medium X, en In februari werd xAI onderdeel van Musks ruimtevaartbedrijf SpaceX.\nPersoonlijk en zakelijk gevecht\nDat maakt de rechtszaak niet alleen een persoonlijke ruzie tussen Musk en Altman, maar ook een zakelijke gevecht. SpaceX en OpenAI hebben allebei plannen voor een beursgang.\nMet de rechtszaak wil Musk bereiken dat OpenAI's aanpassing naar een op winst gericht bedrijf wordt teruggedraaid. Ook wil hij dat \"alle onrechtmatig verkregen winst\" terechtkomt bij het non-profitonderdeel van OpenAI.\nMusk vraagt niet om een specifiek bedrag, maar liet de onrechtmatig verkregen winst eerder schatten op 78 miljard tot 134 miljard dollar. Het gaat waarschijnlijk weken duren voordat de rechter een oordeel velt. Als dat is gebeurd, gaat de zaak verder over welke oplossing daar goed bij past."
+      }
+    },
+    {
+      "id": "occ-4956",
+      "synthetic": false,
+      "provenance": {
+        "archive_path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/historical/.news/historical/source-archive.db",
+        "table": "article_occurrences",
+        "primary_key": {
+          "occurrence_id": 4956
+        },
+        "raw_record_sha256": "83cd591181c8d5a4fad380646debf37a7885d7a953f168ed0a0fd993d169ccd4",
+        "normalized_article_sha256": "fd34183355023d77c3e107839a2bffc557b936e322c42ffae2df57783a92ae30"
+      },
+      "raw_record": {
+        "occurrence_id": 4956,
+        "article_id": "46eba6de344a810b",
+        "editorial_date": "2026-04-29",
+        "source": "The Guardian",
+        "language": "",
+        "title": "Families sue OpenAI over failure to report Canada mass shooter’s behavior on ChatGPT",
+        "description": "<p>New lawsuits allege employees urged company to notify authorities months before deadly Tumbler Ridge attack</p><p>Families of seven victims of a mass shooting at a secondary school in British Columbia are suing OpenAI and the company’s CEO for negligence after it failed to alert authorities to the shooter’s troubling conversations with ChatGPT.</p><p>The lawsuits, filed on Wednesday in a federal court in San Francisco, allege that the violent intentions of the shooter, identified as 18-year-old Jesse Van Rootselaar, were well-known to OpenAI. Employees at the company flagged the shooter’s account eight months before the attack and determined that it posed “a credible and specific threat of gun violence against real people”, according to the lawsuit.</p> <a href=\"https://www.theguardian.com/technology/2026/apr/29/openai-tumbler-ridge-shooter-chatgpt-lawsuit\">Continue reading...</a>",
+        "body_text": "",
+        "url": "https://www.theguardian.com/technology/2026/apr/29/openai-tumbler-ridge-shooter-chatgpt-lawsuit",
+        "published_at": "Wed, 29 Apr 2026 13:00:49 GMT",
+        "content_hash": "035ec7d25e54365019b9bddc08e94488cc6beec90dc95161505c4f0b58553647",
+        "retrieval_status": "legacy_metadata_only",
+        "captured_at": "2026-07-21 20:26:58"
+      },
+      "article": {
+        "id": "occ-4956",
+        "source": "The Guardian",
+        "url": "https://www.theguardian.com/technology/2026/apr/29/openai-tumbler-ridge-shooter-chatgpt-lawsuit",
+        "published_at": "2026-04-29T13:00:49+00:00",
+        "title": "Families sue OpenAI over failure to report Canada mass shooter’s behavior on ChatGPT",
+        "text": "New lawsuits allege employees urged company to notify authorities months before deadly Tumbler Ridge attack\nFamilies of seven victims of a mass shooting at a secondary school in British Columbia are suing OpenAI and the company’s CEO for negligence after it failed to alert authorities to the shooter’s troubling conversations with ChatGPT.\nThe lawsuits, filed on Wednesday in a federal court in San Francisco, allege that the violent intentions of the shooter, identified as 18-year-old Jesse Van Rootselaar, were well-known to OpenAI. Employees at the company flagged the shooter’s account eight months before the attack and determined that it posed “a credible and specific threat of gun violence against real people”, according to the lawsuit.\nContinue reading..."
+      }
+    },
+    {
+      "id": "occ-12956",
+      "synthetic": false,
+      "provenance": {
+        "archive_path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/historical/.news/historical/source-archive.db",
+        "table": "article_occurrences",
+        "primary_key": {
+          "occurrence_id": 12956
+        },
+        "raw_record_sha256": "35b761e9cc4f35219b8e8763d59cebe495b1eb67fa49e8b5c3d8733c384b6d70",
+        "normalized_article_sha256": "d656b3d8006fdc3c922648e430f0448391b86ee1f50b5b1acedc4cee3141e310"
+      },
+      "raw_record": {
+        "occurrence_id": 12956,
+        "article_id": "5f771e765c4f37e6",
+        "editorial_date": "2026-05-18",
+        "source": "NOS",
+        "language": "",
+        "title": "Musk verliest rechtszaak over koers van OpenAI",
+        "description": "<p>Elon Musk heeft de rechtszaak die hij tegen OpenAI aanspande verloren. De miljardair had het bedrijf van topman Sam Altman voor de rechter gesleept omdat hij er geld aan doneerde en het er niet mee eens is dat het een bedrijf is geworden dat winst maakt in plaats van een non-profit onderzoeksbedrijf.</p>\r\n        <p>Een negenkoppige jury oordeelde dat Musk te lang heeft gewacht met het beginnen van een rechtszaak. De jury had slechts een adviserende rol, maar de rechter nam hun oordeel over.</p>\r\n        <p>Musk is samen met Altman oprichter van OpenAI, een bedrijf dat zich bezig ging houden met kunstmatige intelligentie (AI) en later bekend werd met de ontwikkeling van het tekstprogramma ChatGPT. Musk stak er zo'n 38 miljoen dollar in. Het plan was dat het bedrijf een onderzoeksbedrijf zou worden zonder winstoogmerk en aan technologie zou werken die \"goed voor ons allemaal is\".</p>\r\n        <h2>'Geld verdienen'</h2>\r\n        <p>Volgens de miljardair is het bedrijf te ver afgedreven van dat oorspronkelijke doel en vooral uit op geld verdienen, terwijl Altman juist van Musk vindt dat die meer in geld is geïnteresseerd dan in het belang van de mensheid.</p>\r\n        <p>OpenAI werd in 2015 opgericht, en kwam in 2018 met een commercieel bedrijfsonderdeel waar andere bedrijven geld in kunnen investeren in de hoop om dat terug te verdienen. Onder meer Microsoft investeerde fors in het bedrijf (zo'n 13 miljard dollar). Volgens Musk wist ook Microsoft al die tijd dat het OpenAI meer om geld gaat dan om altruïsme.</p>",
+        "body_text": "",
+        "url": "https://nos.nl/l/2614904",
+        "published_at": "Mon, 18 May 2026 19:58:18 +0200",
+        "content_hash": "18979caf855302c2d5b75bcd8d987086c0a47b931167b176f117fbaae0aa87b6",
+        "retrieval_status": "legacy_metadata_only",
+        "captured_at": "2026-07-21 20:26:58"
+      },
+      "article": {
+        "id": "occ-12956",
+        "source": "NOS",
+        "url": "https://nos.nl/l/2614904",
+        "published_at": "2026-05-18T19:58:18+02:00",
+        "title": "Musk verliest rechtszaak over koers van OpenAI",
+        "text": "Elon Musk heeft de rechtszaak die hij tegen OpenAI aanspande verloren. De miljardair had het bedrijf van topman Sam Altman voor de rechter gesleept omdat hij er geld aan doneerde en het er niet mee eens is dat het een bedrijf is geworden dat winst maakt in plaats van een non-profit onderzoeksbedrijf.\nEen negenkoppige jury oordeelde dat Musk te lang heeft gewacht met het beginnen van een rechtszaak. De jury had slechts een adviserende rol, maar de rechter nam hun oordeel over.\nMusk is samen met Altman oprichter van OpenAI, een bedrijf dat zich bezig ging houden met kunstmatige intelligentie (AI) en later bekend werd met de ontwikkeling van het tekstprogramma ChatGPT. Musk stak er zo'n 38 miljoen dollar in. Het plan was dat het bedrijf een onderzoeksbedrijf zou worden zonder winstoogmerk en aan technologie zou werken die \"goed voor ons allemaal is\".\n'Geld verdienen'\nVolgens de miljardair is het bedrijf te ver afgedreven van dat oorspronkelijke doel en vooral uit op geld verdienen, terwijl Altman juist van Musk vindt dat die meer in geld is geïnteresseerd dan in het belang van de mensheid.\nOpenAI werd in 2015 opgericht, en kwam in 2018 met een commercieel bedrijfsonderdeel waar andere bedrijven geld in kunnen investeren in de hoop om dat terug te verdienen. Onder meer Microsoft investeerde fors in het bedrijf (zo'n 13 miljard dollar). Volgens Musk wist ook Microsoft al die tijd dat het OpenAI meer om geld gaat dan om altruïsme."
+      }
+    },
+    {
+      "id": "occ-12961",
+      "synthetic": false,
+      "provenance": {
+        "archive_path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/historical/.news/historical/source-archive.db",
+        "table": "article_occurrences",
+        "primary_key": {
+          "occurrence_id": 12961
+        },
+        "raw_record_sha256": "3589ab5feb27cc899d411e5f58bcc32b675e059397fe72988d2ef908f99f443f",
+        "normalized_article_sha256": "f73c42b4343a92c8eed973834451391506dfb63192668ffcdeff38ea2e4eb760"
+      },
+      "raw_record": {
+        "occurrence_id": 12961,
+        "article_id": "88da39d3187558be",
+        "editorial_date": "2026-05-18",
+        "source": "BBC News",
+        "language": "",
+        "title": "Musk loses OpenAI court battle after jury finds he waited too long to sue",
+        "description": "Jurors spent weeks hearing about Musk's claim that Altman had \"stolen a charity.\"",
+        "body_text": "",
+        "url": "https://www.bbc.com/news/articles/cewpyv79pw1o?at_medium=RSS&at_campaign=rss",
+        "published_at": "Mon, 18 May 2026 20:59:57 GMT",
+        "content_hash": "6b23cc91177c461718096a0b3bc0a3fb8f0346cbd8c903944225629256b34210",
+        "retrieval_status": "legacy_metadata_only",
+        "captured_at": "2026-07-21 20:26:58"
+      },
+      "article": {
+        "id": "occ-12961",
+        "source": "BBC News",
+        "url": "https://www.bbc.com/news/articles/cewpyv79pw1o?at_medium=RSS&at_campaign=rss",
+        "published_at": "2026-05-18T20:59:57+00:00",
+        "title": "Musk loses OpenAI court battle after jury finds he waited too long to sue",
+        "text": "Jurors spent weeks hearing about Musk's claim that Altman had \"stolen a charity.\""
+      }
+    },
+    {
+      "id": "occ-3589",
+      "synthetic": false,
+      "provenance": {
+        "archive_path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/historical/.news/historical/source-archive.db",
+        "table": "article_occurrences",
+        "primary_key": {
+          "occurrence_id": 3589
+        },
+        "raw_record_sha256": "47d31f93081d7a05fee80f5e8f3b3ca19b509c6f5c786d6c4c54e249115a1efd",
+        "normalized_article_sha256": "abab091bf8f5cec3374997441c8e110bb076fa8ce8760a43abf633c14a1a9bc4"
+      },
+      "raw_record": {
+        "occurrence_id": 3589,
+        "article_id": "d715473e8d1ff7a4",
+        "editorial_date": "2026-04-27",
+        "source": "BBC News",
+        "language": "",
+        "title": "Starmer faces vote on inquiry over Mandelson vetting claims",
+        "description": "No 10 brands the move \"a desperate political stunt by the Conservative Party\", which had asked for the vote.",
+        "body_text": "",
+        "url": "https://www.bbc.com/news/articles/c3r3r2vzjp1o?at_medium=RSS&at_campaign=rss",
+        "published_at": "Mon, 27 Apr 2026 17:47:42 GMT",
+        "content_hash": "b2235ebae4b4089a87badfad6e89a2d1300269f8b84c55439e22b9bf18dd38d8",
+        "retrieval_status": "legacy_metadata_only",
+        "captured_at": "2026-07-21 20:26:58"
+      },
+      "article": {
+        "id": "occ-3589",
+        "source": "BBC News",
+        "url": "https://www.bbc.com/news/articles/c3r3r2vzjp1o?at_medium=RSS&at_campaign=rss",
+        "published_at": "2026-04-27T17:47:42+00:00",
+        "title": "Starmer faces vote on inquiry over Mandelson vetting claims",
+        "text": "No 10 brands the move \"a desperate political stunt by the Conservative Party\", which had asked for the vote."
+      }
+    },
+    {
+      "id": "occ-4125",
+      "synthetic": false,
+      "provenance": {
+        "archive_path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/historical/.news/historical/source-archive.db",
+        "table": "article_occurrences",
+        "primary_key": {
+          "occurrence_id": 4125
+        },
+        "raw_record_sha256": "cc784baa73154fd741847a80ce44e4982f9502344e74ba9f6b5b8f704a18e9a1",
+        "normalized_article_sha256": "d4a117161c20d56509612ca498b1fc12b7773861e0c12ce424adf1946ffedc0c"
+      },
+      "raw_record": {
+        "occurrence_id": 4125,
+        "article_id": "35cefcd718c15d6d",
+        "editorial_date": "2026-04-28",
+        "source": "Telegraaf",
+        "language": "",
+        "title": "Geen parlementair onderzoek naar Starmer om aanstelling Mandelson",
+        "description": "Er komt geen parlementair onderzoek naar de Britse premier Keir Starmer. In het parlement wist de motie hiervoor geen meerderheid te behalen. Uit het onderzoek had duidelijk moeten worden of de sociaaldemocraat Starmer het Lagerhuis mogelijk bewust of onbewust heeft misleid in de affaire rond de benoeming van Peter Mandelson als ambassadeur in de Verenigde Staten.",
+        "body_text": "",
+        "url": "https://www.telegraaf.nl/buitenland/geen-parlementair-onderzoek-naar-starmer-om-aanstelling-mandelson/150070346.html",
+        "published_at": "Tue, 28 Apr 2026 17:45:45 GMT",
+        "content_hash": "02d38fa9cef5b63d432f764664ab1309dcba7a3bd20ef0443579d72dca0ef0f5",
+        "retrieval_status": "legacy_metadata_only",
+        "captured_at": "2026-07-21 20:26:58"
+      },
+      "article": {
+        "id": "occ-4125",
+        "source": "Telegraaf",
+        "url": "https://www.telegraaf.nl/buitenland/geen-parlementair-onderzoek-naar-starmer-om-aanstelling-mandelson/150070346.html",
+        "published_at": "2026-04-28T17:45:45+00:00",
+        "title": "Geen parlementair onderzoek naar Starmer om aanstelling Mandelson",
+        "text": "Er komt geen parlementair onderzoek naar de Britse premier Keir Starmer. In het parlement wist de motie hiervoor geen meerderheid te behalen. Uit het onderzoek had duidelijk moeten worden of de sociaaldemocraat Starmer het Lagerhuis mogelijk bewust of onbewust heeft misleid in de affaire rond de benoeming van Peter Mandelson als ambassadeur in de Verenigde Staten."
+      }
+    },
+    {
+      "id": "occ-4902",
+      "synthetic": false,
+      "provenance": {
+        "archive_path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/historical/.news/historical/source-archive.db",
+        "table": "article_occurrences",
+        "primary_key": {
+          "occurrence_id": 4902
+        },
+        "raw_record_sha256": "433cb22a9589d7b118251a685d64fe41f12f185a4e1f27006610515aa5049b78",
+        "normalized_article_sha256": "b34e720191d8f958009ed526de6af90e752b790195c4c2fcb3aaac606b479934"
+      },
+      "raw_record": {
+        "occurrence_id": 4902,
+        "article_id": "3f611cc9db82bd18",
+        "editorial_date": "2026-04-29",
+        "source": "NYT",
+        "language": "",
+        "title": "Men Accused in Fires Targeting Starmer Received Orders in Russian, Prosecutors Say",
+        "description": "Two buildings and a car linked to Prime Minister Keir Starmer of Britain were set afire last year. The men on trial for it were recruited through a Russian-language Telegram account, a jury was told.",
+        "body_text": "",
+        "url": "https://www.nytimes.com/2026/04/29/world/europe/arson-keir-starmer-homes.html",
+        "published_at": "Wed, 29 Apr 2026 16:20:11 +0000",
+        "content_hash": "bd141302ae0e7f0f0b7dfd44a611885d0d76bc69e958728a5b595aa9ffcb47cb",
+        "retrieval_status": "legacy_metadata_only",
+        "captured_at": "2026-07-21 20:26:58"
+      },
+      "article": {
+        "id": "occ-4902",
+        "source": "NYT",
+        "url": "https://www.nytimes.com/2026/04/29/world/europe/arson-keir-starmer-homes.html",
+        "published_at": "2026-04-29T16:20:11+00:00",
+        "title": "Men Accused in Fires Targeting Starmer Received Orders in Russian, Prosecutors Say",
+        "text": "Two buildings and a car linked to Prime Minister Keir Starmer of Britain were set afire last year. The men on trial for it were recruited through a Russian-language Telegram account, a jury was told."
+      }
+    },
+    {
+      "id": "occ-4903",
+      "synthetic": false,
+      "provenance": {
+        "archive_path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/historical/.news/historical/source-archive.db",
+        "table": "article_occurrences",
+        "primary_key": {
+          "occurrence_id": 4903
+        },
+        "raw_record_sha256": "d0c9b1a87e27308490749f6c0feef324f64118b64d591d8c71f49c89ddf08864",
+        "normalized_article_sha256": "e40044b2658ff3f0ec1748969b33df1d2ccd03b8f5bc6a5e94398afd541f1936"
+      },
+      "raw_record": {
+        "occurrence_id": 4903,
+        "article_id": "7a87416e5ac244fc",
+        "editorial_date": "2026-04-29",
+        "source": "BBC News",
+        "language": "",
+        "title": "Man offered Ukrainians money to carry out Starmer arson attacks, court hears",
+        "description": "The three men are accused of targeting north London properties linked to Prime Minister Sir Keir Starmer.",
+        "body_text": "",
+        "url": "https://www.bbc.com/news/articles/cx21y204zz4o?at_medium=RSS&at_campaign=rss",
+        "published_at": "Wed, 29 Apr 2026 15:01:41 GMT",
+        "content_hash": "c4f06d9794e236f1d36481d220cc2e94cf7fd8a40a6d2be431499aa5b8055d33",
+        "retrieval_status": "legacy_metadata_only",
+        "captured_at": "2026-07-21 20:26:58"
+      },
+      "article": {
+        "id": "occ-4903",
+        "source": "BBC News",
+        "url": "https://www.bbc.com/news/articles/cx21y204zz4o?at_medium=RSS&at_campaign=rss",
+        "published_at": "2026-04-29T15:01:41+00:00",
+        "title": "Man offered Ukrainians money to carry out Starmer arson attacks, court hears",
+        "text": "The three men are accused of targeting north London properties linked to Prime Minister Sir Keir Starmer."
+      }
+    },
+    {
+      "id": "occ-5707",
+      "synthetic": false,
+      "provenance": {
+        "archive_path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/historical/.news/historical/source-archive.db",
+        "table": "article_occurrences",
+        "primary_key": {
+          "occurrence_id": 5707
+        },
+        "raw_record_sha256": "ee8180bd46fd648d08057225a0b6a9ad9ad9862e793afacc0514ee468e481c31",
+        "normalized_article_sha256": "ec735649049a5f54763038795f1547e547587b25a2786cde79677ec66d4eeb97"
+      },
+      "raw_record": {
+        "occurrence_id": 5707,
+        "article_id": "574872f49ea018f5",
+        "editorial_date": "2026-04-30",
+        "source": "The Guardian",
+        "language": "",
+        "title": "Starmer’s sister-in-law feared what might have happened in arson attack, court hears",
+        "description": "<p>Judith Alexander describes how Kentish Town house owned by the prime minister was targeted</p><p>The prime minister’s sister-in-law has said she feared what might have happened had she not woken up after her home was targeted in an arson attack, a court has heard.</p><p><a href=\"https://www.theguardian.com/uk-news/2026/apr/29/men-accused-arson-attacks-keir-starmer-london\">The incident is one of a series of arson attacks</a> that took place in May last year on property linked to Keir Starmer, which three men with links to Ukraine are accused of targeting. They deny all the charges.</p> <a href=\"https://www.theguardian.com/uk-news/2026/apr/30/starmers-sister-in-law-feared-what-might-have-happened-in-arson-attack-court-hears\">Continue reading...</a>",
+        "body_text": "",
+        "url": "https://www.theguardian.com/uk-news/2026/apr/30/starmers-sister-in-law-feared-what-might-have-happened-in-arson-attack-court-hears",
+        "published_at": "Thu, 30 Apr 2026 20:56:50 GMT",
+        "content_hash": "1719f78ec5288817790a48fedb10e91ad58d719467b6cc88fbd8a8203e40f350",
+        "retrieval_status": "legacy_metadata_only",
+        "captured_at": "2026-07-21 20:26:58"
+      },
+      "article": {
+        "id": "occ-5707",
+        "source": "The Guardian",
+        "url": "https://www.theguardian.com/uk-news/2026/apr/30/starmers-sister-in-law-feared-what-might-have-happened-in-arson-attack-court-hears",
+        "published_at": "2026-04-30T20:56:50+00:00",
+        "title": "Starmer’s sister-in-law feared what might have happened in arson attack, court hears",
+        "text": "Judith Alexander describes how Kentish Town house owned by the prime minister was targeted\nThe prime minister’s sister-in-law has said she feared what might have happened had she not woken up after her home was targeted in an arson attack, a court has heard.\nThe incident is one of a series of arson attacks that took place in May last year on property linked to Keir Starmer, which three men with links to Ukraine are accused of targeting. They deny all the charges.\nContinue reading..."
+      }
+    },
+    {
+      "id": "occ-17587",
+      "synthetic": false,
+      "provenance": {
+        "archive_path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/historical/.news/historical/source-archive.db",
+        "table": "article_occurrences",
+        "primary_key": {
+          "occurrence_id": 17587
+        },
+        "raw_record_sha256": "ca296d10fce5b527f89986e436d19c6f6a984acd55fb31c1243385fef98149a2",
+        "normalized_article_sha256": "c355af462a32bf1652a708cc8fb82106d03109fdf314eef335ccf169803ba6bd"
+      },
+      "raw_record": {
+        "occurrence_id": 17587,
+        "article_id": "381ac7a9caeed0fb",
+        "editorial_date": "2026-07-22",
+        "source": "BBC News",
+        "language": "en",
+        "title": "Most bus fares in England to be capped at £2 from January",
+        "description": "The government says the policy will \"help with the cost of living and give people the breathing space they need\"",
+        "body_text": "",
+        "url": "https://www.bbc.co.uk/news/articles/cz64l78n5vpo?at_medium=RSS&at_campaign=rss",
+        "published_at": "Wed, 22 Jul 2026 12:26:03 GMT",
+        "content_hash": "d3e49afabe8b2a5a4e11de93ad982b7c5366e861c627956f6092abc31b7cf86e",
+        "retrieval_status": "rss_only",
+        "captured_at": "2026-07-22 21:33:23"
+      },
+      "article": {
+        "id": "occ-17587",
+        "source": "BBC News",
+        "url": "https://www.bbc.co.uk/news/articles/cz64l78n5vpo?at_medium=RSS&at_campaign=rss",
+        "published_at": "2026-07-22T12:26:03+00:00",
+        "title": "Most bus fares in England to be capped at £2 from January",
+        "text": "The government says the policy will \"help with the cost of living and give people the breathing space they need\""
+      }
+    },
+    {
+      "id": "occ-17589",
+      "synthetic": false,
+      "provenance": {
+        "archive_path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/historical/.news/historical/source-archive.db",
+        "table": "article_occurrences",
+        "primary_key": {
+          "occurrence_id": 17589
+        },
+        "raw_record_sha256": "540cf8347df97c8da00a4eb9f2682925e06cf163c7b3e2affeab4554c4bba11e",
+        "normalized_article_sha256": "27a8a253f7716c7c0b0d734fd6c3acc5e11208fce277064467e477dc50e874f2"
+      },
+      "raw_record": {
+        "occurrence_id": 17589,
+        "article_id": "4d0850dac7f1710f",
+        "editorial_date": "2026-07-22",
+        "source": "BBC News",
+        "language": "en",
+        "title": "Ex-Southern Water boss among four charged over alleged plan to manipulate water quality tests",
+        "description": "Matthew Wright is accused alongside three others of trying to save the firm millions in penalties.",
+        "body_text": "",
+        "url": "https://www.bbc.co.uk/news/articles/c36d0njy7jjo?at_medium=RSS&at_campaign=rss",
+        "published_at": "Wed, 22 Jul 2026 16:07:15 GMT",
+        "content_hash": "015fc8bb63b3c19cf31309b599c37d5801e2797663c05c7ccf1125fe19a21686",
+        "retrieval_status": "rss_only",
+        "captured_at": "2026-07-22 21:33:23"
+      },
+      "article": {
+        "id": "occ-17589",
+        "source": "BBC News",
+        "url": "https://www.bbc.co.uk/news/articles/c36d0njy7jjo?at_medium=RSS&at_campaign=rss",
+        "published_at": "2026-07-22T16:07:15+00:00",
+        "title": "Ex-Southern Water boss among four charged over alleged plan to manipulate water quality tests",
+        "text": "Matthew Wright is accused alongside three others of trying to save the firm millions in penalties."
+      }
+    },
+    {
+      "id": "occ-17590",
+      "synthetic": false,
+      "provenance": {
+        "archive_path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/historical/.news/historical/source-archive.db",
+        "table": "article_occurrences",
+        "primary_key": {
+          "occurrence_id": 17590
+        },
+        "raw_record_sha256": "00acad45367c360e245e3e64e0c70fa9eb37ad7991c13e01cd21f383a5f50a31",
+        "normalized_article_sha256": "d28a642ea1c6782359e7c84ce62957523f95b5a2273e540bc45c949ae6cf8fe9"
+      },
+      "raw_record": {
+        "occurrence_id": 17590,
+        "article_id": "0d15813cefd9ed1b",
+        "editorial_date": "2026-07-22",
+        "source": "BBC News",
+        "language": "en",
+        "title": "OpenAI says its AI went rogue and launched 'unprecedented' cyber-attack",
+        "description": "It is one of the first publicly disclosed cyber-attacks carried out by AI without direct human involvement.",
+        "body_text": "",
+        "url": "https://www.bbc.co.uk/news/articles/c3ek3gvdnj3o?at_medium=RSS&at_campaign=rss",
+        "published_at": "Wed, 22 Jul 2026 11:40:11 GMT",
+        "content_hash": "cc942263083727c34399de45010a6613504cca274cb03c2045b13f2103386b4a",
+        "retrieval_status": "rss_only",
+        "captured_at": "2026-07-22 21:33:23"
+      },
+      "article": {
+        "id": "occ-17590",
+        "source": "BBC News",
+        "url": "https://www.bbc.co.uk/news/articles/c3ek3gvdnj3o?at_medium=RSS&at_campaign=rss",
+        "published_at": "2026-07-22T11:40:11+00:00",
+        "title": "OpenAI says its AI went rogue and launched 'unprecedented' cyber-attack",
+        "text": "It is one of the first publicly disclosed cyber-attacks carried out by AI without direct human involvement."
+      }
+    }
+  ]
+}

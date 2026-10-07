@@ -1,0 +1,2757 @@
+{
+  "method": "Offline script authored by an implementation agent, not an independent endorsement. No overall accuracy percentage. Frozen source-only labels are targeted judgments, not verified real-world truth.",
+  "scope": "Paired arm costs exclude shared preparation and review controls, which are reported separately. Succeeded means committed operational output, not semantic success. Story/event pair results are separate; event labels are never inferred from story labels. Prior-prior fresh pairs are excluded.",
+  "not_scored": "Reader-answer omissions, attribution/scope and headline semantic adequacy require the separate final review; this script does not infer them from IDs or lexical matching. Original ship/cat regressions are retrospective; fresh labels precede their outputs.",
+  "script_sha256": "e83f9eb5692b96fb7e861600608be040eaca36f006c1c0c39939d0e0e58a50a1",
+  "calls_sha256": "2097aa799634baf8666cef74a2644b2d617b5c981b03408a61fc71c6da7b56cc",
+  "sources_sha256": "9a0b7f81291280716a1e02f83da03719983df7c2f7a6551728b60490a5d3f329",
+  "labels_sha256": "4aa941c26aa8cb2236c4b43d86dd3d69fd0e3eb70773e0d23960c2da4442fe5e",
+  "max_cli_calls": 24,
+  "recorded_call_attempts": 19,
+  "groups": {
+    "baseline": {
+      "cases": {
+        "succeeded": [
+          "ship-cat-baseline",
+          "cat-followup-baseline",
+          "C02-baseline",
+          "C03-baseline",
+          "headlines-baseline"
+        ],
+        "rejected": [],
+        "failed": [],
+        "unavailable": [
+          "C01-baseline"
+        ]
+      },
+      "confirmed_starts": 5,
+      "unknown_launch_calls": 0,
+      "unknown_usage_calls": 0,
+      "known_usage": {
+        "input_tokens": 79259,
+        "output_tokens": 4291,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "reasoning_output_tokens": 333
+      },
+      "unknown_usage_fields": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_input_tokens": 0
+      },
+      "case_wall_seconds": 112.726191,
+      "cli_wall_seconds": 112.505605,
+      "unknown_cli_wall_calls": 0,
+      "case_counts": {
+        "succeeded": 5,
+        "rejected": 0,
+        "failed": 0,
+        "unavailable": 1
+      }
+    },
+    "candidate": {
+      "cases": {
+        "succeeded": [
+          "C02-candidate",
+          "C03-candidate",
+          "headlines-candidate"
+        ],
+        "rejected": [
+          "ship-cat-candidate"
+        ],
+        "failed": [],
+        "unavailable": [
+          "cat-followup-candidate",
+          "C01-candidate"
+        ]
+      },
+      "confirmed_starts": 8,
+      "unknown_launch_calls": 0,
+      "unknown_usage_calls": 0,
+      "known_usage": {
+        "input_tokens": 111177,
+        "output_tokens": 5530,
+        "cached_input_tokens": 6528,
+        "cache_write_input_tokens": 0,
+        "reasoning_output_tokens": 188
+      },
+      "unknown_usage_fields": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_input_tokens": 0
+      },
+      "case_wall_seconds": 163.566885,
+      "cli_wall_seconds": 163.290489,
+      "unknown_cli_wall_calls": 0,
+      "case_counts": {
+        "succeeded": 3,
+        "rejected": 1,
+        "failed": 0,
+        "unavailable": 2
+      }
+    },
+    "shared_preparation": {
+      "cases": {
+        "succeeded": [
+          "C01-prior-0",
+          "C02-prior-0"
+        ],
+        "rejected": [],
+        "failed": [
+          "C01-prior-1"
+        ],
+        "unavailable": []
+      },
+      "confirmed_starts": 3,
+      "unknown_launch_calls": 0,
+      "unknown_usage_calls": 0,
+      "known_usage": {
+        "input_tokens": 32565,
+        "output_tokens": 1716,
+        "cached_input_tokens": 7040,
+        "cache_write_input_tokens": 0,
+        "reasoning_output_tokens": 246
+      },
+      "unknown_usage_fields": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_input_tokens": 0
+      },
+      "case_wall_seconds": 50.375916,
+      "cli_wall_seconds": 50.197576,
+      "unknown_cli_wall_calls": 0,
+      "case_counts": {
+        "succeeded": 2,
+        "rejected": 0,
+        "failed": 1,
+        "unavailable": 0
+      }
+    },
+    "controls": {
+      "cases": {
+        "succeeded": [
+          "positive-control"
+        ],
+        "rejected": [
+          "observed-bad",
+          "inherited-bad"
+        ],
+        "failed": [],
+        "unavailable": []
+      },
+      "confirmed_starts": 3,
+      "unknown_launch_calls": 0,
+      "unknown_usage_calls": 0,
+      "known_usage": {
+        "input_tokens": 40504,
+        "output_tokens": 1062,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "reasoning_output_tokens": 0
+      },
+      "unknown_usage_fields": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_input_tokens": 0
+      },
+      "case_wall_seconds": 37.12137,
+      "cli_wall_seconds": 37.088105,
+      "unknown_cli_wall_calls": 0,
+      "case_counts": {
+        "succeeded": 1,
+        "rejected": 2,
+        "failed": 0,
+        "unavailable": 0
+      }
+    }
+  },
+  "totals": {
+    "confirmed_starts": 19,
+    "unknown_launch_calls": 0,
+    "unknown_usage_calls": 0,
+    "case_wall_seconds": 363.790362,
+    "cli_wall_seconds": 363.081775,
+    "unknown_cli_wall_calls": 0,
+    "known_usage": {
+      "cache_write_input_tokens": 0,
+      "cached_input_tokens": 13568,
+      "input_tokens": 263505,
+      "output_tokens": 12599,
+      "reasoning_output_tokens": 767
+    }
+  },
+  "cases": {
+    "observed-bad": {
+      "outcome": "rejected",
+      "receipt": {
+        "label": "observed-bad",
+        "code": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007",
+        "mode": "review",
+        "input": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/observed-bad.json",
+        "state": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/observed-bad",
+        "accepted": false,
+        "rejection": "story coherence review rejected the batch: story 0: unsupported — The NOS and BBC ship reports describe the same Black Sea incident, matching the Turkish corn cargo, captain’s death and 11 rescued crew. However, the additional event concerns alleged theft of 2,700 cats in Ho Chi Minh City, with no connection to the ship incident.",
+        "status": "completed",
+        "wall_seconds": 12.365204
+      },
+      "unavailable_reason": null
+    },
+    "inherited-bad": {
+      "outcome": "rejected",
+      "receipt": {
+        "label": "inherited-bad",
+        "code": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007",
+        "mode": "review",
+        "input": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/inherited-bad.json",
+        "state": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/inherited-bad",
+        "accepted": false,
+        "rejection": "story coherence review rejected the batch: story 2: unsupported — The current and prior cat-theft reports match on Ho Chi Minh City, twelve suspects and approximately 2,700 cats. However, the reused story also contains the unrelated Royad Mammadov sinking and alleged attack, supported by its original sources. Renaming the story does not remove that inherited event.",
+        "status": "completed",
+        "wall_seconds": 12.069357
+      },
+      "unavailable_reason": null
+    },
+    "positive-control": {
+      "outcome": "succeeded",
+      "receipt": {
+        "label": "positive-control",
+        "code": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007",
+        "mode": "review",
+        "input": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/positive-control.json",
+        "state": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/positive-control",
+        "accepted": true,
+        "status": "completed",
+        "wall_seconds": 12.686809
+      },
+      "unavailable_reason": null
+    },
+    "C01-prior-0": {
+      "outcome": "succeeded",
+      "receipt": {
+        "label": "C01-prior-0",
+        "code": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-baseline-20261007",
+        "mode": "run",
+        "input": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/C01-prior-0.json",
+        "state": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/C01-shared-prior",
+        "accepted": true,
+        "run_id": "054f6e7af87043289bcdd6198aae6bcf",
+        "reused": false,
+        "status": "completed",
+        "wall_seconds": 17.249368
+      },
+      "unavailable_reason": null
+    },
+    "C01-prior-1": {
+      "outcome": "failed",
+      "receipt": {
+        "label": "C01-prior-1",
+        "code": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-baseline-20261007",
+        "mode": "run",
+        "input": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/C01-prior-1.json",
+        "state": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/C01-shared-prior",
+        "status": "failed",
+        "accepted": false,
+        "error": "continuity evidence must belong to this story",
+        "wall_seconds": 21.547382
+      },
+      "unavailable_reason": null
+    },
+    "C02-prior-0": {
+      "outcome": "succeeded",
+      "receipt": {
+        "label": "C02-prior-0",
+        "code": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-baseline-20261007",
+        "mode": "run",
+        "input": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/C02-prior-0.json",
+        "state": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/C02-shared-prior",
+        "accepted": true,
+        "run_id": "9b8b3ad05dc84e2ebd342c6508e43040",
+        "reused": false,
+        "status": "completed",
+        "wall_seconds": 11.579166
+      },
+      "unavailable_reason": null
+    },
+    "ship-cat-baseline": {
+      "outcome": "succeeded",
+      "receipt": {
+        "label": "ship-cat-baseline",
+        "code": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-baseline-20261007",
+        "mode": "run",
+        "input": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/ship-cat.json",
+        "state": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/ship-cat-baseline",
+        "accepted": true,
+        "run_id": "009eb0e637e746738fbb394f2fe314c7",
+        "reused": false,
+        "status": "completed",
+        "wall_seconds": 33.38844
+      },
+      "unavailable_reason": null
+    },
+    "ship-cat-candidate": {
+      "outcome": "rejected",
+      "receipt": {
+        "label": "ship-cat-candidate",
+        "code": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007",
+        "mode": "run",
+        "input": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/ship-cat.json",
+        "state": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/ship-cat-candidate",
+        "status": "failed",
+        "accepted": false,
+        "error": "story coherence review rejected the batch: story 4: uncertain — The original NOS source explicitly connects Saudi-led coalition air support to Operation Dawn of Yemen. However, the current Guardian headline only reports an air campaign against Houthis in Yemen, with no substantive body identifying that operation or the reused occurrence. The proposed story and event reuse cannot be established from those shared participants alone.",
+        "wall_seconds": 60.094431
+      },
+      "unavailable_reason": null
+    },
+    "cat-followup-baseline": {
+      "outcome": "succeeded",
+      "receipt": {
+        "label": "cat-followup-baseline",
+        "code": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-baseline-20261007",
+        "mode": "run",
+        "input": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/cat-followup.json",
+        "state": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/ship-cat-baseline",
+        "accepted": true,
+        "run_id": "db1fb9f7756e40da921384073a80b1b6",
+        "reused": false,
+        "status": "completed",
+        "wall_seconds": 14.831551
+      },
+      "unavailable_reason": null
+    },
+    "cat-followup-candidate": {
+      "outcome": "unavailable",
+      "receipt": null,
+      "unavailable_reason": "No complete receipt: FileNotFoundError: [Errno 2] No such file or directory: '/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/receipts/cat-followup-candidate.json'"
+    },
+    "C01-baseline": {
+      "outcome": "unavailable",
+      "receipt": null,
+      "unavailable_reason": "No complete receipt: FileNotFoundError: [Errno 2] No such file or directory: '/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/receipts/C01-baseline.json'"
+    },
+    "C01-candidate": {
+      "outcome": "unavailable",
+      "receipt": null,
+      "unavailable_reason": "No complete receipt: FileNotFoundError: [Errno 2] No such file or directory: '/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/receipts/C01-candidate.json'"
+    },
+    "C02-baseline": {
+      "outcome": "succeeded",
+      "receipt": {
+        "label": "C02-baseline",
+        "code": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-baseline-20261007",
+        "mode": "run",
+        "input": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/C02.json",
+        "state": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/C02-baseline",
+        "accepted": true,
+        "run_id": "683eb877ab374b81b448e9e7f2a7848f",
+        "reused": false,
+        "status": "completed",
+        "wall_seconds": 24.874326
+      },
+      "unavailable_reason": null
+    },
+    "C02-candidate": {
+      "outcome": "succeeded",
+      "receipt": {
+        "label": "C02-candidate",
+        "code": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007",
+        "mode": "run",
+        "input": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/C02.json",
+        "state": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/C02-candidate",
+        "accepted": true,
+        "run_id": "9b94484ca30c415c984f1c00c1740f01",
+        "reused": false,
+        "status": "completed",
+        "wall_seconds": 39.902883
+      },
+      "unavailable_reason": null
+    },
+    "C03-baseline": {
+      "outcome": "succeeded",
+      "receipt": {
+        "label": "C03-baseline",
+        "code": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-baseline-20261007",
+        "mode": "run",
+        "input": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/C03.json",
+        "state": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/C03-baseline",
+        "accepted": true,
+        "run_id": "8906918479c34912b08eb143bc800d4a",
+        "reused": false,
+        "status": "completed",
+        "wall_seconds": 18.616277
+      },
+      "unavailable_reason": null
+    },
+    "C03-candidate": {
+      "outcome": "succeeded",
+      "receipt": {
+        "label": "C03-candidate",
+        "code": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007",
+        "mode": "run",
+        "input": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/C03.json",
+        "state": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/C03-candidate",
+        "accepted": true,
+        "run_id": "a822359565cf441d9cb1645f391363ba",
+        "reused": false,
+        "status": "completed",
+        "wall_seconds": 26.351418
+      },
+      "unavailable_reason": null
+    },
+    "headlines-baseline": {
+      "outcome": "succeeded",
+      "receipt": {
+        "label": "headlines-baseline",
+        "code": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-baseline-20261007",
+        "mode": "run",
+        "input": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/headlines.json",
+        "state": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/headlines-baseline",
+        "accepted": true,
+        "run_id": "8f5816f4cf314867956139a1079a0f96",
+        "reused": false,
+        "status": "completed",
+        "wall_seconds": 21.015597
+      },
+      "unavailable_reason": null
+    },
+    "headlines-candidate": {
+      "outcome": "succeeded",
+      "receipt": {
+        "label": "headlines-candidate",
+        "code": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007",
+        "mode": "run",
+        "input": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/inputs/headlines.json",
+        "state": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/headlines-candidate",
+        "accepted": true,
+        "run_id": "069424a73b0b48dbba6b89786603bf68",
+        "reused": false,
+        "status": "completed",
+        "wall_seconds": 37.218153
+      },
+      "unavailable_reason": null
+    }
+  },
+  "calls": [
+    {
+      "ordinal": 1,
+      "label": "observed-bad",
+      "task": "coherence",
+      "artifact": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/controls/observed-bad",
+      "status": "returned",
+      "wall_seconds": 12.354168,
+      "process_started": true,
+      "usage": {
+        "input_tokens": 12551,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 329,
+        "reasoning_output_tokens": 0
+      }
+    },
+    {
+      "ordinal": 2,
+      "label": "inherited-bad",
+      "task": "coherence",
+      "artifact": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/controls/inherited-bad",
+      "status": "returned",
+      "wall_seconds": 12.057675,
+      "process_started": true,
+      "usage": {
+        "input_tokens": 16595,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 391,
+        "reasoning_output_tokens": 0
+      }
+    },
+    {
+      "ordinal": 3,
+      "label": "positive-control",
+      "task": "coherence",
+      "artifact": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/controls/positive-control",
+      "status": "returned",
+      "wall_seconds": 12.676262,
+      "process_started": true,
+      "usage": {
+        "input_tokens": 11358,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 342,
+        "reasoning_output_tokens": 0
+      }
+    },
+    {
+      "ordinal": 4,
+      "label": "ship-cat-baseline",
+      "task": "trajectory",
+      "artifact": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/ship-cat-baseline/runs/009eb0e637e746738fbb394f2fe314c7/model",
+      "status": "returned",
+      "wall_seconds": 33.330802,
+      "process_started": true,
+      "usage": {
+        "input_tokens": 33529,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1462,
+        "reasoning_output_tokens": 0
+      }
+    },
+    {
+      "ordinal": 5,
+      "label": "cat-followup-baseline",
+      "task": "trajectory",
+      "artifact": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/ship-cat-baseline/runs/db1fb9f7756e40da921384073a80b1b6/model",
+      "status": "returned",
+      "wall_seconds": 14.783651,
+      "process_started": true,
+      "usage": {
+        "input_tokens": 14252,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 519,
+        "reasoning_output_tokens": 0
+      }
+    },
+    {
+      "ordinal": 6,
+      "label": "ship-cat-candidate",
+      "task": "trajectory",
+      "artifact": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/ship-cat-candidate/runs/3e3e6afab34641c7a3d2f34b844a02ec/model",
+      "status": "returned",
+      "wall_seconds": 42.749817,
+      "process_started": true,
+      "usage": {
+        "input_tokens": 33653,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1970,
+        "reasoning_output_tokens": 46
+      }
+    },
+    {
+      "ordinal": 7,
+      "label": "ship-cat-candidate",
+      "task": "coherence",
+      "artifact": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/ship-cat-candidate/runs/3e3e6afab34641c7a3d2f34b844a02ec/review",
+      "status": "returned",
+      "wall_seconds": 17.236961,
+      "process_started": true,
+      "usage": {
+        "input_tokens": 14635,
+        "cached_input_tokens": 6528,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 433,
+        "reasoning_output_tokens": 82
+      }
+    },
+    {
+      "ordinal": 8,
+      "label": "C01-prior-0",
+      "task": "trajectory",
+      "artifact": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/C01-shared-prior/runs/054f6e7af87043289bcdd6198aae6bcf/model",
+      "status": "returned",
+      "wall_seconds": 17.165653,
+      "process_started": true,
+      "usage": {
+        "input_tokens": 10059,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 601,
+        "reasoning_output_tokens": 126
+      }
+    },
+    {
+      "ordinal": 9,
+      "label": "C01-prior-1",
+      "task": "trajectory",
+      "artifact": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/C01-shared-prior/runs/9036fef0ac284a8fab1fc458d110bea1/model",
+      "status": "returned",
+      "wall_seconds": 21.483181,
+      "process_started": true,
+      "usage": {
+        "input_tokens": 12691,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 847,
+        "reasoning_output_tokens": 38
+      }
+    },
+    {
+      "ordinal": 10,
+      "label": "C02-prior-0",
+      "task": "trajectory",
+      "artifact": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/C02-shared-prior/runs/9b8b3ad05dc84e2ebd342c6508e43040/model",
+      "status": "returned",
+      "wall_seconds": 11.548742,
+      "process_started": true,
+      "usage": {
+        "input_tokens": 9815,
+        "cached_input_tokens": 7040,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 268,
+        "reasoning_output_tokens": 82
+      }
+    },
+    {
+      "ordinal": 11,
+      "label": "C02-baseline",
+      "task": "trajectory",
+      "artifact": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/C02-baseline/runs/683eb877ab374b81b448e9e7f2a7848f/model",
+      "status": "returned",
+      "wall_seconds": 24.831489,
+      "process_started": true,
+      "usage": {
+        "input_tokens": 11051,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 922,
+        "reasoning_output_tokens": 114
+      }
+    },
+    {
+      "ordinal": 12,
+      "label": "C02-candidate",
+      "task": "trajectory",
+      "artifact": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/C02-candidate/runs/9b94484ca30c415c984f1c00c1740f01/model",
+      "status": "returned",
+      "wall_seconds": 30.02044,
+      "process_started": true,
+      "usage": {
+        "input_tokens": 11179,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1146,
+        "reasoning_output_tokens": 60
+      }
+    },
+    {
+      "ordinal": 13,
+      "label": "C02-candidate",
+      "task": "coherence",
+      "artifact": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/C02-candidate/runs/9b94484ca30c415c984f1c00c1740f01/review",
+      "status": "returned",
+      "wall_seconds": 9.8289,
+      "process_started": true,
+      "usage": {
+        "input_tokens": 10991,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 149,
+        "reasoning_output_tokens": 0
+      }
+    },
+    {
+      "ordinal": 14,
+      "label": "C03-baseline",
+      "task": "trajectory",
+      "artifact": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/C03-baseline/runs/8906918479c34912b08eb143bc800d4a/model",
+      "status": "returned",
+      "wall_seconds": 18.58203,
+      "process_started": true,
+      "usage": {
+        "input_tokens": 10118,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 601,
+        "reasoning_output_tokens": 102
+      }
+    },
+    {
+      "ordinal": 15,
+      "label": "C03-candidate",
+      "task": "trajectory",
+      "artifact": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/C03-candidate/runs/a822359565cf441d9cb1645f391363ba/model",
+      "status": "returned",
+      "wall_seconds": 17.442347,
+      "process_started": true,
+      "usage": {
+        "input_tokens": 10242,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 650,
+        "reasoning_output_tokens": 0
+      }
+    },
+    {
+      "ordinal": 16,
+      "label": "C03-candidate",
+      "task": "coherence",
+      "artifact": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/C03-candidate/runs/a822359565cf441d9cb1645f391363ba/review",
+      "status": "returned",
+      "wall_seconds": 8.849192,
+      "process_started": true,
+      "usage": {
+        "input_tokens": 9825,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 148,
+        "reasoning_output_tokens": 0
+      }
+    },
+    {
+      "ordinal": 17,
+      "label": "headlines-baseline",
+      "task": "trajectory",
+      "artifact": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/headlines-baseline/runs/8f5816f4cf314867956139a1079a0f96/model",
+      "status": "returned",
+      "wall_seconds": 20.977633,
+      "process_started": true,
+      "usage": {
+        "input_tokens": 10309,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 787,
+        "reasoning_output_tokens": 117
+      }
+    },
+    {
+      "ordinal": 18,
+      "label": "headlines-candidate",
+      "task": "trajectory",
+      "artifact": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/headlines-candidate/runs/069424a73b0b48dbba6b89786603bf68/model",
+      "status": "returned",
+      "wall_seconds": 20.322658,
+      "process_started": true,
+      "usage": {
+        "input_tokens": 10439,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 823,
+        "reasoning_output_tokens": 0
+      }
+    },
+    {
+      "ordinal": 19,
+      "label": "headlines-candidate",
+      "task": "coherence",
+      "artifact": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/headlines-candidate/runs/069424a73b0b48dbba6b89786603bf68/review",
+      "status": "returned",
+      "wall_seconds": 16.840174,
+      "process_started": true,
+      "usage": {
+        "input_tokens": 10213,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 211,
+        "reasoning_output_tokens": 0
+      }
+    }
+  ],
+  "unreceipted_calls": [],
+  "fresh_pairs": [
+    {
+      "case": "C01",
+      "arm": "baseline",
+      "outcome": "unavailable",
+      "context": {
+        "available": false,
+        "reason": "No complete case receipt."
+      },
+      "journal": null,
+      "story": {
+        "counts": {
+          "same": {
+            "correct": 0,
+            "wrong": 0,
+            "unavailable": 5
+          },
+          "different": {
+            "correct": 0,
+            "wrong": 0,
+            "unavailable": 4
+          }
+        },
+        "pairs": [
+          {
+            "source_ids": [
+              "occ-12956",
+              "occ-12961"
+            ],
+            "expected": "same",
+            "status": "unavailable",
+            "reason": "No complete case receipt.",
+            "missing_ids": [
+              "occ-12956",
+              "occ-12961"
+            ]
+          },
+          {
+            "source_ids": [
+              "occ-12956",
+              "occ-3600"
+            ],
+            "expected": "same",
+            "status": "unavailable",
+            "reason": "No complete case receipt.",
+            "missing_ids": [
+              "occ-12956",
+              "occ-3600"
+            ]
+          },
+          {
+            "source_ids": [
+              "occ-12956",
+              "occ-3602"
+            ],
+            "expected": "different",
+            "status": "unavailable",
+            "reason": "No complete case receipt.",
+            "missing_ids": [
+              "occ-12956",
+              "occ-3602"
+            ]
+          },
+          {
+            "source_ids": [
+              "occ-12956",
+              "occ-4397"
+            ],
+            "expected": "same",
+            "status": "unavailable",
+            "reason": "No complete case receipt.",
+            "missing_ids": [
+              "occ-12956",
+              "occ-4397"
+            ]
+          },
+          {
+            "source_ids": [
+              "occ-12956",
+              "occ-4956"
+            ],
+            "expected": "different",
+            "status": "unavailable",
+            "reason": "No complete case receipt.",
+            "missing_ids": [
+              "occ-12956",
+              "occ-4956"
+            ]
+          },
+          {
+            "source_ids": [
+              "occ-12961",
+              "occ-3600"
+            ],
+            "expected": "same",
+            "status": "unavailable",
+            "reason": "No complete case receipt.",
+            "missing_ids": [
+              "occ-12961",
+              "occ-3600"
+            ]
+          },
+          {
+            "source_ids": [
+              "occ-12961",
+              "occ-3602"
+            ],
+            "expected": "different",
+            "status": "unavailable",
+            "reason": "No complete case receipt.",
+            "missing_ids": [
+              "occ-12961",
+              "occ-3602"
+            ]
+          },
+          {
+            "source_ids": [
+              "occ-12961",
+              "occ-4397"
+            ],
+            "expected": "same",
+            "status": "unavailable",
+            "reason": "No complete case receipt.",
+            "missing_ids": [
+              "occ-12961",
+              "occ-4397"
+            ]
+          },
+          {
+            "source_ids": [
+              "occ-12961",
+              "occ-4956"
+            ],
+            "expected": "different",
+            "status": "unavailable",
+            "reason": "No complete case receipt.",
+            "missing_ids": [
+              "occ-12961",
+              "occ-4956"
+            ]
+          }
+        ],
+        "excluded_prior_prior_pairs": [
+          {
+            "source_ids": [
+              "occ-3600",
+              "occ-3602"
+            ],
+            "expected": "different"
+          },
+          {
+            "source_ids": [
+              "occ-3600",
+              "occ-4397"
+            ],
+            "expected": "same"
+          },
+          {
+            "source_ids": [
+              "occ-3600",
+              "occ-4956"
+            ],
+            "expected": "different"
+          },
+          {
+            "source_ids": [
+              "occ-3602",
+              "occ-4397"
+            ],
+            "expected": "different"
+          },
+          {
+            "source_ids": [
+              "occ-3602",
+              "occ-4956"
+            ],
+            "expected": "same"
+          },
+          {
+            "source_ids": [
+              "occ-4397",
+              "occ-4956"
+            ],
+            "expected": "different"
+          }
+        ]
+      },
+      "event": {
+        "counts": {
+          "same": {
+            "correct": 0,
+            "wrong": 0,
+            "unavailable": 1
+          },
+          "different": {
+            "correct": 0,
+            "wrong": 0,
+            "unavailable": 0
+          }
+        },
+        "pairs": [
+          {
+            "source_ids": [
+              "occ-12956",
+              "occ-12961"
+            ],
+            "expected": "same",
+            "status": "unavailable",
+            "reason": "No complete case receipt.",
+            "missing_ids": [
+              "occ-12956",
+              "occ-12961"
+            ]
+          }
+        ],
+        "excluded_prior_prior_pairs": [
+          {
+            "source_ids": [
+              "occ-3602",
+              "occ-4956"
+            ],
+            "expected": "different"
+          }
+        ]
+      },
+      "unscored_event_labels": [
+        {
+          "source_ids": [
+            "occ-3600",
+            "occ-4397"
+          ],
+          "reason": "Both explain the Musk dispute. The brief BBC source does not establish a precise court session or bounded event shared with the NOS explainer; neither a same-event nor a different-event label is required."
+        }
+      ]
+    },
+    {
+      "case": "C01",
+      "arm": "candidate",
+      "outcome": "unavailable",
+      "context": {
+        "available": false,
+        "reason": "No complete case receipt."
+      },
+      "journal": null,
+      "story": {
+        "counts": {
+          "same": {
+            "correct": 0,
+            "wrong": 0,
+            "unavailable": 5
+          },
+          "different": {
+            "correct": 0,
+            "wrong": 0,
+            "unavailable": 4
+          }
+        },
+        "pairs": [
+          {
+            "source_ids": [
+              "occ-12956",
+              "occ-12961"
+            ],
+            "expected": "same",
+            "status": "unavailable",
+            "reason": "No complete case receipt.",
+            "missing_ids": [
+              "occ-12956",
+              "occ-12961"
+            ]
+          },
+          {
+            "source_ids": [
+              "occ-12956",
+              "occ-3600"
+            ],
+            "expected": "same",
+            "status": "unavailable",
+            "reason": "No complete case receipt.",
+            "missing_ids": [
+              "occ-12956",
+              "occ-3600"
+            ]
+          },
+          {
+            "source_ids": [
+              "occ-12956",
+              "occ-3602"
+            ],
+            "expected": "different",
+            "status": "unavailable",
+            "reason": "No complete case receipt.",
+            "missing_ids": [
+              "occ-12956",
+              "occ-3602"
+            ]
+          },
+          {
+            "source_ids": [
+              "occ-12956",
+              "occ-4397"
+            ],
+            "expected": "same",
+            "status": "unavailable",
+            "reason": "No complete case receipt.",
+            "missing_ids": [
+              "occ-12956",
+              "occ-4397"
+            ]
+          },
+          {
+            "source_ids": [
+              "occ-12956",
+              "occ-4956"
+            ],
+            "expected": "different",
+            "status": "unavailable",
+            "reason": "No complete case receipt.",
+            "missing_ids": [
+              "occ-12956",
+              "occ-4956"
+            ]
+          },
+          {
+            "source_ids": [
+              "occ-12961",
+              "occ-3600"
+            ],
+            "expected": "same",
+            "status": "unavailable",
+            "reason": "No complete case receipt.",
+            "missing_ids": [
+              "occ-12961",
+              "occ-3600"
+            ]
+          },
+          {
+            "source_ids": [
+              "occ-12961",
+              "occ-3602"
+            ],
+            "expected": "different",
+            "status": "unavailable",
+            "reason": "No complete case receipt.",
+            "missing_ids": [
+              "occ-12961",
+              "occ-3602"
+            ]
+          },
+          {
+            "source_ids": [
+              "occ-12961",
+              "occ-4397"
+            ],
+            "expected": "same",
+            "status": "unavailable",
+            "reason": "No complete case receipt.",
+            "missing_ids": [
+              "occ-12961",
+              "occ-4397"
+            ]
+          },
+          {
+            "source_ids": [
+              "occ-12961",
+              "occ-4956"
+            ],
+            "expected": "different",
+            "status": "unavailable",
+            "reason": "No complete case receipt.",
+            "missing_ids": [
+              "occ-12961",
+              "occ-4956"
+            ]
+          }
+        ],
+        "excluded_prior_prior_pairs": [
+          {
+            "source_ids": [
+              "occ-3600",
+              "occ-3602"
+            ],
+            "expected": "different"
+          },
+          {
+            "source_ids": [
+              "occ-3600",
+              "occ-4397"
+            ],
+            "expected": "same"
+          },
+          {
+            "source_ids": [
+              "occ-3600",
+              "occ-4956"
+            ],
+            "expected": "different"
+          },
+          {
+            "source_ids": [
+              "occ-3602",
+              "occ-4397"
+            ],
+            "expected": "different"
+          },
+          {
+            "source_ids": [
+              "occ-3602",
+              "occ-4956"
+            ],
+            "expected": "same"
+          },
+          {
+            "source_ids": [
+              "occ-4397",
+              "occ-4956"
+            ],
+            "expected": "different"
+          }
+        ]
+      },
+      "event": {
+        "counts": {
+          "same": {
+            "correct": 0,
+            "wrong": 0,
+            "unavailable": 1
+          },
+          "different": {
+            "correct": 0,
+            "wrong": 0,
+            "unavailable": 0
+          }
+        },
+        "pairs": [
+          {
+            "source_ids": [
+              "occ-12956",
+              "occ-12961"
+            ],
+            "expected": "same",
+            "status": "unavailable",
+            "reason": "No complete case receipt.",
+            "missing_ids": [
+              "occ-12956",
+              "occ-12961"
+            ]
+          }
+        ],
+        "excluded_prior_prior_pairs": [
+          {
+            "source_ids": [
+              "occ-3602",
+              "occ-4956"
+            ],
+            "expected": "different"
+          }
+        ]
+      },
+      "unscored_event_labels": [
+        {
+          "source_ids": [
+            "occ-3600",
+            "occ-4397"
+          ],
+          "reason": "Both explain the Musk dispute. The brief BBC source does not establish a precise court session or bounded event shared with the NOS explainer; neither a same-event nor a different-event label is required."
+        }
+      ]
+    },
+    {
+      "case": "C02",
+      "arm": "baseline",
+      "outcome": "succeeded",
+      "context": {
+        "path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/author-inputs/C02-baseline.json",
+        "sha256": "aedd01377f0096cf963b89fe9a01d476986d10a6b7d8c16db9d2770338f4d6fa",
+        "actual_current_ids": [
+          "occ-4125",
+          "occ-4902",
+          "occ-4903",
+          "occ-5707"
+        ],
+        "actual_prior_ids": [
+          "occ-3589"
+        ],
+        "available": true
+      },
+      "journal": {
+        "path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/C02-baseline/journal.sqlite3",
+        "sha256": "21f4e37f46b08376bd34ee589fea5ea96eb803070223a37dfbec5caf4f69f97d",
+        "through_run": "683eb877ab374b81b448e9e7f2a7848f"
+      },
+      "story": {
+        "counts": {
+          "same": {
+            "correct": 4,
+            "wrong": 0,
+            "unavailable": 0
+          },
+          "different": {
+            "correct": 6,
+            "wrong": 0,
+            "unavailable": 0
+          }
+        },
+        "pairs": [
+          {
+            "source_ids": [
+              "occ-3589",
+              "occ-4125"
+            ],
+            "expected": "same",
+            "status": "correct",
+            "observed": "same",
+            "assignments": {
+              "occ-3589": {
+                "story_id": "s-d19596f299e30b4f654f",
+                "event_id": "e-d7e7f95e65aeb9e4b523",
+                "capture_id": "c-7f289d8bafdc192d06332212",
+                "run_id": "9b8b3ad05dc84e2ebd342c6508e43040",
+                "identity_uncertain": true
+              },
+              "occ-4125": {
+                "story_id": "s-d19596f299e30b4f654f",
+                "event_id": "e-e38cb6e2c9b933113911",
+                "capture_id": "c-352e9d2657d41ccae8d0aa0e",
+                "run_id": "683eb877ab374b81b448e9e7f2a7848f",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-3589",
+              "occ-4902"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-3589": {
+                "story_id": "s-d19596f299e30b4f654f",
+                "event_id": "e-d7e7f95e65aeb9e4b523",
+                "capture_id": "c-7f289d8bafdc192d06332212",
+                "run_id": "9b8b3ad05dc84e2ebd342c6508e43040",
+                "identity_uncertain": true
+              },
+              "occ-4902": {
+                "story_id": "s-2dc7a385ff5c5ec9f8cc",
+                "event_id": "e-fc92f6436e0bcda00bbf",
+                "capture_id": "c-b84a8508775c9ffda70949d8",
+                "run_id": "683eb877ab374b81b448e9e7f2a7848f",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-3589",
+              "occ-4903"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-3589": {
+                "story_id": "s-d19596f299e30b4f654f",
+                "event_id": "e-d7e7f95e65aeb9e4b523",
+                "capture_id": "c-7f289d8bafdc192d06332212",
+                "run_id": "9b8b3ad05dc84e2ebd342c6508e43040",
+                "identity_uncertain": true
+              },
+              "occ-4903": {
+                "story_id": "s-2dc7a385ff5c5ec9f8cc",
+                "event_id": "e-fc92f6436e0bcda00bbf",
+                "capture_id": "c-cd4613d859a8e847d1d44523",
+                "run_id": "683eb877ab374b81b448e9e7f2a7848f",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-3589",
+              "occ-5707"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-3589": {
+                "story_id": "s-d19596f299e30b4f654f",
+                "event_id": "e-d7e7f95e65aeb9e4b523",
+                "capture_id": "c-7f289d8bafdc192d06332212",
+                "run_id": "9b8b3ad05dc84e2ebd342c6508e43040",
+                "identity_uncertain": true
+              },
+              "occ-5707": {
+                "story_id": "s-2dc7a385ff5c5ec9f8cc",
+                "event_id": "e-dcee2b2ec153193441cb",
+                "capture_id": "c-7f4f98851d708c8456ba7a10",
+                "run_id": "683eb877ab374b81b448e9e7f2a7848f",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-4125",
+              "occ-4902"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-4125": {
+                "story_id": "s-d19596f299e30b4f654f",
+                "event_id": "e-e38cb6e2c9b933113911",
+                "capture_id": "c-352e9d2657d41ccae8d0aa0e",
+                "run_id": "683eb877ab374b81b448e9e7f2a7848f",
+                "identity_uncertain": false
+              },
+              "occ-4902": {
+                "story_id": "s-2dc7a385ff5c5ec9f8cc",
+                "event_id": "e-fc92f6436e0bcda00bbf",
+                "capture_id": "c-b84a8508775c9ffda70949d8",
+                "run_id": "683eb877ab374b81b448e9e7f2a7848f",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-4125",
+              "occ-4903"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-4125": {
+                "story_id": "s-d19596f299e30b4f654f",
+                "event_id": "e-e38cb6e2c9b933113911",
+                "capture_id": "c-352e9d2657d41ccae8d0aa0e",
+                "run_id": "683eb877ab374b81b448e9e7f2a7848f",
+                "identity_uncertain": false
+              },
+              "occ-4903": {
+                "story_id": "s-2dc7a385ff5c5ec9f8cc",
+                "event_id": "e-fc92f6436e0bcda00bbf",
+                "capture_id": "c-cd4613d859a8e847d1d44523",
+                "run_id": "683eb877ab374b81b448e9e7f2a7848f",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-4125",
+              "occ-5707"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-4125": {
+                "story_id": "s-d19596f299e30b4f654f",
+                "event_id": "e-e38cb6e2c9b933113911",
+                "capture_id": "c-352e9d2657d41ccae8d0aa0e",
+                "run_id": "683eb877ab374b81b448e9e7f2a7848f",
+                "identity_uncertain": false
+              },
+              "occ-5707": {
+                "story_id": "s-2dc7a385ff5c5ec9f8cc",
+                "event_id": "e-dcee2b2ec153193441cb",
+                "capture_id": "c-7f4f98851d708c8456ba7a10",
+                "run_id": "683eb877ab374b81b448e9e7f2a7848f",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-4902",
+              "occ-4903"
+            ],
+            "expected": "same",
+            "status": "correct",
+            "observed": "same",
+            "assignments": {
+              "occ-4902": {
+                "story_id": "s-2dc7a385ff5c5ec9f8cc",
+                "event_id": "e-fc92f6436e0bcda00bbf",
+                "capture_id": "c-b84a8508775c9ffda70949d8",
+                "run_id": "683eb877ab374b81b448e9e7f2a7848f",
+                "identity_uncertain": false
+              },
+              "occ-4903": {
+                "story_id": "s-2dc7a385ff5c5ec9f8cc",
+                "event_id": "e-fc92f6436e0bcda00bbf",
+                "capture_id": "c-cd4613d859a8e847d1d44523",
+                "run_id": "683eb877ab374b81b448e9e7f2a7848f",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-4902",
+              "occ-5707"
+            ],
+            "expected": "same",
+            "status": "correct",
+            "observed": "same",
+            "assignments": {
+              "occ-4902": {
+                "story_id": "s-2dc7a385ff5c5ec9f8cc",
+                "event_id": "e-fc92f6436e0bcda00bbf",
+                "capture_id": "c-b84a8508775c9ffda70949d8",
+                "run_id": "683eb877ab374b81b448e9e7f2a7848f",
+                "identity_uncertain": false
+              },
+              "occ-5707": {
+                "story_id": "s-2dc7a385ff5c5ec9f8cc",
+                "event_id": "e-dcee2b2ec153193441cb",
+                "capture_id": "c-7f4f98851d708c8456ba7a10",
+                "run_id": "683eb877ab374b81b448e9e7f2a7848f",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-4903",
+              "occ-5707"
+            ],
+            "expected": "same",
+            "status": "correct",
+            "observed": "same",
+            "assignments": {
+              "occ-4903": {
+                "story_id": "s-2dc7a385ff5c5ec9f8cc",
+                "event_id": "e-fc92f6436e0bcda00bbf",
+                "capture_id": "c-cd4613d859a8e847d1d44523",
+                "run_id": "683eb877ab374b81b448e9e7f2a7848f",
+                "identity_uncertain": false
+              },
+              "occ-5707": {
+                "story_id": "s-2dc7a385ff5c5ec9f8cc",
+                "event_id": "e-dcee2b2ec153193441cb",
+                "capture_id": "c-7f4f98851d708c8456ba7a10",
+                "run_id": "683eb877ab374b81b448e9e7f2a7848f",
+                "identity_uncertain": false
+              }
+            }
+          }
+        ],
+        "excluded_prior_prior_pairs": []
+      },
+      "event": {
+        "counts": {
+          "same": {
+            "correct": 0,
+            "wrong": 0,
+            "unavailable": 0
+          },
+          "different": {
+            "correct": 1,
+            "wrong": 0,
+            "unavailable": 0
+          }
+        },
+        "pairs": [
+          {
+            "source_ids": [
+              "occ-4125",
+              "occ-5707"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-4125": {
+                "story_id": "s-d19596f299e30b4f654f",
+                "event_id": "e-e38cb6e2c9b933113911",
+                "capture_id": "c-352e9d2657d41ccae8d0aa0e",
+                "run_id": "683eb877ab374b81b448e9e7f2a7848f",
+                "identity_uncertain": false
+              },
+              "occ-5707": {
+                "story_id": "s-2dc7a385ff5c5ec9f8cc",
+                "event_id": "e-dcee2b2ec153193441cb",
+                "capture_id": "c-7f4f98851d708c8456ba7a10",
+                "run_id": "683eb877ab374b81b448e9e7f2a7848f",
+                "identity_uncertain": false
+              }
+            }
+          }
+        ],
+        "excluded_prior_prior_pairs": []
+      },
+      "unscored_event_labels": [
+        {
+          "source_ids": [
+            "occ-3589",
+            "occ-4125"
+          ],
+          "reason": "The earlier item anticipates a vote and the later item reports a motion failing. They certainly advance the same inquiry matter. Whether an event representation treats anticipation and outcome as one vote lifecycle or separate developments is not scored."
+        },
+        {
+          "source_ids": [
+            "occ-4902",
+            "occ-4903"
+          ],
+          "reason": "The snippets describe prosecutorial/court allegations on the same day in the arson matter, but do not establish that the accounts come from the identical hearing session or the same specific testimony. Same story is scored; exact event identity is not."
+        }
+      ]
+    },
+    {
+      "case": "C02",
+      "arm": "candidate",
+      "outcome": "succeeded",
+      "context": {
+        "path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/author-inputs/C02-candidate.json",
+        "sha256": "aedd01377f0096cf963b89fe9a01d476986d10a6b7d8c16db9d2770338f4d6fa",
+        "actual_current_ids": [
+          "occ-4125",
+          "occ-4902",
+          "occ-4903",
+          "occ-5707"
+        ],
+        "actual_prior_ids": [
+          "occ-3589"
+        ],
+        "available": true
+      },
+      "journal": {
+        "path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/C02-candidate/journal.sqlite3",
+        "sha256": "0d0bc7f61ecf074d6e48c765c6d66019512a0a6f075c6e989122a0fd6dd7a7b8",
+        "through_run": "9b94484ca30c415c984f1c00c1740f01"
+      },
+      "story": {
+        "counts": {
+          "same": {
+            "correct": 4,
+            "wrong": 0,
+            "unavailable": 0
+          },
+          "different": {
+            "correct": 6,
+            "wrong": 0,
+            "unavailable": 0
+          }
+        },
+        "pairs": [
+          {
+            "source_ids": [
+              "occ-3589",
+              "occ-4125"
+            ],
+            "expected": "same",
+            "status": "correct",
+            "observed": "same",
+            "assignments": {
+              "occ-3589": {
+                "story_id": "s-d19596f299e30b4f654f",
+                "event_id": "e-d7e7f95e65aeb9e4b523",
+                "capture_id": "c-7f289d8bafdc192d06332212",
+                "run_id": "9b8b3ad05dc84e2ebd342c6508e43040",
+                "identity_uncertain": true
+              },
+              "occ-4125": {
+                "story_id": "s-d19596f299e30b4f654f",
+                "event_id": "e-e843be45e34ce7b7e663",
+                "capture_id": "c-352e9d2657d41ccae8d0aa0e",
+                "run_id": "9b94484ca30c415c984f1c00c1740f01",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-3589",
+              "occ-4902"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-3589": {
+                "story_id": "s-d19596f299e30b4f654f",
+                "event_id": "e-d7e7f95e65aeb9e4b523",
+                "capture_id": "c-7f289d8bafdc192d06332212",
+                "run_id": "9b8b3ad05dc84e2ebd342c6508e43040",
+                "identity_uncertain": true
+              },
+              "occ-4902": {
+                "story_id": "s-6908ef34a3f7aacf041f",
+                "event_id": "e-124faf1da3e30155b07d",
+                "capture_id": "c-b84a8508775c9ffda70949d8",
+                "run_id": "9b94484ca30c415c984f1c00c1740f01",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-3589",
+              "occ-4903"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-3589": {
+                "story_id": "s-d19596f299e30b4f654f",
+                "event_id": "e-d7e7f95e65aeb9e4b523",
+                "capture_id": "c-7f289d8bafdc192d06332212",
+                "run_id": "9b8b3ad05dc84e2ebd342c6508e43040",
+                "identity_uncertain": true
+              },
+              "occ-4903": {
+                "story_id": "s-6908ef34a3f7aacf041f",
+                "event_id": "e-124faf1da3e30155b07d",
+                "capture_id": "c-cd4613d859a8e847d1d44523",
+                "run_id": "9b94484ca30c415c984f1c00c1740f01",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-3589",
+              "occ-5707"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-3589": {
+                "story_id": "s-d19596f299e30b4f654f",
+                "event_id": "e-d7e7f95e65aeb9e4b523",
+                "capture_id": "c-7f289d8bafdc192d06332212",
+                "run_id": "9b8b3ad05dc84e2ebd342c6508e43040",
+                "identity_uncertain": true
+              },
+              "occ-5707": {
+                "story_id": "s-6908ef34a3f7aacf041f",
+                "event_id": "e-2f33d0ef8b201e01347b",
+                "capture_id": "c-7f4f98851d708c8456ba7a10",
+                "run_id": "9b94484ca30c415c984f1c00c1740f01",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-4125",
+              "occ-4902"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-4125": {
+                "story_id": "s-d19596f299e30b4f654f",
+                "event_id": "e-e843be45e34ce7b7e663",
+                "capture_id": "c-352e9d2657d41ccae8d0aa0e",
+                "run_id": "9b94484ca30c415c984f1c00c1740f01",
+                "identity_uncertain": false
+              },
+              "occ-4902": {
+                "story_id": "s-6908ef34a3f7aacf041f",
+                "event_id": "e-124faf1da3e30155b07d",
+                "capture_id": "c-b84a8508775c9ffda70949d8",
+                "run_id": "9b94484ca30c415c984f1c00c1740f01",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-4125",
+              "occ-4903"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-4125": {
+                "story_id": "s-d19596f299e30b4f654f",
+                "event_id": "e-e843be45e34ce7b7e663",
+                "capture_id": "c-352e9d2657d41ccae8d0aa0e",
+                "run_id": "9b94484ca30c415c984f1c00c1740f01",
+                "identity_uncertain": false
+              },
+              "occ-4903": {
+                "story_id": "s-6908ef34a3f7aacf041f",
+                "event_id": "e-124faf1da3e30155b07d",
+                "capture_id": "c-cd4613d859a8e847d1d44523",
+                "run_id": "9b94484ca30c415c984f1c00c1740f01",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-4125",
+              "occ-5707"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-4125": {
+                "story_id": "s-d19596f299e30b4f654f",
+                "event_id": "e-e843be45e34ce7b7e663",
+                "capture_id": "c-352e9d2657d41ccae8d0aa0e",
+                "run_id": "9b94484ca30c415c984f1c00c1740f01",
+                "identity_uncertain": false
+              },
+              "occ-5707": {
+                "story_id": "s-6908ef34a3f7aacf041f",
+                "event_id": "e-2f33d0ef8b201e01347b",
+                "capture_id": "c-7f4f98851d708c8456ba7a10",
+                "run_id": "9b94484ca30c415c984f1c00c1740f01",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-4902",
+              "occ-4903"
+            ],
+            "expected": "same",
+            "status": "correct",
+            "observed": "same",
+            "assignments": {
+              "occ-4902": {
+                "story_id": "s-6908ef34a3f7aacf041f",
+                "event_id": "e-124faf1da3e30155b07d",
+                "capture_id": "c-b84a8508775c9ffda70949d8",
+                "run_id": "9b94484ca30c415c984f1c00c1740f01",
+                "identity_uncertain": false
+              },
+              "occ-4903": {
+                "story_id": "s-6908ef34a3f7aacf041f",
+                "event_id": "e-124faf1da3e30155b07d",
+                "capture_id": "c-cd4613d859a8e847d1d44523",
+                "run_id": "9b94484ca30c415c984f1c00c1740f01",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-4902",
+              "occ-5707"
+            ],
+            "expected": "same",
+            "status": "correct",
+            "observed": "same",
+            "assignments": {
+              "occ-4902": {
+                "story_id": "s-6908ef34a3f7aacf041f",
+                "event_id": "e-124faf1da3e30155b07d",
+                "capture_id": "c-b84a8508775c9ffda70949d8",
+                "run_id": "9b94484ca30c415c984f1c00c1740f01",
+                "identity_uncertain": false
+              },
+              "occ-5707": {
+                "story_id": "s-6908ef34a3f7aacf041f",
+                "event_id": "e-2f33d0ef8b201e01347b",
+                "capture_id": "c-7f4f98851d708c8456ba7a10",
+                "run_id": "9b94484ca30c415c984f1c00c1740f01",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-4903",
+              "occ-5707"
+            ],
+            "expected": "same",
+            "status": "correct",
+            "observed": "same",
+            "assignments": {
+              "occ-4903": {
+                "story_id": "s-6908ef34a3f7aacf041f",
+                "event_id": "e-124faf1da3e30155b07d",
+                "capture_id": "c-cd4613d859a8e847d1d44523",
+                "run_id": "9b94484ca30c415c984f1c00c1740f01",
+                "identity_uncertain": false
+              },
+              "occ-5707": {
+                "story_id": "s-6908ef34a3f7aacf041f",
+                "event_id": "e-2f33d0ef8b201e01347b",
+                "capture_id": "c-7f4f98851d708c8456ba7a10",
+                "run_id": "9b94484ca30c415c984f1c00c1740f01",
+                "identity_uncertain": false
+              }
+            }
+          }
+        ],
+        "excluded_prior_prior_pairs": []
+      },
+      "event": {
+        "counts": {
+          "same": {
+            "correct": 0,
+            "wrong": 0,
+            "unavailable": 0
+          },
+          "different": {
+            "correct": 1,
+            "wrong": 0,
+            "unavailable": 0
+          }
+        },
+        "pairs": [
+          {
+            "source_ids": [
+              "occ-4125",
+              "occ-5707"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-4125": {
+                "story_id": "s-d19596f299e30b4f654f",
+                "event_id": "e-e843be45e34ce7b7e663",
+                "capture_id": "c-352e9d2657d41ccae8d0aa0e",
+                "run_id": "9b94484ca30c415c984f1c00c1740f01",
+                "identity_uncertain": false
+              },
+              "occ-5707": {
+                "story_id": "s-6908ef34a3f7aacf041f",
+                "event_id": "e-2f33d0ef8b201e01347b",
+                "capture_id": "c-7f4f98851d708c8456ba7a10",
+                "run_id": "9b94484ca30c415c984f1c00c1740f01",
+                "identity_uncertain": false
+              }
+            }
+          }
+        ],
+        "excluded_prior_prior_pairs": []
+      },
+      "unscored_event_labels": [
+        {
+          "source_ids": [
+            "occ-3589",
+            "occ-4125"
+          ],
+          "reason": "The earlier item anticipates a vote and the later item reports a motion failing. They certainly advance the same inquiry matter. Whether an event representation treats anticipation and outcome as one vote lifecycle or separate developments is not scored."
+        },
+        {
+          "source_ids": [
+            "occ-4902",
+            "occ-4903"
+          ],
+          "reason": "The snippets describe prosecutorial/court allegations on the same day in the arson matter, but do not establish that the accounts come from the identical hearing session or the same specific testimony. Same story is scored; exact event identity is not."
+        }
+      ]
+    },
+    {
+      "case": "C03",
+      "arm": "baseline",
+      "outcome": "succeeded",
+      "context": {
+        "path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/author-inputs/C03-baseline.json",
+        "sha256": "0af56ce655b1650360943c6852ec14ea1cecf7f4a3e2b780966a1016d1d722bd",
+        "actual_current_ids": [
+          "occ-17587",
+          "occ-17589",
+          "occ-17590"
+        ],
+        "actual_prior_ids": [],
+        "available": true
+      },
+      "journal": {
+        "path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/C03-baseline/journal.sqlite3",
+        "sha256": "286785f4cd61f00d6b0bb047d59c782b1d615096bf07a84b08ce7308f7281132",
+        "through_run": "8906918479c34912b08eb143bc800d4a"
+      },
+      "story": {
+        "counts": {
+          "same": {
+            "correct": 0,
+            "wrong": 0,
+            "unavailable": 0
+          },
+          "different": {
+            "correct": 3,
+            "wrong": 0,
+            "unavailable": 0
+          }
+        },
+        "pairs": [
+          {
+            "source_ids": [
+              "occ-17587",
+              "occ-17589"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-17587": {
+                "story_id": "s-e9961f01e7cdca88935c",
+                "event_id": "e-efd822db70481f00d5d5",
+                "capture_id": "c-e695306f9918096709e8a555",
+                "run_id": "8906918479c34912b08eb143bc800d4a",
+                "identity_uncertain": true
+              },
+              "occ-17589": {
+                "story_id": "s-f67f88b5f7c4ab072ced",
+                "event_id": "e-0fc79585351ee0e10240",
+                "capture_id": "c-70ccab3f30c1f1f5a464b464",
+                "run_id": "8906918479c34912b08eb143bc800d4a",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-17587",
+              "occ-17590"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-17587": {
+                "story_id": "s-e9961f01e7cdca88935c",
+                "event_id": "e-efd822db70481f00d5d5",
+                "capture_id": "c-e695306f9918096709e8a555",
+                "run_id": "8906918479c34912b08eb143bc800d4a",
+                "identity_uncertain": true
+              },
+              "occ-17590": {
+                "story_id": "s-90200b2d5b600d7a3b9f",
+                "event_id": "e-4b53bc155d870da49c83",
+                "capture_id": "c-f7b2129f3eb03cdff5712c7e",
+                "run_id": "8906918479c34912b08eb143bc800d4a",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-17589",
+              "occ-17590"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-17589": {
+                "story_id": "s-f67f88b5f7c4ab072ced",
+                "event_id": "e-0fc79585351ee0e10240",
+                "capture_id": "c-70ccab3f30c1f1f5a464b464",
+                "run_id": "8906918479c34912b08eb143bc800d4a",
+                "identity_uncertain": false
+              },
+              "occ-17590": {
+                "story_id": "s-90200b2d5b600d7a3b9f",
+                "event_id": "e-4b53bc155d870da49c83",
+                "capture_id": "c-f7b2129f3eb03cdff5712c7e",
+                "run_id": "8906918479c34912b08eb143bc800d4a",
+                "identity_uncertain": false
+              }
+            }
+          }
+        ],
+        "excluded_prior_prior_pairs": []
+      },
+      "event": {
+        "counts": {
+          "same": {
+            "correct": 0,
+            "wrong": 0,
+            "unavailable": 0
+          },
+          "different": {
+            "correct": 3,
+            "wrong": 0,
+            "unavailable": 0
+          }
+        },
+        "pairs": [
+          {
+            "source_ids": [
+              "occ-17587",
+              "occ-17589"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-17587": {
+                "story_id": "s-e9961f01e7cdca88935c",
+                "event_id": "e-efd822db70481f00d5d5",
+                "capture_id": "c-e695306f9918096709e8a555",
+                "run_id": "8906918479c34912b08eb143bc800d4a",
+                "identity_uncertain": true
+              },
+              "occ-17589": {
+                "story_id": "s-f67f88b5f7c4ab072ced",
+                "event_id": "e-0fc79585351ee0e10240",
+                "capture_id": "c-70ccab3f30c1f1f5a464b464",
+                "run_id": "8906918479c34912b08eb143bc800d4a",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-17587",
+              "occ-17590"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-17587": {
+                "story_id": "s-e9961f01e7cdca88935c",
+                "event_id": "e-efd822db70481f00d5d5",
+                "capture_id": "c-e695306f9918096709e8a555",
+                "run_id": "8906918479c34912b08eb143bc800d4a",
+                "identity_uncertain": true
+              },
+              "occ-17590": {
+                "story_id": "s-90200b2d5b600d7a3b9f",
+                "event_id": "e-4b53bc155d870da49c83",
+                "capture_id": "c-f7b2129f3eb03cdff5712c7e",
+                "run_id": "8906918479c34912b08eb143bc800d4a",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-17589",
+              "occ-17590"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-17589": {
+                "story_id": "s-f67f88b5f7c4ab072ced",
+                "event_id": "e-0fc79585351ee0e10240",
+                "capture_id": "c-70ccab3f30c1f1f5a464b464",
+                "run_id": "8906918479c34912b08eb143bc800d4a",
+                "identity_uncertain": false
+              },
+              "occ-17590": {
+                "story_id": "s-90200b2d5b600d7a3b9f",
+                "event_id": "e-4b53bc155d870da49c83",
+                "capture_id": "c-f7b2129f3eb03cdff5712c7e",
+                "run_id": "8906918479c34912b08eb143bc800d4a",
+                "identity_uncertain": false
+              }
+            }
+          }
+        ],
+        "excluded_prior_prior_pairs": []
+      },
+      "unscored_event_labels": []
+    },
+    {
+      "case": "C03",
+      "arm": "candidate",
+      "outcome": "succeeded",
+      "context": {
+        "path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/author-inputs/C03-candidate.json",
+        "sha256": "0af56ce655b1650360943c6852ec14ea1cecf7f4a3e2b780966a1016d1d722bd",
+        "actual_current_ids": [
+          "occ-17587",
+          "occ-17589",
+          "occ-17590"
+        ],
+        "actual_prior_ids": [],
+        "available": true
+      },
+      "journal": {
+        "path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/C03-candidate/journal.sqlite3",
+        "sha256": "a301ca7569a1df0193e71c3d2d06e5b158e6d0d5d48e0459a53eb9862518f8ac",
+        "through_run": "a822359565cf441d9cb1645f391363ba"
+      },
+      "story": {
+        "counts": {
+          "same": {
+            "correct": 0,
+            "wrong": 0,
+            "unavailable": 0
+          },
+          "different": {
+            "correct": 3,
+            "wrong": 0,
+            "unavailable": 0
+          }
+        },
+        "pairs": [
+          {
+            "source_ids": [
+              "occ-17587",
+              "occ-17589"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-17587": {
+                "story_id": "s-6434665f409a798c2467",
+                "event_id": "e-fb6e90f286ac5c1a498a",
+                "capture_id": "c-e695306f9918096709e8a555",
+                "run_id": "a822359565cf441d9cb1645f391363ba",
+                "identity_uncertain": false
+              },
+              "occ-17589": {
+                "story_id": "s-dfe62ed3877ef1b7bf7f",
+                "event_id": "e-e0808b804ced76be841f",
+                "capture_id": "c-70ccab3f30c1f1f5a464b464",
+                "run_id": "a822359565cf441d9cb1645f391363ba",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-17587",
+              "occ-17590"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-17587": {
+                "story_id": "s-6434665f409a798c2467",
+                "event_id": "e-fb6e90f286ac5c1a498a",
+                "capture_id": "c-e695306f9918096709e8a555",
+                "run_id": "a822359565cf441d9cb1645f391363ba",
+                "identity_uncertain": false
+              },
+              "occ-17590": {
+                "story_id": "s-3d1497300c429581d5b3",
+                "event_id": "e-ce340611071d17a0aa5e",
+                "capture_id": "c-f7b2129f3eb03cdff5712c7e",
+                "run_id": "a822359565cf441d9cb1645f391363ba",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-17589",
+              "occ-17590"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-17589": {
+                "story_id": "s-dfe62ed3877ef1b7bf7f",
+                "event_id": "e-e0808b804ced76be841f",
+                "capture_id": "c-70ccab3f30c1f1f5a464b464",
+                "run_id": "a822359565cf441d9cb1645f391363ba",
+                "identity_uncertain": false
+              },
+              "occ-17590": {
+                "story_id": "s-3d1497300c429581d5b3",
+                "event_id": "e-ce340611071d17a0aa5e",
+                "capture_id": "c-f7b2129f3eb03cdff5712c7e",
+                "run_id": "a822359565cf441d9cb1645f391363ba",
+                "identity_uncertain": false
+              }
+            }
+          }
+        ],
+        "excluded_prior_prior_pairs": []
+      },
+      "event": {
+        "counts": {
+          "same": {
+            "correct": 0,
+            "wrong": 0,
+            "unavailable": 0
+          },
+          "different": {
+            "correct": 3,
+            "wrong": 0,
+            "unavailable": 0
+          }
+        },
+        "pairs": [
+          {
+            "source_ids": [
+              "occ-17587",
+              "occ-17589"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-17587": {
+                "story_id": "s-6434665f409a798c2467",
+                "event_id": "e-fb6e90f286ac5c1a498a",
+                "capture_id": "c-e695306f9918096709e8a555",
+                "run_id": "a822359565cf441d9cb1645f391363ba",
+                "identity_uncertain": false
+              },
+              "occ-17589": {
+                "story_id": "s-dfe62ed3877ef1b7bf7f",
+                "event_id": "e-e0808b804ced76be841f",
+                "capture_id": "c-70ccab3f30c1f1f5a464b464",
+                "run_id": "a822359565cf441d9cb1645f391363ba",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-17587",
+              "occ-17590"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-17587": {
+                "story_id": "s-6434665f409a798c2467",
+                "event_id": "e-fb6e90f286ac5c1a498a",
+                "capture_id": "c-e695306f9918096709e8a555",
+                "run_id": "a822359565cf441d9cb1645f391363ba",
+                "identity_uncertain": false
+              },
+              "occ-17590": {
+                "story_id": "s-3d1497300c429581d5b3",
+                "event_id": "e-ce340611071d17a0aa5e",
+                "capture_id": "c-f7b2129f3eb03cdff5712c7e",
+                "run_id": "a822359565cf441d9cb1645f391363ba",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "occ-17589",
+              "occ-17590"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "occ-17589": {
+                "story_id": "s-dfe62ed3877ef1b7bf7f",
+                "event_id": "e-e0808b804ced76be841f",
+                "capture_id": "c-70ccab3f30c1f1f5a464b464",
+                "run_id": "a822359565cf441d9cb1645f391363ba",
+                "identity_uncertain": false
+              },
+              "occ-17590": {
+                "story_id": "s-3d1497300c429581d5b3",
+                "event_id": "e-ce340611071d17a0aa5e",
+                "capture_id": "c-f7b2129f3eb03cdff5712c7e",
+                "run_id": "a822359565cf441d9cb1645f391363ba",
+                "identity_uncertain": false
+              }
+            }
+          }
+        ],
+        "excluded_prior_prior_pairs": []
+      },
+      "unscored_event_labels": []
+    }
+  ],
+  "fresh_pair_totals_by_arm": {
+    "baseline": {
+      "story": {
+        "same": {
+          "correct": 4,
+          "wrong": 0,
+          "unavailable": 5
+        },
+        "different": {
+          "correct": 9,
+          "wrong": 0,
+          "unavailable": 4
+        }
+      },
+      "event": {
+        "same": {
+          "correct": 0,
+          "wrong": 0,
+          "unavailable": 1
+        },
+        "different": {
+          "correct": 4,
+          "wrong": 0,
+          "unavailable": 0
+        }
+      }
+    },
+    "candidate": {
+      "story": {
+        "same": {
+          "correct": 4,
+          "wrong": 0,
+          "unavailable": 5
+        },
+        "different": {
+          "correct": 9,
+          "wrong": 0,
+          "unavailable": 4
+        }
+      },
+      "event": {
+        "same": {
+          "correct": 0,
+          "wrong": 0,
+          "unavailable": 1
+        },
+        "different": {
+          "correct": 4,
+          "wrong": 0,
+          "unavailable": 0
+        }
+      }
+    }
+  },
+  "original_regressions": [
+    {
+      "case": "ship-cat",
+      "arm": "baseline",
+      "outcome": "succeeded",
+      "journal": {
+        "path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/ship-cat-baseline/journal.sqlite3",
+        "sha256": "68ba8d6b3d510d32294168811d93411a9cea17175078191644a3719456513410",
+        "through_run": "009eb0e637e746738fbb394f2fe314c7"
+      },
+      "supplied_prior_ids": [
+        "0e1f6645160f7f6b80f6d483",
+        "0eea12d783e82bf85bbf3e9a",
+        "13368ce7df52bbee2eec4fa8",
+        "1cbba550d08ea8e14a7335f3",
+        "28ea8d7de992dc1788dad7b6",
+        "2da6c37670113dae74cf7b4e",
+        "3c9ba2a69452f291eec704be",
+        "415ade395dad3f9bd092508e",
+        "41600cd1f5d96f3cfa7b3fcb",
+        "4229fd943f7721679b80e7fc",
+        "4afee3e992afba4c36d3a7c9",
+        "4bef9655ec0272ebcf204a0d",
+        "51642edd5b1080d374a6d0ba",
+        "52f75449d67e5a3928c6d8bc",
+        "5fa3335ba345f2a39b866af7",
+        "63520d9dd633f1d9c56f3ea1",
+        "6ec0a073fbd539a168c6be52",
+        "7d3bdc1214f07808c9113aae",
+        "7f09ac4019aa7f0e2294cf3b",
+        "8ce4c05e37254bbdb4c13b6c",
+        "aca448994dd4ce00afabf0e9",
+        "b87b528ec0b17ca9971464a8",
+        "dd6352268b91189273ae946b"
+      ],
+      "story": {
+        "counts": {
+          "same": {
+            "correct": 1,
+            "wrong": 0,
+            "unavailable": 0
+          },
+          "different": {
+            "correct": 2,
+            "wrong": 0,
+            "unavailable": 0
+          }
+        },
+        "pairs": [
+          {
+            "source_ids": [
+              "30ba9d82a4a224c0c84db4a0",
+              "b5097a6c20686f5241b8f1aa"
+            ],
+            "expected": "same",
+            "status": "correct",
+            "observed": "same",
+            "assignments": {
+              "30ba9d82a4a224c0c84db4a0": {
+                "story_id": "s-cf8a63c0238048a72e7d",
+                "event_id": "e-8f3fecfb1851ad6b4077",
+                "capture_id": "c-0bc3511c09efd3d460f9947b",
+                "run_id": "009eb0e637e746738fbb394f2fe314c7",
+                "identity_uncertain": false
+              },
+              "b5097a6c20686f5241b8f1aa": {
+                "story_id": "s-cf8a63c0238048a72e7d",
+                "event_id": "e-8f3fecfb1851ad6b4077",
+                "capture_id": "c-1ded1dc6493a0bda56e4538e",
+                "run_id": "009eb0e637e746738fbb394f2fe314c7",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "30ba9d82a4a224c0c84db4a0",
+              "3ae710513a084e1b9f385449"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "30ba9d82a4a224c0c84db4a0": {
+                "story_id": "s-cf8a63c0238048a72e7d",
+                "event_id": "e-8f3fecfb1851ad6b4077",
+                "capture_id": "c-0bc3511c09efd3d460f9947b",
+                "run_id": "009eb0e637e746738fbb394f2fe314c7",
+                "identity_uncertain": false
+              },
+              "3ae710513a084e1b9f385449": {
+                "story_id": "s-c3c6d5978bccf6e0e672",
+                "event_id": "e-e08f5876d57f9a22411a",
+                "capture_id": "c-d94bb6aea4ef0a09af63c8ac",
+                "run_id": "009eb0e637e746738fbb394f2fe314c7",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "b5097a6c20686f5241b8f1aa",
+              "3ae710513a084e1b9f385449"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "b5097a6c20686f5241b8f1aa": {
+                "story_id": "s-cf8a63c0238048a72e7d",
+                "event_id": "e-8f3fecfb1851ad6b4077",
+                "capture_id": "c-1ded1dc6493a0bda56e4538e",
+                "run_id": "009eb0e637e746738fbb394f2fe314c7",
+                "identity_uncertain": false
+              },
+              "3ae710513a084e1b9f385449": {
+                "story_id": "s-c3c6d5978bccf6e0e672",
+                "event_id": "e-e08f5876d57f9a22411a",
+                "capture_id": "c-d94bb6aea4ef0a09af63c8ac",
+                "run_id": "009eb0e637e746738fbb394f2fe314c7",
+                "identity_uncertain": false
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case": "cat-followup",
+      "arm": "baseline",
+      "outcome": "succeeded",
+      "journal": {
+        "path": "/Users/mrgreen/Desktop/AI/News-worktrees/experiments/source-integrity-20261007/.news/source-integrity/states/ship-cat-baseline/journal.sqlite3",
+        "sha256": "68ba8d6b3d510d32294168811d93411a9cea17175078191644a3719456513410",
+        "through_run": "db1fb9f7756e40da921384073a80b1b6"
+      },
+      "supplied_prior_ids": [
+        "3ae710513a084e1b9f385449",
+        "74acac04e87c0658ea839e4e",
+        "dd6352268b91189273ae946b"
+      ],
+      "story": {
+        "counts": {
+          "same": {
+            "correct": 1,
+            "wrong": 0,
+            "unavailable": 0
+          },
+          "different": {
+            "correct": 2,
+            "wrong": 0,
+            "unavailable": 0
+          }
+        },
+        "pairs": [
+          {
+            "source_ids": [
+              "335bd8e8bb5da4c5bd57e22a",
+              "3ae710513a084e1b9f385449"
+            ],
+            "expected": "same",
+            "status": "correct",
+            "observed": "same",
+            "assignments": {
+              "335bd8e8bb5da4c5bd57e22a": {
+                "story_id": "s-c3c6d5978bccf6e0e672",
+                "event_id": "e-e08f5876d57f9a22411a",
+                "capture_id": "c-0c3db4bee254d786af1c90a0",
+                "run_id": "db1fb9f7756e40da921384073a80b1b6",
+                "identity_uncertain": false
+              },
+              "3ae710513a084e1b9f385449": {
+                "story_id": "s-c3c6d5978bccf6e0e672",
+                "event_id": "e-e08f5876d57f9a22411a",
+                "capture_id": "c-d94bb6aea4ef0a09af63c8ac",
+                "run_id": "009eb0e637e746738fbb394f2fe314c7",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "335bd8e8bb5da4c5bd57e22a",
+              "30ba9d82a4a224c0c84db4a0"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "335bd8e8bb5da4c5bd57e22a": {
+                "story_id": "s-c3c6d5978bccf6e0e672",
+                "event_id": "e-e08f5876d57f9a22411a",
+                "capture_id": "c-0c3db4bee254d786af1c90a0",
+                "run_id": "db1fb9f7756e40da921384073a80b1b6",
+                "identity_uncertain": false
+              },
+              "30ba9d82a4a224c0c84db4a0": {
+                "story_id": "s-cf8a63c0238048a72e7d",
+                "event_id": "e-8f3fecfb1851ad6b4077",
+                "capture_id": "c-0bc3511c09efd3d460f9947b",
+                "run_id": "009eb0e637e746738fbb394f2fe314c7",
+                "identity_uncertain": false
+              }
+            }
+          },
+          {
+            "source_ids": [
+              "335bd8e8bb5da4c5bd57e22a",
+              "b5097a6c20686f5241b8f1aa"
+            ],
+            "expected": "different",
+            "status": "correct",
+            "observed": "different",
+            "assignments": {
+              "335bd8e8bb5da4c5bd57e22a": {
+                "story_id": "s-c3c6d5978bccf6e0e672",
+                "event_id": "e-e08f5876d57f9a22411a",
+                "capture_id": "c-0c3db4bee254d786af1c90a0",
+                "run_id": "db1fb9f7756e40da921384073a80b1b6",
+                "identity_uncertain": false
+              },
+              "b5097a6c20686f5241b8f1aa": {
+                "story_id": "s-cf8a63c0238048a72e7d",
+                "event_id": "e-8f3fecfb1851ad6b4077",
+                "capture_id": "c-1ded1dc6493a0bda56e4538e",
+                "run_id": "009eb0e637e746738fbb394f2fe314c7",
+                "identity_uncertain": false
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case": "ship-cat",
+      "arm": "candidate",
+      "outcome": "rejected",
+      "journal": null,
+      "supplied_prior_ids": null,
+      "story": {
+        "counts": {
+          "same": {
+            "correct": 0,
+            "wrong": 0,
+            "unavailable": 1
+          },
+          "different": {
+            "correct": 0,
+            "wrong": 0,
+            "unavailable": 2
+          }
+        },
+        "pairs": [
+          {
+            "source_ids": [
+              "30ba9d82a4a224c0c84db4a0",
+              "b5097a6c20686f5241b8f1aa"
+            ],
+            "expected": "same",
+            "status": "unavailable",
+            "reason": "Case rejected; no accepted output.",
+            "missing_ids": [
+              "30ba9d82a4a224c0c84db4a0",
+              "b5097a6c20686f5241b8f1aa"
+            ]
+          },
+          {
+            "source_ids": [
+              "30ba9d82a4a224c0c84db4a0",
+              "3ae710513a084e1b9f385449"
+            ],
+            "expected": "different",
+            "status": "unavailable",
+            "reason": "Case rejected; no accepted output.",
+            "missing_ids": [
+              "30ba9d82a4a224c0c84db4a0",
+              "3ae710513a084e1b9f385449"
+            ]
+          },
+          {
+            "source_ids": [
+              "b5097a6c20686f5241b8f1aa",
+              "3ae710513a084e1b9f385449"
+            ],
+            "expected": "different",
+            "status": "unavailable",
+            "reason": "Case rejected; no accepted output.",
+            "missing_ids": [
+              "b5097a6c20686f5241b8f1aa",
+              "3ae710513a084e1b9f385449"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "case": "cat-followup",
+      "arm": "candidate",
+      "outcome": "unavailable",
+      "journal": null,
+      "supplied_prior_ids": null,
+      "story": {
+        "counts": {
+          "same": {
+            "correct": 0,
+            "wrong": 0,
+            "unavailable": 1
+          },
+          "different": {
+            "correct": 0,
+            "wrong": 0,
+            "unavailable": 2
+          }
+        },
+        "pairs": [
+          {
+            "source_ids": [
+              "335bd8e8bb5da4c5bd57e22a",
+              "3ae710513a084e1b9f385449"
+            ],
+            "expected": "same",
+            "status": "unavailable",
+            "reason": "Case unavailable; no accepted output.",
+            "missing_ids": [
+              "335bd8e8bb5da4c5bd57e22a",
+              "3ae710513a084e1b9f385449"
+            ]
+          },
+          {
+            "source_ids": [
+              "335bd8e8bb5da4c5bd57e22a",
+              "30ba9d82a4a224c0c84db4a0"
+            ],
+            "expected": "different",
+            "status": "unavailable",
+            "reason": "Case unavailable; no accepted output.",
+            "missing_ids": [
+              "335bd8e8bb5da4c5bd57e22a",
+              "30ba9d82a4a224c0c84db4a0"
+            ]
+          },
+          {
+            "source_ids": [
+              "335bd8e8bb5da4c5bd57e22a",
+              "b5097a6c20686f5241b8f1aa"
+            ],
+            "expected": "different",
+            "status": "unavailable",
+            "reason": "Case unavailable; no accepted output.",
+            "missing_ids": [
+              "335bd8e8bb5da4c5bd57e22a",
+              "b5097a6c20686f5241b8f1aa"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "controls": [
+    {
+      "label": "observed-bad",
+      "expected": "rejected",
+      "observed": "rejected",
+      "matches_expectation": true
+    },
+    {
+      "label": "inherited-bad",
+      "expected": "rejected",
+      "observed": "rejected",
+      "matches_expectation": true
+    },
+    {
+      "label": "positive-control",
+      "expected": "succeeded",
+      "observed": "succeeded",
+      "matches_expectation": true
+    }
+  ],
+  "original_file_verification": {
+    "files": 844,
+    "changed": []
+  }
+}

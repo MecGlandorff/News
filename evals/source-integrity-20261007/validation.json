@@ -1,0 +1,13 @@
+{
+  "application_commit": "d3b63e23922fb75040c3e21d279e2fb33a43feb3",
+  "pytest": {
+    "command": "/Users/mrgreen/Desktop/AI/News-worktrees/from-scratch/.venv/bin/python -m pytest -q",
+    "result": "309 passed in 16.15s",
+    "scope": "Final application and offline tests before commit; no source changes since the passing run."
+  },
+  "ruff_check": "All checks passed!",
+  "ruff_format": "28 files already formatted",
+  "git_diff_check": "passed",
+  "primary_runtime_sha256_unchanged_files": 844,
+  "review": "Separate Astra/max preflight and final evidence review; not test authors self-endorsing."
+}

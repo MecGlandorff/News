@@ -1,0 +1,903 @@
+{
+  "schema_version": 1,
+  "pack_id": "fresh-source-integrity-20261007",
+  "label_version": 1,
+  "authored_at_utc": "2026-10-07T21:17:30.107138+00:00",
+  "sources_file_sha256": "9a0b7f81291280716a1e02f83da03719983df7c2f7a6551728b60490a5d3f329",
+  "label_origin": "Fresh source-only judgments authored by the delegated labeling agent before any baseline/candidate output for this pack exists or is inspected. Not human adjudication or independently verified real-world truth.",
+  "synthetic_fixtures": [],
+  "scoring_protocol": {
+    "unit": "A fixed-context case, with separate judgments for story relationship, event identity, semantic coverage, attribution/scope and evidence-field correctness.",
+    "request_budget": "Exactly three bounded case requests per arm can carry all 14 source versions. Do not spend one model request per archived day. The same source cards and ordering must be used for baseline and candidate.",
+    "blindness": "Do not expose labels or reader-question answers to evaluated models. Do not tune labels after seeing outputs. Root must review labels against the frozen sources before starting either arm.",
+    "required": "Score a missing required reader-answer assertion as a meaningful omission only if the output is expected to answer that case. Score separate, material overstatement/attribution errors even when the central fact is present.",
+    "important_context": "These details improve completeness. Apply the stated conditions rather than requiring every background sentence in a compact output.",
+    "conditional": "Score only when the model chooses to discuss that claim or explanatory dimension. Absence alone is not a failure.",
+    "allowed_abstention": "Any relationship explicitly listed as unscored/ambiguous is excluded from correctness denominators. Unlisted pairs should not be automatically converted to hard gold unless implied by an explicitly scored same/different story group.",
+    "story_vs_event": "Articles can belong to one ongoing matter while describing different developments. Do not score a flexible event granularity choice as a story continuity failure.",
+    "citation_scope": "Evidence spans identify exact title or normalized text, using zero-based Python Unicode character offsets [start,end). A headline-only element needs title evidence or an alternative supplied source text that actually states it. A URL alone is never evidence of a proposition.",
+    "no_exhaustiveness_claim": "This is a deliberately selected 3-case supplement, not a random sample, production quality rate, full-history retrieval test or estimate of general accuracy.",
+    "no_checklist_fabrication": "No explicit publisher correction is present. Do not require one. Claims/denials within an article are not automatically disagreement between publishers.",
+    "changes": "If root finds a source-only labeling mistake before model runs, make a new documented label version and freeze new hashes. After any output inspection, do not silently revise this pack or use retrospective labels as if they were blind."
+  },
+  "cases": [
+    {
+      "id": "C01",
+      "purpose": "Keep a specific lawsuit coherent across a gap exceeding 14 days while rejecting another OpenAI lawsuit as a competing story.",
+      "story_relationships": {
+        "same_story_groups": [
+          {
+            "story_id": "C01-MUSK-OPENAI",
+            "source_ids": [
+              "occ-3600",
+              "occ-4397",
+              "occ-12956",
+              "occ-12961"
+            ],
+            "matter": "Musk’s challenge to OpenAI’s departure from its original nonprofit mission."
+          },
+          {
+            "story_id": "C01-TUMBLER-RIDGE",
+            "source_ids": [
+              "occ-3602",
+              "occ-4956"
+            ],
+            "matter": "OpenAI’s handling of the Tumbler Ridge shooter’s account, the apology and families’ negligence lawsuits."
+          }
+        ],
+        "different_story_group_pairs": [
+          [
+            "C01-MUSK-OPENAI",
+            "C01-TUMBLER-RIDGE"
+          ]
+        ],
+        "rationale": "The Musk matter repeats the named claimant, OpenAI, donated funds and nonprofit-to-profit dispute in the April 29 and May 18 text. The competitor names a Canadian shooting, victim families, notification of authorities and negligence claims. Shared OpenAI/Altman, courts or litigation do not make these one matter.",
+        "evidence": [
+          {
+            "source_id": "occ-4397",
+            "field": "text",
+            "quote": "Musk beweert dat hij door Altman is misleid toen hij in de beginjaren van OpenAI geld doneerde.",
+            "start": 651,
+            "end": 746
+          },
+          {
+            "source_id": "occ-4397",
+            "field": "text",
+            "quote": "Met de rechtszaak wil Musk bereiken dat OpenAI's aanpassing naar een op winst gericht bedrijf wordt teruggedraaid.",
+            "start": 4442,
+            "end": 4556
+          },
+          {
+            "source_id": "occ-12956",
+            "field": "text",
+            "quote": "Elon Musk heeft de rechtszaak die hij tegen OpenAI aanspande verloren.",
+            "start": 0,
+            "end": 70
+          },
+          {
+            "source_id": "occ-12956",
+            "field": "text",
+            "quote": "De miljardair had het bedrijf van topman Sam Altman voor de rechter gesleept omdat hij er geld aan doneerde en het er niet mee eens is dat het een bedrijf is geworden dat winst maakt in plaats van een non-profit onderzoeksbedrijf.",
+            "start": 71,
+            "end": 301
+          },
+          {
+            "source_id": "occ-4956",
+            "field": "text",
+            "quote": "Families of seven victims of a mass shooting at a secondary school in British Columbia are suing OpenAI and the company’s CEO for negligence after it failed to alert authorities to the shooter’s troubling conversations with ChatGPT.",
+            "start": 108,
+            "end": 340
+          },
+          {
+            "source_id": "occ-3602",
+            "field": "text",
+            "quote": "The head of OpenAI has written a letter apologizing that his company didn’t alert law enforcement about the online behavior of a person who shot and killed eight people in Tumbler Ridge, British Columbia.",
+            "start": 152,
+            "end": 356
+          }
+        ],
+        "temporal_obligation": {
+          "latest_same_story_prior_published_date": "2026-04-29",
+          "current_published_date": "2026-05-18",
+          "calendar_gap_days": 19,
+          "earliest_same_story_prior_published_date": "2026-04-27",
+          "earliest_to_current_calendar_gap_days": 21,
+          "expected": "An age cutoff alone must not split the current outcome into a new unrelated story. The supplied source text supports the continuation; unseen intervening events must not be invented."
+        }
+      },
+      "event_identity": {
+        "definition": "Story continuity is scored separately from whether two source cards describe one concrete development.",
+        "same_event_groups": [
+          {
+            "event_id": "C01-LOSS-ON-TIMELINESS",
+            "source_ids": [
+              "occ-12956",
+              "occ-12961"
+            ],
+            "description": "May 18 loss of the Musk lawsuit on timeliness grounds."
+          }
+        ],
+        "different_event_pairs": [
+          {
+            "source_ids": [
+              "occ-3602",
+              "occ-4956"
+            ],
+            "reason": "An apology/letter and subsequently filed negligence lawsuits are distinct developments within the Tumbler Ridge matter."
+          }
+        ],
+        "unscored": [
+          {
+            "source_ids": [
+              "occ-3600",
+              "occ-4397"
+            ],
+            "reason": "Both explain the Musk dispute. The brief BBC source does not establish a precise court session or bounded event shared with the NOS explainer; neither a same-event nor a different-event label is required."
+          }
+        ],
+        "current_versus_prior": "The May 18 outcome is a new development in the older Musk matter, not a duplicate of the prior explanatory coverage."
+      },
+      "reader_questions": [
+        {
+          "id": "C01-Q1",
+          "question": "What happened to Musk’s lawsuit, and why did he lose?",
+          "expectations": [
+            {
+              "id": "C01-OUTCOME",
+              "assertion": "Musk lost the lawsuit against OpenAI.",
+              "criticality": "required",
+              "evidence": [
+                {
+                  "source_id": "occ-12956",
+                  "field": "title",
+                  "quote": "Musk verliest rechtszaak over koers van OpenAI",
+                  "start": 0,
+                  "end": 46
+                },
+                {
+                  "source_id": "occ-12956",
+                  "field": "text",
+                  "quote": "Elon Musk heeft de rechtszaak die hij tegen OpenAI aanspande verloren.",
+                  "start": 0,
+                  "end": 70
+                },
+                {
+                  "source_id": "occ-12961",
+                  "field": "title",
+                  "quote": "Musk loses OpenAI court battle after jury finds he waited too long to sue",
+                  "start": 0,
+                  "end": 73
+                }
+              ]
+            },
+            {
+              "id": "C01-GROUND",
+              "assertion": "The reported ground was that Musk waited too long to bring the case. Do not describe the result as a finding that the nonprofit allegations were disproved.",
+              "criticality": "required",
+              "evidence": [
+                {
+                  "source_id": "occ-12956",
+                  "field": "text",
+                  "quote": "Een negenkoppige jury oordeelde dat Musk te lang heeft gewacht met het beginnen van een rechtszaak.",
+                  "start": 302,
+                  "end": 401
+                },
+                {
+                  "source_id": "occ-12961",
+                  "field": "title",
+                  "quote": "Musk loses OpenAI court battle after jury finds he waited too long to sue",
+                  "start": 0,
+                  "end": 73
+                }
+              ]
+            },
+            {
+              "id": "C01-AUTHORITY",
+              "assertion": "The NOS text says the jury was advisory and the judge adopted its view.",
+              "criticality": "important_context",
+              "evidence": [
+                {
+                  "source_id": "occ-12956",
+                  "field": "text",
+                  "quote": "De jury had slechts een adviserende rol, maar de rechter nam hun oordeel over.",
+                  "start": 402,
+                  "end": 480
+                }
+              ],
+              "omit_condition": "Omitting the advisory detail is acceptable in a very short summary if it does not incorrectly state that the jury alone issued the binding judgment."
+            }
+          ]
+        },
+        {
+          "id": "C01-Q2",
+          "question": "Which older matter did this outcome advance, and which similar-looking lawsuit is separate?",
+          "expectations": [
+            {
+              "id": "C01-HISTORY",
+              "assertion": "Continue the Musk/OpenAI nonprofit-mission dispute despite the 19-day gap from the latest supplied prior coverage.",
+              "criticality": "required",
+              "evidence": [
+                {
+                  "source_id": "occ-4397",
+                  "field": "text",
+                  "quote": "Met de rechtszaak wil Musk bereiken dat OpenAI's aanpassing naar een op winst gericht bedrijf wordt teruggedraaid.",
+                  "start": 4442,
+                  "end": 4556
+                },
+                {
+                  "source_id": "occ-12956",
+                  "field": "text",
+                  "quote": "De miljardair had het bedrijf van topman Sam Altman voor de rechter gesleept omdat hij er geld aan doneerde en het er niet mee eens is dat het een bedrijf is geworden dat winst maakt in plaats van een non-profit onderzoeksbedrijf.",
+                  "start": 71,
+                  "end": 301
+                }
+              ]
+            },
+            {
+              "id": "C01-COMPETITOR",
+              "assertion": "Keep the Tumbler Ridge negligence suits and apology separate; the May 18 ruling does not resolve those families’ claims.",
+              "criticality": "required",
+              "evidence": [
+                {
+                  "source_id": "occ-4956",
+                  "field": "text",
+                  "quote": "New lawsuits allege employees urged company to notify authorities months before deadly Tumbler Ridge attack",
+                  "start": 0,
+                  "end": 107
+                },
+                {
+                  "source_id": "occ-12956",
+                  "field": "text",
+                  "quote": "Elon Musk heeft de rechtszaak die hij tegen OpenAI aanspande verloren.",
+                  "start": 0,
+                  "end": 70
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "C01-Q3",
+          "question": "What was alleged, as opposed to established by the reported outcome?",
+          "expectations": [
+            {
+              "id": "C01-ALLEGATION",
+              "assertion": "If describing the original dispute, attribute Musk’s claim that he was misled and avoid adopting the phrase “stolen a charity” as a finding.",
+              "criticality": "conditional",
+              "evidence": [
+                {
+                  "source_id": "occ-4397",
+                  "field": "text",
+                  "quote": "Musk beweert dat hij door Altman is misleid toen hij in de beginjaren van OpenAI geld doneerde.",
+                  "start": 651,
+                  "end": 746
+                },
+                {
+                  "source_id": "occ-12961",
+                  "field": "text",
+                  "quote": "Jurors spent weeks hearing about Musk's claim that Altman had \"stolen a charity.\"",
+                  "start": 0,
+                  "end": 81
+                }
+              ]
+            },
+            {
+              "id": "C01-REBUTTAL",
+              "assertion": "The older NOS text presents OpenAI’s denial of firm donation agreements. If explaining the parties’ opposing positions, preserve that attribution; it is a party dispute reported by a source, not necessarily a disagreement between publishers.",
+              "criticality": "conditional",
+              "evidence": [
+                {
+                  "source_id": "occ-4397",
+                  "field": "text",
+                  "quote": "OpenAI zegt dat er helemaal geen harde afspraken waren over de donaties van Musk.",
+                  "start": 2977,
+                  "end": 3058
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "title_text_scope": [
+        {
+          "source_id": "occ-12961",
+          "headline_only_elements": [
+            "Musk lost",
+            "jury found he waited too long"
+          ],
+          "text_scope": "The text supplies only background about jurors hearing Musk’s claim. A body/text-only citation does not substantiate either headline-only element. A title citation does, as does the independently supplied NOS text."
+        },
+        {
+          "source_id": "occ-3600",
+          "headline_scope": "The title identifies a lawsuit and $130bn framing; the description supplies Musk seeking more than $130bn. This does not establish a damages award."
+        }
+      ],
+      "meaningful_omissions": [
+        "Losing the lawsuit is omitted while only the old nonprofit dispute is repeated.",
+        "The timeliness ground is omitted in a way that makes the result look like adjudication of the substantive allegations.",
+        "The older Musk matter is not connected solely because the prior article is more than 14 days old.",
+        "The current loss is wrongly applied to the Tumbler Ridge lawsuits."
+      ],
+      "unscored_or_not_required": [
+        "No appeal, final remedy, later procedural step or eventual outcome beyond May 18 is supplied.",
+        "The older NOS description says approximately 38 million euros donated; the later NOS description says approximately 38 million dollars. The pack does not resolve this variation, require either figure, or label either article an explicit correction. Omitting the amount is acceptable; choosing one settled currency without attribution is not justified.",
+        "No numeric demand, donation history or Microsoft investment amount is required for the core reader questions.",
+        "The sources support party disagreement about the nonprofit mission, but no explicit publisher correction is supplied. Do not invent a correction event to satisfy a checklist."
+      ]
+    },
+    {
+      "id": "C02",
+      "purpose": "Separate two named matters involving Starmer and preserve the procedural status and attribution of each.",
+      "story_relationships": {
+        "same_story_groups": [
+          {
+            "story_id": "C02-MANDELSON-INQUIRY",
+            "source_ids": [
+              "occ-3589",
+              "occ-4125"
+            ],
+            "matter": "Proposed parliamentary investigation of Starmer over Mandelson’s appointment/vetting and whether Parliament was misled."
+          },
+          {
+            "story_id": "C02-ARSON-TRIAL",
+            "source_ids": [
+              "occ-4902",
+              "occ-4903",
+              "occ-5707"
+            ],
+            "matter": "Trial over arson attacks on Starmer-linked properties and a car."
+          }
+        ],
+        "different_story_group_pairs": [
+          [
+            "C02-MANDELSON-INQUIRY",
+            "C02-ARSON-TRIAL"
+          ]
+        ],
+        "rationale": "A parliamentary motion about Mandelson’s appointment and a criminal arson trial have different conduct, parties and procedural forums. The shared Starmer name and close publication dates are not a basis to merge.",
+        "evidence": [
+          {
+            "source_id": "occ-3589",
+            "field": "title",
+            "quote": "Starmer faces vote on inquiry over Mandelson vetting claims",
+            "start": 0,
+            "end": 59
+          },
+          {
+            "source_id": "occ-4125",
+            "field": "text",
+            "quote": "In het parlement wist de motie hiervoor geen meerderheid te behalen.",
+            "start": 73,
+            "end": 141
+          },
+          {
+            "source_id": "occ-4125",
+            "field": "text",
+            "quote": "Uit het onderzoek had duidelijk moeten worden of de sociaaldemocraat Starmer het Lagerhuis mogelijk bewust of onbewust heeft misleid in de affaire rond de benoeming van Peter Mandelson als ambassadeur in de Verenigde Staten.",
+            "start": 142,
+            "end": 366
+          },
+          {
+            "source_id": "occ-4902",
+            "field": "text",
+            "quote": "Two buildings and a car linked to Prime Minister Keir Starmer of Britain were set afire last year.",
+            "start": 0,
+            "end": 98
+          },
+          {
+            "source_id": "occ-5707",
+            "field": "text",
+            "quote": "The incident is one of a series of arson attacks that took place in May last year on property linked to Keir Starmer, which three men with links to Ukraine are accused of targeting.",
+            "start": 259,
+            "end": 440
+          }
+        ]
+      },
+      "event_identity": {
+        "same_event_groups": [],
+        "different_event_pairs": [
+          {
+            "source_ids": [
+              "occ-4125",
+              "occ-5707"
+            ],
+            "reason": "The parliamentary vote outcome and court testimony about an arson attack are different concrete developments as well as different stories."
+          }
+        ],
+        "unscored": [
+          {
+            "source_ids": [
+              "occ-3589",
+              "occ-4125"
+            ],
+            "reason": "The earlier item anticipates a vote and the later item reports a motion failing. They certainly advance the same inquiry matter. Whether an event representation treats anticipation and outcome as one vote lifecycle or separate developments is not scored."
+          },
+          {
+            "source_ids": [
+              "occ-4902",
+              "occ-4903"
+            ],
+            "reason": "The snippets describe prosecutorial/court allegations on the same day in the arson matter, but do not establish that the accounts come from the identical hearing session or the same specific testimony. Same story is scored; exact event identity is not."
+          }
+        ],
+        "allowed_granularity": "The April 30 witness account can be represented as a new trial development or as additional evidence within a continuing trial event; do not score that representation choice as a story-link error."
+      },
+      "reader_questions": [
+        {
+          "id": "C02-Q1",
+          "question": "Did Parliament open the proposed investigation into Starmer over Mandelson?",
+          "expectations": [
+            {
+              "id": "C02-VOTE-OUTCOME",
+              "assertion": "The motion failed to gain a majority and the parliamentary investigation did not proceed as reported.",
+              "criticality": "required",
+              "evidence": [
+                {
+                  "source_id": "occ-4125",
+                  "field": "title",
+                  "quote": "Geen parlementair onderzoek naar Starmer om aanstelling Mandelson",
+                  "start": 0,
+                  "end": 65
+                },
+                {
+                  "source_id": "occ-4125",
+                  "field": "text",
+                  "quote": "Er komt geen parlementair onderzoek naar de Britse premier Keir Starmer. In het parlement wist de motie hiervoor geen meerderheid te behalen.",
+                  "start": 0,
+                  "end": 141
+                }
+              ]
+            },
+            {
+              "id": "C02-INQUIRY-SCOPE",
+              "assertion": "The proposed investigation concerned whether Starmer misled the Commons over Mandelson’s appointment. Failure of the motion is not a criminal acquittal or a finding that nobody was misled.",
+              "criticality": "important_context",
+              "evidence": [
+                {
+                  "source_id": "occ-4125",
+                  "field": "text",
+                  "quote": "Uit het onderzoek had duidelijk moeten worden of de sociaaldemocraat Starmer het Lagerhuis mogelijk bewust of onbewust heeft misleid in de affaire rond de benoeming van Peter Mandelson als ambassadeur in de Verenigde Staten.",
+                  "start": 142,
+                  "end": 366
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "C02-Q2",
+          "question": "What is being reported in the separate arson trial, and whose account is it?",
+          "expectations": [
+            {
+              "id": "C02-TESTIMONY",
+              "assertion": "The court heard the prime minister’s sister-in-law describe fear after an arson attack on her home; the supplied text names Judith Alexander and the Kentish Town house.",
+              "criticality": "required",
+              "evidence": [
+                {
+                  "source_id": "occ-5707",
+                  "field": "title",
+                  "quote": "Starmer’s sister-in-law feared what might have happened in arson attack, court hears",
+                  "start": 0,
+                  "end": 84
+                },
+                {
+                  "source_id": "occ-5707",
+                  "field": "text",
+                  "quote": "Judith Alexander describes how Kentish Town house owned by the prime minister was targeted",
+                  "start": 0,
+                  "end": 90
+                },
+                {
+                  "source_id": "occ-5707",
+                  "field": "text",
+                  "quote": "The prime minister’s sister-in-law has said she feared what might have happened had she not woken up after her home was targeted in an arson attack, a court has heard.",
+                  "start": 91,
+                  "end": 258
+                }
+              ],
+              "name_and_neighborhood": "Helpful identifiers, but omitting either alone is not a meaningful omission if the witness relationship and testimony are clear."
+            },
+            {
+              "id": "C02-TIMING",
+              "assertion": "These are reports about attacks in the previous year, including May, not assertions that new attacks happened on the article dates.",
+              "criticality": "important_context",
+              "evidence": [
+                {
+                  "source_id": "occ-4902",
+                  "field": "text",
+                  "quote": "Two buildings and a car linked to Prime Minister Keir Starmer of Britain were set afire last year.",
+                  "start": 0,
+                  "end": 98
+                },
+                {
+                  "source_id": "occ-5707",
+                  "field": "text",
+                  "quote": "The incident is one of a series of arson attacks that took place in May last year on property linked to Keir Starmer, which three men with links to Ukraine are accused of targeting.",
+                  "start": 259,
+                  "end": 440
+                }
+              ]
+            },
+            {
+              "id": "C02-DENIAL",
+              "assertion": "Three men are accused and deny all charges. Preserve the accusation status; include their denial when summarizing the prosecutorial case against them.",
+              "criticality": "required",
+              "evidence": [
+                {
+                  "source_id": "occ-4903",
+                  "field": "text",
+                  "quote": "The three men are accused of targeting north London properties linked to Prime Minister Sir Keir Starmer.",
+                  "start": 0,
+                  "end": 105
+                },
+                {
+                  "source_id": "occ-5707",
+                  "field": "text",
+                  "quote": "They deny all the charges.",
+                  "start": 441,
+                  "end": 467
+                }
+              ]
+            },
+            {
+              "id": "C02-RUSSIAN-ATTRIBUTION",
+              "assertion": "If reporting Russian-language instructions or recruitment, attribute that to prosecutors/the account presented to the jury. The source does not establish Russian-state sponsorship or guilt.",
+              "criticality": "conditional",
+              "evidence": [
+                {
+                  "source_id": "occ-4902",
+                  "field": "title",
+                  "quote": "Men Accused in Fires Targeting Starmer Received Orders in Russian, Prosecutors Say",
+                  "start": 0,
+                  "end": 82
+                },
+                {
+                  "source_id": "occ-4902",
+                  "field": "text",
+                  "quote": "The men on trial for it were recruited through a Russian-language Telegram account, a jury was told.",
+                  "start": 99,
+                  "end": 199
+                }
+              ]
+            },
+            {
+              "id": "C02-PAYMENT-ATTRIBUTION",
+              "assertion": "If reporting an offer of money to Ukrainians, cite the BBC title and retain “court hears”; the BBC description alone contains only the accusation about targeting properties.",
+              "criticality": "conditional",
+              "evidence": [
+                {
+                  "source_id": "occ-4903",
+                  "field": "title",
+                  "quote": "Man offered Ukrainians money to carry out Starmer arson attacks, court hears",
+                  "start": 0,
+                  "end": 76
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "C02-Q3",
+          "question": "Are the parliamentary inquiry and the arson trial one case?",
+          "expectations": [
+            {
+              "id": "C02-SEPARATION",
+              "assertion": "Keep the Mandelson inquiry matter and the arson trial separate; do not use one proceeding’s outcome as the other’s outcome.",
+              "criticality": "required",
+              "evidence": [
+                {
+                  "source_id": "occ-4125",
+                  "field": "title",
+                  "quote": "Geen parlementair onderzoek naar Starmer om aanstelling Mandelson",
+                  "start": 0,
+                  "end": 65
+                },
+                {
+                  "source_id": "occ-5707",
+                  "field": "title",
+                  "quote": "Starmer’s sister-in-law feared what might have happened in arson attack, court hears",
+                  "start": 0,
+                  "end": 84
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "title_text_scope": [
+        {
+          "source_id": "occ-3589",
+          "headline_only_elements": [
+            "vote on inquiry",
+            "Mandelson vetting claims"
+          ],
+          "text_scope": "The text gives No 10’s characterization of the move and the Conservatives’ request; it does not independently identify the named inquiry."
+        },
+        {
+          "source_id": "occ-4903",
+          "headline_only_elements": [
+            "man offered money",
+            "Ukrainians",
+            "court heard the allegation"
+          ],
+          "text_scope": "The text identifies three accused men and north London properties, without the payment detail."
+        }
+      ],
+      "meaningful_omissions": [
+        "The failed parliamentary motion is left as only a pending inquiry vote.",
+        "The arson allegations are repeated without accusation/court attribution or are presented as convictions.",
+        "The defendants’ denial is omitted from an account that explains the allegations against them.",
+        "The witness testimony is replaced by a generic statement about Starmer controversies.",
+        "A new April 2026 arson attack is implied despite the source describing attacks the previous year."
+      ],
+      "unscored_or_not_required": [
+        "No verdict, culprit, motive or state sponsor is established by these sources.",
+        "No causal link between the Mandelson appointment matter and arson attacks is supplied.",
+        "The snippets do not establish exact trial session identity or the full chronology of every fire.",
+        "No publisher disagreement or correction is required; allegations and denials are different parties’ positions."
+      ]
+    },
+    {
+      "id": "C03",
+      "purpose": "Use short RSS headlines as separately citeable evidence while respecting their attribution, scope and missing details.",
+      "story_relationships": {
+        "same_story_groups": [
+          {
+            "story_id": "C03-ENGLAND-BUS-CAP",
+            "source_ids": [
+              "occ-17587"
+            ],
+            "matter": "Announced cap for most bus fares in England."
+          },
+          {
+            "story_id": "C03-SOUTHERN-WATER-CHARGES",
+            "source_ids": [
+              "occ-17589"
+            ],
+            "matter": "Charges over an alleged plan to manipulate water quality tests."
+          },
+          {
+            "story_id": "C03-OPENAI-CYBERATTACK-CLAIM",
+            "source_ids": [
+              "occ-17590"
+            ],
+            "matter": "OpenAI’s report of its AI launching a cyberattack."
+          }
+        ],
+        "different_story_group_pairs": [
+          [
+            "C03-ENGLAND-BUS-CAP",
+            "C03-SOUTHERN-WATER-CHARGES"
+          ],
+          [
+            "C03-ENGLAND-BUS-CAP",
+            "C03-OPENAI-CYBERATTACK-CLAIM"
+          ],
+          [
+            "C03-SOUTHERN-WATER-CHARGES",
+            "C03-OPENAI-CYBERATTACK-CLAIM"
+          ]
+        ],
+        "rationale": "The supplied concrete developments concern separate policies, proceedings and incidents. Shared source and publication date establish no story relationship.",
+        "bounded_history_note": "No prior sources are supplied here. This does not prove that any matter is new in the wider world."
+      },
+      "event_identity": {
+        "same_event_groups": [],
+        "different_event_pairs": [
+          {
+            "source_ids": [
+              "occ-17587",
+              "occ-17589"
+            ],
+            "reason": "Bus policy and water-testing charges are different developments."
+          },
+          {
+            "source_ids": [
+              "occ-17587",
+              "occ-17590"
+            ],
+            "reason": "Bus policy and a reported AI cyberattack are different developments."
+          },
+          {
+            "source_ids": [
+              "occ-17589",
+              "occ-17590"
+            ],
+            "reason": "Water-testing charges and a reported AI cyberattack are different developments."
+          }
+        ],
+        "unscored": []
+      },
+      "reader_questions": [
+        {
+          "id": "C03-Q1",
+          "question": "What bus-fare change is announced, where, and when?",
+          "expectations": [
+            {
+              "id": "C03-BUS-CORE",
+              "assertion": "Most bus fares in England are to be capped at £2 from January. Preserve “most”, the England scope, the £2 cap and future timing.",
+              "criticality": "required",
+              "evidence": [
+                {
+                  "source_id": "occ-17587",
+                  "field": "title",
+                  "quote": "Most bus fares in England to be capped at £2 from January",
+                  "start": 0,
+                  "end": 57
+                }
+              ],
+              "citation_requirement": "All concrete cap details are title evidence. The text alone cannot substantiate the amount, geography, coverage or January timing."
+            },
+            {
+              "id": "C03-BUS-RATIONALE",
+              "assertion": "If giving the expected benefit, attribute the cost-of-living rationale to the government; do not present it as a measured outcome.",
+              "criticality": "conditional",
+              "evidence": [
+                {
+                  "source_id": "occ-17587",
+                  "field": "text",
+                  "quote": "The government says the policy will \"help with the cost of living and give people the breathing space they need\"",
+                  "start": 0,
+                  "end": 112
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "C03-Q2",
+          "question": "What happened in the Southern Water matter, and what remains an allegation?",
+          "expectations": [
+            {
+              "id": "C03-WATER-CORE",
+              "assertion": "Four people, including a former Southern Water boss, were charged over an alleged plan to manipulate water quality tests.",
+              "criticality": "required",
+              "evidence": [
+                {
+                  "source_id": "occ-17589",
+                  "field": "title",
+                  "quote": "Ex-Southern Water boss among four charged over alleged plan to manipulate water quality tests",
+                  "start": 0,
+                  "end": 93
+                }
+              ],
+              "citation_requirement": "Company, former-boss status, charging event and water-quality-test plan are title evidence. The text-only allegation about penalties is insufficient for these elements."
+            },
+            {
+              "id": "C03-WATER-NAME",
+              "assertion": "The description names Matthew Wright among those accused and says the alleged aim was to save the firm millions in penalties.",
+              "criticality": "important_context",
+              "evidence": [
+                {
+                  "source_id": "occ-17589",
+                  "field": "text",
+                  "quote": "Matthew Wright is accused alongside three others of trying to save the firm millions in penalties.",
+                  "start": 0,
+                  "end": 98
+                }
+              ],
+              "identity_limit": "The pack does not require the response to equate Matthew Wright with the unnamed former boss in the title; the snippet does not explicitly state that apposition."
+            },
+            {
+              "id": "C03-WATER-STATUS",
+              "assertion": "Do not turn the charges or alleged plan into guilt, successful manipulation, a conviction, an actual saving, or an imposed fine.",
+              "criticality": "required",
+              "evidence": [
+                {
+                  "source_id": "occ-17589",
+                  "field": "title",
+                  "quote": "charged over alleged plan to manipulate water quality tests",
+                  "start": 34,
+                  "end": 93
+                },
+                {
+                  "source_id": "occ-17589",
+                  "field": "text",
+                  "quote": "Matthew Wright is accused alongside three others of trying to save the firm millions in penalties.",
+                  "start": 0,
+                  "end": 98
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "C03-Q3",
+          "question": "Who reports the AI cyberattack, and what does this snippet establish?",
+          "expectations": [
+            {
+              "id": "C03-AI-CORE",
+              "assertion": "OpenAI says its AI went rogue and launched a cyberattack. Preserve the attribution to OpenAI.",
+              "criticality": "required",
+              "evidence": [
+                {
+                  "source_id": "occ-17590",
+                  "field": "title",
+                  "quote": "OpenAI says its AI went rogue and launched 'unprecedented' cyber-attack",
+                  "start": 0,
+                  "end": 71
+                }
+              ],
+              "citation_requirement": "The attribution to OpenAI, whose AI it was and the “went rogue” framing occur in the title. They cannot be supported by a body-only citation."
+            },
+            {
+              "id": "C03-AI-SCOPE",
+              "assertion": "The description calls it one of the first publicly disclosed AI cyberattacks without direct human involvement. Do not upgrade this to the first ever AI cyberattack, independently verified autonomy, or a universal capability claim.",
+              "criticality": "important_context",
+              "evidence": [
+                {
+                  "source_id": "occ-17590",
+                  "field": "text",
+                  "quote": "It is one of the first publicly disclosed cyber-attacks carried out by AI without direct human involvement.",
+                  "start": 0,
+                  "end": 107
+                }
+              ]
+            },
+            {
+              "id": "C03-AI-FRAMING",
+              "assertion": "If retaining “unprecedented”, identify it as the supplied headline’s quoted characterization rather than a separately proven comparison.",
+              "criticality": "conditional",
+              "evidence": [
+                {
+                  "source_id": "occ-17590",
+                  "field": "title",
+                  "quote": "'unprecedented'",
+                  "start": 43,
+                  "end": 58
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "title_text_scope": [
+        {
+          "source_id": "occ-17587",
+          "headline_only_elements": [
+            "most bus fares",
+            "England",
+            "£2 cap",
+            "from January"
+          ],
+          "text_scope": "Only an attributed government rationale is in text."
+        },
+        {
+          "source_id": "occ-17589",
+          "headline_only_elements": [
+            "Southern Water",
+            "former boss",
+            "four charged",
+            "alleged plan to manipulate water quality tests"
+          ],
+          "text_scope": "The text names Matthew Wright and three others, and alleges a goal of saving millions in penalties."
+        },
+        {
+          "source_id": "occ-17590",
+          "headline_only_elements": [
+            "OpenAI says",
+            "its AI",
+            "went rogue",
+            "quoted unprecedented characterization"
+          ],
+          "text_scope": "The text characterizes public disclosure and direct human involvement, but does not name OpenAI or independently verify the company’s account."
+        }
+      ],
+      "meaningful_omissions": [
+        "The concrete fare amount, place or start month is lost because only the vague description is used.",
+        "“Most” is dropped in a way that wrongly promises a universal cap, or England becomes the entire UK.",
+        "The charging development or alleged water-testing plan is omitted in favor of a generic penalties story.",
+        "An accusation is promoted to a conviction or completed manipulation.",
+        "The OpenAI attribution is removed from the cyberattack claim.",
+        "The response loses all headline-only developments despite having intact source titles."
+      ],
+      "unscored_or_not_required": [
+        "No precise January day or explicit year is stated; “January” is sufficient. A year inferred from July 2026 must be marked as inference rather than cited as explicit title text.",
+        "No old bus fare, budget, duration, operator list or exceptions are supplied.",
+        "No exact penalty amount, court date, offense wording, verdict or defendants’ response is supplied for Southern Water.",
+        "No AI model name, attack target, attack date, technical mechanism, damage estimate, external confirmation, or company response beyond the headline is supplied.",
+        "No corroboration, correction or cross-source disagreement is required from a one-source brief."
+      ]
+    }
+  ]
+}
