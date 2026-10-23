@@ -3,8 +3,10 @@
 This is a finite source packet for independent labeling before candidate runs.
 It is not a news pipeline, semantic gold, or a holdout. Selection used source
 fields only, without consulting old reports, briefs, memory, generated labels,
-evaluation outputs, or candidate outputs. No model calls or external fetches
-were made to assemble it. All archived material is **development / prior exposure
+evaluation outputs, or candidate outputs. No application model calls or external
+fetches were made to assemble it. Research was performed by `gpt-6.1-sol` agents
+with high reasoning; research-agent token/cost telemetry is unknown, not zero.
+All archived material is **development / prior exposure
 unknown**. A new labeler does not change that classification.
 
 Known: the frozen selection contains **12 cases, 49 source observations, 46 source

@@ -9,6 +9,8 @@ rebuild at [`bc7b0fb`](https://github.com/MecGlandorff/News/tree/bc7b0fb93d3ca34
 is a frozen comparison baseline. Its code, databases and outputs are not a new
 implementation or evaluation truth. The empty starting commit retains common
 Git ancestry so a later transition to the permanent main branch remains possible.
+This research change depends on bootstrap PR #58 into `News2.0`; that PR was
+still open when the protocol was prepared. Integrate the bootstrap first.
 
 ## What the system must explain
 
@@ -56,15 +58,17 @@ does not establish a meaningful change.
    newly observed sources. Claims about 30/60/90-day evolution require suitable
    source-supported trajectories and declared coverage gaps, not shifted dates.
 
-The next research PR should provide the frozen research protocol and
-casebook, not a new news pipeline. Calibrate cost on a small development slice
-before budgeting larger replays. Record finite call, token and runtime ceilings
+This research change provides a proposed protocol and frozen source casebook;
+it adds no news pipeline. Calibrate cost on a small development slice before
+budgeting larger replays. Record finite call, token and runtime ceilings
 for every live experiment, including preparation, rejected calls and recovery.
 
 The [pre-candidate protocol v0.1](research/PROTOCOL.md) proposes source-only labels,
 prefix replay, finite screening floors and a bounded calibration design. It is a
 development proposal, not measured quality or authorization for live model calls;
-holdout and prospective promotion gates remain pending.
+holdout and prospective promotion gates remain pending. The
+[development casebook](research/CASEBOOK.md) documents source provenance,
+chronology limits, local rehydration and the independent-labeling boundary.
 
 ## Evidence required to advance
 
@@ -99,5 +103,11 @@ evidence; integrate improvements only when the comparison supports them.
 
 Raw runtime archives belong under `.news/` and are ignored. Commit deliberately
 selected fixtures and manifests only when their provenance and publication scope
-have been checked. No application tests or CI workflow exist in this bootstrap;
-add executable checks with the first executable implementation.
+have been checked. Offline research checks use only the Python standard library:
+
+```sh
+python3 -m unittest discover -s research/tests -v
+```
+
+These checks validate research source-packet tooling, not application behavior or
+model quality. No application tests or CI workflow exist yet.
