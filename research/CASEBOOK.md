@@ -8,6 +8,9 @@ fetches were made to assemble it. Research was performed by `gpt-6.1-sol` agents
 with high reasoning; research-agent token/cost telemetry is unknown, not zero.
 All archived material is **development / prior exposure
 unknown**. A new labeler does not change that classification.
+Independent labeling and adjudication are documented in [LABELING.md](LABELING.md),
+with limitations and retained disagreements; see also [REVIEW.md](REVIEW.md).
+Their completion does not turn this packet into semantic truth or a replay-ready corpus.
 
 Known: the frozen selection contains **12 cases, 49 source observations, 46 source
 field versions, 44 URLs, and 37 cumulative prefixes**. Eight cases use authentic
@@ -130,8 +133,9 @@ Selection probes same-occurrence developments, nearby competing matters,
 repeated observations and same-URL field changes, insufficient text, source
 correction language, questions and later reports, and a historical trajectory
 with a publication gap greater than 14 days. These are sampling intentions;
-independent labels must establish which mechanisms the evidence actually
-supports. They are not frozen expected conclusions. The unblinded selection notes
+the [completed adjudication](LABELING.md) records which mechanisms the evidence
+supports. A publication gap greater than 14 days does not establish a required
+same-matter long-gap link. The unblinded selection notes
 record intentions without assigning story memberships or expected deltas.
 
 The case-grouped labeling packets **are not valid candidate inputs for measuring
@@ -142,6 +146,8 @@ and grouping and construct a mixed chronological stream with background sources,
 using the same matched source corpus for every candidate. Full-slice evaluation,
 including rejected and pending work, is required before broad quality claims.
 This labeling export alone is not a replay-ready quality corpus.
+Full daily windows, mixed-stream inputs, a reviewed dependency-cluster map and
+recovery fixtures remain missing; 30/60/90-day evolution is not demonstrated.
 
 Unknown: a clear unrelated-matter roundup is not guaranteed represented. The
 selected liveblog excerpt is relatively narrow, and a liveblog title alone does
@@ -165,4 +171,5 @@ quality: eleven offline tests cover generated-field leakage, schema drift,
 file/row/source integrity failures, revision/repeat preservation, empty/duplicate
 identities, chronology and future-source boundaries, path containment, and
 non-destructive output handling. A separate rehydration reproduced the frozen
-packet digest. Source labels and evaluation remain independent work.
+packet digest. [Source adjudication](LABELING.md) is complete with documented
+limits; candidate evaluation and the remaining replay prerequisites are still pending.

@@ -69,6 +69,10 @@ development proposal, not measured quality or authorization for live model calls
 holdout and prospective promotion gates remain pending. The
 [development casebook](research/CASEBOOK.md) documents source provenance,
 chronology limits, local rehydration and the independent-labeling boundary.
+The [labeling reference](research/LABELING.md) records completed adjudication and
+its interpretation limits; the [research review](research/REVIEW.md) records the
+independent assessment. These are development evidence, not replay readiness or
+measured candidate quality.
 
 ## Evidence required to advance
 
