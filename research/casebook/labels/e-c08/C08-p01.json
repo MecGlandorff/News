@@ -1,0 +1,75 @@
+{
+  "case_id": "C08",
+  "prefix_id": "C08-p01",
+  "labeler_id": "E",
+  "label_version": "E-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "E-C08-C001",
+      "kind": "context_only",
+      "claim": "BBC News promotes its app and news coverage; this supplies no specific news occurrence.",
+      "source_spans": [
+        {
+          "observation_id": "O030",
+          "field": "title",
+          "start": 0,
+          "end": 12
+        },
+        {
+          "observation_id": "O030",
+          "field": "text",
+          "start": 0,
+          "end": 92
+        }
+      ],
+      "attribution": "BBC News app promotional text",
+      "occurrence_ref": null,
+      "story_ref": null,
+      "materiality": "none",
+      "uncertainty": "No event-specific facts are supplied."
+    },
+    {
+      "id": "E-C08-C002",
+      "kind": "new_occurrence",
+      "claim": "The Guardian headline reports an Indian pilot recalling a flydubai cockpit attack, calls him a hero, and quotes him saying he was fighting for his life.",
+      "source_spans": [
+        {
+          "observation_id": "O031",
+          "field": "title",
+          "start": 0,
+          "end": 89
+        }
+      ],
+      "attribution": "The Guardian headline; first-person words attributed to the pilot",
+      "occurrence_ref": "E-C08-OCC001",
+      "story_ref": "E-C08-STORY001",
+      "materiality": "material",
+      "uncertainty": "Headline only; attack date, location, participants and sequence are not established by the visible text."
+    }
+  ],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "E-C08-C001"
+      ],
+      "status": "prohibited",
+      "reason": "Generic app promotion does not constitute an occurrence or material news delta."
+    },
+    {
+      "contribution_ids": [
+        "E-C08-C002"
+      ],
+      "status": "required",
+      "reason": "First visible report of the cockpit attack and the pilot recalling it; retain headline-level attribution."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": "The attack report has only a headline and photo credit; detailed event facts are unavailable.",
+  "ambiguity_notes": [
+    "The attack and the later recollection are linked by the headline, but no distinct date or venue of the recollection is supplied. No separate recollection occurrence is forced."
+  ],
+  "adjudication_status": "unadjudicated"
+}

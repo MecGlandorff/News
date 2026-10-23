@@ -1,0 +1,61 @@
+{
+  "case_id": "C08",
+  "label_version": "adjudicated-c08-v2",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "scope": "Effective C08 development-only gold mapping for these three prefixes; not truth labels or holdout data.",
+  "effective_prefixes": {
+    "C08-p01": {
+      "gold_file": "research/casebook/labels/adjudicated-c08-v2/C08-p01.json",
+      "gold_sha256": "1d2be581a8496f43b687c74938e6a1ceb536659e81268726f3030207af3007aa",
+      "source_packet_raw_sha256": "691ec4d2c9696a02c4291a4a7b8d1183d79ae052a3dc700ddd75941e32b065fb",
+      "label_input_raw_sha256": {
+        "D": "36fc60064c161837e5a0976b82b9433201bdaeab28f40e654dbf68583772c1f7",
+        "E": "7a091d00bdb2bb9b067918e9219e5e93df2f4c2ae1b6ed83c6f853111a36a54d"
+      },
+      "saved_at_utc": "2026-10-23T22:04:35.176373+00:00"
+    },
+    "C08-p02": {
+      "gold_file": "research/casebook/labels/adjudicated-c08-v2/C08-p02.json",
+      "gold_sha256": "13ad8ccf184a529a240e613fc46f6f28b1c1d6a6829f5434195dc1e9297b7063",
+      "source_packet_raw_sha256": "91c76d80845d983c0ce882aeecf2d9491b0d693020c060084c352b7279571a69",
+      "label_input_raw_sha256": {
+        "D": "a91bbe310fce7cae41456876d2c72741e3b7312f58bb32b03ef3a88193cd58e0",
+        "E": "1a0fa7e600863dba50f3c0e9bb1a9c386ad1c3feb2d1d578d7d35767e191671a"
+      },
+      "saved_at_utc": "2026-10-23T22:05:00.937720+00:00"
+    },
+    "C08-p03": {
+      "gold_file": "research/casebook/labels/adjudicated-c08-v2/C08-p03.json",
+      "gold_sha256": "8ef2887171e57917e4bd5403d7a9d14f1993b7d16891e8e6207c3c75eb5f1a44",
+      "source_packet_raw_sha256": "8c44e03a6cdb210f91707affc923a6a81a4270d7ba3042b894c9db457f1e8a21",
+      "label_input_raw_sha256": {
+        "D": "84b6c8c63e491ed1da3a24543a16d00bd7499f764c9ff20060d1c4ccc649e8e9",
+        "E": "3b783496813c7d326045d778b4a21911844b75344c9dcfb861021be33d83738b"
+      },
+      "saved_at_utc": "2026-10-23T22:05:24.840078+00:00"
+    }
+  },
+  "audit_file": "research/casebook/labels/adjudicated-c08-v2/audit.jsonl",
+  "audit_sha256": "f1f94b9f911b2763b532583c3d56a74b49d32ae05de6f20dbac993a1faeb28bb",
+  "preserved_inputs": {
+    "D": {
+      "C08-p01.json": "36fc60064c161837e5a0976b82b9433201bdaeab28f40e654dbf68583772c1f7",
+      "C08-p02.json": "a91bbe310fce7cae41456876d2c72741e3b7312f58bb32b03ef3a88193cd58e0",
+      "C08-p03.json": "84b6c8c63e491ed1da3a24543a16d00bd7499f764c9ff20060d1c4ccc649e8e9",
+      "audit.jsonl": "9dc9c73fe7535ef9857b8fe27996281a13f795ac700a493fe52cda7539f3c147",
+      "SUMMARY.md": "a5715e658244d8b5a18bf1c5e826eb38a47a870f4852879c3cae93bb4f08a71c"
+    },
+    "E": {
+      "C08-p01.json": "7a091d00bdb2bb9b067918e9219e5e93df2f4c2ae1b6ed83c6f853111a36a54d",
+      "C08-p02.json": "1a0fa7e600863dba50f3c0e9bb1a9c386ad1c3feb2d1d578d7d35767e191671a",
+      "C08-p03.json": "3b783496813c7d326045d778b4a21911844b75344c9dcfb861021be33d83738b",
+      "audit.jsonl": "80259e8448b0e38045a62154a73632e7dd474ab876b64f2db07083d1367f08ab",
+      "SUMMARY.md": "623f1982f234a601d6d4f633d9dcf913b5461c8d0dad42c8dc5cd5ac11db46e2"
+    }
+  },
+  "assigned_model": "gpt-6.1-sol",
+  "assigned_reasoning_effort": "high",
+  "agent_token_usage": "unknown",
+  "agent_cost": "unknown",
+  "created_at_utc": "2026-10-23T22:06:01.902608+00:00"
+}
