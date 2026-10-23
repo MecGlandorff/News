@@ -114,6 +114,13 @@ later sources, without candidate outputs or arm identities. Retain
 both original labels, adjudication rationale and unresolved ambiguity. Later
 prefixes may add expectations but may not leak facts into an earlier label.
 Use provisional source-based occurrence/story references, never candidate IDs.
+Future visibility includes related cases, not merely later prefixes within a bundle.
+Before scheduling labels, freeze an exposure graph and audit related-case clusters.
+Within each appropriate clock stratum, label in global chronological order; curated
+diagnostics may instead use fresh isolated case contexts, with cross-case links
+adjudicated separately before mixed-stream scoring. Retained labels exposed to
+related future evidence are ineligible; replacement requires fresh labelers and
+separate adjudication. Current v0.1 does not establish global clock blindness.
 
 Keep shared provenance, chronology, exposure, source sufficiency and source lists
 in the versioned inventory/prefix manifest rather than copying them into every label.
@@ -185,6 +192,12 @@ repair latency in replay and processing wall time. Passing a cutoff unrepaired f
 The primary independent unit is a source-supported trajectory, not all possible
 article pairs. Report raw numerators/denominators plus micro pooled unit rates and
 macro means across eligible trajectories, with each trajectory's result visible.
+Twelve case bundles are not twelve independent trajectories (nor eleven after
+subtracting one overlap): a bundle may contain multiple matters, and one matter
+may span bundles. A reviewed semantic/statistical dependency-cluster map is required
+before minimum-trajectory gates or clustered intervals; use its independent units,
+not packet counts. Unknown background dependence stays explicit. Current v0.1 has
+no claimed complete cluster map; the corresponding gates remain unestablished.
 Do not inflate sample size by counting repeated prefixes or n-squared negative
 pairs as independent observations. Cluster uncertainty by trajectory; report a
 paired trajectory bootstrap 95% interval only with at least 10 eligible trajectories
