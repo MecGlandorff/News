@@ -61,6 +61,11 @@ casebook, not a new news pipeline. Calibrate cost on a small development slice
 before budgeting larger replays. Record finite call, token and runtime ceilings
 for every live experiment, including preparation, rejected calls and recovery.
 
+The [pre-candidate protocol v0.1](research/PROTOCOL.md) proposes source-only labels,
+prefix replay, finite screening floors and a bounded calibration design. It is a
+development proposal, not measured quality or authorization for live model calls;
+holdout and prospective promotion gates remain pending.
+
 ## Evidence required to advance
 
 Measure false merges, missed connections and developments, supported and novel
@@ -79,7 +84,8 @@ when it meets the predeclared absolute floors, passes the relevant regressions,
 and has independent review of correctness, narrative usefulness and simplicity.
 Agent agreement and small perfect matching samples are not reliability estimates.
 
-Research agents use `gpt-6.1-sol` with high reasoning. Production model choice is a
+All delegated research, implementation, evaluation and review uses `gpt-6.1-sol`
+with high reasoning. Production model choice is a
 separate experiment: comparisons initially retain the baseline's `gpt-6-astra` /
 medium configuration unless the protocol explicitly declares a model comparison.
 The number of research agents does not prescribe the number of production calls.

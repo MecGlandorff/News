@@ -7,7 +7,8 @@ from an older checkout or a tool's remembered default.
 
 ## Research and implementation
 
-- Use `gpt-6.1-sol` with high reasoning for the requested research subagents.
+- Use `gpt-6.1-sol` with high reasoning for all delegated research,
+  implementation, evaluation and review.
   Delegate independent source labeling, architecture experiments and critical
   review. A candidate's author must not be its only reviewer.
 - Use separate worktrees. Treat the previous implementation and its production
@@ -18,6 +19,8 @@ from an older checkout or a tool's remembered default.
 - Fix inputs, model settings, ordering and resource accounting for comparisons.
   Keep source-quality and model-choice experiments distinct from architecture
   comparisons. Do not promote a change on selected positive matches alone.
+- Follow the proposed pre-candidate [research protocol](research/PROTOCOL.md).
+  It authorizes no model runs; freeze a separately bounded run plan first.
 - Establish finite live-run budgets before launching calls. Count preparation,
   review, failed attempts and recovery; unknown usage is unknown, never zero.
   Never keep retrying until a reviewer happens to accept a proposal.
