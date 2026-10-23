@@ -68,6 +68,16 @@ evidence, local version/hash, excerpt/full-text status, gaps, rights/publication
 scope, exposure history and trajectory membership. Absence of text is not absence
 of a real-world development. Preserve competing and unassigned source material.
 The casebook is a development resource and cannot authorize quality promotion.
+The 12 grouped packets are source-labeling aids, not inputs for unassisted story
+discovery or retrieval: case IDs, membership and rationales pre-cluster relevance.
+The 49 selected observations are curated, incomplete-day diagnostics, not evidence
+of full-archive retrieval or coverage. A candidate harness must hide those grouping
+cues and use mixed chronological streams with predeclared background sources.
+Before broad quality claims, freeze and replay full archive slices, retaining all
+sources and failures, separately by chronology mode. This full-slice gate is unmet;
+selected-case calibration establishes feasibility only.
+Source-version differences may reflect acquisition or extraction changes, not a
+publisher correction. Require claim-level evidence before assigning semantic change.
 
 Keep these chronology modes separate in every result and denominator:
 
