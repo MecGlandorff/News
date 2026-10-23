@@ -159,10 +159,32 @@ status enums, and amendment base/history hashes and targets. The executed check
 passed with zero gold errors, 37 gold records and 37/37/4 preserved originals.
 It reports A C01-p03's original `partially_answered` question status as outside
 the protocol enum; the original stays intact and gold uses supported separate
-answered/open states. This validator checks the preserved v1 set and locator amendments; the separately
-validated fresh C08 override is documented in LABELING-C08.md. A passing validator
-does not prove semantic truth,
-independence, temporal blindness, output quality or automatic recovery.
+answered/open states. The machine-readable [`effective-reference.json`](casebook/labels/effective-reference.json)
+selects exactly 37 effective records: 34 archived v1 records plus the three fresh
+C08 v2 records. It pins raw record/packet hashes, inventory/freeze/case manifests,
+eligibility and its audit, the active locator version and rejected history, and
+the separate replacement manifest. Each affected entry explicitly selects its
+active locator amendment IDs and version/hash. Exposed old C08 records remain
+preserved but cannot be selected as effective references.
+
+Validator output separates `archived_v1` preservation checks from
+`effective_reference` selection checks. The latter verifies the replacement
+originals/audits, embedded input/packet hashes, same-prefix decision pointers,
+coverage, explicit nested fields, and exact span shape/types/bounds. It rejects
+unknown paths, future observations and inactive amendments; span checks remain
+active under `python -O`. V1 retains its recorded clocks/visible observation
+metadata; v2 is checked against the pinned packet without inventing missing gold
+metadata. The actual frozen archive passed with 37 effective records, profiles
+34 v1 / 3 v2, 17 active amendments and zero errors. Ordinary regression tests use
+synthetic temporary packets and need no local archive:
+
+```sh
+python3 -m unittest discover -s research/tests -v
+```
+
+These checks establish reference selection integrity and structure. They do not
+prove semantic truth, independence, temporal blindness, output quality or
+automatic recovery.
 
 Application model calls: **0**. Research-agent inference occurred; token/cost
 telemetry is **unknown**, not zero. No pipeline, CI, push, merge or PR was run
