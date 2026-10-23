@@ -1,0 +1,154 @@
+{
+  "case_id": "C04",
+  "prefix_id": "C04-p04",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C04-monday-attack",
+      "kind": "new_occurrence",
+      "claim": "A further round of Houthi missile attacks damaged Riyadh airport and killed one; military spokesperson reports more missiles at Saudi cities on Monday.",
+      "source_spans": [
+        {
+          "observation_id": "O016",
+          "field": "text",
+          "start": 330,
+          "end": 422
+        },
+        {
+          "observation_id": "O016",
+          "field": "text",
+          "start": 541,
+          "end": 659
+        }
+      ],
+      "attribution": "Guardian; Saudi military spokesperson",
+      "occurrence_ref": "C04-riyadh-monday-attack",
+      "story_ref": "C04-yemen-control",
+      "materiality": "material",
+      "uncertainty": null
+    },
+    {
+      "id": "C04-flight-suspension",
+      "kind": "new_occurrence",
+      "claim": "Saudi Arabia suspends Riyadh airport flights until next Saturday after further attacks; some airlines had already cancelled services.",
+      "source_spans": [
+        {
+          "observation_id": "O016",
+          "field": "text",
+          "start": 205,
+          "end": 329
+        }
+      ],
+      "attribution": "Guardian",
+      "occurrence_ref": "C04-riyadh-flight-suspension",
+      "story_ref": "C04-yemen-control",
+      "materiality": "material",
+      "uncertainty": null
+    },
+    {
+      "id": "C04-saturday-toll",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Later account dates previous mass-casualty attack to Saturday and reports 13 killed, over 300 injured.",
+      "source_spans": [
+        {
+          "observation_id": "O016",
+          "field": "text",
+          "start": 753,
+          "end": 835
+        }
+      ],
+      "attribution": "Guardian",
+      "occurrence_ref": "C04-riyadh-undated-attack",
+      "story_ref": "C04-yemen-control",
+      "uncertainty": "Latest toll differs by one from earlier 12; no correction notice supplied.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [
+    {
+      "from": "C04-riyadh-monday-attack",
+      "to": "C04-riyadh-undated-attack",
+      "type": "distinct_occurrence_same_story",
+      "status": "required",
+      "reason": "Explicit further round and Monday versus Saturday distinguish attacks.",
+      "source_spans": [
+        {
+          "observation_id": "O016",
+          "field": "text",
+          "start": 330,
+          "end": 377
+        },
+        {
+          "observation_id": "O016",
+          "field": "text",
+          "start": 782,
+          "end": 803
+        }
+      ]
+    },
+    {
+      "from": "C04-riyadh-undated-attack",
+      "to": "C04-riyadh-thursday-attack",
+      "type": "distinct_occurrence_same_story",
+      "status": "required",
+      "reason": "New text dates the high-toll attack Saturday, different from earlier explicitly Thursday attack.",
+      "source_spans": [
+        {
+          "observation_id": "O016",
+          "field": "text",
+          "start": 782,
+          "end": 803
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C04-monday-attack",
+        "C04-flight-suspension",
+        "C04-saturday-toll"
+      ],
+      "status": "required",
+      "reason": "Separate further attack, transport consequence and updated previous toll are material."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C04-airport-identity",
+      "status": "answered",
+      "claim": "Later report identifies mass-casualty prior attack as Saturday, supporting distinction from Thursday's attack.",
+      "source_spans": [
+        {
+          "observation_id": "O016",
+          "field": "text",
+          "start": 782,
+          "end": 803
+        }
+      ],
+      "closure_reason": "New explicit event date supplies missing discriminator."
+    },
+    {
+      "id": "C04-missile-defences",
+      "status": "open",
+      "claim": "Why and how Houthi missiles are penetrating airport defences is posed by the source.",
+      "source_spans": [
+        {
+          "observation_id": "O016",
+          "field": "text",
+          "start": 118,
+          "end": 204
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Later event dates resolve earlier identity uncertainty prospectively; earlier labels remain frozen."
+  ],
+  "adjudication_status": "unadjudicated"
+}

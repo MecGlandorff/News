@@ -1,0 +1,152 @@
+{
+  "case_id": "C10",
+  "prefix_id": "C10-p02",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C10-c1",
+      "kind": "source_correction",
+      "claim": "Province South Holland wrongly announced its first wolf sighting; reporter supplied wrong location and actually saw the animal in Limburg.",
+      "source_spans": [
+        {
+          "observation_id": "O042",
+          "field": "description",
+          "start": 0,
+          "end": 287
+        }
+      ],
+      "attribution": "Telegraaf reporting provincial mistake",
+      "occurrence_ref": "C10-mislocated-wolf-report",
+      "story_ref": "C10-south-holland-wolf-report",
+      "materiality": "high",
+      "uncertainty": "Source explicitly describes corrected earlier report; original announcement not independently visible in prefix."
+    },
+    {
+      "id": "C10-c2",
+      "kind": "conflict",
+      "claim": "NU.nl says first South Holland wolf sighting occurred in Barendrecht three weeks earlier, conflicting with already visible source correction locating reported animal in Limburg.",
+      "source_spans": [
+        {
+          "observation_id": "O039",
+          "field": "description",
+          "start": 0,
+          "end": 203
+        },
+        {
+          "observation_id": "O042",
+          "field": "description",
+          "start": 0,
+          "end": 287
+        }
+      ],
+      "attribution": "NU.nl report versus Telegraaf provincial-error account",
+      "occurrence_ref": null,
+      "story_ref": "C10-south-holland-wolf-report",
+      "materiality": "high",
+      "uncertainty": "Likely same mistaken report, but no original report ID; simulation ordering cannot authenticate which version was available first."
+    }
+  ],
+  "relations": [
+    {
+      "from": "C10-c2",
+      "to": "C10-c1",
+      "type": "same_occurrence",
+      "status": "allowed",
+      "reason": "Same first South Holland claim and Barendrecht reporter context strongly suggest same sighting report.",
+      "source_spans": [
+        {
+          "observation_id": "O039",
+          "field": "description",
+          "start": 0,
+          "end": 203
+        },
+        {
+          "observation_id": "O042",
+          "field": "description",
+          "start": 0,
+          "end": 287
+        }
+      ]
+    },
+    {
+      "from": "C10-c2",
+      "to": "C10-c1",
+      "type": "conflict",
+      "status": "required",
+      "reason": "NU asserts first South Holland/Barendrecht sighting that visible correction rejects; nominal later timestamp does not establish reversal.",
+      "source_spans": [
+        {
+          "observation_id": "O039",
+          "field": "description",
+          "start": 0,
+          "end": 203
+        },
+        {
+          "observation_id": "O042",
+          "field": "description",
+          "start": 0,
+          "end": 287
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C10-c2"
+      ],
+      "status": "required",
+      "reason": "New source-attributed conflict is visible; it must not overwrite earlier correction as established reality."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Order of dated article versions is not reliable correction chronology. No new physical wolf movement inferred from contradictory locations."
+  ],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "current_view_policy": "Prior contributions and unresolved questions retained as attributed evidence; current delta expectations apply only at this prefix, not to repeated context.",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:C10-uncorrected-claim",
+        "B:C10-c2",
+        "A:relations[0]",
+        "B:relations[0]"
+      ],
+      "decision": "Require attributed conflict; same physical sighting identity allowed, not mandatory.",
+      "reason": "First province and Barendrecht align, but no original report ID. Both accounts cannot be promoted to unqualified current truth."
+    },
+    {
+      "label_refs": [
+        "B:C10-q1",
+        "A:questions(empty)"
+      ],
+      "decision": "Retain identity ambiguity in relations rather than add a required source-question lifecycle.",
+      "reason": "Source excerpts do not explicitly ask that reconciliation question; uncertainty is still preserved."
+    }
+  ],
+  "chronology_mode": "publication_order_simulation",
+  "checkpoint_at": "2026-05-08T15:30:51+00:00",
+  "source_packet_sha256": "a0b09d2d92c134ea553ef90d80bb3a4c38705f358f02ea2c226020d58a80c473",
+  "visible_observation_ids": [
+    "O042",
+    "O039"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "6939fc974af84f141d33ab5de9870924810bfa0473ad38e47650e2a8595b6351",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "dff0cf7b14e3b4402ab59a88983764c5390adef55c64c69aa712a9d277688ed3",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:57:42.993314+00:00"
+}

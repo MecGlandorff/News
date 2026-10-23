@@ -1,0 +1,336 @@
+{
+  "case_id": "C04",
+  "prefix_id": "C04-p02",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C04-c1",
+      "kind": "new_occurrence",
+      "claim": "Yemeni army announced Operation Dawn of Yemen, with an initial aim of regaining Bab al-Mandab and Mocha.",
+      "source_spans": [
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 249,
+          "end": 345
+        },
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 464,
+          "end": 673
+        }
+      ],
+      "attribution": "Yemeni military/government via NOS",
+      "occurrence_ref": "C04-yemen-offensive",
+      "story_ref": "C04-yemen-control",
+      "materiality": "high",
+      "uncertainty": "War-party claims; announced aims are not verified territorial outcomes."
+    },
+    {
+      "id": "C04-c2",
+      "kind": "conflict",
+      "claim": "Information minister claims government army regained Bab al-Mandab; Houthi-linked media denied army territorial gains.",
+      "source_spans": [
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 0,
+          "end": 157
+        },
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 1649,
+          "end": 1734
+        }
+      ],
+      "attribution": "Government minister versus Houthi-linked media via NOS/Reuters",
+      "occurrence_ref": "C04-yemen-offensive",
+      "story_ref": "C04-yemen-control",
+      "materiality": "high",
+      "uncertainty": "Source reports explicitly conflict; cannot assert recapture as settled."
+    },
+    {
+      "id": "C04-sanaa",
+      "kind": "new_occurrence",
+      "claim": "A military spokesperson reports a strategic offensive in Houthi-held Sanaa; the Houthis acknowledge a Saudi attack there.",
+      "source_spans": [
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 1002,
+          "end": 1157
+        },
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 1158,
+          "end": 1250
+        }
+      ],
+      "attribution": "Yemeni armed-forces spokesperson on X and Houthis on Telegram, reported by NOS.",
+      "occurrence_ref": "C04-sanaa-attack",
+      "story_ref": "C04-yemen-control",
+      "materiality": "material",
+      "uncertainty": "Distinct location and reports; exact operational relationship and scale are not established."
+    },
+    {
+      "id": "C04-riyadh-thursday",
+      "kind": "new_occurrence",
+      "claim": "Saudi officials report three citizens killed and others wounded in a late-Thursday Riyadh airport attack claimed by Houthis.",
+      "source_spans": [
+        {
+          "observation_id": "O013",
+          "field": "text",
+          "start": 111,
+          "end": 300
+        },
+        {
+          "observation_id": "O013",
+          "field": "text",
+          "start": 301,
+          "end": 328
+        }
+      ],
+      "attribution": "Saudi officials; Houthi responsibility claim via Guardian",
+      "occurrence_ref": "C04-riyadh-thursday-attack",
+      "story_ref": "C04-yemen-control",
+      "materiality": "material",
+      "uncertainty": null
+    },
+    {
+      "id": "C04-riyadh-later-report",
+      "kind": "same_occurrence_material_fact",
+      "claim": "A later Guardian report describes a Houthi missile attack at Riyadh airport with dozens reported wounded; Saudi authorities had not confirmed the strike.",
+      "source_spans": [
+        {
+          "observation_id": "O014",
+          "field": "text",
+          "start": 0,
+          "end": 39
+        },
+        {
+          "observation_id": "O014",
+          "field": "text",
+          "start": 135,
+          "end": 309
+        }
+      ],
+      "attribution": "Guardian, unspecified injury reports and witness",
+      "occurrence_ref": null,
+      "story_ref": "C04-yemen-control",
+      "uncertainty": "Material additional report; occurrence identity unresolved. Classification permits same-occurrence follow-up without requiring a merge or second attack.",
+      "materiality": "material"
+    },
+    {
+      "id": "C04-us-evaluation",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Trump says he is evaluating US participation in Saudi strikes against Houthis.",
+      "source_spans": [
+        {
+          "observation_id": "O014",
+          "field": "text",
+          "start": 310,
+          "end": 457
+        }
+      ],
+      "attribution": "Trump via Guardian",
+      "story_ref": "C04-yemen-control",
+      "occurrence_ref": null,
+      "materiality": "material",
+      "uncertainty": null
+    }
+  ],
+  "relations": [
+    {
+      "from": "C04-sanaa-attack",
+      "to": "C04-yemen-offensive",
+      "type": "same_story",
+      "status": "allowed",
+      "reason": "Article presents concurrent anti-Houthi operations together; precise operational relationship not established.",
+      "source_spans": [
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 1002,
+          "end": 1157
+        },
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 1158,
+          "end": 1250
+        }
+      ]
+    },
+    {
+      "from": "C04-riyadh-later-report",
+      "to": "C04-riyadh-thursday",
+      "type": "same_occurrence",
+      "status": "uncertain",
+      "reason": "Same airport and actor but absent date; casualty and confirmation differences do not alone prove either a correction or second attack.",
+      "source_spans": [
+        {
+          "observation_id": "O014",
+          "field": "title",
+          "start": 0,
+          "end": 65
+        }
+      ]
+    },
+    {
+      "from": "C04-riyadh-thursday-attack",
+      "to": "C04-yemen-offensive",
+      "type": "same_story",
+      "status": "required",
+      "reason": "Source directly places airport attack in the Yemen offensive context.",
+      "source_spans": [
+        {
+          "observation_id": "O013",
+          "field": "text",
+          "start": 363,
+          "end": 469
+        }
+      ]
+    },
+    {
+      "from": "C04-riyadh-later-report",
+      "to": "C04-riyadh-thursday",
+      "type": "source_correction",
+      "status": "prohibited",
+      "reason": "No explicit retraction/replacement; differing confirmation and casualty detail do not establish correction.",
+      "source_spans": [
+        {
+          "observation_id": "O014",
+          "field": "text",
+          "start": 0,
+          "end": 39
+        },
+        {
+          "observation_id": "O014",
+          "field": "text",
+          "start": 135,
+          "end": 309
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C04-riyadh-thursday",
+        "C04-riyadh-later-report",
+        "C04-us-evaluation"
+      ],
+      "status": "required",
+      "reason": "Airport violence and potential US involvement materially advance the ongoing matter; identity of two airport reports must remain qualified."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C04-q1",
+      "status": "open",
+      "claim": "Who controls Bab al-Mandab and how much territory did the army regain?",
+      "source_spans": [
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 1505,
+          "end": 1596
+        }
+      ],
+      "closure_reason": null
+    },
+    {
+      "id": "C04-airport-identity",
+      "status": "open",
+      "claim": "Whether the two airport reports describe one attack or separate attacks cannot be determined from supplied event timing.",
+      "source_spans": [
+        {
+          "observation_id": "O013",
+          "field": "text",
+          "start": 301,
+          "end": 328
+        },
+        {
+          "observation_id": "O014",
+          "field": "text",
+          "start": 0,
+          "end": 39
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Repeated government-allied strait-recapture claim adds no demonstrated independent resolution of C04-control-question.",
+    "Strict temporal replacement: B p02 is excluded; A plus fresh C p02 and visible sources support gold. Earlier C metadata annotation still cites p01 checkpoint; packet checkpoint controls p02."
+  ],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "current_view_policy": "Prior contributions and unresolved questions retained as attributed evidence; current delta expectations apply only at this prefix, not to repeated context.",
+  "decisions": [
+    {
+      "label_refs": [
+        "B:C04-p02 (entire record)"
+      ],
+      "decision": "Exclude B from strict temporal adjudication; preserve original unchanged.",
+      "reason": "B disclosed seeing p03 source before successful p02 save. Gold uses A, fresh C and current packet only."
+    },
+    {
+      "label_refs": [
+        "A:C04-riyadh-thursday",
+        "C:C04-C07",
+        "A:C04-riyadh-later-report",
+        "C:C04-C08"
+      ],
+      "decision": "Require airport attack account and materially different later reporting; leave occurrence identity uncertain with null reference for later account.",
+      "reason": "O013 dates Thursday; O014 supplies no event date. Same airport and actor do not prove two attacks or one."
+    },
+    {
+      "label_refs": [
+        "A:C04-us-evaluation",
+        "C:C04-C09"
+      ],
+      "decision": "Require attributed evaluation statement, not US intervention.",
+      "reason": "Both eligible labelers recognize meaningful prospective-policy report; O014 explicitly says evaluating."
+    },
+    {
+      "label_refs": [
+        "A:ambiguity_notes[0]",
+        "C:C04-C10"
+      ],
+      "decision": "Repeated strait-control claim does not close control question or create new capture.",
+      "reason": "No new operation date, independent verification or explicit correction."
+    }
+  ],
+  "chronology_mode": "captured_observation",
+  "checkpoint_at": "2026-10-10T19:54:57.969523+00:00",
+  "source_packet_sha256": "d0267dc34dd9a780b23d0d5fff4a86fbeaf6367643c71a5a75a611a0b650ca28",
+  "visible_observation_ids": [
+    "O012",
+    "O013",
+    "O014"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "d93c5b6fae9e9f888b5a6d0803d0b97ece0b848c1685565932915415fd8edc64",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "eea3d26d84ab7dd1007ebeb623aab1110e17f3ef233d66ef3cba543e3ecde51a",
+      "temporal_eligibility": "excluded_for_C04-p02_future_read"
+    },
+    "c04": {
+      "sha256": "2a24a9ff7ad33f96635bc48d0dbaecb9c83aadf8c0422aa2d29977cb9948f0b2",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:54:01.060852+00:00"
+}

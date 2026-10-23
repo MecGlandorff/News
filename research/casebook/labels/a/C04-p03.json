@@ -1,0 +1,72 @@
+{
+  "case_id": "C04",
+  "prefix_id": "C04-p03",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C04-riyadh-toll",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Updated report: civil aviation authorities say latest Riyadh airport attack killed 12 and injured over 300; coalition blames Houthis; anonymous regional official identifies domestic terminals 3 and 4 complex.",
+      "source_spans": [
+        {
+          "observation_id": "O015",
+          "field": "text",
+          "start": 99,
+          "end": 316
+        },
+        {
+          "observation_id": "O015",
+          "field": "text",
+          "start": 317,
+          "end": 394
+        },
+        {
+          "observation_id": "O015",
+          "field": "text",
+          "start": 395,
+          "end": 528
+        }
+      ],
+      "attribution": "Civil aviation authorities; Saudi-led coalition; anonymous regional official via Guardian",
+      "occurrence_ref": "C04-riyadh-undated-attack",
+      "story_ref": "C04-yemen-control",
+      "uncertainty": "Reported toll and responsibility; relation to Thursday attack remains uncertain.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [
+    {
+      "from": "C04-riyadh-toll",
+      "to": "C04-riyadh-later-report",
+      "type": "same_occurrence",
+      "status": "required",
+      "reason": "Same article URL and latest-attack account update casualty figures and attribution.",
+      "source_spans": [
+        {
+          "observation_id": "O015",
+          "field": "title",
+          "start": 0,
+          "end": 69
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C04-riyadh-toll"
+      ],
+      "status": "required",
+      "reason": "Large new official casualty toll and location details are material updates; no explicit correction language."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Do not classify an evolving casualty estimate as a source correction without evidence of error acknowledgment. Earlier one-versus-two attack ambiguity remains."
+  ],
+  "adjudication_status": "unadjudicated"
+}

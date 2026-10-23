@@ -1,0 +1,83 @@
+{
+  "case_id": "C08",
+  "prefix_id": "C08-p01",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C08-app",
+      "kind": "context_only",
+      "claim": "BBC app promotional text describes news and topic-following features.",
+      "source_spans": [
+        {
+          "observation_id": "O030",
+          "field": "text",
+          "start": 0,
+          "end": 92
+        }
+      ],
+      "attribution": "BBC",
+      "materiality": "none",
+      "occurrence_ref": null,
+      "story_ref": null,
+      "uncertainty": null
+    },
+    {
+      "id": "C08-pilot-account",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Guardian headline says Indian pilot recalls fighting for his life in a Flydubai cockpit attack and is hailed as hero.",
+      "source_spans": [
+        {
+          "observation_id": "O031",
+          "field": "title",
+          "start": 0,
+          "end": 89
+        }
+      ],
+      "attribution": "Guardian headline; pilot account",
+      "occurrence_ref": "C08-flydubai-attack",
+      "story_ref": "C08-flydubai-investigation",
+      "uncertainty": "Photo credit body supplies no additional interview details.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [
+    {
+      "from": "C08-app",
+      "to": "C08-flydubai-investigation",
+      "type": "same_story",
+      "status": "prohibited",
+      "reason": "Generic app promotion contains no connection to cockpit attack.",
+      "source_spans": [
+        {
+          "observation_id": "O030",
+          "field": "title",
+          "start": 0,
+          "end": 12
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C08-pilot-account"
+      ],
+      "status": "required",
+      "reason": "Initial source headline supports an attributed survivor account."
+    },
+    {
+      "contribution_ids": [
+        "C08-app"
+      ],
+      "status": "prohibited",
+      "reason": "Promotional boilerplate supports no news occurrence or material update."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": "Pilot interview body unavailable.",
+  "ambiguity_notes": [],
+  "adjudication_status": "unadjudicated"
+}

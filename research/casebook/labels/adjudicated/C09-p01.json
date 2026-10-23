@@ -1,0 +1,152 @@
+{
+  "case_id": "C09",
+  "prefix_id": "C09-p01",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C09-c1",
+      "kind": "new_occurrence",
+      "claim": "WHO and South African health department report three deaths and at least three others ill in a suspected hantavirus outbreak on an Atlantic cruise ship.",
+      "source_spans": [
+        {
+          "observation_id": "O035",
+          "field": "description",
+          "start": 365,
+          "end": 642
+        }
+      ],
+      "attribution": "WHO and South African health department via Guardian",
+      "occurrence_ref": "C09-cruise-outbreak",
+      "story_ref": "C09-cruise-hantavirus",
+      "materiality": "high",
+      "uncertainty": "Suspected outbreak cause; not all deaths confirmed hantavirus."
+    },
+    {
+      "id": "C09-c2",
+      "kind": "same_occurrence_material_fact",
+      "claim": "WHO says at least one hantavirus case confirmed, one patient in South African intensive care and evacuation of two symptomatic people being arranged.",
+      "source_spans": [
+        {
+          "observation_id": "O035",
+          "field": "description",
+          "start": 649,
+          "end": 823
+        },
+        {
+          "observation_id": "O035",
+          "field": "description",
+          "start": 897,
+          "end": 985
+        }
+      ],
+      "attribution": "WHO via Guardian/AP",
+      "occurrence_ref": "C09-cruise-outbreak",
+      "story_ref": "C09-cruise-hantavirus",
+      "materiality": "high",
+      "uncertainty": "Evacuations in progress/planning; counts may include overlapping people."
+    }
+  ],
+  "relations": [
+    {
+      "from": "C09-c2",
+      "to": "C09-c1",
+      "type": "same_occurrence",
+      "status": "required",
+      "reason": "WHO care/confirmation account concerns same suspected shipboard outbreak.",
+      "source_spans": [
+        {
+          "observation_id": "O035",
+          "field": "description",
+          "start": 649,
+          "end": 823
+        },
+        {
+          "observation_id": "O035",
+          "field": "description",
+          "start": 897,
+          "end": 985
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C09-c1",
+        "C09-c2"
+      ],
+      "status": "required",
+      "reason": "Initial outbreak, toll, confirmation and care status."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C09-q1",
+      "status": "open",
+      "claim": "Investigation is ongoing into suspected outbreak; confirmation across affected passengers remains incomplete.",
+      "source_spans": [
+        {
+          "observation_id": "O035",
+          "field": "description",
+          "start": 649,
+          "end": 753
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Publication-order simulation: authentic availability of this version at dated publication is unknown; content may be revised/backfilled. No real-time chronology inferred."
+  ],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:C09-outbreak",
+        "B:C09-c1",
+        "B:C09-c2"
+      ],
+      "decision": "Retain severity and care/confirmation units, explicitly suspected cause.",
+      "reason": "O035 separates three deaths/three ill from at least one confirmed case and planned evacuations."
+    },
+    {
+      "label_refs": [
+        "A:C09-cause",
+        "B:C09-q1"
+      ],
+      "decision": "Use narrower supported investigation/confirmation uncertainty; do not require a transmission-mechanism question.",
+      "reason": "Text says investigation underway but does not explicitly identify transmission research question."
+    },
+    {
+      "label_refs": [
+        "A:ambiguity_notes[0]",
+        "B:ambiguity_notes[0]"
+      ],
+      "decision": "Preserve publication-order simulation status.",
+      "reason": "May4-linked material in May3 record reinforces that actual contemporaneous availability is unknown, not a labeling future-read violation."
+    }
+  ],
+  "chronology_mode": "publication_order_simulation",
+  "checkpoint_at": "2026-05-03T22:55:44+00:00",
+  "source_packet_sha256": "ed3dc18c462c3850686c45011476949ab895290e58d1e6c9d31d1b1f3526fdf6",
+  "visible_observation_ids": [
+    "O035"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "fd00a8984bfa15b354a9a905b6a2123b7fee5cc282f0957f56b6b3181a614482",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "b1eec541cdada7f963aa69f9e7c7ab145527c6ee06fc5d38b529fd2f1b922eee",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:56:34.620902+00:00"
+}

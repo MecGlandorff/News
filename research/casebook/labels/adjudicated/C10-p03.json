@@ -1,0 +1,234 @@
+{
+  "case_id": "C10",
+  "prefix_id": "C10-p03",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C10-c1",
+      "kind": "source_correction",
+      "claim": "Province South Holland wrongly announced its first wolf sighting; reporter supplied wrong location and actually saw the animal in Limburg.",
+      "source_spans": [
+        {
+          "observation_id": "O042",
+          "field": "description",
+          "start": 0,
+          "end": 287
+        }
+      ],
+      "attribution": "Telegraaf reporting provincial mistake",
+      "occurrence_ref": "C10-mislocated-wolf-report",
+      "story_ref": "C10-south-holland-wolf-report",
+      "materiality": "high",
+      "uncertainty": "Source explicitly describes corrected earlier report; original announcement not independently visible in prefix."
+    },
+    {
+      "id": "C10-c3",
+      "kind": "source_correction",
+      "claim": "BIJ12 says the reported April 17 Barendrecht sighting was wrong: reporter saw wolf in Limburg and home address was accidentally selected on map; attempted correction did not reach wildlife association.",
+      "source_spans": [
+        {
+          "observation_id": "O041",
+          "field": "description",
+          "start": 3,
+          "end": 199
+        },
+        {
+          "observation_id": "O041",
+          "field": "description",
+          "start": 215,
+          "end": 359
+        },
+        {
+          "observation_id": "O041",
+          "field": "description",
+          "start": 704,
+          "end": 904
+        },
+        {
+          "observation_id": "O041",
+          "field": "description",
+          "start": 1096,
+          "end": 1155
+        }
+      ],
+      "attribution": "BIJ12; NU.nl referenced by NOS",
+      "occurrence_ref": "C10-mislocated-wolf-report",
+      "story_ref": "C10-south-holland-wolf-report",
+      "materiality": "high",
+      "uncertainty": "Explains reported correction; no claim wolves cannot ever occur in South Holland."
+    },
+    {
+      "id": "C10-c2",
+      "kind": "conflict",
+      "claim": "NU.nl says first South Holland wolf sighting occurred in Barendrecht three weeks earlier, conflicting with already visible source correction locating reported animal in Limburg.",
+      "source_spans": [
+        {
+          "observation_id": "O039",
+          "field": "description",
+          "start": 0,
+          "end": 203
+        },
+        {
+          "observation_id": "O042",
+          "field": "description",
+          "start": 0,
+          "end": 287
+        }
+      ],
+      "attribution": "NU.nl report versus Telegraaf provincial-error account",
+      "occurrence_ref": "C10-mislocated-wolf-report",
+      "story_ref": "C10-south-holland-wolf-report",
+      "materiality": "high",
+      "uncertainty": "Later O041 explicitly explains this first Barendrecht report as mislocated Limburg sighting; retain NU attribution as history, not current South Holland sighting.",
+      "view_status": "historical_report_corrected"
+    }
+  ],
+  "relations": [
+    {
+      "from": "C10-c2",
+      "to": "C10-c1",
+      "type": "same_occurrence",
+      "status": "allowed",
+      "reason": "Same first South Holland claim and Barendrecht reporter context strongly suggest same sighting report.",
+      "source_spans": [
+        {
+          "observation_id": "O039",
+          "field": "description",
+          "start": 0,
+          "end": 203
+        },
+        {
+          "observation_id": "O042",
+          "field": "description",
+          "start": 0,
+          "end": 287
+        }
+      ]
+    },
+    {
+      "from": "C10-c2",
+      "to": "C10-c1",
+      "type": "conflict",
+      "status": "required",
+      "reason": "NU asserts first South Holland/Barendrecht sighting that visible correction rejects; nominal later timestamp does not establish reversal.",
+      "source_spans": [
+        {
+          "observation_id": "O039",
+          "field": "description",
+          "start": 0,
+          "end": 203
+        },
+        {
+          "observation_id": "O042",
+          "field": "description",
+          "start": 0,
+          "end": 287
+        }
+      ]
+    },
+    {
+      "from": "C10-c2",
+      "to": "C10-c3",
+      "type": "corrected_by",
+      "status": "required",
+      "reason": "Explicit earlier-in-day first Barendrecht report is identified as erroneous.",
+      "source_spans": [
+        {
+          "observation_id": "O041",
+          "field": "description",
+          "start": 444,
+          "end": 486
+        }
+      ]
+    },
+    {
+      "from": "C10-c3",
+      "to": "C10-c1",
+      "type": "same_occurrence",
+      "status": "required",
+      "reason": "Limburg/home address/Barendrecht mechanism identifies same reporting error.",
+      "source_spans": [
+        {
+          "observation_id": "O041",
+          "field": "description",
+          "start": 215,
+          "end": 359
+        },
+        {
+          "observation_id": "O041",
+          "field": "description",
+          "start": 704,
+          "end": 904
+        },
+        {
+          "observation_id": "O041",
+          "field": "description",
+          "start": 1096,
+          "end": 1155
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C10-c3"
+      ],
+      "status": "required",
+      "reason": "Correction mechanism and authoritative identity resolution materially advance prior conflict."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Historical source ordering cannot guarantee these versions were actually available at stated times; correction is content-explicit."
+  ],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "current_view_policy": "Prior contributions and unresolved questions retained as attributed evidence; current delta expectations apply only at this prefix, not to repeated context.",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:C10-bij12-correction",
+        "B:C10-c3",
+        "B:C10-c4"
+      ],
+      "decision": "Require one richer authoritative correction; no duplicate identity-answer recall unit.",
+      "reason": "O041 supplies BIJ12 attribution, April17 date and map-address error mechanism."
+    },
+    {
+      "label_refs": [
+        "A:relations[0]",
+        "A:relations[1]",
+        "B:relations[0]",
+        "A:C10-sighting-location",
+        "B:C10-q1"
+      ],
+      "decision": "Require correction and same-report links; mark previous NU claim historical corrected report.",
+      "reason": "Later explicit account resolves prior identity uncertainty prospectively. Earlier gold remains unchanged; no application repair is measured."
+    }
+  ],
+  "chronology_mode": "publication_order_simulation",
+  "checkpoint_at": "2026-05-08T16:03:42+00:00",
+  "source_packet_sha256": "31f6a17fcf535e1c071bc7e316f87a4528eade5264abf47f4b9279f37f35840d",
+  "visible_observation_ids": [
+    "O042",
+    "O039",
+    "O041"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "f61235d9481e3ce2b7ed224f5b04162fde9d364fb922e15207d1013f3640baaf",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "dd5b077713a187837cefc6319dd16b7d34877dfe4af7f6ef4008ee61d01cbc32",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:58:01.073110+00:00"
+}

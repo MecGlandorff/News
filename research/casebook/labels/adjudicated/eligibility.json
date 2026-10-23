@@ -1,0 +1,30 @@
+{
+  "version": "eligibility-v1",
+  "saved_at_utc": "2026-10-23T22:05:28.598273+00:00",
+  "scope": "Overrides tentative eligibility strings inside immutable gold-v1 label_inputs. Candidate-output blindness and within-case sequence are distinct from cross-case future-source blindness.",
+  "candidate_output_exposure": "No candidate/application outputs inspected by adjudicator; originals declare none. No candidate runs exist in this work.",
+  "within_case_order": "All37 adjudications saved and SHA-256 audited before opening next case-local prefix; A/B/C originals preserved with their own declared limits.",
+  "exclusions": [
+    {
+      "label_set": "b",
+      "prefix_ids": [
+        "C04-p02"
+      ],
+      "reason": "B read O015 from p03 before successfully saving p02. Reconstructed attempted draft is not proof of temporal cleanliness.",
+      "replacement_used_for_gold_v1": "A plus independently fresh C04 labeler C and current source packet."
+    },
+    {
+      "label_set": "a,b,adjudicated-v1",
+      "prefix_ids": [
+        "C08-p01",
+        "C08-p02",
+        "C08-p03"
+      ],
+      "reason": "Whole C01 trajectory, including Oct10 Flydubai material, was seen before overlapping C08 starts Oct5. Clean within-case ordering does not cure cross-case future-source exposure.",
+      "replacement_used_for_gold_v1": null,
+      "scoring_status": "Temporally ineligible; preserve as exposed development records, use separately frozen fresh replacement/supersession if supplied."
+    }
+  ],
+  "cross_case_scope": "This artifact does not certify other cases as globally future-source blind. Cross-case overlap/precedence audit and plausible-dependence cluster mapping must be frozen before temporal scoring or trajectory-based inference.",
+  "locator_amendment_scope": "Active source-span-locators-v2 expands same-prefix evidence locators after all gold-v1 prefixes frozen; does not confer temporal eligibility or change source claims/statuses."
+}

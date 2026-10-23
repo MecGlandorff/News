@@ -1,0 +1,76 @@
+{
+  "case_id": "C07",
+  "prefix_id": "C07-p02",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C07-c1",
+      "kind": "new_occurrence",
+      "claim": "India's Cockroach movement launches new protests over voter-roll changes.",
+      "source_spans": [
+        {
+          "observation_id": "O026",
+          "field": "title",
+          "start": 0,
+          "end": 75
+        }
+      ],
+      "attribution": "Guardian headline",
+      "occurrence_ref": "C07-voter-roll-protests",
+      "story_ref": "C07-cockroach-movement",
+      "materiality": "high",
+      "uncertainty": "Headline only; no scale, location details, events or political linkage beyond title."
+    }
+  ],
+  "relations": [],
+  "delta_expectations": [],
+  "questions": [],
+  "no_delta_reason": "Cumulative packet adds no unseen source text, title or description; existing protest headline remains the same claim.",
+  "missing_evidence_reason": "Full article remains unavailable; repeated capture supplies no further detail.",
+  "ambiguity_notes": [
+    "No-delta expectation is explicit through no_delta_reason; empty new delta list does not erase cumulative prior contribution."
+  ],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "current_view_policy": "Prior contributions and unresolved questions retained as attributed evidence; current delta expectations apply only at this prefix, not to repeated context.",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:contributions(empty)",
+        "B:C07-c2",
+        "B:relations[0]"
+      ],
+      "decision": "Zero new semantic contributions; prior supported view persists.",
+      "reason": "O027 repeats exact S026 source version; B recapture context is provenance rather than a fresh factual contribution."
+    },
+    {
+      "label_refs": [
+        "A:no_delta_reason",
+        "B:no_delta_reason"
+      ],
+      "decision": "Require no news delta at this checkpoint.",
+      "reason": "Recapture alone supplies no changed facts."
+    }
+  ],
+  "chronology_mode": "captured_observation",
+  "checkpoint_at": "2026-10-06T20:39:33.778026+00:00",
+  "source_packet_sha256": "6522ebb89ed7c0c5d4850d086f74c201d9eed9cb27c62080994fafe86b7c812e",
+  "visible_observation_ids": [
+    "O026",
+    "O027"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "cb6dc62fe7dac117f8bf88312817a697451ad2931c9b5af744138a5263f4260b",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "6b7994382566c96632ce91bf367cad45808a644624cb14cb6aa47cc8c99e5077",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:55:40.183378+00:00"
+}

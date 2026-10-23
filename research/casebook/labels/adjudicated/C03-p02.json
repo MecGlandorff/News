@@ -1,0 +1,188 @@
+{
+  "case_id": "C03",
+  "prefix_id": "C03-p02",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C03-c1",
+      "kind": "new_occurrence",
+      "claim": "American bombers departed RAF Fairford/the UK en masse.",
+      "source_spans": [
+        {
+          "observation_id": "O008",
+          "field": "title",
+          "start": 0,
+          "end": 51
+        },
+        {
+          "observation_id": "O008",
+          "field": "text",
+          "start": 0,
+          "end": 121
+        }
+      ],
+      "attribution": "BBC News security correspondent",
+      "occurrence_ref": "C03-bomber-departure",
+      "story_ref": "C03-fairford-bombers",
+      "materiality": "high",
+      "uncertainty": "Sparse summary supplies no precise date, count or cause."
+    },
+    {
+      "id": "C03-c2",
+      "kind": "question_opened",
+      "claim": "What prompted the bombers' departure?",
+      "source_spans": [
+        {
+          "observation_id": "O008",
+          "field": "title",
+          "start": 0,
+          "end": 51
+        }
+      ],
+      "attribution": "BBC headline",
+      "occurrence_ref": "C03-bomber-departure",
+      "story_ref": "C03-fairford-bombers",
+      "materiality": "medium",
+      "uncertainty": "Correspondent infers Pentagon concern, but provided text does not establish reason."
+    },
+    {
+      "id": "C03-c3",
+      "kind": "new_occurrence",
+      "claim": "A British national was arrested, the seventh arrest linked to an incident near RAF Fairford last month.",
+      "source_spans": [
+        {
+          "observation_id": "O009",
+          "field": "title",
+          "start": 0,
+          "end": 66
+        },
+        {
+          "observation_id": "O009",
+          "field": "text",
+          "start": 0,
+          "end": 84
+        }
+      ],
+      "attribution": "BBC News",
+      "occurrence_ref": "C03-fairford-arrest",
+      "story_ref": "C03-fairford-incident-investigation",
+      "materiality": "high",
+      "uncertainty": "The incident itself is unspecified; no proven link to bomber departure."
+    }
+  ],
+  "relations": [
+    {
+      "from": "C03-fairford-incident-investigation",
+      "to": "C03-fairford-bombers",
+      "type": "same_story",
+      "status": "uncertain",
+      "reason": "Shared RAF Fairford location does not establish causal or narrative identity.",
+      "source_spans": [
+        {
+          "observation_id": "O009",
+          "field": "text",
+          "start": 0,
+          "end": 84
+        },
+        {
+          "observation_id": "O008",
+          "field": "title",
+          "start": 0,
+          "end": 51
+        }
+      ]
+    },
+    {
+      "from": "C03-c3",
+      "to": "C03-q1",
+      "type": "answers_question",
+      "status": "prohibited",
+      "reason": "No source connects arrest to bomber departure cause.",
+      "source_spans": [
+        {
+          "observation_id": "O009",
+          "field": "title",
+          "start": 0,
+          "end": 66
+        },
+        {
+          "observation_id": "O009",
+          "field": "text",
+          "start": 0,
+          "end": 84
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C03-c3"
+      ],
+      "status": "required",
+      "reason": "Arrest is a distinct newly supported occurrence."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C03-q1",
+      "status": "open",
+      "claim": "What prompted US bombers to leave RAF Fairford?",
+      "source_spans": [
+        {
+          "observation_id": "O008",
+          "field": "title",
+          "start": 0,
+          "end": 51
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": "No details identify last month's incident or relate it to aircraft departure.",
+  "ambiguity_notes": [],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "current_view_policy": "Prior contributions and unresolved questions retained as attributed evidence; current delta expectations apply only at this prefix, not to repeated context.",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:C03-arrest",
+        "B:C03-c3",
+        "A:relations[0]",
+        "B:relations[0]"
+      ],
+      "decision": "Require distinct arrest update; same-story connection remains uncertain.",
+      "reason": "Visible text supplies seventh arrest but underlying incident is unspecified."
+    },
+    {
+      "label_refs": [
+        "B:delta_expectations[1]"
+      ],
+      "decision": "Encode prohibited causal/question-answer inference as a relation, not contradictory prohibition of required arrest contribution.",
+      "reason": "Arrest is supported; using it to answer departure cause is unsupported."
+    }
+  ],
+  "chronology_mode": "captured_observation",
+  "checkpoint_at": "2026-10-06T20:39:33.778026+00:00",
+  "source_packet_sha256": "85cab6d66b565ec308e763e0105b5d1af2040620f8a9ba360d4b3f45cb8df9e4",
+  "visible_observation_ids": [
+    "O008",
+    "O009"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "702dfe87391fbb59f59a47a6486fb5fa6632f25fd36742731428d65b9a438ce7",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "c5ffe67e8d88fea34944632690d7b77cc143cd8a52f0c6284f92b5b0156b4676",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:53:08.562477+00:00"
+}

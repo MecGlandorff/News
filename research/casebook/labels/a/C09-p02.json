@@ -1,0 +1,44 @@
+{
+  "case_id": "C09",
+  "prefix_id": "C09-p02",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C09-case-status",
+      "kind": "same_occurrence_material_fact",
+      "claim": "NYT summary attributes to WHO one laboratory-confirmed hantavirus infection and five additional suspected cases, with three deaths in headline.",
+      "source_spans": [
+        {
+          "observation_id": "O034",
+          "field": "description",
+          "start": 0,
+          "end": 144
+        }
+      ],
+      "attribution": "WHO via NYT",
+      "occurrence_ref": "C09-cruise-outbreak",
+      "story_ref": "C09-hantavirus-cruise",
+      "uncertainty": "Clarifies confirmed/suspected breakdown; does not show a new death or additional ill passenger beyond previously reported six affected.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C09-case-status"
+      ],
+      "status": "allowed",
+      "reason": "Useful case-status precision; overall six affected and one confirmed already compatible with prior account. A wholly new outbreak/death delta is prohibited."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Publication-order simulation has unknown authentic availability. Different publisher and count phrasing do not demonstrate a correction or fresh case."
+  ],
+  "adjudication_status": "unadjudicated"
+}

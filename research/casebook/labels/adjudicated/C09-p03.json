@@ -1,0 +1,272 @@
+{
+  "case_id": "C09",
+  "prefix_id": "C09-p03",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C09-c1",
+      "kind": "new_occurrence",
+      "claim": "WHO and South African health department report three deaths and at least three others ill in a suspected hantavirus outbreak on an Atlantic cruise ship.",
+      "source_spans": [
+        {
+          "observation_id": "O035",
+          "field": "description",
+          "start": 365,
+          "end": 642
+        }
+      ],
+      "attribution": "WHO and South African health department via Guardian",
+      "occurrence_ref": "C09-cruise-outbreak",
+      "story_ref": "C09-cruise-hantavirus",
+      "materiality": "high",
+      "uncertainty": "Suspected outbreak cause; not all deaths confirmed hantavirus."
+    },
+    {
+      "id": "C09-c2",
+      "kind": "same_occurrence_material_fact",
+      "claim": "WHO says at least one hantavirus case confirmed, one patient in South African intensive care and evacuation of two symptomatic people being arranged.",
+      "source_spans": [
+        {
+          "observation_id": "O035",
+          "field": "description",
+          "start": 649,
+          "end": 823
+        },
+        {
+          "observation_id": "O035",
+          "field": "description",
+          "start": 897,
+          "end": 985
+        }
+      ],
+      "attribution": "WHO via Guardian/AP",
+      "occurrence_ref": "C09-cruise-outbreak",
+      "story_ref": "C09-cruise-hantavirus",
+      "materiality": "high",
+      "uncertainty": "Evacuations in progress/planning; counts may include overlapping people."
+    },
+    {
+      "id": "C09-c3",
+      "kind": "same_occurrence_material_fact",
+      "claim": "NYT attributes one laboratory-confirmed hantavirus infection and five additional suspected cases to WHO.",
+      "source_spans": [
+        {
+          "observation_id": "O034",
+          "field": "description",
+          "start": 0,
+          "end": 144
+        }
+      ],
+      "attribution": "WHO via NYT",
+      "occurrence_ref": "C09-cruise-outbreak",
+      "story_ref": "C09-cruise-hantavirus",
+      "materiality": "medium",
+      "uncertainty": "Six cases aligns with earlier three deaths plus at least three ill; cannot infer five newly infected people."
+    },
+    {
+      "id": "C09-c4",
+      "kind": "new_occurrence",
+      "claim": "NU.nl reports all persons remaining aboard Hondius when it docked in Rotterdam tested negative for hantavirus and had no symptoms.",
+      "source_spans": [
+        {
+          "observation_id": "O036",
+          "field": "title",
+          "start": 0,
+          "end": 70
+        },
+        {
+          "observation_id": "O036",
+          "field": "description",
+          "start": 0,
+          "end": 186
+        }
+      ],
+      "attribution": "NU.nl",
+      "occurrence_ref": "C09-hondius-rotterdam-testing",
+      "story_ref": "C09-hondius-testing",
+      "materiality": "high",
+      "uncertainty": "Limited to people still aboard at Rotterdam; excludes earlier evacuated/deceased persons."
+    }
+  ],
+  "relations": [
+    {
+      "from": "C09-c2",
+      "to": "C09-c1",
+      "type": "same_occurrence",
+      "status": "required",
+      "reason": "WHO care/confirmation account concerns same suspected shipboard outbreak.",
+      "source_spans": [
+        {
+          "observation_id": "O035",
+          "field": "description",
+          "start": 649,
+          "end": 823
+        },
+        {
+          "observation_id": "O035",
+          "field": "description",
+          "start": 897,
+          "end": 985
+        }
+      ]
+    },
+    {
+      "from": "C09-c3",
+      "to": "C09-c2",
+      "type": "same_occurrence",
+      "status": "required",
+      "reason": "Same cruise outbreak with same three-death headline and confirmed/suspected classifications.",
+      "source_spans": [
+        {
+          "observation_id": "O034",
+          "field": "title",
+          "start": 0,
+          "end": 61
+        }
+      ]
+    },
+    {
+      "from": "C09-hondius-testing",
+      "to": "C09-cruise-hantavirus",
+      "type": "same_story",
+      "status": "uncertain",
+      "reason": "Hantavirus and cruise context suggest linkage, but earlier packet never names its ship; literal identity not established.",
+      "source_spans": [
+        {
+          "observation_id": "O036",
+          "field": "description",
+          "start": 0,
+          "end": 186
+        },
+        {
+          "observation_id": "O035",
+          "field": "title",
+          "start": 0,
+          "end": 72
+        }
+      ]
+    },
+    {
+      "from": "C09-c4",
+      "to": "C09-q1",
+      "type": "closes_question",
+      "status": "prohibited",
+      "reason": "Negative tests among those remaining do not settle earlier outbreak investigation/cause.",
+      "source_spans": [
+        {
+          "observation_id": "O036",
+          "field": "title",
+          "start": 0,
+          "end": 70
+        },
+        {
+          "observation_id": "O036",
+          "field": "description",
+          "start": 0,
+          "end": 186
+        }
+      ]
+    },
+    {
+      "from": "C09-c4",
+      "to": "C09-c1",
+      "type": "source_correction",
+      "status": "prohibited",
+      "reason": "Different population/time; no retraction of prior deaths or confirmed infection.",
+      "source_spans": [
+        {
+          "observation_id": "O036",
+          "field": "title",
+          "start": 0,
+          "end": 70
+        },
+        {
+          "observation_id": "O036",
+          "field": "description",
+          "start": 0,
+          "end": 186
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C09-c4"
+      ],
+      "status": "required",
+      "reason": "Specific negative testing outcome enters evidence."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C09-q1",
+      "status": "open",
+      "claim": "Investigation is ongoing into suspected outbreak; confirmation across affected passengers remains incomplete.",
+      "source_spans": [
+        {
+          "observation_id": "O035",
+          "field": "description",
+          "start": 649,
+          "end": 753
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "No source correction: different population/time from earlier deaths and cases. Publication simulation gives no authentic availability guarantees."
+  ],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "current_view_policy": "Prior contributions and unresolved questions retained as attributed evidence; current delta expectations apply only at this prefix, not to repeated context.",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:C09-hondius-tests",
+        "B:C09-c4"
+      ],
+      "decision": "Require narrowly scoped remaining-passenger negative tests, no universal outbreak closure.",
+      "reason": "O036 explicitly limits population to still aboard at Rotterdam."
+    },
+    {
+      "label_refs": [
+        "A:relations[0]",
+        "B:relations[0]"
+      ],
+      "decision": "Keep earlier unnamed ship linkage uncertain.",
+      "reason": "Shared rare disease/cruise topic suggests but does not identify ship in earlier excerpts."
+    },
+    {
+      "label_refs": [
+        "B:delta_expectations[1]"
+      ],
+      "decision": "Represent prohibited closure/correction as relations, not prohibition of the required testing report itself.",
+      "reason": "The report is supported; erasing earlier cases or declaring investigation resolved is not."
+    }
+  ],
+  "chronology_mode": "publication_order_simulation",
+  "checkpoint_at": "2026-05-21T18:23:22+00:00",
+  "source_packet_sha256": "25dcc926e4b52c9d97412029bd90574a58a6e21dfb92553866787314ef46240d",
+  "visible_observation_ids": [
+    "O035",
+    "O034",
+    "O036"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "fd6b6793dc3a59ddb66779cd85b093b6e7d34eb384204c7b667981a6d3e5226e",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "8ac1d731730f5c8980fda5033c0a9e9eacc61279e6485c04b5a48f507d190e9e",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:56:51.759457+00:00"
+}

@@ -1,0 +1,73 @@
+{
+  "case_id": "C07",
+  "prefix_id": "C07-p01",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C07-c1",
+      "kind": "new_occurrence",
+      "claim": "India's Cockroach movement launches new protests over voter-roll changes.",
+      "source_spans": [
+        {
+          "observation_id": "O026",
+          "field": "title",
+          "start": 0,
+          "end": 75
+        }
+      ],
+      "attribution": "Guardian headline",
+      "occurrence_ref": "C07-voter-roll-protests",
+      "story_ref": "C07-cockroach-movement",
+      "materiality": "high",
+      "uncertainty": "Headline only; no scale, location details, events or political linkage beyond title."
+    }
+  ],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C07-c1"
+      ],
+      "status": "required",
+      "reason": "Initial title supports new protest mobilisation."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": "Article text is only a photograph credit; no further factual or causal detail supported.",
+  "ambiguity_notes": [
+    "Publication on Oct2 and capture on Oct5 remain distinct; initial evidence delta is not a claim of current-day occurrence."
+  ],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:C07-protests",
+        "B:C07-c1"
+      ],
+      "decision": "Retain only narrowly attributed headline protest claim.",
+      "reason": "O026 supports movement/topic but photo credit supplies no additional facts; Oct5 capture is not proof of protests occurring that day."
+    }
+  ],
+  "chronology_mode": "captured_observation",
+  "checkpoint_at": "2026-10-05T19:34:32.871175+00:00",
+  "source_packet_sha256": "bfdc2574bdc21650c95e435704574212df7221813a1b83d7316e0cf7e198cf65",
+  "visible_observation_ids": [
+    "O026"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "10808a65bbd144e10aeb4784a489ebf4c0295eced2af685e6a98c35369fd7ab7",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "50a958807eddcd83f729568c1f059b8cdac06f4f956515e499f430c322b9aaf1",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:55:29.394691+00:00"
+}

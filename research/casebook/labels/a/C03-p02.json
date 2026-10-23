@@ -1,0 +1,66 @@
+{
+  "case_id": "C03",
+  "prefix_id": "C03-p02",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C03-arrest",
+      "kind": "new_occurrence",
+      "claim": "A British national is the seventh person arrested in connection with an incident near RAF Fairford last month.",
+      "source_spans": [
+        {
+          "observation_id": "O009",
+          "field": "title",
+          "start": 0,
+          "end": 66
+        },
+        {
+          "observation_id": "O009",
+          "field": "text",
+          "start": 0,
+          "end": 84
+        }
+      ],
+      "attribution": "BBC",
+      "occurrence_ref": "C03-british-national-arrest",
+      "story_ref": "C03-fairford-incident-investigation",
+      "uncertainty": "The underlying incident is unspecified in visible text.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [
+    {
+      "from": "C03-fairford-incident-investigation",
+      "to": "C03-us-bomber-deployment",
+      "type": "same_story",
+      "status": "uncertain",
+      "reason": "Shared RAF Fairford name does not establish a causal or narrative link between departure and an unspecified earlier incident.",
+      "source_spans": [
+        {
+          "observation_id": "O009",
+          "field": "text",
+          "start": 46,
+          "end": 83
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C03-arrest"
+      ],
+      "status": "required",
+      "reason": "A distinct arrest occurrence is reported."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": "No description of last month's incident or relationship to bomber departure.",
+  "ambiguity_notes": [
+    "Do not answer C03-why-departure using the arrest on shared geography alone."
+  ],
+  "adjudication_status": "unadjudicated"
+}

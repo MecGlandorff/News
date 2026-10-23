@@ -1,0 +1,281 @@
+{
+  "case_id": "C05",
+  "prefix_id": "C05-p02",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C05-c1",
+      "kind": "new_occurrence",
+      "claim": "Trump announced an immediate Russia–Ukraine energy ceasefire and claimed both parties agreed.",
+      "source_spans": [
+        {
+          "observation_id": "O017",
+          "field": "text",
+          "start": 454,
+          "end": 587
+        }
+      ],
+      "attribution": "Trump social-media claim via Guardian",
+      "occurrence_ref": "C05-ceasefire-announcement",
+      "story_ref": "C05-energy-ceasefire",
+      "materiality": "high",
+      "uncertainty": "Announcement does not establish agreement or implementation."
+    },
+    {
+      "id": "C05-c2",
+      "kind": "conflict",
+      "claim": "Zelenskyy said the announced deal was news to him, in tension with Trump's claim both parties agreed.",
+      "source_spans": [
+        {
+          "observation_id": "O017",
+          "field": "text",
+          "start": 301,
+          "end": 363
+        }
+      ],
+      "attribution": "Zelenskyy versus Trump via Guardian",
+      "occurrence_ref": "C05-ceasefire-announcement",
+      "story_ref": "C05-energy-ceasefire",
+      "materiality": "high",
+      "uncertainty": "No proof of consultation or assent at announcement."
+    },
+    {
+      "id": "C05-c3",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Zelenskyy signals conditional support for an energy ceasefire; EU Commission president supports his call while details from the US are awaited.",
+      "source_spans": [
+        {
+          "observation_id": "O018",
+          "field": "title",
+          "start": 0,
+          "end": 112
+        },
+        {
+          "observation_id": "O018",
+          "field": "text",
+          "start": 652,
+          "end": 784
+        }
+      ],
+      "attribution": "Guardian live report quoting leaders",
+      "occurrence_ref": "C05-ceasefire-response",
+      "story_ref": "C05-energy-ceasefire",
+      "materiality": "high",
+      "uncertainty": "Support in principle is not a fully specified implemented agreement."
+    },
+    {
+      "id": "C05-c4",
+      "kind": "new_occurrence",
+      "claim": "Zelenskyy says Russia hit six Ukrainian energy sites after Trump's ceasefire announcement; Ukraine says strikes continued.",
+      "source_spans": [
+        {
+          "observation_id": "O020",
+          "field": "title",
+          "start": 0,
+          "end": 87
+        },
+        {
+          "observation_id": "O020",
+          "field": "text",
+          "start": 0,
+          "end": 117
+        }
+      ],
+      "attribution": "Zelenskyy/Ukraine via BBC",
+      "occurrence_ref": "C05-post-announcement-strikes",
+      "story_ref": "C05-energy-ceasefire",
+      "materiality": "high",
+      "uncertainty": "Source-attributed attack claims, no independent verification or Russian account in packet."
+    },
+    {
+      "id": "C05-c5",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Zelenskyy says Russia increasingly appears unwilling to accept an energy ceasefire.",
+      "source_spans": [
+        {
+          "observation_id": "O019",
+          "field": "title",
+          "start": 0,
+          "end": 125
+        }
+      ],
+      "attribution": "Zelenskyy via Guardian",
+      "occurrence_ref": "C05-ceasefire-response",
+      "story_ref": "C05-energy-ceasefire",
+      "materiality": "medium",
+      "uncertainty": "Political assessment, not proof of agreed terms or formal Russian rejection."
+    }
+  ],
+  "relations": [
+    {
+      "from": "C05-c2",
+      "to": "C05-c1",
+      "type": "conflict",
+      "status": "required",
+      "reason": "Reported surprise challenges claimed assent; do not state mutually established agreement.",
+      "source_spans": [
+        {
+          "observation_id": "O017",
+          "field": "text",
+          "start": 301,
+          "end": 363
+        }
+      ]
+    },
+    {
+      "from": "C05-c3",
+      "to": "C05-c1",
+      "type": "same_story",
+      "status": "required",
+      "reason": "Response explicitly concerns announced energy ceasefire.",
+      "source_spans": [
+        {
+          "observation_id": "O018",
+          "field": "title",
+          "start": 0,
+          "end": 112
+        },
+        {
+          "observation_id": "O018",
+          "field": "text",
+          "start": 652,
+          "end": 784
+        }
+      ]
+    },
+    {
+      "from": "C05-post-announcement-strikes",
+      "to": "C05-ceasefire-announcement",
+      "type": "same_occurrence",
+      "status": "prohibited",
+      "reason": "Subsequent reported attacks are distinct from the announcement, though same ongoing matter.",
+      "source_spans": [
+        {
+          "observation_id": "O020",
+          "field": "title",
+          "start": 0,
+          "end": 87
+        }
+      ]
+    },
+    {
+      "from": "C05-post-announcement-strikes",
+      "to": "C05-ceasefire-announcement",
+      "type": "same_story",
+      "status": "required",
+      "reason": "BBC explicitly relates strikes to announcement; announcement and attacks remain separate occurrences.",
+      "source_spans": [
+        {
+          "observation_id": "O020",
+          "field": "title",
+          "start": 0,
+          "end": 87
+        },
+        {
+          "observation_id": "O020",
+          "field": "text",
+          "start": 0,
+          "end": 117
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C05-c4"
+      ],
+      "status": "required",
+      "reason": "Post-announcement energy strikes materially challenge practical ceasefire operation."
+    },
+    {
+      "contribution_ids": [
+        "C05-c5"
+      ],
+      "status": "allowed",
+      "reason": "Attributed interpretation may accompany attack report."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C05-q1",
+      "status": "open",
+      "claim": "Whether a mutually accepted energy ceasefire exists remains unresolved amid reported continued strikes.",
+      "source_spans": [
+        {
+          "observation_id": "O020",
+          "field": "text",
+          "start": 0,
+          "end": 117
+        },
+        {
+          "observation_id": "O019",
+          "field": "title",
+          "start": 0,
+          "end": 125
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Continued strikes do not retroactively turn earlier announcement into a source correction; no formal implementation terms supplied."
+  ],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "current_view_policy": "Prior contributions and unresolved questions retained as attributed evidence; current delta expectations apply only at this prefix, not to repeated context.",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:C05-continued-strikes",
+        "B:C05-c4",
+        "B:C05-c5"
+      ],
+      "decision": "Require attributed six-site attack report; allow separate political assessment.",
+      "reason": "Source supports Ukraine claim and Zelenskyy interpretation, not independently established Russian rejection."
+    },
+    {
+      "label_refs": [
+        "A:C05-total-ceasefire-proposal",
+        "B:omission"
+      ],
+      "decision": "Earlier broader proposal is optional context, omitted from compact gold.",
+      "reason": "No supplied timing makes it a required current development."
+    },
+    {
+      "label_refs": [
+        "A:relations[0]",
+        "B:relations[0]",
+        "A:C05-agreement",
+        "B:C05-q1"
+      ],
+      "decision": "Require same ongoing story, prohibit identity with announcement, keep assent/terms question open.",
+      "reason": "Explicitly subsequent strikes add evidence, not retrospective source correction."
+    }
+  ],
+  "chronology_mode": "captured_observation",
+  "checkpoint_at": "2026-10-12T21:32:09.233346+00:00",
+  "source_packet_sha256": "559a05247181b806f12f29a98948b3f2a70e4c1889d8be7e37e0deea4faecc8f",
+  "visible_observation_ids": [
+    "O017",
+    "O018",
+    "O019",
+    "O020"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "94a54c7c50713aa5ecb009716d0f1c1dc100156c7aadb11505de10b69e715c7d",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "0129af46c37273861dc8e214f53c9ee9ac5f921e522eff666364fabe8ac26ab5",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:55:07.402156+00:00"
+}

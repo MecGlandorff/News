@@ -1,0 +1,71 @@
+{
+  "case_id": "C09",
+  "prefix_id": "C09-p01",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C09-outbreak",
+      "kind": "new_occurrence",
+      "claim": "WHO and South African health department report suspected cruise-ship hantavirus outbreak with three dead and at least three others ill; at least one case confirmed, one patient in South African intensive care and two symptomatic evacuations being arranged.",
+      "source_spans": [
+        {
+          "observation_id": "O035",
+          "field": "description",
+          "start": 365,
+          "end": 642
+        },
+        {
+          "observation_id": "O035",
+          "field": "description",
+          "start": 702,
+          "end": 753
+        },
+        {
+          "observation_id": "O035",
+          "field": "description",
+          "start": 897,
+          "end": 985
+        }
+      ],
+      "attribution": "WHO and South African health department via Guardian",
+      "occurrence_ref": "C09-cruise-outbreak",
+      "story_ref": "C09-hantavirus-cruise",
+      "uncertainty": "Suspected outbreak attribution does not establish all deaths as confirmed hantavirus.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C09-outbreak"
+      ],
+      "status": "required",
+      "reason": "Initial packet establishes suspected outbreak, severity and pending response."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C09-cause",
+      "status": "open",
+      "claim": "Investigation is ongoing into suspected outbreak; confirmation across affected passengers remains incomplete.",
+      "source_spans": [
+        {
+          "observation_id": "O035",
+          "field": "description",
+          "start": 649,
+          "end": 753
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Publication-order simulation: authentic availability unknown; supplied historical content may be backfilled or revised. Raw HTML includes a May 4 explainer link in a May 3 publication record; no inference of actual May 3 availability."
+  ],
+  "adjudication_status": "unadjudicated"
+}

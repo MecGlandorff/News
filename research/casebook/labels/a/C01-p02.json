@@ -1,0 +1,44 @@
+{
+  "case_id": "C01",
+  "prefix_id": "C01-p02",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C01-nz-scrutiny",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Guardian headline reports widening attack investigation and scrutiny of alleged hijacker's New Zealand training.",
+      "source_spans": [
+        {
+          "observation_id": "O003",
+          "field": "title",
+          "start": 0,
+          "end": 94
+        }
+      ],
+      "attribution": "The Guardian headline",
+      "occurrence_ref": "C01-flight-attack",
+      "story_ref": "C01-flight-investigation",
+      "uncertainty": "Only headline and photo credit supplied; no detailed new investigative act is established.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C01-nz-scrutiny"
+      ],
+      "status": "allowed",
+      "reason": "Headline may support an investigation update, but earlier NOS already reported New Zealand inquiry; distinct new facts are sparse."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": "Guardian body is only a photo credit; cannot infer detailed findings or new training facts.",
+  "ambiguity_notes": [
+    "Do not turn a new publisher's phrasing into a required new occurrence."
+  ],
+  "adjudication_status": "unadjudicated"
+}

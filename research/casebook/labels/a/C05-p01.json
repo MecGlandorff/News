@@ -1,0 +1,96 @@
+{
+  "case_id": "C05",
+  "prefix_id": "C05-p01",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C05-announcement",
+      "kind": "new_occurrence",
+      "claim": "Trump announces an immediate Russia-Ukraine energy ceasefire and claims both sides agreed; Zelenskyy says the deal is news to him.",
+      "source_spans": [
+        {
+          "observation_id": "O017",
+          "field": "text",
+          "start": 175,
+          "end": 363
+        },
+        {
+          "observation_id": "O017",
+          "field": "text",
+          "start": 545,
+          "end": 570
+        }
+      ],
+      "attribution": "Trump's social post and Zelenskyy via Guardian",
+      "occurrence_ref": "C05-energy-ceasefire-announcement",
+      "story_ref": "C05-energy-ceasefire",
+      "uncertainty": "Announcement and agreement claim do not establish a mutually operative ceasefire.",
+      "materiality": "material"
+    },
+    {
+      "id": "C05-conditional-support",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Zelenskyy reportedly signals acceptance if Moscow does, says Ukraine supports de-escalation and is awaiting US details; von der Leyen expresses support.",
+      "source_spans": [
+        {
+          "observation_id": "O018",
+          "field": "text",
+          "start": 0,
+          "end": 75
+        },
+        {
+          "observation_id": "O018",
+          "field": "text",
+          "start": 737,
+          "end": 784
+        },
+        {
+          "observation_id": "O018",
+          "field": "text",
+          "start": 272,
+          "end": 414
+        }
+      ],
+      "attribution": "Zelenskyy and von der Leyen via Guardian",
+      "occurrence_ref": "C05-energy-ceasefire-announcement",
+      "story_ref": "C05-energy-ceasefire",
+      "uncertainty": "Conditional support is not unqualified bilateral agreement.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C05-announcement",
+        "C05-conditional-support"
+      ],
+      "status": "required",
+      "reason": "Announcement, surprise reaction and conditional response all materially define initial state."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C05-agreement",
+      "status": "open",
+      "claim": "Whether Russia accepts and what ceasefire terms apply remain unclear despite Trump's claim.",
+      "source_spans": [
+        {
+          "observation_id": "O018",
+          "field": "text",
+          "start": 688,
+          "end": 784
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Two reports captured together show different reactions without proving a source correction or separate ceasefire occurrence."
+  ],
+  "adjudication_status": "unadjudicated"
+}

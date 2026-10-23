@@ -1,0 +1,63 @@
+{
+  "case_id": "C03",
+  "prefix_id": "C03-p01",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C03-bombers",
+      "kind": "new_occurrence",
+      "claim": "BBC describes mass departure of US bombers from RAF Fairford and interprets it as Pentagon concern.",
+      "source_spans": [
+        {
+          "observation_id": "O008",
+          "field": "title",
+          "start": 0,
+          "end": 51
+        },
+        {
+          "observation_id": "O008",
+          "field": "text",
+          "start": 0,
+          "end": 121
+        }
+      ],
+      "attribution": "BBC security correspondent",
+      "occurrence_ref": "C03-fairford-departure",
+      "story_ref": "C03-us-bomber-deployment",
+      "uncertainty": "No departure cause or detailed timing supplied; concern is correspondent interpretation.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C03-bombers"
+      ],
+      "status": "required",
+      "reason": "Initial evidence describes a departure occurrence and an explicitly attributed interpretation."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C03-why-departure",
+      "status": "open",
+      "claim": "What prompted departure from RAF Fairford?",
+      "source_spans": [
+        {
+          "observation_id": "O008",
+          "field": "title",
+          "start": 0,
+          "end": 51
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": "Headline and summary do not establish the operational reason for departure.",
+  "ambiguity_notes": [],
+  "adjudication_status": "unadjudicated"
+}

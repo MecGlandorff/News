@@ -1,0 +1,164 @@
+{
+  "case_id": "C03",
+  "prefix_id": "C03-p03",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C03-attribution",
+      "kind": "same_occurrence_material_fact",
+      "claim": "UK prime minister says IRGC almost certainly directed the late-last-month Fairford threat incident; Iran denies involvement.",
+      "source_spans": [
+        {
+          "observation_id": "O010",
+          "field": "text",
+          "start": 179,
+          "end": 283
+        },
+        {
+          "observation_id": "O010",
+          "field": "text",
+          "start": 1888,
+          "end": 1915
+        },
+        {
+          "observation_id": "O011",
+          "field": "text",
+          "start": 231,
+          "end": 328
+        }
+      ],
+      "attribution": "Burnham; Iranian denial via NOS and Guardian",
+      "occurrence_ref": "C03-fairford-threat",
+      "story_ref": "C03-fairford-incident-investigation",
+      "uncertainty": "Attributed assessment is disputed, no criminal charge yet reported.",
+      "materiality": "material"
+    },
+    {
+      "id": "C03-incident-details",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Threat investigation concerned vans near Fairford, evacuations and petrol cans rather than explosives; seven arrested suspects were released subject to conditions and nobody charged.",
+      "source_spans": [
+        {
+          "observation_id": "O010",
+          "field": "text",
+          "start": 833,
+          "end": 907
+        },
+        {
+          "observation_id": "O010",
+          "field": "text",
+          "start": 1073,
+          "end": 1129
+        },
+        {
+          "observation_id": "O011",
+          "field": "text",
+          "start": 520,
+          "end": 560
+        }
+      ],
+      "attribution": "NOS; Guardian",
+      "occurrence_ref": "C03-fairford-threat",
+      "story_ref": "C03-fairford-incident-investigation",
+      "materiality": "material",
+      "uncertainty": null
+    },
+    {
+      "id": "C03-diplomacy",
+      "kind": "new_occurrence",
+      "claim": "UK summoned Iran's ambassador and sanctioned two Iranians, while announcing further sanctions.",
+      "source_spans": [
+        {
+          "observation_id": "O010",
+          "field": "text",
+          "start": 1396,
+          "end": 1486
+        },
+        {
+          "observation_id": "O010",
+          "field": "text",
+          "start": 1702,
+          "end": 1755
+        }
+      ],
+      "attribution": "NOS citing BBC; UK officials",
+      "occurrence_ref": "C03-uk-response",
+      "story_ref": "C03-fairford-incident-investigation",
+      "materiality": "material",
+      "uncertainty": null
+    }
+  ],
+  "relations": [
+    {
+      "from": "C03-british-national-arrest",
+      "to": "C03-fairford-threat",
+      "type": "part_of_investigation",
+      "status": "allowed",
+      "reason": "Location, previous-month timing and seven total arrests strongly support linkage, but the British national is not individually identified in this update.",
+      "source_spans": [
+        {
+          "observation_id": "O010",
+          "field": "text",
+          "start": 908,
+          "end": 1072
+        }
+      ]
+    },
+    {
+      "from": "C03-fairford-threat",
+      "to": "C03-fairford-departure",
+      "type": "causal_link",
+      "status": "uncertain",
+      "reason": "Base's use for Iran bombing provides context but no supplied source says threat caused bomber departure.",
+      "source_spans": [
+        {
+          "observation_id": "O010",
+          "field": "text",
+          "start": 1195,
+          "end": 1270
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C03-attribution",
+        "C03-incident-details",
+        "C03-diplomacy"
+      ],
+      "status": "required",
+      "reason": "New official attribution, suspect disposition and diplomatic measures materially develop the threat investigation."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C03-responsibility",
+      "status": "open",
+      "claim": "UK attributes direction to IRGC; Iran disputes responsibility and nobody has been charged.",
+      "source_spans": [
+        {
+          "observation_id": "O010",
+          "field": "text",
+          "start": 1888,
+          "end": 1915
+        },
+        {
+          "observation_id": "O011",
+          "field": "text",
+          "start": 520,
+          "end": 560
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "No established answer to original departure-cause question; do not silently resolve it from related-base context."
+  ],
+  "adjudication_status": "unadjudicated"
+}

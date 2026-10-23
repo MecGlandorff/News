@@ -1,0 +1,50 @@
+{
+  "case_id": "C11",
+  "prefix_id": "C11-p01",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C11-mine-blast",
+      "kind": "new_occurrence",
+      "claim": "BBC reports at least 82 killed in a Shanxi coal mine explosion, described as China's worst mining disaster in 16 years.",
+      "source_spans": [
+        {
+          "observation_id": "O043",
+          "field": "title",
+          "start": 0,
+          "end": 49
+        },
+        {
+          "observation_id": "O043",
+          "field": "description",
+          "start": 0,
+          "end": 89
+        }
+      ],
+      "attribution": "BBC",
+      "occurrence_ref": "C11-shanxi-explosion",
+      "story_ref": "C11-shanxi-mine-disaster",
+      "uncertainty": "At-least count is provisional; no mine name, cause or further circumstances supplied.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C11-mine-blast"
+      ],
+      "status": "required",
+      "reason": "Initial occurrence and minimum casualty toll are supported."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Publication-order simulation: authentic availability unknown; historical source content may be revised or backfilled."
+  ],
+  "adjudication_status": "unadjudicated"
+}
