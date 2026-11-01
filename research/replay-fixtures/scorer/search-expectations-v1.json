@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "visibility": "SCORER_ONLY",
+  "frozen_at": "2026-11-01T11:41:02.121312+00:00",
+  "file": {
+    "path": "synthetic-search-clock-v1.json",
+    "sha256": "9373de0ee9d757660e6f7b3cda6ff03aafd35991ff73ba5117a104b3c2fdd72e"
+  },
+  "expectations": [
+    "SP01 enrichment view contains SE01 and zero claim-bearing observations.",
+    "SE01 empty results cannot close a story/question or prove no development.",
+    "SP02 enrichment view admits F001 only at April 1 fetch time, never its January 20 publication time.",
+    "Both search events count toward the tool-call ledger; unknown elapsed/cost/token usage stays unknown.",
+    "Unenriched baseline sees no fetched F001 or search events."
+  ],
+  "negative_probe": "Move SE02 observed_at to January 20 while leaving linked F001 available April 1: prefix SP01 must reject the visible event that points to future source evidence before candidate invocation.",
+  "limits": "Tests deterministic event/availability and accounting boundaries only; no search recall, source sufficiency or semantic correctness measured."
+}

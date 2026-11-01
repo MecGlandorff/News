@@ -1,0 +1,75 @@
+{
+  "case_id": "C11",
+  "prefix_id": "C11-p02",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C11-toll-reduction",
+      "kind": "source_correction",
+      "claim": "Volkskrant headline reports authorities lowered the Chinese coal-mine explosion death toll; revised number not supplied.",
+      "source_spans": [
+        {
+          "observation_id": "O045",
+          "field": "title",
+          "start": 0,
+          "end": 97
+        }
+      ],
+      "attribution": "Authorities via Volkskrant headline",
+      "occurrence_ref": "C11-shanxi-explosion",
+      "story_ref": "C11-shanxi-mine-disaster",
+      "uncertainty": "Same-event link strongly suggested by timing and disaster framing, but mine identity absent; cannot invent new count.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [
+    {
+      "from": "C11-toll-reduction",
+      "to": "C11-mine-blast",
+      "type": "same_occurrence_revision",
+      "status": "allowed",
+      "reason": "Consistent Chinese coal-mine disaster and worst-since framing, with no evidence of distinct explosion; exact named mine absent.",
+      "source_spans": [
+        {
+          "observation_id": "O045",
+          "field": "title",
+          "start": 0,
+          "end": 64
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C11-toll-reduction"
+      ],
+      "status": "required",
+      "reason": "Explicit authority downward revision is material even without supplied numeric replacement."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C11-revised-toll",
+      "status": "open",
+      "claim": "What revised death toll and reason for lowering did authorities report?",
+      "source_spans": [
+        {
+          "observation_id": "O045",
+          "field": "title",
+          "start": 0,
+          "end": 64
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": "Headline only; revised toll and cause of revision unavailable.",
+  "ambiguity_notes": [
+    "Publication-order simulation: authentic availability unknown. Do not preserve 82 as current settled count after explicit lowering, or label a second explosion."
+  ],
+  "adjudication_status": "unadjudicated"
+}

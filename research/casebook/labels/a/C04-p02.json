@@ -1,0 +1,146 @@
+{
+  "case_id": "C04",
+  "prefix_id": "C04-p02",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C04-riyadh-thursday",
+      "kind": "new_occurrence",
+      "claim": "Saudi officials report three citizens killed and others wounded in a late-Thursday Riyadh airport attack claimed by Houthis.",
+      "source_spans": [
+        {
+          "observation_id": "O013",
+          "field": "text",
+          "start": 111,
+          "end": 300
+        },
+        {
+          "observation_id": "O013",
+          "field": "text",
+          "start": 301,
+          "end": 328
+        }
+      ],
+      "attribution": "Saudi officials; Houthi responsibility claim via Guardian",
+      "occurrence_ref": "C04-riyadh-thursday-attack",
+      "story_ref": "C04-yemen-control",
+      "materiality": "material",
+      "uncertainty": null
+    },
+    {
+      "id": "C04-riyadh-later-report",
+      "kind": "new_occurrence",
+      "claim": "A later Guardian report describes a Houthi missile attack at Riyadh airport with dozens reported wounded; Saudi authorities had not confirmed the strike.",
+      "source_spans": [
+        {
+          "observation_id": "O014",
+          "field": "text",
+          "start": 0,
+          "end": 39
+        },
+        {
+          "observation_id": "O014",
+          "field": "text",
+          "start": 135,
+          "end": 309
+        }
+      ],
+      "attribution": "Guardian, unspecified injury reports and witness",
+      "occurrence_ref": "C04-riyadh-undated-attack",
+      "story_ref": "C04-yemen-control",
+      "uncertainty": "No explicit event date supplied; may be separate attack or another account of Thursday occurrence.",
+      "materiality": "material"
+    },
+    {
+      "id": "C04-us-evaluation",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Trump says he is evaluating US participation in Saudi strikes against Houthis.",
+      "source_spans": [
+        {
+          "observation_id": "O014",
+          "field": "text",
+          "start": 310,
+          "end": 457
+        }
+      ],
+      "attribution": "Trump via Guardian",
+      "story_ref": "C04-yemen-control",
+      "occurrence_ref": null,
+      "materiality": "material",
+      "uncertainty": null
+    }
+  ],
+  "relations": [
+    {
+      "from": "C04-riyadh-undated-attack",
+      "to": "C04-riyadh-thursday-attack",
+      "type": "same_occurrence",
+      "status": "uncertain",
+      "reason": "Same airport and actor but absent date; casualty and confirmation differences do not alone prove either a correction or second attack.",
+      "source_spans": [
+        {
+          "observation_id": "O014",
+          "field": "title",
+          "start": 0,
+          "end": 65
+        }
+      ]
+    },
+    {
+      "from": "C04-riyadh-thursday-attack",
+      "to": "C04-dawn-offensive",
+      "type": "same_story",
+      "status": "required",
+      "reason": "Source directly places airport attack in the Yemen offensive context.",
+      "source_spans": [
+        {
+          "observation_id": "O013",
+          "field": "text",
+          "start": 363,
+          "end": 469
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C04-riyadh-thursday",
+        "C04-riyadh-later-report",
+        "C04-us-evaluation"
+      ],
+      "status": "required",
+      "reason": "Airport violence and potential US involvement materially advance the ongoing matter; identity of two airport reports must remain qualified."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C04-airport-identity",
+      "status": "open",
+      "claim": "Whether the two airport reports describe one attack or separate attacks cannot be determined from supplied event timing.",
+      "source_spans": [
+        {
+          "observation_id": "O013",
+          "field": "text",
+          "start": 301,
+          "end": 328
+        },
+        {
+          "observation_id": "O014",
+          "field": "text",
+          "start": 0,
+          "end": 39
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Repeated government-allied strait-recapture claim adds no demonstrated independent resolution of C04-control-question."
+  ],
+  "adjudication_status": "unadjudicated"
+}

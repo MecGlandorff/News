@@ -1,0 +1,323 @@
+{
+  "case_id": "C12",
+  "prefix_id": "C12-p04",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C12-c1",
+      "kind": "new_occurrence",
+      "claim": "ICC pre-trial judges unanimously confirmed crimes-against-humanity charges against Duterte on substantial grounds, sending the anti-drug-crackdown case to trial; this is not conviction.",
+      "source_spans": [
+        {
+          "observation_id": "O047",
+          "field": "description",
+          "start": 245,
+          "end": 397
+        },
+        {
+          "observation_id": "O047",
+          "field": "description",
+          "start": 404,
+          "end": 661
+        }
+      ],
+      "attribution": "ICC judges via Guardian",
+      "occurrence_ref": "C12-charges-confirmed",
+      "story_ref": "C12-duterte-icc-case",
+      "materiality": "high",
+      "uncertainty": "Confirmation threshold substantial grounds, not conviction."
+    },
+    {
+      "id": "C12-c2",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Judges find substantial grounds to believe Duterte responsible for murder and attempted murder in crackdowns killing thousands.",
+      "source_spans": [
+        {
+          "observation_id": "O047",
+          "field": "description",
+          "start": 404,
+          "end": 661
+        }
+      ],
+      "attribution": "ICC pre-trial judges via Guardian",
+      "occurrence_ref": "C12-charges-confirmed",
+      "story_ref": "C12-duterte-icc-case",
+      "materiality": "high",
+      "uncertainty": "Alleged responsibility assessed for proceeding to trial, guilt unresolved."
+    },
+    {
+      "id": "C12-c3",
+      "kind": "context_only",
+      "claim": "NYT reports same ICC decision that enough evidence exists to try Duterte over drug-crackdown killings.",
+      "source_spans": [
+        {
+          "observation_id": "O046",
+          "field": "title",
+          "start": 0,
+          "end": 73
+        },
+        {
+          "observation_id": "O046",
+          "field": "description",
+          "start": 0,
+          "end": 177
+        }
+      ],
+      "attribution": "NYT attributing ICC",
+      "occurrence_ref": "C12-charges-confirmed",
+      "story_ref": "C12-duterte-icc-case",
+      "materiality": "none",
+      "uncertainty": "Independent publication restates prior procedural step without new material detail."
+    },
+    {
+      "id": "C12-c4",
+      "kind": "new_occurrence",
+      "claim": "Philippine vice president Sara Duterte was impeached again; NYT assesses Senate prosecution likely to fail again.",
+      "source_spans": [
+        {
+          "observation_id": "O048",
+          "field": "title",
+          "start": 0,
+          "end": 60
+        },
+        {
+          "observation_id": "O048",
+          "field": "description",
+          "start": 0,
+          "end": 141
+        }
+      ],
+      "attribution": "NYT",
+      "occurrence_ref": "C12-sara-impeachment",
+      "story_ref": "C12-sara-impeachment-matter",
+      "materiality": "high",
+      "uncertainty": "Likelihood is journalist assessment, not Senate result. Different person and forum from Rodrigo ICC case."
+    },
+    {
+      "id": "C12-c5",
+      "kind": "new_occurrence",
+      "claim": "Ronald dela Rosa, a former police chief and longtime Rodrigo Duterte ally wanted by ICC, fled government agents and took refuge at Senate offices to avoid arrest.",
+      "source_spans": [
+        {
+          "observation_id": "O049",
+          "field": "title",
+          "start": 0,
+          "end": 89
+        },
+        {
+          "observation_id": "O049",
+          "field": "description",
+          "start": 208,
+          "end": 393
+        }
+      ],
+      "attribution": "Guardian CCTV account/headline",
+      "occurrence_ref": "C12-dela-rosa-arrest-avoidance",
+      "story_ref": "C12-dela-rosa-icc-pursuit",
+      "materiality": "high",
+      "uncertainty": "No completed arrest or transfer established."
+    },
+    {
+      "id": "C12-c6",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Dela Rosa said agents wanted to forcibly bring him to The Hague; another ally offered protective custody and he stayed overnight in Senate office.",
+      "source_spans": [
+        {
+          "observation_id": "O049",
+          "field": "description",
+          "start": 3,
+          "end": 122
+        },
+        {
+          "observation_id": "O049",
+          "field": "description",
+          "start": 401,
+          "end": 468
+        }
+      ],
+      "attribution": "Dela Rosa Facebook statement; Guardian",
+      "occurrence_ref": "C12-dela-rosa-arrest-avoidance",
+      "story_ref": "C12-dela-rosa-icc-pursuit",
+      "materiality": "medium",
+      "uncertainty": "Personal claim does not prove legal transfer plan or terms."
+    }
+  ],
+  "relations": [
+    {
+      "from": "C12-c3",
+      "to": "C12-c1",
+      "type": "same_occurrence",
+      "status": "required",
+      "reason": "Same defendant, court, decision and date.",
+      "source_spans": [
+        {
+          "observation_id": "O046",
+          "field": "title",
+          "start": 0,
+          "end": 73
+        },
+        {
+          "observation_id": "O047",
+          "field": "title",
+          "start": 0,
+          "end": 83
+        }
+      ]
+    },
+    {
+      "from": "C12-sara-impeachment-matter",
+      "to": "C12-duterte-icc-case",
+      "type": "distinct_story",
+      "status": "required",
+      "reason": "Sara's domestic impeachment and Rodrigo's ICC prosecution involve different individuals, allegations/proceedings and decision bodies.",
+      "source_spans": [
+        {
+          "observation_id": "O048",
+          "field": "title",
+          "start": 0,
+          "end": 60
+        },
+        {
+          "observation_id": "O047",
+          "field": "title",
+          "start": 0,
+          "end": 83
+        }
+      ]
+    },
+    {
+      "from": "C12-dela-rosa-arrest-avoidance",
+      "to": "C12-charges-confirmed",
+      "type": "distinct_occurrence",
+      "status": "required",
+      "reason": "Different person's arrest avoidance vs court confirmation of Rodrigo charges.",
+      "source_spans": [
+        {
+          "observation_id": "O049",
+          "field": "title",
+          "start": 0,
+          "end": 89
+        },
+        {
+          "observation_id": "O047",
+          "field": "title",
+          "start": 0,
+          "end": 83
+        }
+      ]
+    },
+    {
+      "from": "C12-dela-rosa-icc-pursuit",
+      "to": "C12-duterte-icc-case",
+      "type": "same_story",
+      "status": "allowed",
+      "reason": "Explicit Rodrigo alliance and ICC pursuit support broader related coverage; shared charges/proceeding is not established.",
+      "source_spans": [
+        {
+          "observation_id": "O049",
+          "field": "description",
+          "start": 226,
+          "end": 281
+        }
+      ]
+    },
+    {
+      "from": "C12-dela-rosa-icc-pursuit",
+      "to": "C12-sara-impeachment-matter",
+      "type": "distinct_story",
+      "status": "required",
+      "reason": "Use of Senate premises does not make arrest pursuit Sara impeachment proceeding.",
+      "source_spans": [
+        {
+          "observation_id": "O049",
+          "field": "title",
+          "start": 0,
+          "end": 89
+        },
+        {
+          "observation_id": "O048",
+          "field": "title",
+          "start": 0,
+          "end": 60
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C12-c5"
+      ],
+      "status": "required",
+      "reason": "Distinct ICC-related arrest pursuit supported."
+    },
+    {
+      "contribution_ids": [
+        "C12-c6"
+      ],
+      "status": "allowed",
+      "reason": "Overnight refuge and attributed transfer fears can accompany occurrence."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Shared institution/ally labels do not force same legal case. Unknown authentic publication-version availability in simulation."
+  ],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "current_view_policy": "Prior contributions and unresolved questions retained as attributed evidence; current delta expectations apply only at this prefix, not to repeated context.",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:C12-dela-rosa-refuge",
+        "B:C12-c5",
+        "B:C12-c6"
+      ],
+      "decision": "Require distinct pursuit/refuge occurrence; allow overnight/attributed Hague fears as detail.",
+      "reason": "O049 supports attempted arrest avoidance, not completed arrest, transfer or guilt."
+    },
+    {
+      "label_refs": [
+        "A:relations[0]",
+        "B:relations[1]"
+      ],
+      "decision": "Allow broader Rodrigo-related story coverage without asserting same legal case.",
+      "reason": "Source explicitly supplies alliance and ICC context; exact charges/proceeding absent. Original allowed/uncertain distinction preserved."
+    },
+    {
+      "label_refs": [
+        "A:relations[1]",
+        "B:relations[0]",
+        "A:relations[2]",
+        "B:relations[2]"
+      ],
+      "decision": "Require distinct occurrence from charge hearing and separate legal matter from Sara impeachment.",
+      "reason": "Different person/action/forum. Senate setting and surname associations do not establish one legal proceeding; broader context cannot merge event identities."
+    }
+  ],
+  "chronology_mode": "publication_order_simulation",
+  "checkpoint_at": "2026-05-12T08:20:37+00:00",
+  "source_packet_sha256": "0c9c2239547d7f22685b9c2279132bd86470c508cce480921261d05d4c08f3ae",
+  "visible_observation_ids": [
+    "O047",
+    "O046",
+    "O048",
+    "O049"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "60388ac0122ef045041aec26fb0e986acb43e0fc7b1482aa06d6b7d066eb7499",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "690095fd32520882ce971ef6cd1ae9f55c7c44da2a497a8b89af56c446239fbb",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:59:51.480464+00:00"
+}

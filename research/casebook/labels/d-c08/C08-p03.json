@@ -1,0 +1,100 @@
+{
+  "case_id": "C08",
+  "prefix_id": "C08-p03",
+  "labeler_id": "D",
+  "label_version": "D-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "D-C08-001",
+      "kind": "context_only",
+      "claim": "BBC app promotional copy advertises news reporting and personalized topics.",
+      "source_spans": [
+        {
+          "observation_id": "O030",
+          "field": "title",
+          "start": 0,
+          "end": 12
+        },
+        {
+          "observation_id": "O030",
+          "field": "text",
+          "start": 0,
+          "end": 92
+        },
+        {
+          "observation_id": "O032",
+          "field": "title",
+          "start": 0,
+          "end": 12
+        },
+        {
+          "observation_id": "O032",
+          "field": "text",
+          "start": 0,
+          "end": 92
+        },
+        {
+          "observation_id": "O033",
+          "field": "title",
+          "start": 0,
+          "end": 12
+        },
+        {
+          "observation_id": "O033",
+          "field": "text",
+          "start": 0,
+          "end": 92
+        }
+      ],
+      "attribution": "BBC News app promotional listing",
+      "occurrence_ref": null,
+      "story_ref": null,
+      "materiality": "No reported news occurrence or material update.",
+      "uncertainty": "App availability, launch, or change is not established by this copy."
+    },
+    {
+      "id": "D-C08-002",
+      "kind": "new_occurrence",
+      "claim": "A Guardian headline reports an Indian pilot recalling a flydubai cockpit attack, describing a fight for his life and being hailed as a hero.",
+      "source_spans": [
+        {
+          "observation_id": "O031",
+          "field": "title",
+          "start": 0,
+          "end": 89
+        }
+      ],
+      "attribution": "The Guardian headline, including a quotation attributed in the headline to the pilot",
+      "occurrence_ref": "C08-occ-flydubai-cockpit-attack",
+      "story_ref": "C08-story-flydubai-cockpit-attack",
+      "materiality": "Introduces the cockpit attack matter and the pilot’s retrospective account.",
+      "uncertainty": "Only the headline supports this account; the text is a photograph credit. Pilot identity, attack date, flight, participants, and outcomes are absent."
+    }
+  ],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "D-C08-001"
+      ],
+      "status": "prohibited",
+      "reason": "O033 exactly repeats the BBC app promotional title and text already observed as O030 and O032; capture time alone supplies no news development."
+    },
+    {
+      "contribution_ids": [
+        "D-C08-002"
+      ],
+      "status": "prohibited",
+      "reason": "The pilot item is unchanged and carries forward from the previous prefixes."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": "The sole added observation is another unchanged capture of the BBC app promotional listing; no new supported news fact appears.",
+  "missing_evidence_reason": "The pilot item contains only a headline and photograph credit, so detailed event reconstruction is unsupported.",
+  "ambiguity_notes": [
+    "No relationship between the BBC app promotion and the pilot item is evidenced.",
+    "The article publication timestamp must not be treated as the attack date."
+  ],
+  "adjudication_status": "unadjudicated"
+}

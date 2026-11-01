@@ -1,0 +1,133 @@
+{
+  "case_id": "C01",
+  "prefix_id": "C01-p01",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C01-attack",
+      "kind": "new_occurrence",
+      "claim": "NOS recounts the Flydubai cockpit attack, passenger/crew restraint and diversion to Saudi Arabia.",
+      "source_spans": [
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 957,
+          "end": 1024
+        },
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 1391,
+          "end": 1506
+        }
+      ],
+      "attribution": "NOS; Reuters identified the co-pilot",
+      "occurrence_ref": "C01-flight-attack",
+      "story_ref": "C01-flight-investigation",
+      "materiality": "material",
+      "uncertainty": null
+    },
+    {
+      "id": "C01-plan",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Israeli sources briefed on the investigation reportedly believe the co-pilot intended a Tel Aviv airport crash, operated alone, and had abandoned an earlier hijacking plan.",
+      "source_spans": [
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 0,
+          "end": 168
+        },
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 264,
+          "end": 393
+        },
+        {
+          "observation_id": "O001",
+          "field": "text",
+          "start": 0,
+          "end": 73
+        }
+      ],
+      "attribution": "Anonymous Israeli sources via NOS; BBC reports",
+      "occurrence_ref": "C01-flight-attack",
+      "story_ref": "C01-flight-investigation",
+      "uncertainty": "Preliminary investigation, no official response; airport versus building is unresolved across titles.",
+      "materiality": "material"
+    },
+    {
+      "id": "C01-background",
+      "kind": "context_only",
+      "claim": "Prior employment suspension, overseas training and Australian/New Zealand inquiries provide suspect background.",
+      "source_spans": [
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 1651,
+          "end": 1799
+        },
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 1891,
+          "end": 1972
+        }
+      ],
+      "story_ref": "C01-flight-investigation",
+      "materiality": "context",
+      "attribution": null,
+      "occurrence_ref": null,
+      "uncertainty": null
+    }
+  ],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C01-attack",
+        "C01-plan"
+      ],
+      "status": "required",
+      "reason": "Initial supplied evidence establishes the attack and attributed investigative findings."
+    },
+    {
+      "contribution_ids": [
+        "C01-background"
+      ],
+      "status": "allowed",
+      "reason": "Relevant background can be included without treating every biography detail as a separate occurrence."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C01-motive",
+      "status": "open",
+      "claim": "Intended target and motive remain preliminary; sources say the reason for abandoning the earlier plan is unclear.",
+      "source_spans": [
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 394,
+          "end": 496
+        },
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 784,
+          "end": 843
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Captured observation supports actual capture time, not independent truth of anonymous claims."
+  ],
+  "adjudication_status": "unadjudicated"
+}

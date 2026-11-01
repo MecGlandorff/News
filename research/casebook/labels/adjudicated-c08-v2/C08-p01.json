@@ -1,0 +1,125 @@
+{
+  "case_id": "C08",
+  "prefix_id": "C08-p01",
+  "labeler_id": "C08-independent-adjudicator",
+  "label_version": "adjudicated-c08-v2",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C08-A001",
+      "kind": "context_only",
+      "claim": "BBC News app copy advertises top stories, breaking news, live reporting, and following news topics matching the reader’s interests.",
+      "source_spans": [
+        {
+          "observation_id": "O030",
+          "field": "title",
+          "start": 0,
+          "end": 12
+        },
+        {
+          "observation_id": "O030",
+          "field": "text",
+          "start": 0,
+          "end": 92
+        }
+      ],
+      "attribution": "BBC News app title and promotional copy",
+      "occurrence_ref": null,
+      "story_ref": null,
+      "materiality": "No event-specific news development is established.",
+      "uncertainty": "The copy does not establish an app launch or change."
+    },
+    {
+      "id": "C08-A002",
+      "kind": "new_occurrence",
+      "claim": "The Guardian headline reports an Indian pilot recalling a flydubai cockpit attack, says the pilot was hailed as a hero, and quotes “I was fighting for my life”.",
+      "source_spans": [
+        {
+          "observation_id": "O031",
+          "field": "title",
+          "start": 0,
+          "end": 89
+        }
+      ],
+      "attribution": "The Guardian headline; the first-person quotation is presented as the pilot’s recollection.",
+      "occurrence_ref": "C08-OCC001",
+      "story_ref": "C08-MATTER001",
+      "materiality": "Introduces a headline-level report about a cockpit attack and the pilot’s recollection.",
+      "uncertainty": "The visible article text is a photograph credit. No attack date, location, sequence, identity of attacker, or outcome is established by the cited headline."
+    }
+  ],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C08-A001"
+      ],
+      "status": "prohibited",
+      "reason": "Generic app promotion does not establish a news occurrence or development."
+    },
+    {
+      "contribution_ids": [
+        "C08-A002"
+      ],
+      "status": "allowed",
+      "reason": "The headline supports a narrowly attributed attack/recollection item. Its limited detail permits retention without requiring a separately reconstructed occurrence or recollection event."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": "O031 supplies a headline and photograph credit rather than an account of the attack.",
+  "ambiguity_notes": [
+    "The headline explicitly mentions an attack; C08-OCC001 denotes only that reported occurrence, not a verified event reconstruction. C08-MATTER001 denotes its broader attack/account matter.",
+    "The headline links the recollection to the attack; no separate recollection occurrence is required.",
+    "The publication timestamp is not evidence of the attack date. No link between the app promotion and attack matter is established."
+  ],
+  "adjudication_status": "adjudicated",
+  "decisions": [
+    {
+      "id": "C08-p01-decision-01",
+      "d_refs": [
+        "d-c08/C08-p01.json#/contributions/0",
+        "d-c08/C08-p01.json#/delta_expectations/0"
+      ],
+      "e_refs": [
+        "e-c08/C08-p01.json#/contributions/0",
+        "e-c08/C08-p01.json#/delta_expectations/0"
+      ],
+      "gold_refs": [
+        "#/contributions/0",
+        "#/delta_expectations/0"
+      ],
+      "reason": "Both labels correctly treat the app promotion as context only. The exact title identifies an app and the text lists coverage features; neither supplies a specific news occurrence."
+    },
+    {
+      "id": "C08-p01-decision-02",
+      "d_refs": [
+        "d-c08/C08-p01.json#/contributions/1",
+        "d-c08/C08-p01.json#/delta_expectations/1"
+      ],
+      "e_refs": [
+        "e-c08/C08-p01.json#/contributions/1",
+        "e-c08/C08-p01.json#/delta_expectations/1"
+      ],
+      "gold_refs": [
+        "#/contributions/1",
+        "#/delta_expectations/1"
+      ],
+      "reason": "D allows the item while E requires it. Retain allowed: the title entails the attack/recollection claim, but the thin packet does not require emission or a separate recollection occurrence. Preserve “hailed as hero” attribution rather than E’s stronger paraphrase that the headline itself calls him a hero."
+    }
+  ],
+  "reference_syntax": {
+    "contribution_ids": "Exact id values in this file’s contributions array.",
+    "occurrence_ref": "C08-OCC001 identifies the reported flydubai cockpit attack; null means no occurrence assignment.",
+    "story_ref": "C08-MATTER001 identifies the broader flydubai cockpit attack/account matter; null means no matter assignment.",
+    "relation_refs": "If present, relation endpoints use contribution:<id>, occurrence:<occurrence_ref>, or matter:<story_ref>; there are no relations in this prefix.",
+    "decision_refs": "d-c08/ or e-c08/ paths are relative to research/casebook/labels; #/ paths are JSON Pointers into the named input or current gold file."
+  },
+  "source_packet_raw_sha256": "691ec4d2c9696a02c4291a4a7b8d1183d79ae052a3dc700ddd75941e32b065fb",
+  "label_input_raw_sha256": {
+    "D": "36fc60064c161837e5a0976b82b9433201bdaeab28f40e654dbf68583772c1f7",
+    "E": "7a091d00bdb2bb9b067918e9219e5e93df2f4c2ae1b6ed83c6f853111a36a54d"
+  },
+  "saved_at_utc": "2026-10-23T22:04:35.176373+00:00",
+  "scope": "Development-only, source-bounded C08 adjudication; not truth labels or a holdout."
+}

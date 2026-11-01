@@ -1,0 +1,60 @@
+{
+  "case_id": "C10",
+  "prefix_id": "C10-p02",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C10-uncorrected-claim",
+      "kind": "conflict",
+      "claim": "NU.nl reports a first South Holland wolf sighting at Barendrecht three weeks earlier and concludes every Dutch province has had a wolf, conflicting with already-visible explicit location correction.",
+      "source_spans": [
+        {
+          "observation_id": "O039",
+          "field": "description",
+          "start": 0,
+          "end": 203
+        }
+      ],
+      "attribution": "NU.nl versus Telegraaf's prior explicit correction",
+      "occurrence_ref": "C10-wolf-sighting-report",
+      "story_ref": "C10-wolf-location-correction",
+      "uncertainty": "Publication-order sequence cannot establish which content was authentically available first; later timestamp does not override correction.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [
+    {
+      "from": "C10-uncorrected-claim",
+      "to": "C10-wolf-correction",
+      "type": "contradicts",
+      "status": "required",
+      "reason": "Same first provincial sighting and Barendrecht location are affirmatively claimed and explicitly rejected.",
+      "source_spans": [
+        {
+          "observation_id": "O039",
+          "field": "title",
+          "start": 0,
+          "end": 68
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C10-uncorrected-claim"
+      ],
+      "status": "required",
+      "reason": "Source-attributed conflict is newly visible; no new real wolf occurrence or reversal of explicit correction established."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Publication-order simulation: authentic availability unknown, potentially revised or backfilled versions. Preserve source conflict rather than overwrite correction with nominally later report."
+  ],
+  "adjudication_status": "unadjudicated"
+}

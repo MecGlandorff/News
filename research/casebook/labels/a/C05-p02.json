@@ -1,0 +1,106 @@
+{
+  "case_id": "C05",
+  "prefix_id": "C05-p02",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C05-continued-strikes",
+      "kind": "new_occurrence",
+      "claim": "Zelenskyy says Russia has hit six Ukrainian energy sites since Trump's ceasefire announcement and concludes Russia increasingly appears unwilling to cease energy attacks.",
+      "source_spans": [
+        {
+          "observation_id": "O020",
+          "field": "title",
+          "start": 0,
+          "end": 87
+        },
+        {
+          "observation_id": "O019",
+          "field": "title",
+          "start": 0,
+          "end": 125
+        }
+      ],
+      "attribution": "Zelenskyy/Ukraine via BBC and Guardian",
+      "occurrence_ref": "C05-post-announcement-strikes",
+      "story_ref": "C05-energy-ceasefire",
+      "uncertainty": "Strikes and Russian unwillingness are Ukraine's attributed account; no Russian response supplied.",
+      "materiality": "material"
+    },
+    {
+      "id": "C05-total-ceasefire-proposal",
+      "kind": "context_only",
+      "claim": "Zelenskyy had proposed a 60-day total ceasefire to permit presidential elections.",
+      "source_spans": [
+        {
+          "observation_id": "O019",
+          "field": "text",
+          "start": 0,
+          "end": 95
+        }
+      ],
+      "attribution": "Guardian",
+      "story_ref": "C05-energy-ceasefire",
+      "materiality": "context",
+      "uncertainty": "Not evidence this broader proposal was agreed or newly made at this checkpoint.",
+      "occurrence_ref": null
+    }
+  ],
+  "relations": [
+    {
+      "from": "C05-post-announcement-strikes",
+      "to": "C05-energy-ceasefire-announcement",
+      "type": "same_story_distinct_occurrence",
+      "status": "required",
+      "reason": "Explicitly reported after and in relation to the announced ceasefire.",
+      "source_spans": [
+        {
+          "observation_id": "O020",
+          "field": "text",
+          "start": 0,
+          "end": 117
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C05-continued-strikes"
+      ],
+      "status": "required",
+      "reason": "Reported subsequent attacks and Ukrainian assessment materially qualify the ceasefire's implementation."
+    },
+    {
+      "contribution_ids": [
+        "C05-total-ceasefire-proposal"
+      ],
+      "status": "allowed",
+      "reason": "Broader proposal is relevant background but timing is unspecified."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C05-agreement",
+      "status": "open",
+      "claim": "Ukraine reports attacks continued; Russia's acceptance and implementation remain unresolved in supplied evidence.",
+      "source_spans": [
+        {
+          "observation_id": "O020",
+          "field": "text",
+          "start": 80,
+          "end": 117
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Do not retroactively replace Trump's original claim with a factual mutual ceasefire; later noncompliance allegations are new developments."
+  ],
+  "adjudication_status": "unadjudicated"
+}

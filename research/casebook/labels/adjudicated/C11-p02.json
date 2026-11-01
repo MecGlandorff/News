@@ -1,0 +1,149 @@
+{
+  "case_id": "C11",
+  "prefix_id": "C11-p02",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C11-c2",
+      "kind": "source_correction",
+      "claim": "Volkskrant headline says authorities lowered death toll for Chinese coal mine explosion; disaster remains worst since 2009.",
+      "source_spans": [
+        {
+          "observation_id": "O045",
+          "field": "title",
+          "start": 0,
+          "end": 97
+        }
+      ],
+      "attribution": "Authorities via Volkskrant headline",
+      "occurrence_ref": null,
+      "story_ref": "C11-shanxi-mine-disaster",
+      "materiality": "high",
+      "uncertainty": "Explicit authority downward revision, but revised number/prior authority figure and exact mine identity absent; cannot prove BBC at-least-82 specifically retracted."
+    },
+    {
+      "id": "C11-c1",
+      "kind": "new_occurrence",
+      "claim": "BBC reports at least 82 killed in a Shanxi coal mine explosion, described as China's worst mining disaster in 16 years.",
+      "source_spans": [
+        {
+          "observation_id": "O043",
+          "field": "title",
+          "start": 0,
+          "end": 49
+        },
+        {
+          "observation_id": "O043",
+          "field": "description",
+          "start": 0,
+          "end": 89
+        }
+      ],
+      "attribution": "BBC News",
+      "occurrence_ref": "C11-shanxi-mine-blast",
+      "story_ref": "C11-shanxi-mine-disaster",
+      "materiality": "high",
+      "uncertainty": "Historical BBC at-least-82 report. O045 says authorities lowered a toll but gives neither revised number nor prior authority count; do not infer how it compares with 82.",
+      "view_status": "historical_report_revision_possible"
+    }
+  ],
+  "relations": [
+    {
+      "from": "C11-c2",
+      "to": "C11-c1",
+      "type": "same_occurrence",
+      "status": "allowed",
+      "reason": "Chinese coal mine explosion with matching worst-disaster framing suggests same event, though sparse identifiers.",
+      "source_spans": [
+        {
+          "observation_id": "O045",
+          "field": "title",
+          "start": 0,
+          "end": 97
+        },
+        {
+          "observation_id": "O043",
+          "field": "title",
+          "start": 0,
+          "end": 49
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C11-c2"
+      ],
+      "status": "required",
+      "reason": "Explicit downward revision materially qualifies earlier toll."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C11-q1",
+      "status": "open",
+      "claim": "What is the revised death toll and why was it lowered?",
+      "source_spans": [
+        {
+          "observation_id": "O045",
+          "field": "title",
+          "start": 0,
+          "end": 97
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": "Headline only; cannot assign revised count or explain adjustment.",
+  "ambiguity_notes": [
+    "Content explicitly reports authority correction despite unknown authentic publication-version availability. Do not invent new fatality number.",
+    "Questions about revised figure/reason represent directly missing information in explicit revision, not an inferred transmission or motive theory."
+  ],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "current_view_policy": "Prior contributions and unresolved questions retained as attributed evidence; current delta expectations apply only at this prefix, not to repeated context.",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:C11-toll-reduction",
+        "B:C11-c2",
+        "A:relations[0]",
+        "B:relations[0]"
+      ],
+      "decision": "Require reported downward authority revision; same explosion link allowed without forced identity.",
+      "reason": "Sparse title matches country/disaster framing but omits mine/province. Explicit lowering qualifies as a revision report; no revised number can be invented."
+    },
+    {
+      "label_refs": [
+        "A:ambiguity_notes[0]",
+        "B:C11-q1",
+        "A:C11-revised-toll"
+      ],
+      "decision": "Retain unknown revised toll; qualify historical 82, do not assert that precise number was corrected.",
+      "reason": "Authority might have revised a different intervening count; source does not identify old authority figure or reason."
+    }
+  ],
+  "chronology_mode": "publication_order_simulation",
+  "checkpoint_at": "2026-05-24T07:49:00+00:00",
+  "source_packet_sha256": "b2926fed7b79ba88b748cb17c48d31d59fd5e84f3809657ca66010f11c1e91ee",
+  "visible_observation_ids": [
+    "O043",
+    "O045"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "652d32d20cc1e84408e7680705a5e2cf8a721ee994658f30c22bc3134179740b",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "93cd0c2ac11fc1bf45f150290e1906640b1cefa6d4e3bdb44bd89106f9f622b0",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:58:46.579628+00:00"
+}

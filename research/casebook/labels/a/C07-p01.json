@@ -1,0 +1,42 @@
+{
+  "case_id": "C07",
+  "prefix_id": "C07-p01",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C07-protests",
+      "kind": "new_occurrence",
+      "claim": "Guardian headline reports new Cockroach movement protests over Indian voter-roll changes.",
+      "source_spans": [
+        {
+          "observation_id": "O026",
+          "field": "title",
+          "start": 0,
+          "end": 75
+        }
+      ],
+      "attribution": "Guardian headline",
+      "occurrence_ref": "C07-voter-roll-protests",
+      "story_ref": "C07-cockroach-movement",
+      "uncertainty": "Only headline and photo credit; no dates, organizers or detailed grievance evidence.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C07-protests"
+      ],
+      "status": "required",
+      "reason": "Initial headline supports a protest occurrence with attributed topic."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": "Body is only a photo credit; cannot infer protest scale or specifics.",
+  "ambiguity_notes": [],
+  "adjudication_status": "unadjudicated"
+}

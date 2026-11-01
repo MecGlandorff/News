@@ -1,0 +1,204 @@
+{
+  "case_id": "C07",
+  "prefix_id": "C07-p04",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C07-c1",
+      "kind": "new_occurrence",
+      "claim": "India's Cockroach movement launches new protests over voter-roll changes.",
+      "source_spans": [
+        {
+          "observation_id": "O026",
+          "field": "title",
+          "start": 0,
+          "end": 75
+        }
+      ],
+      "attribution": "Guardian headline",
+      "occurrence_ref": "C07-voter-roll-protests",
+      "story_ref": "C07-cockroach-movement",
+      "materiality": "high",
+      "uncertainty": "Headline only; no scale, location details, events or political linkage beyond title."
+    },
+    {
+      "id": "C07-protest-details",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Now-visible article text describes thousands gathering in Mumbai amid nationwide youth-led protests, concern over voter disenfranchisement and demand for election commissioner Gyanesh Kumar's resignation.",
+      "source_spans": [
+        {
+          "observation_id": "O028",
+          "field": "text",
+          "start": 115,
+          "end": 332
+        },
+        {
+          "observation_id": "O028",
+          "field": "text",
+          "start": 450,
+          "end": 550
+        }
+      ],
+      "attribution": "Guardian; movement grievance is attributed concern",
+      "occurrence_ref": "C07-voter-roll-protests",
+      "story_ref": "C07-cockroach-movement",
+      "uncertainty": "Body became visible at this capture despite unchanged publication time; do not date these details as newly occurring October 10.",
+      "materiality": "material"
+    },
+    {
+      "id": "C07-c4",
+      "kind": "new_occurrence",
+      "claim": "CJP alleges authorities began mass detention of members before a planned Saturday Delhi protest.",
+      "source_spans": [
+        {
+          "observation_id": "O029",
+          "field": "text",
+          "start": 266,
+          "end": 378
+        }
+      ],
+      "attribution": "Cockroach Janta Party via Guardian",
+      "occurrence_ref": "C07-member-detentions",
+      "story_ref": "C07-cockroach-movement",
+      "materiality": "high",
+      "uncertainty": "Allegation, no official confirmation or detention count supplied."
+    },
+    {
+      "id": "C07-c5",
+      "kind": "context_only",
+      "claim": "The Oct9 report expected thousands at a Saturday Delhi march and describes continuing resignation-demand demonstrations.",
+      "source_spans": [
+        {
+          "observation_id": "O029",
+          "field": "text",
+          "start": 0,
+          "end": 48
+        },
+        {
+          "observation_id": "O029",
+          "field": "text",
+          "start": 501,
+          "end": 569
+        }
+      ],
+      "attribution": "Guardian",
+      "occurrence_ref": "C07-planned-delhi-protest",
+      "story_ref": "C07-cockroach-movement",
+      "materiality": "medium",
+      "uncertainty": "Plan relative to publication, not future relative to Oct12 capture; no supplied evidence establishes whether the march occurred."
+    }
+  ],
+  "relations": [
+    {
+      "from": "C07-protest-details",
+      "to": "C07-c1",
+      "type": "same_occurrence",
+      "status": "required",
+      "reason": "Same title, URL and publication time; body enriches existing reported protests.",
+      "source_spans": [
+        {
+          "observation_id": "O028",
+          "field": "title",
+          "start": 0,
+          "end": 75
+        }
+      ]
+    },
+    {
+      "from": "C07-member-detentions",
+      "to": "C07-voter-roll-protests",
+      "type": "same_story",
+      "status": "required",
+      "reason": "Same movement and explicit continued resignation demand over voter lists.",
+      "source_spans": [
+        {
+          "observation_id": "O029",
+          "field": "text",
+          "start": 424,
+          "end": 569
+        }
+      ]
+    },
+    {
+      "from": "C07-member-detentions",
+      "to": "C07-voter-roll-protests",
+      "type": "distinct_occurrence",
+      "status": "required",
+      "reason": "Detention allegation is distinct from earlier Mumbai protest gathering.",
+      "source_spans": [
+        {
+          "observation_id": "O029",
+          "field": "text",
+          "start": 266,
+          "end": 378
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C07-c4"
+      ],
+      "status": "required",
+      "reason": "Alleged mass detentions materially advance ongoing protest story."
+    },
+    {
+      "contribution_ids": [
+        "C07-c5"
+      ],
+      "status": "allowed",
+      "reason": "Planned new location/date can be conveyed as plan, not completed event."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Protest movement remains same story; detention episode distinct from Mumbai mobilisation."
+  ],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "current_view_policy": "Prior contributions and unresolved questions retained as attributed evidence; current delta expectations apply only at this prefix, not to repeated context.",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:C07-detentions",
+        "B:C07-c4"
+      ],
+      "decision": "Require attributed detention allegation linked to same movement, distinct from prior gathering.",
+      "reason": "O029 links CJP and specific voter-roll dispute; no official confirmation/count is supplied."
+    },
+    {
+      "label_refs": [
+        "A:C07-delhi-plan",
+        "B:C07-c5"
+      ],
+      "decision": "Allow publication-relative plan only, with outcome unknown at capture.",
+      "reason": "Oct9 Saturday expectation is not a future Oct12 event and does not prove occurrence."
+    }
+  ],
+  "chronology_mode": "captured_observation",
+  "checkpoint_at": "2026-10-12T21:32:09.233346+00:00",
+  "source_packet_sha256": "fd0e406f45df752d44aa408900e86d68e9e5cda5704f3937ac6955224655bf41",
+  "visible_observation_ids": [
+    "O026",
+    "O027",
+    "O028",
+    "O029"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "256661c42b71fbd716e3034e95f70ae42200d33d1a9288b78c2cec28c68188b3",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "795c59be780f7d3309be9eb3f5528c15ed1adb1f32380bbb825decbba4a9de6d",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:55:58.325020+00:00"
+}

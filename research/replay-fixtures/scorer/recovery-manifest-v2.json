@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "fixture_id": "synthetic-recovery-v2",
+  "visibility": "SCORER_ONLY; never expose expected repairs, filenames or audit to a candidate.",
+  "supersedes": "scorer/recovery-manifest-v1.json",
+  "frozen_at": "2026-11-01T11:41:02.120488+00:00",
+  "reason": "Pre-execution contract check requires contribution citations for every processed observation. Frozen v1 states listed repeated R004 as processed but cited only R001. V2 adds the exact R004 evidence span; source definitions and semantic expectations are unchanged. V1 artifacts remain as failed structural fixtures.",
+  "semantic_contamination": "scorer/contaminated-state-p04-v2.json",
+  "clean_reference": "scorer/clean-state-p04-v2.json",
+  "repair_only_response": "scorer/repaired-state-p04-v2.json",
+  "structural_rejection_control": "scorer/invalid-accounting-state-p04-v2.json",
+  "repair_audit": "Runner may fill supersedes from the actual state envelope. Repair-only response emits no fresh-news delta. These scripted states do not prove semantic detection.",
+  "files": [
+    {
+      "path": "scorer/clean-state-p04-v2.json",
+      "sha256": "bfede0562598be7d4c04d0a02ac7eea84ae870d898049666b47f9fbad6f65d25"
+    },
+    {
+      "path": "scorer/contaminated-state-p04-v2.json",
+      "sha256": "1780b1a1089e94a0f5d86f0dc85786dd82b54547cf23c0eeaa4edc304c8dc0b6"
+    },
+    {
+      "path": "scorer/invalid-accounting-state-p04-v2.json",
+      "sha256": "ac4c054ad1c71499112ebb8b743be6f18bec0c9fbabd1cf758a3a60897951ddd"
+    },
+    {
+      "path": "scorer/repaired-state-p04-v2.json",
+      "sha256": "7ec14a036c0da2ec8a9ac1005c56a335eddbfde9ac32e883563bd80dc997dbe7"
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "fixture_id": "synthetic-search-clock-v1",
+  "chronology_mode": "synthetic_stress",
+  "observations": [
+    {
+      "observation_id": "F001",
+      "source_version_id": "FV001",
+      "source_sha256": "f0fb5ce2f8ef81528b5a38a8653ff3f006ec326ef4bfec4a54dff8798b74b8df",
+      "fields": {
+        "source": "Invented civic archive",
+        "url": "https://example.invalid/bolt-register",
+        "title": "Bolt register review",
+        "description": "",
+        "text": "The Alder Works Board says the bolt register is under review.",
+        "published_at": "2026-01-20T09:00:00Z"
+      },
+      "observed_at": "2026-04-01T12:00:00Z",
+      "published_at_utc": "2026-01-20T09:00:00Z",
+      "available_at": "2026-04-01T12:00:00Z",
+      "search_event_id": "SE02"
+    }
+  ],
+  "boundaries": [
+    {
+      "prefix_id": "SP01",
+      "day": "2026-01-20",
+      "at": "2026-01-20T12:00:00Z"
+    },
+    {
+      "prefix_id": "SP02",
+      "day": "2026-04-01",
+      "at": "2026-04-01T12:00:00Z"
+    }
+  ],
+  "coverage": {
+    "scope": "Invented per-story search/fetch timing controls; no actual tool call or real external evidence. Search failure or zero results is not proof of silence.",
+    "gaps": [
+      {
+        "from": "2026-01-21",
+        "to": "2026-03-31",
+        "reason": "No synthetic search or fetch event supplied."
+      }
+    ]
+  },
+  "search_events": [
+    {
+      "event_id": "SE01",
+      "kind": "search",
+      "observed_at": "2026-01-20T12:00:00Z",
+      "request": {
+        "story_question": "Was a bolt register published?",
+        "query": "Alder Works Board bolt register"
+      },
+      "response": {
+        "body": {
+          "results": []
+        },
+        "body_sha256": "5021e624e752b001ce3e3846e8f158ed4aeb93a4c9a72fdb35a0c5b14a0eea84"
+      },
+      "observation_ids": [],
+      "status": "empty",
+      "usage": {
+        "tool_calls": 1,
+        "elapsed_ms": null,
+        "cost": null,
+        "model_tokens": null
+      }
+    },
+    {
+      "event_id": "SE02",
+      "kind": "fetch",
+      "observed_at": "2026-04-01T12:00:00Z",
+      "request": {
+        "url": "https://example.invalid/bolt-register"
+      },
+      "response": {
+        "body": {
+          "source": "Invented civic archive",
+          "url": "https://example.invalid/bolt-register",
+          "title": "Bolt register review",
+          "description": "",
+          "text": "The Alder Works Board says the bolt register is under review.",
+          "published_at": "2026-01-20T09:00:00Z"
+        },
+        "body_sha256": "f0fb5ce2f8ef81528b5a38a8653ff3f006ec326ef4bfec4a54dff8798b74b8df"
+      },
+      "observation_ids": [
+        "F001"
+      ],
+      "status": "ok",
+      "usage": {
+        "tool_calls": 1,
+        "elapsed_ms": null,
+        "cost": null,
+        "model_tokens": null
+      }
+    }
+  ]
+}

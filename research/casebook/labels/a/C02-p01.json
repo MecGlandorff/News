@@ -1,0 +1,200 @@
+{
+  "case_id": "C02",
+  "prefix_id": "C02-p01",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C02-lens",
+      "kind": "new_occurrence",
+      "claim": "A 15-year-old lost a hand after picking up an exploding projectile at a Lens school protest; authorities say his life is not in danger.",
+      "source_spans": [
+        {
+          "observation_id": "O005",
+          "field": "text",
+          "start": 0,
+          "end": 176
+        },
+        {
+          "observation_id": "O006",
+          "field": "text",
+          "start": 0,
+          "end": 75
+        }
+      ],
+      "attribution": "NOS and BBC citing prefect",
+      "occurrence_ref": "C02-lens-injury",
+      "story_ref": "C02-french-school-protests",
+      "materiality": "material",
+      "uncertainty": null
+    },
+    {
+      "id": "C02-projectile",
+      "kind": "same_occurrence_material_fact",
+      "claim": "French media identify the projectile as a police flash grenade the boy reportedly intended to throw back.",
+      "source_spans": [
+        {
+          "observation_id": "O005",
+          "field": "text",
+          "start": 255,
+          "end": 354
+        },
+        {
+          "observation_id": "O005",
+          "field": "text",
+          "start": 457,
+          "end": 542
+        }
+      ],
+      "attribution": "French media via NOS",
+      "occurrence_ref": "C02-lens-injury",
+      "story_ref": "C02-french-school-protests",
+      "uncertainty": "Reported identification and intent, not an established finding.",
+      "materiality": "material"
+    },
+    {
+      "id": "C02-paris",
+      "kind": "new_occurrence",
+      "claim": "A Paris school was attacked, confined pupils and then evacuated, according to its director.",
+      "source_spans": [
+        {
+          "observation_id": "O005",
+          "field": "text",
+          "start": 1266,
+          "end": 1336
+        },
+        {
+          "observation_id": "O005",
+          "field": "text",
+          "start": 1592,
+          "end": 1623
+        }
+      ],
+      "attribution": "School director via NOS",
+      "occurrence_ref": "C02-paris-school-attack",
+      "story_ref": "C02-french-school-protests",
+      "materiality": "material",
+      "uncertainty": null
+    },
+    {
+      "id": "C02-national",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Education minister reports protests at 589 schools today and 190 pupils/staff injured since last week.",
+      "source_spans": [
+        {
+          "observation_id": "O005",
+          "field": "text",
+          "start": 1624,
+          "end": 1848
+        }
+      ],
+      "attribution": "Minister Geffray via NOS; Guardian headline corroborates approximate injury total",
+      "story_ref": "C02-french-school-protests",
+      "occurrence_ref": null,
+      "materiality": "material",
+      "uncertainty": null
+    },
+    {
+      "id": "C02-arrests",
+      "kind": "new_occurrence",
+      "claim": "Two youths arrested for separate earlier French protest incidents, involving a stone injury in Aix-en-Provence and alleged petrol attack on a teacher in La Ciotat.",
+      "source_spans": [
+        {
+          "observation_id": "O005",
+          "field": "text",
+          "start": 1958,
+          "end": 2071
+        },
+        {
+          "observation_id": "O005",
+          "field": "text",
+          "start": 2156,
+          "end": 2283
+        }
+      ],
+      "attribution": "NOS",
+      "story_ref": "C02-french-school-protests",
+      "uncertainty": "Two distinct arrest occurrences; grouping is a compact reporting unit.",
+      "occurrence_ref": null,
+      "materiality": "material"
+    },
+    {
+      "id": "C02-belgium",
+      "kind": "new_occurrence",
+      "claim": "Separate Belgian disturbances produced arrests in Liège, Charleroi and Arlon.",
+      "source_spans": [
+        {
+          "observation_id": "O005",
+          "field": "text",
+          "start": 3195,
+          "end": 3393
+        }
+      ],
+      "attribution": "NOS",
+      "story_ref": "C02-belgian-school-protests",
+      "uncertainty": "Several local occurrences, not the Lens event.",
+      "occurrence_ref": null,
+      "materiality": "material"
+    }
+  ],
+  "relations": [
+    {
+      "from": "C02-lens-injury",
+      "to": "C02-paris-school-attack",
+      "type": "distinct_occurrence_same_story",
+      "status": "required",
+      "reason": "Different cities and incidents under French protests.",
+      "source_spans": [
+        {
+          "observation_id": "O005",
+          "field": "text",
+          "start": 1266,
+          "end": 1336
+        }
+      ]
+    },
+    {
+      "from": "C02-belgian-school-protests",
+      "to": "C02-french-school-protests",
+      "type": "distinct_story",
+      "status": "allowed",
+      "reason": "Cross-border thematic relation alone does not establish a single ongoing matter.",
+      "source_spans": [
+        {
+          "observation_id": "O005",
+          "field": "text",
+          "start": 2625,
+          "end": 2688
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C02-lens",
+        "C02-projectile",
+        "C02-national",
+        "C02-paris"
+      ],
+      "status": "required",
+      "reason": "Initial packet contains both incident facts and broader protest developments."
+    },
+    {
+      "contribution_ids": [
+        "C02-arrests",
+        "C02-belgium"
+      ],
+      "status": "allowed",
+      "reason": "Distinct supporting events may warrant separate coverage; no requirement to merge all school unrest."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Guardian photo credit contributes no extra body facts."
+  ],
+  "adjudication_status": "unadjudicated"
+}

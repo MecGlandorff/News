@@ -1,0 +1,212 @@
+{
+  "case_id": "C01",
+  "prefix_id": "C01-p01",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C01-c1",
+      "kind": "new_occurrence",
+      "claim": "Flydubai FZ1073 copilot attacked the captain; passengers and crew subdued him and replacement pilots landed in Saudi Arabia.",
+      "source_spans": [
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 957,
+          "end": 982
+        },
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 1391,
+          "end": 1506
+        }
+      ],
+      "attribution": "NOS reporting",
+      "occurrence_ref": "C01-flight-attack",
+      "story_ref": "C01-flydubai-investigation",
+      "materiality": "high",
+      "uncertainty": "Initial source account, event date relative Wednesday."
+    },
+    {
+      "id": "C01-c2",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Israeli sources briefed on the investigation say the copilot probably planned a Tel Aviv airport crash; BBC also reports airport or building as possible target.",
+      "source_spans": [
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 0,
+          "end": 263
+        },
+        {
+          "observation_id": "O001",
+          "field": "title",
+          "start": 0,
+          "end": 87
+        }
+      ],
+      "attribution": "Anonymous Israeli sources via NOS; reports via BBC",
+      "occurrence_ref": "C01-flight-attack",
+      "story_ref": "C01-flydubai-investigation",
+      "materiality": "high",
+      "uncertainty": "No official response; investigation early; target account unconfirmed."
+    },
+    {
+      "id": "C01-c3",
+      "kind": "context_only",
+      "claim": "Sources allege he contemplated hijacking an earlier Tel Aviv flight this year but abandoned it.",
+      "source_spans": [
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 264,
+          "end": 393
+        }
+      ],
+      "attribution": "Anonymous Israeli sources via NOS",
+      "occurrence_ref": "C01-earlier-plan",
+      "story_ref": "C01-flydubai-investigation",
+      "materiality": "medium",
+      "uncertainty": "Unconfirmed attributed earlier abandoned plan; source does not establish an executed hijacking."
+    },
+    {
+      "id": "C01-c4",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Australian and New Zealand authorities investigate his past activities; Australia examines possible radicalisation during 2015–17 study.",
+      "source_spans": [
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 1891,
+          "end": 2122
+        }
+      ],
+      "attribution": "NOS attributing authorities",
+      "occurrence_ref": "C01-background-inquiries",
+      "story_ref": "C01-flydubai-investigation",
+      "materiality": "medium",
+      "uncertainty": "Past residence timing in New Zealand unknown."
+    }
+  ],
+  "relations": [
+    {
+      "from": "C01-earlier-plan",
+      "to": "C01-flight-attack",
+      "type": "distinct_occurrence",
+      "status": "required",
+      "reason": "Reported abandoned earlier plan differs from attack on Wednesday.",
+      "source_spans": [
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 316,
+          "end": 393
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C01-c1",
+        "C01-c2"
+      ],
+      "status": "required",
+      "reason": "Initial evidence requires attack context and attributed current investigative finding."
+    },
+    {
+      "contribution_ids": [
+        "C01-c3",
+        "C01-c4"
+      ],
+      "status": "allowed",
+      "reason": "Earlier alleged plan and background inquiries are supported secondary context; do not force each into the daily briefing."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C01-q1",
+      "status": "open",
+      "claim": "Was the intended target Tel Aviv airport or another building, and was he acting alone?",
+      "source_spans": [
+        {
+          "observation_id": "O001",
+          "field": "title",
+          "start": 0,
+          "end": 87
+        },
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 784,
+          "end": 843
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Initial prefix contains established event context and attributed investigative reports, not independent confirmation of motive.",
+    "Gold required units deliberately use a common supported subset; original grouping/materiality disagreement preserved in decisions."
+  ],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:C01-attack",
+        "B:C01-c1"
+      ],
+      "decision": "Retain common attack context.",
+      "reason": "O002 describes attack and diversion."
+    },
+    {
+      "label_refs": [
+        "A:C01-plan",
+        "B:C01-c2",
+        "B:C01-c3"
+      ],
+      "decision": "Separate current target allegation from earlier abandoned plan; earlier plan is allowed context, distinct if represented.",
+      "reason": "O002 explicitly says earlier this year; same actor does not make it the Wednesday attack. A bundles the two, B requires both."
+    },
+    {
+      "label_refs": [
+        "A:C01-background",
+        "B:C01-c4"
+      ],
+      "decision": "Allow attributed background inquiries without requiring separate developments.",
+      "reason": "Visible text supports inquiries; materiality secondary."
+    },
+    {
+      "label_refs": [
+        "A:C01-motive",
+        "B:C01-q1"
+      ],
+      "decision": "Keep B question as unresolved attributed uncertainty, not evidence of independent verification.",
+      "reason": "BBC target alternatives and preliminary investigation permit uncertainty; no later evidence available."
+    }
+  ],
+  "chronology_mode": "captured_observation",
+  "checkpoint_at": "2026-10-05T19:34:32.871175+00:00",
+  "source_packet_sha256": "e83cb7cab815a0e9f5f83b670d10c396a4b0420544c8f07beea24998fbf15b92",
+  "visible_observation_ids": [
+    "O001",
+    "O002"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "fbf8925ea39b748e01e411940169f668814037c83f8df847b90782cd41dbaf40",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "4a7d2dcc2c8d600e4b367dff5b9e4d33f5a9e4e92e6864e5cac2315ffbf20e64",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:51:55.175326+00:00"
+}

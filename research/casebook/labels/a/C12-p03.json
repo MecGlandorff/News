@@ -1,0 +1,66 @@
+{
+  "case_id": "C12",
+  "prefix_id": "C12-p03",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C12-sara-impeachment",
+      "kind": "new_occurrence",
+      "claim": "NYT reports Philippine Vice President Sara Duterte impeached again, while predicting Senate prosecution likely to fail.",
+      "source_spans": [
+        {
+          "observation_id": "O048",
+          "field": "title",
+          "start": 0,
+          "end": 60
+        },
+        {
+          "observation_id": "O048",
+          "field": "description",
+          "start": 4,
+          "end": 141
+        }
+      ],
+      "attribution": "NYT",
+      "occurrence_ref": "C12-sara-impeachment-event",
+      "story_ref": "C12-sara-impeachment",
+      "uncertainty": "Forecast is source assessment, not an accomplished Senate result; no grounds or vote detail supplied.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [
+    {
+      "from": "C12-sara-impeachment",
+      "to": "C12-duterte-icc-case",
+      "type": "distinct_story",
+      "status": "required",
+      "reason": "Different named person, office and legal process; shared surname and country do not justify one case.",
+      "source_spans": [
+        {
+          "observation_id": "O048",
+          "field": "title",
+          "start": 0,
+          "end": 60
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C12-sara-impeachment"
+      ],
+      "status": "required",
+      "reason": "New impeachment occurrence belongs to its own matter; must not be absorbed into Rodrigo's ICC trial."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Publication-order simulation: authentic availability unknown. No family relationship or causal linkage inferred from surname alone."
+  ],
+  "adjudication_status": "unadjudicated"
+}

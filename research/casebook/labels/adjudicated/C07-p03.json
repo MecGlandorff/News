@@ -1,0 +1,117 @@
+{
+  "case_id": "C07",
+  "prefix_id": "C07-p03",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C07-c1",
+      "kind": "new_occurrence",
+      "claim": "India's Cockroach movement launches new protests over voter-roll changes.",
+      "source_spans": [
+        {
+          "observation_id": "O026",
+          "field": "title",
+          "start": 0,
+          "end": 75
+        }
+      ],
+      "attribution": "Guardian headline",
+      "occurrence_ref": "C07-voter-roll-protests",
+      "story_ref": "C07-cockroach-movement",
+      "materiality": "high",
+      "uncertainty": "Headline only; no scale, location details, events or political linkage beyond title."
+    },
+    {
+      "id": "C07-protest-details",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Now-visible article text describes thousands gathering in Mumbai amid nationwide youth-led protests, concern over voter disenfranchisement and demand for election commissioner Gyanesh Kumar's resignation.",
+      "source_spans": [
+        {
+          "observation_id": "O028",
+          "field": "text",
+          "start": 115,
+          "end": 332
+        },
+        {
+          "observation_id": "O028",
+          "field": "text",
+          "start": 450,
+          "end": 550
+        }
+      ],
+      "attribution": "Guardian; movement grievance is attributed concern",
+      "occurrence_ref": "C07-voter-roll-protests",
+      "story_ref": "C07-cockroach-movement",
+      "uncertainty": "Body became visible at this capture despite unchanged publication time; do not date these details as newly occurring October 10.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [
+    {
+      "from": "C07-protest-details",
+      "to": "C07-c1",
+      "type": "same_occurrence",
+      "status": "required",
+      "reason": "Same title, URL and publication time; body enriches existing reported protests.",
+      "source_spans": [
+        {
+          "observation_id": "O028",
+          "field": "title",
+          "start": 0,
+          "end": 75
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C07-protest-details"
+      ],
+      "status": "required",
+      "reason": "First supplied substantive body adds material factual details to known occurrence."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Capture novelty supports newly available information, not a fresh protest occurrence; disenfranchisement remains a concern described by source.",
+    "Newly available evidence may be a useful dated evidence delta, but freshness wording must distinguish old occurrence details from a current-day protest."
+  ],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "current_view_policy": "Prior contributions and unresolved questions retained as attributed evidence; current delta expectations apply only at this prefix, not to repeated context.",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:C07-protest-details",
+        "B:C07-c3"
+      ],
+      "decision": "Require source enrichment within same reported protests; do not create Oct10 protest occurrence.",
+      "reason": "O028 first supplies scale/location/demand to this capture history, but retains Oct2 publication time. Rights loss is a concern, not an established total."
+    }
+  ],
+  "chronology_mode": "captured_observation",
+  "checkpoint_at": "2026-10-10T19:54:57.969523+00:00",
+  "source_packet_sha256": "97749b3aaf829a91c24ad2af67fb161df1d518defa1e8e88ab5dee270b7a0824",
+  "visible_observation_ids": [
+    "O026",
+    "O027",
+    "O028"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "9898c714be2d94440a7fa134abe272a611d7ed5aa26fb8debc4b7772869d7347",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "03d840527cb1ddc3c14bdb22a4caea337d4dd487b6c3c4b183c77cf84c31a781",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:55:49.447907+00:00"
+}

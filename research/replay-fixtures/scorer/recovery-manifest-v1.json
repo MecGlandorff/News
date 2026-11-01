@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "fixture_id": "synthetic-recovery-v1",
+  "visibility": "SCORER_ONLY. Candidates receive only the selected source manifest and plain initial_state, never this manifest, filenames or expected repairs.",
+  "definition_freeze": "definition-freeze-v1.json",
+  "injection_prefix": "P04",
+  "clean_reference": "scorer/clean-state-p04-v1.json",
+  "semantic_contamination": "scorer/contaminated-state-p04-v1.json",
+  "structural_rejection_control": "scorer/invalid-accounting-state-p04-v1.json",
+  "expectations": "scorer/synthetic-expectations-v1.json",
+  "expected_contract": "Clean state is one permitted authored reconstruction, not an exact-string target. The valid contaminated state tests unsupported merge, omitted transit, stale count and unjustified question closure. Processed-empty R002 is separated as a structural rejection control.",
+  "no_news_repair": "When repairing at P04 with unchanged sources, emit audit/revision metadata and no fresh-news delta solely for repair. The clean historical P04 source-correction delta is not a newly observed correction.",
+  "frozen_at": "2026-11-01T11:38:31.778708+00:00",
+  "files": [
+    {
+      "path": "scorer/clean-state-p04-v1.json",
+      "sha256": "747e38bbf04a37c48d5ca231c5c21b6ed4b701e2d0aec623bcddf7560a1ea9bc"
+    },
+    {
+      "path": "scorer/contaminated-state-p04-v1.json",
+      "sha256": "4ca0f6e7deadf149e53f93c98519df2ddba80ff2ea0b87e6f7a77d46e8d5ddce"
+    },
+    {
+      "path": "scorer/invalid-accounting-state-p04-v1.json",
+      "sha256": "76bd67c4873b7f55edf0c48044c143814742712a4a188fec98b0581cf3dc419d"
+    },
+    {
+      "path": "synthetic-recovery-prefix-v1.json",
+      "sha256": "c5186ed67eab778aa6cc18bb40fddf324051d69951dc69a9ad9337ad77bb9975"
+    }
+  ]
+}

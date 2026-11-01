@@ -1,0 +1,102 @@
+{
+  "case_id": "C10",
+  "prefix_id": "C10-p03",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C10-bij12-correction",
+      "kind": "source_correction",
+      "claim": "BIJ12 says claimed April 17 Barendrecht wolf sighting was erroneous; resident's home address was selected instead of actual Limburg sighting and attempted fix did not reach the monitoring organization.",
+      "source_spans": [
+        {
+          "observation_id": "O041",
+          "field": "description",
+          "start": 3,
+          "end": 119
+        },
+        {
+          "observation_id": "O041",
+          "field": "description",
+          "start": 772,
+          "end": 904
+        },
+        {
+          "observation_id": "O041",
+          "field": "description",
+          "start": 1096,
+          "end": 1155
+        }
+      ],
+      "attribution": "BIJ12 via NOS; attempted correction via NU.nl",
+      "occurrence_ref": "C10-wolf-sighting-report",
+      "story_ref": "C10-wolf-location-correction",
+      "materiality": "material",
+      "uncertainty": null
+    }
+  ],
+  "relations": [
+    {
+      "from": "C10-bij12-correction",
+      "to": "C10-uncorrected-claim",
+      "type": "corrects",
+      "status": "required",
+      "reason": "Explicit reversal of the same Barendrecht/first South Holland report, not a separate sighting.",
+      "source_spans": [
+        {
+          "observation_id": "O041",
+          "field": "description",
+          "start": 444,
+          "end": 486
+        }
+      ]
+    },
+    {
+      "from": "C10-bij12-correction",
+      "to": "C10-wolf-correction",
+      "type": "same_occurrence",
+      "status": "required",
+      "reason": "Same Limburg-versus-Barendrecht reporting error with richer mechanism.",
+      "source_spans": [
+        {
+          "observation_id": "O041",
+          "field": "description",
+          "start": 704,
+          "end": 771
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C10-bij12-correction"
+      ],
+      "status": "required",
+      "reason": "Named monitoring authority, exact claimed date and error mechanism add material support resolving conflicting source claims; do not count another animal occurrence."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C10-sighting-location",
+      "status": "answered",
+      "claim": "BIJ12 confirms false Barendrecht location; actual reported sighting was Limburg.",
+      "source_spans": [
+        {
+          "observation_id": "O041",
+          "field": "description",
+          "start": 704,
+          "end": 771
+        }
+      ],
+      "closure_reason": "Explicit monitoring-authority correction provides source-supported resolution of location conflict."
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Publication-order simulation: authentic availability unknown, especially NOS link to a NU.nl correction not yet separately visible. Contextual wolf-policy paragraphs are not newly dated policy actions."
+  ],
+  "adjudication_status": "unadjudicated"
+}
