@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "freeze_id": "tiny-live-source-definitions-v2",
+  "supersedes": "tiny-live-source-definitions-v1",
+  "reason": "Versioned candidate-visible scope fix and separate D/E schedules under restricted synthetic_diagnostic purpose.",
+  "status": "definitions_frozen_execution_capsules_and_review_still_required",
+  "application_calls_made_by_author": 0,
+  "network_news_calls_made_by_author": 0,
+  "candidate_outputs_seen_by_author": false,
+  "files": [
+    {
+      "path": "research/live-feasibility/RUN-PLAN-v2.md",
+      "sha256": "4a650b75a4780d9e41d7c1872f6dccdb60f57094ea6dde3a1fc9536e8f9726a5"
+    },
+    {
+      "path": "research/live-feasibility/run-plan-v2.json",
+      "sha256": "38e5a309205e732fc21e5e027732c0baa432de915449d92953125733ed38e43d"
+    },
+    {
+      "path": "research/live-feasibility/inputs/synthetic-p01-p02-v2.json",
+      "sha256": "cc8ff5f3e5bdc39e9cec33e0bed00bfc6e9321626b9226e176a9ec641c481faa"
+    },
+    {
+      "path": "research/live-feasibility/synthetic-phase-plan-v2.json",
+      "sha256": "3ca38d10a8e500dbbbe9625e914978adcbec4595e96dd2b0456e56b0f7c73d1f"
+    },
+    {
+      "path": "research/live-feasibility/preflight-phase-plan-v2.json",
+      "sha256": "54773bc061c83ae4d910bccce4c8dbe21488d8dce54c0b161862a3aeeff6189c"
+    },
+    {
+      "path": "research/live-feasibility/synthetic-D-backend-plan-v2.json",
+      "sha256": "2512e0c05b86756ff09147300c5b65a189f9e43379533aa20163bf73ac4d6494"
+    },
+    {
+      "path": "research/live-feasibility/synthetic-E-backend-plan-v2.json",
+      "sha256": "c0dc57388981383586a9cf01e04c26261b65df896e9399dd5e7260582f6982a4"
+    },
+    {
+      "path": "research/live-feasibility/scorer/projection-amendment-v2.json",
+      "sha256": "566e017cb332bd0393a5d0a4b7244b8c0bf9b29763f6955e2462c4817c37dae7"
+    },
+    {
+      "path": "research/live-feasibility/scorer/synthetic-expectations-v1.json",
+      "sha256": "610906cc805a3418572f9eeb06b80c4984382d805625d84f8c7181107856b893"
+    },
+    {
+      "path": "research/live-feasibility/scorer/search-seed-expectations-v1.json",
+      "sha256": "8a664bd8cc1e6fa55edec0b71f2a6a182e2df3b96dbd5f9f12f7532bbf0b0ba9"
+    }
+  ]
+}

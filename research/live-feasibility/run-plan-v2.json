@@ -1,0 +1,396 @@
+{
+  "schema_version": 1,
+  "manifest_id": "news2-tiny-live-feasibility-source-plan-v2",
+  "status": "source_inputs_and_expectations_frozen_execution_capsules_required",
+  "scope": "Backend/D/E/search feasibility; expressly not the future D/E/I/R/B five-arm comparison.",
+  "trials": 1,
+  "application_model": {
+    "model": "gpt-6-astra",
+    "reasoning_effort": "medium",
+    "seed": null,
+    "seed_support": "unknown",
+    "decoding_settings": "backend defaults except medium reasoning; freeze effective command/config in execution capsule"
+  },
+  "preflight": {
+    "manifest": "research/live-feasibility/preflight-manifest-v2.json",
+    "commit": null,
+    "maximum_calls": 2,
+    "unused_diagnostic_reallocated": false,
+    "definition_freeze": "research/live-feasibility/preflight-freeze-v2.json"
+  },
+  "source_inputs": [
+    {
+      "path": "research/live-feasibility/inputs/synthetic-p01-p02-v2.json",
+      "sha256": "cc8ff5f3e5bdc39e9cec33e0bed00bfc6e9321626b9226e176a9ec641c481faa",
+      "chronology_mode": "synthetic_stress",
+      "source_sufficiency": "authored mechanics only",
+      "cutoffs": [
+        "P01",
+        "P02"
+      ],
+      "observations": 4,
+      "unique_source_versions": 3,
+      "projection_amendment": "research/live-feasibility/scorer/projection-amendment-v2.json"
+    },
+    {
+      "path": ".news/research/live-feasibility/search-seed-v1.json",
+      "sha256": "80f7075a70c55cd87fec2f032fc04f68358ca55c888203c8c1426b4aa89d9114",
+      "chronology_mode": "captured_observation",
+      "source_sufficiency": "title/photo_credit_only; substantive details insufficient",
+      "selection_manifest": "research/live-feasibility/search-seed-selection-v1.json"
+    }
+  ],
+  "scorer_only_expectations": [
+    {
+      "path": "research/live-feasibility/scorer/synthetic-expectations-v1.json",
+      "sha256": "610906cc805a3418572f9eeb06b80c4984382d805625d84f8c7181107856b893"
+    },
+    {
+      "path": "research/live-feasibility/scorer/search-seed-expectations-v1.json",
+      "sha256": "8a664bd8cc1e6fa55edec0b71f2a6a182e2df3b96dbd5f9f12f7532bbf0b0ba9"
+    }
+  ],
+  "fixed_source_contract": {
+    "input_text": "Exact same preserved source-field bytes and cutoffs underlie D and E. No truncation of synthetic fields.",
+    "candidate_grouping_hints": false,
+    "hosted_search": "Disabled in frozen CLI configuration. Preventive tool/context isolation remains limited/unverified: this exception permits invented synthetic_diagnostic inputs only, with fail-closed observed-event checks. Natural/search candidates remain blocked pending verified preventive evidence isolation.",
+    "D_reconstruction_prior_interpretations": false,
+    "E_reconstruction_prior_interpretations": false,
+    "extraction_policy": "One invocation per distinct source version, source-local only; V001/V002/V003 at P01. Reuse V001 for R004 at P02; do not extract repeat again.",
+    "extraction_actual_calls": 3,
+    "extraction_standalone_attribution": "Charge all three calls and their measured tokens/time to E; actual total counts them once. Future I/R reuse is outside this trial.",
+    "delta_comparison": "Each reconstruction yields a factual view; separate scheduled comparator alone sees prior published view. P01 starts with null, P02 uses that arm’s P01 publication. Both search conditions start with null and cannot consume one another.",
+    "analysis": "No extra analysis or judge application calls. Any analysis field is bounded within reconstruction and cannot mutate facts or deltas.",
+    "failures": "A failed dependency leaves dependent slots pending/failed; no skip consumes or transfers a call and no manual patch produces a success.",
+    "backend_purpose": "synthetic_diagnostic",
+    "independent_arm_schedules": "D has4 fixed slots; E has7 fixed slots. Preserve the11-position interleaved order. Known-usage arm failure stops that backend and leaves its later slots pending; independently scheduled unaffected arm may continue. Never mutate/pop a schedule, transfer unused allocations or mark unattempted slots as model calls.",
+    "failure_scope": "Unknown usage, forbidden/unfamiliar tool activity, shared accounting/source integrity failure, token/time stop or exhausted global failures stops all arms. A fully accounted ordinary arm failure consumes global failure budget and stops only that arm while the shared ledger permits the other."
+  },
+  "scheduled_candidate_calls": [
+    {
+      "call_id": "fixed-D-P01",
+      "stage": "D",
+      "prefix_id": "P01",
+      "timeout_seconds": 120,
+      "input_token_stop_threshold": 24000,
+      "output_token_stop_threshold": 4000,
+      "condition": "requires preceding dependencies; no retries"
+    },
+    {
+      "call_id": "fixed-D-delta-P01",
+      "stage": "delta",
+      "prefix_id": "P01",
+      "timeout_seconds": 60,
+      "input_token_stop_threshold": 24000,
+      "output_token_stop_threshold": 4000,
+      "condition": "requires preceding dependencies; no retries"
+    },
+    {
+      "call_id": "fixed-E-extract-V001",
+      "stage": "E_extract",
+      "prefix_id": "P01",
+      "timeout_seconds": 90,
+      "input_token_stop_threshold": 24000,
+      "output_token_stop_threshold": 4000,
+      "condition": "requires preceding dependencies; no retries"
+    },
+    {
+      "call_id": "fixed-E-extract-V002",
+      "stage": "E_extract",
+      "prefix_id": "P01",
+      "timeout_seconds": 90,
+      "input_token_stop_threshold": 24000,
+      "output_token_stop_threshold": 4000,
+      "condition": "requires preceding dependencies; no retries"
+    },
+    {
+      "call_id": "fixed-E-extract-V003",
+      "stage": "E_extract",
+      "prefix_id": "P01",
+      "timeout_seconds": 90,
+      "input_token_stop_threshold": 24000,
+      "output_token_stop_threshold": 4000,
+      "condition": "requires preceding dependencies; no retries"
+    },
+    {
+      "call_id": "fixed-E-P01",
+      "stage": "E",
+      "prefix_id": "P01",
+      "timeout_seconds": 120,
+      "input_token_stop_threshold": 24000,
+      "output_token_stop_threshold": 4000,
+      "condition": "requires preceding dependencies; no retries"
+    },
+    {
+      "call_id": "fixed-E-delta-P01",
+      "stage": "delta",
+      "prefix_id": "P01",
+      "timeout_seconds": 60,
+      "input_token_stop_threshold": 24000,
+      "output_token_stop_threshold": 4000,
+      "condition": "requires preceding dependencies; no retries"
+    },
+    {
+      "call_id": "fixed-E-P02",
+      "stage": "E",
+      "prefix_id": "P02",
+      "timeout_seconds": 120,
+      "input_token_stop_threshold": 24000,
+      "output_token_stop_threshold": 4000,
+      "condition": "requires preceding dependencies; no retries"
+    },
+    {
+      "call_id": "fixed-E-delta-P02",
+      "stage": "delta",
+      "prefix_id": "P02",
+      "timeout_seconds": 60,
+      "input_token_stop_threshold": 24000,
+      "output_token_stop_threshold": 4000,
+      "condition": "requires preceding dependencies; no retries"
+    },
+    {
+      "call_id": "fixed-D-P02",
+      "stage": "D",
+      "prefix_id": "P02",
+      "timeout_seconds": 120,
+      "input_token_stop_threshold": 24000,
+      "output_token_stop_threshold": 4000,
+      "condition": "requires preceding dependencies; no retries"
+    },
+    {
+      "call_id": "fixed-D-delta-P02",
+      "stage": "delta",
+      "prefix_id": "P02",
+      "timeout_seconds": 60,
+      "input_token_stop_threshold": 24000,
+      "output_token_stop_threshold": 4000,
+      "condition": "requires preceding dependencies; no retries"
+    },
+    {
+      "call_id": "search-plan-v1",
+      "stage": "search_plan",
+      "prefix_id": null,
+      "timeout_seconds": 60,
+      "input_token_stop_threshold": 24000,
+      "output_token_stop_threshold": 4000,
+      "condition": "requires preceding dependencies; no retries"
+    },
+    {
+      "call_id": "search-off-D",
+      "stage": "D",
+      "prefix_id": "SEARCH-PAIR",
+      "timeout_seconds": 120,
+      "input_token_stop_threshold": 24000,
+      "output_token_stop_threshold": 4000,
+      "condition": "requires completed recorded search and independently frozen added-source expectations"
+    },
+    {
+      "call_id": "search-off-delta",
+      "stage": "delta",
+      "prefix_id": "SEARCH-PAIR",
+      "timeout_seconds": 60,
+      "input_token_stop_threshold": 24000,
+      "output_token_stop_threshold": 4000,
+      "condition": "requires completed recorded search and independently frozen added-source expectations"
+    },
+    {
+      "call_id": "search-on-D",
+      "stage": "D",
+      "prefix_id": "SEARCH-PAIR",
+      "timeout_seconds": 120,
+      "input_token_stop_threshold": 24000,
+      "output_token_stop_threshold": 4000,
+      "condition": "requires completed recorded search and independently frozen added-source expectations"
+    },
+    {
+      "call_id": "search-on-delta",
+      "stage": "delta",
+      "prefix_id": "SEARCH-PAIR",
+      "timeout_seconds": 60,
+      "input_token_stop_threshold": 24000,
+      "output_token_stop_threshold": 4000,
+      "condition": "requires completed recorded search and independently frozen added-source expectations"
+    }
+  ],
+  "budgets": {
+    "maximum_application_invocations_including_preflight_failures_recovery": 18,
+    "automatic_retries": 0,
+    "candidate_reserved_recovery_calls": 0,
+    "input_token_stop_threshold": 480000,
+    "output_token_stop_threshold": 72000,
+    "maximum_model_active_seconds": 1800,
+    "maximum_elapsed_live_seconds": 2700,
+    "clock_origin": "First preflight dispatch; shared across all stages, failures, recording and post-search source-only review.",
+    "token_hard_limits_enforced": false,
+    "token_overshoot": "One-call risk; observed overshoot stops and is reported. Unknown application usage stops all remaining app dispatch.",
+    "max_application_failures_total": 2,
+    "per_arm_failures_before_stop": 1,
+    "preparation_and_review": {
+      "aggregate_active_agent_hours": 6,
+      "elapsed_working_days": 1,
+      "model": "gpt-6-astra",
+      "reasoning_effort": "xhigh",
+      "tokens": null,
+      "cost": null,
+      "review_cycles": {
+        "initial_independent": 1,
+        "correction_recheck": 1
+      },
+      "global_financial_cap_claim": false
+    },
+    "automatic_retry_scope": "controller/application subprocess; builtin HTTP/SSE/auth retries unknown and may occur",
+    "call_count_meaning": "Application Codex invocations, not a proven count of upstream provider requests"
+  },
+  "stage_ceilings": [
+    {
+      "stage": "preflight",
+      "calls": 2,
+      "input_token_stop_threshold": 48000,
+      "output_token_stop_threshold": 8000,
+      "model_active_seconds": 240,
+      "elapsed_seconds": 600
+    },
+    {
+      "stage": "fixed-D-standalone",
+      "calls": 4,
+      "input_token_stop_threshold": 96000,
+      "output_token_stop_threshold": 16000,
+      "model_active_seconds": 360,
+      "elapsed_seconds": 1200
+    },
+    {
+      "stage": "fixed-E-standalone",
+      "calls": 7,
+      "input_token_stop_threshold": 168000,
+      "output_token_stop_threshold": 28000,
+      "model_active_seconds": 630,
+      "elapsed_seconds": 1200
+    },
+    {
+      "stage": "fixed-D-E-actual",
+      "calls": 11,
+      "input_token_stop_threshold": 264000,
+      "output_token_stop_threshold": 44000,
+      "model_active_seconds": 990,
+      "elapsed_seconds": 1200
+    },
+    {
+      "stage": "search-planning",
+      "calls": 1,
+      "input_token_stop_threshold": 24000,
+      "output_token_stop_threshold": 4000,
+      "model_active_seconds": 60,
+      "elapsed_seconds": 90
+    },
+    {
+      "stage": "search-paired-D",
+      "calls": 4,
+      "input_token_stop_threshold": 96000,
+      "output_token_stop_threshold": 16000,
+      "model_active_seconds": 360,
+      "elapsed_seconds": 450
+    }
+  ],
+  "reservation_totals": {
+    "maximum_scheduled_calls": 18,
+    "scheduled_input_reservations": 432000,
+    "scheduled_output_reservations": 72000,
+    "maximum_sum_call_deadlines_seconds": 1650,
+    "note": "Stage/arm subtotals overlap; never add standalone D/E again to fixed actual. All remain subject to the stricter remaining global thresholds. Unused probe lowers actual calls; no reallocations."
+  },
+  "search": {
+    "trigger_observed_at": "2026-11-01T12:14:57Z",
+    "prospective_not_historical": true,
+    "application_planning_calls": 1,
+    "application_planner_tools_enabled": false,
+    "planner_role": "Produce at most two targeted queries with reasons for substantive original evidence, corrections/counterevidence/subsequent developments on the exact seed matter. No result-dependent second planning invocation.",
+    "transport_id": "runtime-web-run-single-operation",
+    "provider": "runtime_web_tool",
+    "mode": "runtime-default",
+    "provider_internal_mode": "unknown; no historical/cached availability claim",
+    "max_single_query_attempts": 2,
+    "max_single_url_fetch_attempts": 3,
+    "automatic_retries": 0,
+    "maximum_recording_elapsed_seconds": 300,
+    "per_tool_attempt_cancel_target_seconds": 60,
+    "tool_timeout_enforcement": "Unknown for interactive runtime tool; do not describe target as hard. If call returns beyond remaining stage/run deadline, retain outcome and stop.",
+    "fetch_selection_rule": "First attempt the exact frozen seed URL because seed body is insufficient. Then select up to two additional unique HTTP(S) URLs from the recorded search results in query order then returned rank. Normalize by removing fragments only; no model/manual substitution, domain reranking, or URL guessing. Exclude the seed URL and already selected exact normalized URLs. Skip malformed/non-HTTP(S) URLs with recorded reasons.",
+    "tool_payloads": "Record started request before each dispatch, exact returned JSON and text, order, URLs/redirect metadata, request/result times and failure/block/empty outcome. Search snippets are leads only.",
+    "admitted_source_text": "Only fetched returned text; immutable snapshot and SHA-256. Full/excerpt/unknown and truncation status must be explicit. No manual sentence selection; freeze the complete returned text as received. If transport payload cannot be preserved or candidate input exceeds reserved fit, retain failure and leave dependent work pending.",
+    "provider_hidden_calls_retries_tokens_cost": "unknown; cap refers only to controller-visible requested single operations",
+    "search_preflight_extra_queries_or_fetches": 0,
+    "unsupported_capture_path": "Retain failure and continue eligible fixed-source arms; no controlled-search claim and no substitution of hosted search.",
+    "postsearch_gate": "Added sources/expectations, common exact cutoff and paired inputs must be independently frozen source-only before either off/on candidate output. All new pins go in an append-only derived execution capsule.",
+    "source_review_deadline": "Within remaining 2700s elapsed-live and6aggregateactiveagent-hour budgets; missing review leaves pair pending.",
+    "evidence_conditional_vs_expanded": "Use separate required-unit denominator for each evidence condition; expanded-only units are unavailable in off, not inference failures. Report new supported units against frozen expanded union separately; search-derived union is incomplete.",
+    "paired_delta_limit": "Both comparisons begin with null prior publication; exercise the interface only. Initial-window discovery is not proof of current-day novelty or useful daily deltas. Do not turn older publication into a current occurrence."
+  },
+  "required_execution_capsules": {
+    "preflight": [
+      "reviewed runner revision/hash",
+      "executable path/version/hash",
+      "effective disabled-feature configuration",
+      "independent review record",
+      "prior usage/clock ledger"
+    ],
+    "candidate": [
+      "exact implementation/prompts/schemas revisions and hashes",
+      "all source input pins",
+      "complete independent D/E backend plans plus frozen phase order",
+      "remaining shared budgets and live clock origin",
+      "reviewed limited-isolation scope explicitly restricted to invented synthetic_diagnostic sources"
+    ],
+    "search_pair": [
+      "recorded events and fetched-text source pins",
+      "independent source-only expanded expectations",
+      "same final observed cutoff",
+      "exact off/on input and prompt hashes",
+      "remaining shared budgets"
+    ],
+    "natural_search_candidate": [
+      "verified preventive evidence isolation, not inferred from invented diagnostic success",
+      "exact source-bearing prompt/schema/input/code pins",
+      "source-only added-evidence expectations before either off/on output",
+      "remaining18invocation/globaltoken/time/failure budget"
+    ]
+  },
+  "critical_stops": [
+    "Unknown app usage stops all further app invocations; partial known values retained.",
+    "Forbidden tool/source access, source/label leakage, changed inputs, broken provenance/accounting, unbounded execution or patched output invalidates affected results.",
+    "Critical unsupported fact stops the affected arm as semantic failure, retaining pending slots and unaffected matched results.",
+    "No retry, new trial, alternative seed, added arm, extra judge or replacement source is implicit in unused capacity.",
+    "Report failure/pending/abstention/source insufficiency; no architecture winner, natural-news quality, complete-day omission, importance, usefulness, automatic repair, 30–90-day, five-arm or holdout claim."
+  ],
+  "supersedes": "news2-tiny-live-feasibility-source-plan-v1",
+  "amendment_reason": "Independent review identified future source/cutoff counts in candidate-visible coverage.scope. Use a versioned metadata-only projection and independent D/E schedules; admit invented diagnostics under reviewed limited isolation without granting natural/search source-bearing calls.",
+  "ledger_contract": {
+    "global_application_invocation_ceiling": 18,
+    "preflight_allocation": 2,
+    "synthetic_D_allocation": 4,
+    "synthetic_E_allocation": 7,
+    "later_search_allocation": 5,
+    "remaining_capacity_not_transferable": true,
+    "ledger_origin": "First preflight dispatch timestamp; immutable ledger carried across phases.",
+    "prior_evidence": "Pin prior reports and every referenced started/terminal record. Started-only, missing terminal, invalid ledger or any unknown usage prevents later dispatch.",
+    "token_accounting": "Aggregate observed turn telemetry, including known failed attempts and partial known counts; cachedinput is subset, not additional input. Provider-internal hiddenrequests/retries/cancelledserverusage unknown; no spendbound.",
+    "wall_accounting": "Current time minus original first-dispatch time; include recording/review/failure/cleanup. Never reset by phase, arm, directory or rerun.",
+    "model_active_accounting": "Sum recorded invocation elapsed time, including failed/cancelledattempts and cleanup; use remaining global cap before eachdispatch.",
+    "failure_accounting": "At most2 failed application invocations globally; max1 per syntheticarm. A second global failure stops further dispatch. Semantic failures also retained without pretending an undispatched call occurred.",
+    "per_call_guard": "Use minimum of slot deadline, remaining stage active/wall and remaining global active/wall. Reserve24kinput/4koutput before each invocation against both stage and global thresholds. Tokens are postcallstopthresholds, not enforceable providercaps.",
+    "unattempted_slots": "Retain explicit pending/stopped status with reason, no charge as an attempted invocation and no reuse of slot elsewhere."
+  },
+  "synthetic_phase_plan": {
+    "path": "research/live-feasibility/synthetic-phase-plan-v2.json",
+    "sha256": "3ca38d10a8e500dbbbe9625e914978adcbec4595e96dd2b0456e56b0f7c73d1f"
+  },
+  "synthetic_backend_plans": [
+    {
+      "path": "research/live-feasibility/synthetic-D-backend-plan-v2.json",
+      "sha256": "2512e0c05b86756ff09147300c5b65a189f9e43379533aa20163bf73ac4d6494"
+    },
+    {
+      "path": "research/live-feasibility/synthetic-E-backend-plan-v2.json",
+      "sha256": "c0dc57388981383586a9cf01e04c26261b65df896e9399dd5e7260582f6982a4"
+    }
+  ]
+}

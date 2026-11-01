@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "amendment_id": "synthetic-candidate-projection-v2",
+  "reason": "Remove future total observation/version/cutoff counts from metadata visible at P01. Discovered by independent review before application output inspection.",
+  "prior_input": {
+    "path": "research/live-feasibility/inputs/synthetic-p01-p02-v1.json",
+    "sha256": "78a830df8cd88a1a8b49fd9e279d695d7683c72021d750e9be300201ece6c01d"
+  },
+  "new_input": {
+    "path": "research/live-feasibility/inputs/synthetic-p01-p02-v2.json",
+    "sha256": "cc8ff5f3e5bdc39e9cec33e0bed00bfc6e9321626b9226e176a9ec641c481faa"
+  },
+  "exact_changes": [
+    {
+      "json_path": "fixture_id",
+      "before": "live-synthetic-p01-p02-v1",
+      "after": "live-synthetic-projection-v2",
+      "reason": "Versioned neutral projection identifier; not passed through replay.prefix to candidates."
+    },
+    {
+      "json_path": "coverage.scope",
+      "before": "Invented mixed-source development mechanics only: four observations of three source versions across two synthetic cutoffs; no natural-news, complete-day, importance, holdout, repair or long-run claim.",
+      "after": "Invented partial source stream for synthetic diagnostic mechanics. Coverage outside the visible supplied sources is unknown; no natural-news, importance or completeness claim.",
+      "reason": "Generic candidate-visible scope; future aggregate counts removed."
+    }
+  ],
+  "unchanged": [
+    "observations including exact fields/source/version hashes/clocks/order",
+    "boundaries",
+    "coverage.gaps",
+    "all source-grounded expected units, statuses, spans and ambiguity"
+  ],
+  "unchanged_expectations": {
+    "path": "research/live-feasibility/scorer/synthetic-expectations-v1.json",
+    "sha256": "610906cc805a3418572f9eeb06b80c4984382d805625d84f8c7181107856b893"
+  },
+  "expectation_compatibility": "Original expectations pin v1 input. This amendment maps those unchanged source expectations to v2 because only fixture identity and generic coverage prose changed; it adds no source truth or expected output.",
+  "counts_visibility": "Counts remain scorer/run-plan reporting metadata only; never pass run plan, amendment, freeze or expectations to an application. Candidate receives only the selected prefix projection.",
+  "candidate_outputs_seen": false,
+  "application_calls_made_by_author": 0
+}
