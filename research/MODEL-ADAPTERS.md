@@ -29,9 +29,10 @@ The plan is a JSON object with these exact keys:
 }
 ```
 
-Candidate purpose requires `isolation.status="verified"` and external reviewed
+Natural-source candidate purpose requires `isolation.status="verified"` and external reviewed
 preventive-isolation evidence. This string is an attestation, not a proof created
-by the backend. Limited isolation permits only a source-free probe. Allowed stages
+by the backend. Limited isolation permits a source-free probe or the explicitly
+reviewed invented diagnostic described below. Allowed stages
 are probe, D, E_extract, E, delta, search_plan. Probe calls contain no news corpus,
 labels or scorer material. The run controller owns actual corpus freezing,
 cross-ledger/shared-stage accounting, stage/arm allocation and semantic stops.
@@ -104,3 +105,77 @@ with descendants, schema failure, schedule/isolation gates and source boundaries
 Capability sources: local codex-cli0.164.0 `exec --help` and `features list`,
 [official exec documentation](https://learn.chatgpt.com/docs/developer-commands#codex-exec)
 and [configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference).
+
+## Pinned diagnostic driver
+
+An explicitly reviewed `synthetic_diagnostic` purpose additionally permits only
+D/E_extract/E/delta with limited isolation. This is a narrow invented-input
+diagnostic, not a declaration that preventive isolation is verified. Use the
+driver's exact source hash and review pin; neither natural articles nor search
+stages are admitted through this purpose. `candidate` retains its verified gate.
+
+`trial_driver.py --capsule capsule.json --root /absolute/repository --output NEW`
+supports source-free preflight and synthetic D/E phases. It verifies every pin
+before dispatch, uses separate frozen D and E backend schedules, and preserves
+the declared interleaving. A known-usage arm failure leaves its remaining slots
+pending without consuming or transferring them; the other arm may continue.
+Unknown usage, forbidden events, overshoot or global exhaustion stops all calls.
+Canonical model output is preserved; publication only attaches the separately
+generated validated deltas. No assignment/quote/offset repair is performed.
+The driver validates structure/provenance, not semantic correctness; it does not
+claim a live semantic judge or a quality score.
+
+The capsule has exactly these keys (all non-null unless shown):
+
+```json
+{
+  "schema_version": 1,
+  "phase": "preflight",
+  "files": [{"path": "relative/to/root", "sha256": "..."}],
+  "phase_plan": "relative/phase-plan.json",
+  "source": null,
+  "schemas": {"reconstruction": "...", "extraction": "...", "delta": "..."},
+  "executable": {"path": "/absolute/codex", "sha256": "...", "version": "codex-cli 0.164.0"},
+  "review_record": "relative/independent-review.json",
+  "prior_runs": []
+}
+```
+
+`files` must pin the four Python files in `trial_driver.CODE`, all three prompt
+files, phase/backend plans, input files and the review record. Paths resolve within
+the supplied root. `schemas` is the canonical SHA-256 mapping from
+`trial_driver.schemas()`. The executable bytes are pinned separately; its stated
+version is frozen by review, not measured by a model call. For synthetic phase,
+`source` is the pinned `synthetic_stress` manifest and `prior_runs` contains
+`{"path":"/absolute/preflight/report.json","sha256":"..."}`. The driver verifies
+that report and its call-record hashes, reconstructs usage from terminal records,
+and rejects unaccounted/started-only attempts. This is a trusted controller and
+same-user filesystem pins, not a malicious-code sandbox.
+
+For the earlier root-owned preflight wrapper, use `trial_driver.py
+--bridge-preflight /absolute/phase-summary.json --output
+/same/directory/preflight-driver-bridge-v1.json`. This writes a new accounting
+bridge, verifies summary usage against the recorded terminal, preserves its
+original trial clock, and hashes all original raw call files plus the wrapper
+capsule, start and summary records. It never rewrites them. Unknown usage remains
+an explicit global stop; a failed preflight cannot authorize a synthetic phase.
+
+Preflight phase plans contain `schema_version,phase,backend_plans:{preflight:path},
+inputs:[initial_path,diagnostic_path]`. Only the first probe is dispatched. The
+reserved diagnostic is retained as unused and is never automatically spent; a
+later diagnostic requires a separately reviewed execution path and remaining
+allocation. Synthetic phase plans contain `schema_version,phase,
+backend_plans:{D:path,E:path},order:[{arm,call_id,stage,prefix_id,source_version_id}]`.
+Each arm's filtered order must exactly equal its backend schedule. Extraction
+source_version_id is explicit; other stages use null. D has at most4 slots and E
+at most7. A successful pinned preflight must precede synthetic execution.
+
+All phases retain the first preflight UTC clock origin and add measured call time
+and usage; the global ceilings are18 CLI invocations,480000 input/72000 output
+token stop thresholds,1800 model-active seconds,2700 elapsed seconds and2 failures.
+The driver reserves at most2 preflight+4D+7E slots; the5 later search slots are
+unimplemented here and cannot be silently spent. Phase/backend limits still apply,
+and the strictest remaining shared time is passed to the child timeout. Unused
+slots remain unused. These totals are reported turn usage, not financial caps or
+proven provider request totals. A synthetic output marked successful here only
+passed mechanical checks; semantic source review remains separate.

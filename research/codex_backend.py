@@ -109,7 +109,7 @@ class Backend:
         self.plan = copy.deepcopy(plan)
         if set(plan) != {"schema_version", "purpose", "isolation", "schedule", "budget"} or type(plan["schema_version"]) is not int or plan["schema_version"] != 1:
             raise ValueError("Invalid backend plan")
-        if plan["purpose"] not in {"transport_probe", "candidate"}:
+        if plan["purpose"] not in {"transport_probe", "synthetic_diagnostic", "candidate"}:
             raise ValueError("Invalid purpose")
         isolation = plan["isolation"]
         if set(isolation) != {"status", "evidence"} or isolation["status"] not in {"limited", "verified"} or not isinstance(isolation["evidence"], str) or not isolation["evidence"]:
@@ -128,6 +128,8 @@ class Backend:
             seen.add(slot["call_id"])
             if slot["stage"] not in {"probe", "D", "E_extract", "E", "delta", "search_plan"} or (plan["purpose"] == "transport_probe" and slot["stage"] != "probe"):
                 raise ValueError("Undeclared stage")
+            if plan["purpose"] == "synthetic_diagnostic" and slot["stage"] not in {"D", "E_extract", "E", "delta"}:
+                raise ValueError("Synthetic diagnostic cannot search or probe")
             if any(type(slot[k]) is not int or slot[k] <= 0 for k in ("input_tokens", "output_tokens")) or not positive(slot["timeout_seconds"]) or slot["timeout_seconds"] > 120:
                 raise ValueError("Invalid per-call thresholds")
         if set(budget) != {"input_tokens", "output_tokens", "model_active_seconds", "wall_seconds", "max_failures"} or any(not positive(v) for v in budget.values()):
@@ -146,7 +148,7 @@ class Backend:
              backend_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
              environment_key_allowlist=sorted(ENVIRONMENT_KEYS)))
 
-    def invoke(self, call_id, stage, prompt, schema, validate=None):
+    def invoke(self, call_id, stage, prompt, schema, validate=None, remaining_seconds=None):
         if self.stopped:
             raise RuntimeError("Backend stopped: " + self.stopped)
         if self.calls >= len(self.plan["schedule"]):
@@ -159,6 +161,10 @@ class Backend:
         budget = self.plan["budget"]
         remaining = min(slot["timeout_seconds"], budget["model_active_seconds"] - self.active_seconds,
                         budget["wall_seconds"] - (time.monotonic() - self.started))
+        if remaining_seconds is not None:
+            if not positive(remaining_seconds):
+                raise ValueError("Invalid shared remaining time")
+            remaining = min(remaining, remaining_seconds)
         if remaining <= 0 or any(self.known_usage[k] + slot[k] > budget[k] for k in self.known_usage):
             self.stopped = "budget_exhausted"
             raise RuntimeError(self.stopped)
