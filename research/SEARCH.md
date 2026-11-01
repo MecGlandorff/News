@@ -1,10 +1,11 @@
 # Bounded story search — 2026-11-01
 
-Status: **accepted product direction; proposed experiment; offline contract only**.
+Status: **accepted product direction; offline recorder implemented; bounded trial
+requires its separately frozen run manifest**.
 The user requests targeted web search per story, including counterevidence and
 missed developments. This means source retrieval/fetch, not tool-catalog discovery.
 Broad discovery of new stories is outside the first experiment. No live news,
-application-model run, backend implementation or production mutation is authorized
+application-model run or production mutation is authorized
 by this document. [PROTOCOL.md](PROTOCOL.md) still governs the five-arm comparison.
 
 ## Question and bounded role
@@ -132,5 +133,83 @@ The docs describe `web_search` items and JSONL turn usage; they do not promise t
 the stream alone preserves every fetched page body. See [OpenAI non-interactive output](https://learn.chatgpt.com/docs/non-interactive-mode#make-output-machine-readable).
 Account/runtime availability, `exec` integration, enforceable per-tool/per-model
 caps, cancellation telemetry and complete immutable capture remain unverified.
-No live smoke test was performed; docs/help are capability evidence, not an
-implemented or validated backend. Resolve these before a separately bounded run.
+No live smoke test was performed during this capability inspection; docs/help are
+not validation of a hosted-search backend. Resolve these before using that path.
+
+## Controller-owned recording implementation
+
+`search_recorder.py` is a small, offline two-phase receipt writer for an explicit
+controller. It does not launch a model or search/fetch tool. The controlled path
+uses a source-only application-model call with hosted search disabled to propose
+targeted queries and reasons. A frozen controller policy selects fetch URLs from
+ordered results; it cannot select only favorable findings. The first trial can
+use the runtime-provided web tool, one query or one URL per operation. This does
+not establish a standalone CLI search backend.
+
+The controller initializes a new receipt directory from a frozen JSON plan with
+exact keys `collection_id`, `story_id`, `cutoff`, `scope`, `provider`, `mode`,
+`transport_id`, `max_searches`, `max_fetches`. The cutoff describes the visible
+seed; it cannot backdate newly captured evidence. Requests are `{query,reason}`
+for search or `{url,reason}` for fetch. The controller follows this sequence:
+
+```sh
+python3 research/search_recorder.py init --directory NEW --plan plan.json
+python3 research/search_recorder.py begin --directory NEW --kind search --request request.json
+# Invoke exactly one explicit tool operation; preserve its COMPLETE returned JSON.
+python3 research/search_recorder.py complete --directory NEW --event-id ID --result tool-return.json --status ok
+python3 research/search_recorder.py package --directory NEW
+```
+
+Fetch completion may add `--source source.json`, containing `fields` (including
+`url` and `text`), `completeness` (`full`, `excerpt`, `truncated`, or `unknown`),
+`redirects` (URL array or null), and `published_at_utc` (UTC or null). Text must
+occur unchanged within a returned payload string. This proves an exact returned
+span, not semantic truth, publisher identity or that a tool supplied a whole page.
+Only successful fetches admit observations. The runtime tool's text representation
+must be labeled excerpt/unknown when completeness cannot be established. All
+metadata remains visible alongside the preserved raw result; original result array
+order and JSON string contents survive canonical JSON serialization. Original HTTP
+bytes, hidden provider requests, redirects not exposed by the tool, hidden retries
+and provider costs/tokens remain unknown.
+
+`begin` writes a started receipt before dispatch, reserves one capped operation,
+and refuses new operations while a receipt is unfinished. Reopening counts prior
+starts; it cannot reset the budget. A refusal is a separate runner outcome, never
+a fictional tool call. A process crash leaves a pending reservation with unknown
+dispatch/usage, which the package exposes. `complete` writes the full raw return
+before validating source metadata; failed/blocked/empty attempts count. Use
+`--status failed --error error.json` for an exception without a returned payload.
+The recorder does not automatically retry, dispatch from model JSON, enforce tool
+timeouts or control provider-internal work. The trusted controller must call
+`begin` before every actual operation and preserve each complete return.
+
+Files are exclusive-create, flushed and read-only after writing; hashes detect
+changed raw snapshots before subsequent operations. This is append-only API
+behavior, not protection against a filesystem owner rewriting the entire ledger.
+Invalid source/capture contracts stop further reservations. Available-at and
+observed-at use completion time, so today's results cannot enter an older prefix.
+Elapsed time covers the reservation-to-completion wall interval, including controller
+bookkeeping. Unknown provider cost/model usage is null. Pending reservations must
+remain visible in overall run accounting, separately from completed replay events.
+
+Offline verification:
+
+```sh
+python3 -m unittest discover -s research/tests -p test_search_recorder.py -v
+```
+
+The tests cover restart-safe caps, pending and failed attempts, immutable capture,
+text validation, CLI operation and replay chronology/isolation. They do not prove
+the runtime transport exposes every provider-internal operation or news quality.
+Additional read-only inspection of `codex-cli 0.164.0` generated app-server schemas:
+the web-search item exposes query/action and optional `results` documented for
+standalone search; its open-page action contains a URL, not a page body. This is
+not the exec JSONL schema and does not establish complete hosted capture. Official
+[web-search settings](https://learn.chatgpt.com/docs/config-file/config-basic#web-search-mode)
+confirm `web_search = "disabled"` removes the hosted tool. The
+[configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference)
+documents custom-provider request/stream retry settings. The
+[custom-provider contract](https://learn.chatgpt.com/docs/config-file/config-advanced#custom-model-providers)
+forbids redefining the built-in `openai` provider; these settings are not a verified
+built-in retry override. Zero controller retries does not imply zero hidden
+CLI/provider retries.
