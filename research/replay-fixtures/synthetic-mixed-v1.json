@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "fixture_id": "synthetic-mixed-v1",
+  "chronology_mode": "synthetic_stress",
+  "observations": [
+    {
+      "observation_id": "R001",
+      "source_version_id": "V001",
+      "source_sha256": "4026be5a1eda31e8af5a167602e1398ce92fe2f789ebb3257d1db58f805b80cd",
+      "fields": {
+        "title": "Vale footbridge closed",
+        "description": "",
+        "text": "The Alder Works Board closed Vale footbridge on January 1 after inspectors found 12 loose bolts. The cause was not yet known. No reopening date was given.",
+        "source": "Invented civic wire",
+        "url": "https://example.invalid/vale-closure"
+      },
+      "observed_at": "2026-01-01T12:00:00Z",
+      "published_at_utc": "2026-01-01T12:00:00Z",
+      "available_at": "2026-01-01T12:00:00Z"
+    },
+    {
+      "observation_id": "R002",
+      "source_version_id": "V002",
+      "source_sha256": "9c3f9d7609747e1a48762d5084a6afe85372cec750acfef0175b8449f85223fe",
+      "fields": {
+        "title": "Updates from Alder",
+        "description": "",
+        "text": "",
+        "source": "Invented civic wire",
+        "url": "https://example.invalid/alder-updates"
+      },
+      "observed_at": "2026-01-01T12:00:00Z",
+      "published_at_utc": "2026-01-01T12:00:00Z",
+      "available_at": "2026-01-01T12:00:00Z"
+    },
+    {
+      "observation_id": "R003",
+      "source_version_id": "V003",
+      "source_sha256": "551026190f031bb12b8de7333dc695aec935676cb304f6ad2e6b1ef2d71e708a",
+      "fields": {
+        "title": "Two civic notices",
+        "description": "",
+        "text": "Alder Museum opened a pottery wing on January 1. Separately, Birch Transit extended tram service to 23:00 from January 1. The museum and tram projects have separate operators and funding.",
+        "source": "Invented civic wire",
+        "url": "https://example.invalid/civic-notices"
+      },
+      "observed_at": "2026-01-01T12:00:00Z",
+      "published_at_utc": "2026-01-01T12:00:00Z",
+      "available_at": "2026-01-01T12:00:00Z"
+    },
+    {
+      "observation_id": "R004",
+      "source_version_id": "V001",
+      "source_sha256": "4026be5a1eda31e8af5a167602e1398ce92fe2f789ebb3257d1db58f805b80cd",
+      "fields": {
+        "title": "Vale footbridge closed",
+        "description": "",
+        "text": "The Alder Works Board closed Vale footbridge on January 1 after inspectors found 12 loose bolts. The cause was not yet known. No reopening date was given.",
+        "source": "Invented civic wire",
+        "url": "https://example.invalid/vale-closure"
+      },
+      "observed_at": "2026-01-02T12:00:00Z",
+      "published_at_utc": "2026-01-02T12:00:00Z",
+      "available_at": "2026-01-02T12:00:00Z"
+    },
+    {
+      "observation_id": "R005",
+      "source_version_id": "V005",
+      "source_sha256": "fec500869a2984a253ddadb2672ba3b1f3a3ccfa1e867aa9e3568ce5df4150ed",
+      "fields": {
+        "title": "Vale inspection update",
+        "description": "",
+        "text": "The Alder Works Board said on January 3 that corrosion was found around the loose bolts at Vale footbridge. The January 1 closure remained in force. The source of the corrosion and a reopening date remained unknown.",
+        "source": "Invented civic wire",
+        "url": "https://example.invalid/vale-inspection"
+      },
+      "observed_at": "2026-01-03T12:00:00Z",
+      "published_at_utc": "2026-01-03T12:00:00Z",
+      "available_at": "2026-01-03T12:00:00Z"
+    },
+    {
+      "observation_id": "R006",
+      "source_version_id": "V006",
+      "source_sha256": "9239dad306e3f5c2b7f423f781c2ffe051f27d38ba08fce6b348a1f1219499d3",
+      "fields": {
+        "title": "Quarry footbridge closed",
+        "description": "",
+        "text": "Westvale Council closed Quarry footbridge on January 3 after corrosion was found on its bolts. Engineers were checking whether the bolts shared a supplier with those at Vale footbridge. No shared supplier or common cause had been established.",
+        "source": "Invented civic wire",
+        "url": "https://example.invalid/quarry-closure"
+      },
+      "observed_at": "2026-01-03T12:00:00Z",
+      "published_at_utc": "2026-01-03T12:00:00Z",
+      "available_at": "2026-01-03T12:00:00Z"
+    },
+    {
+      "observation_id": "R007",
+      "source_version_id": "V007",
+      "source_sha256": "7a4e73d12b9ca41bdcc231f2dee9f601b96ca40bf9d2b82b066ff21aa0cd2b9e",
+      "fields": {
+        "title": "Correction to Vale bolt count",
+        "description": "",
+        "text": "Correction from the Alder Works Board on January 4: its January 1 closure notice should have said 2 loose bolts, not 12. The correction changes the count only. The cause had not been known on January 1; the January 3 corrosion finding remains reported.",
+        "source": "Invented civic wire",
+        "url": "https://example.invalid/vale-correction"
+      },
+      "observed_at": "2026-01-04T12:00:00Z",
+      "published_at_utc": "2026-01-04T12:00:00Z",
+      "available_at": "2026-01-04T12:00:00Z"
+    },
+    {
+      "observation_id": "R008",
+      "source_version_id": "V008",
+      "source_sha256": "f7a6af607f389fa33eabfe78a005094aac917cd4215be5abb67bc12f9d8fdb39",
+      "fields": {
+        "title": "Elm reading room opens",
+        "description": "",
+        "text": "Elm Library opened its reading room on January 31. Its notice gives no information about either footbridge.",
+        "source": "Invented civic wire",
+        "url": "https://example.invalid/elm-library"
+      },
+      "observed_at": "2026-01-31T12:00:00Z",
+      "published_at_utc": "2026-01-31T12:00:00Z",
+      "available_at": "2026-01-31T12:00:00Z"
+    },
+    {
+      "observation_id": "R009",
+      "source_version_id": "V009",
+      "source_sha256": "5a2bf05ced2df821d4ee30d972e1375090c9410e7953aec94f2c2bb95bdce98d",
+      "fields": {
+        "title": "Vale bridge reopens; inquiry published",
+        "description": "",
+        "text": "The Alder Works Board reopened Vale footbridge on April 1 after replacing its bolts. A joint inquiry now establishes that the corroded bolts at Vale and Quarry footbridges came from the same faulty batch L. The inquiry does not report whether Quarry footbridge has reopened.",
+        "source": "Invented civic wire",
+        "url": "https://example.invalid/vale-reopening"
+      },
+      "observed_at": "2026-04-01T12:00:00Z",
+      "published_at_utc": "2026-04-01T12:00:00Z",
+      "available_at": "2026-04-01T12:00:00Z"
+    }
+  ],
+  "boundaries": [
+    {
+      "prefix_id": "P01",
+      "day": "2026-01-01",
+      "at": "2026-01-01T12:00:00Z"
+    },
+    {
+      "prefix_id": "P02",
+      "day": "2026-01-02",
+      "at": "2026-01-02T12:00:00Z"
+    },
+    {
+      "prefix_id": "P03",
+      "day": "2026-01-03",
+      "at": "2026-01-03T12:00:00Z"
+    },
+    {
+      "prefix_id": "P04",
+      "day": "2026-01-04",
+      "at": "2026-01-04T12:00:00Z"
+    },
+    {
+      "prefix_id": "P05",
+      "day": "2026-01-31",
+      "at": "2026-01-31T12:00:00Z"
+    },
+    {
+      "prefix_id": "P06",
+      "day": "2026-03-02",
+      "at": "2026-03-02T12:00:00Z"
+    },
+    {
+      "prefix_id": "P07",
+      "day": "2026-04-01",
+      "at": "2026-04-01T12:00:00Z"
+    }
+  ],
+  "coverage": {
+    "scope": "Invented partial source stream for offline mechanics; no real-world coverage or importance claim.",
+    "gaps": [
+      {
+        "from": "2026-01-05",
+        "to": "2026-01-30",
+        "reason": "No fixture sources supplied; no claim of quiet news."
+      },
+      {
+        "from": "2026-02-01",
+        "to": "2026-03-31",
+        "reason": "No fixture sources supplied; no claim of quiet news."
+      }
+    ]
+  }
+}

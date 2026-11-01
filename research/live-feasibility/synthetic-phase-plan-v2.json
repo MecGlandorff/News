@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "phase": "synthetic",
+  "backend_plans": {
+    "D": "research/live-feasibility/synthetic-D-backend-plan-v2.json",
+    "E": "research/live-feasibility/synthetic-E-backend-plan-v2.json"
+  },
+  "order": [
+    {
+      "arm": "D",
+      "call_id": "fixed-D-P01",
+      "stage": "D",
+      "prefix_id": "P01",
+      "source_version_id": null
+    },
+    {
+      "arm": "D",
+      "call_id": "fixed-D-delta-P01",
+      "stage": "delta",
+      "prefix_id": "P01",
+      "source_version_id": null
+    },
+    {
+      "arm": "E",
+      "call_id": "fixed-E-extract-V001",
+      "stage": "E_extract",
+      "prefix_id": "P01",
+      "source_version_id": "V001"
+    },
+    {
+      "arm": "E",
+      "call_id": "fixed-E-extract-V002",
+      "stage": "E_extract",
+      "prefix_id": "P01",
+      "source_version_id": "V002"
+    },
+    {
+      "arm": "E",
+      "call_id": "fixed-E-extract-V003",
+      "stage": "E_extract",
+      "prefix_id": "P01",
+      "source_version_id": "V003"
+    },
+    {
+      "arm": "E",
+      "call_id": "fixed-E-P01",
+      "stage": "E",
+      "prefix_id": "P01",
+      "source_version_id": null
+    },
+    {
+      "arm": "E",
+      "call_id": "fixed-E-delta-P01",
+      "stage": "delta",
+      "prefix_id": "P01",
+      "source_version_id": null
+    },
+    {
+      "arm": "E",
+      "call_id": "fixed-E-P02",
+      "stage": "E",
+      "prefix_id": "P02",
+      "source_version_id": null
+    },
+    {
+      "arm": "E",
+      "call_id": "fixed-E-delta-P02",
+      "stage": "delta",
+      "prefix_id": "P02",
+      "source_version_id": null
+    },
+    {
+      "arm": "D",
+      "call_id": "fixed-D-P02",
+      "stage": "D",
+      "prefix_id": "P02",
+      "source_version_id": null
+    },
+    {
+      "arm": "D",
+      "call_id": "fixed-D-delta-P02",
+      "stage": "delta",
+      "prefix_id": "P02",
+      "source_version_id": null
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "case_id": "C08",
+  "prefix_id": "C08-p02",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [],
+      "status": "prohibited",
+      "reason": "Repeated source capture supplies no new claim."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": "All source hashes already observed; app promotion and pilot-account headline are unchanged.",
+  "missing_evidence_reason": "Pilot account body remains a photo credit.",
+  "ambiguity_notes": [],
+  "adjudication_status": "unadjudicated"
+}

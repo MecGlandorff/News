@@ -1,0 +1,79 @@
+{
+  "case_id": "C11",
+  "prefix_id": "C11-p01",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C11-c1",
+      "kind": "new_occurrence",
+      "claim": "BBC reports at least 82 killed in a Shanxi coal mine explosion, described as China's worst mining disaster in 16 years.",
+      "source_spans": [
+        {
+          "observation_id": "O043",
+          "field": "title",
+          "start": 0,
+          "end": 49
+        },
+        {
+          "observation_id": "O043",
+          "field": "description",
+          "start": 0,
+          "end": 89
+        }
+      ],
+      "attribution": "BBC News",
+      "occurrence_ref": "C11-shanxi-mine-blast",
+      "story_ref": "C11-shanxi-mine-disaster",
+      "materiality": "high",
+      "uncertainty": "At least is a lower bound; no mine name, cause or blast date supplied."
+    }
+  ],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C11-c1"
+      ],
+      "status": "required",
+      "reason": "Initial fatal explosion and minimum toll."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Publication-order simulation: authentic historical availability of exact version unknown; no cause inferred from explosion label."
+  ],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:C11-mine-blast",
+        "B:C11-c1"
+      ],
+      "decision": "Require attributed minimum toll and explosion; no precise event date, cause or mine name inferred.",
+      "reason": "O043 sparse title/description agree; at least is a lower bound."
+    }
+  ],
+  "chronology_mode": "publication_order_simulation",
+  "checkpoint_at": "2026-05-23T15:18:40+00:00",
+  "source_packet_sha256": "17823eb2d0f8417139030c2aa453a9373bd22d64d792a82b495b63ed9239fb24",
+  "visible_observation_ids": [
+    "O043"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "6223a6b28a4af14a6d38627a4e1b65eb3c5dc63efa52fe96ba2da91ec22a238e",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "a94d363d6f810c0cb476363f1031979912d09a0ba21cc0b6a93c8918e3fa8a51",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:58:24.627863+00:00"
+}

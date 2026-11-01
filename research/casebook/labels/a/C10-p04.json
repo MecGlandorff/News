@@ -1,0 +1,66 @@
+{
+  "case_id": "C10",
+  "prefix_id": "C10-p04",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C10-nu-correction",
+      "kind": "source_correction",
+      "claim": "NU.nl explicitly withdraws the earlier claim that wolves had been seen in all Dutch provinces, citing BIJ12 and wrong reported location.",
+      "source_spans": [
+        {
+          "observation_id": "O040",
+          "field": "description",
+          "start": 0,
+          "end": 113
+        },
+        {
+          "observation_id": "O040",
+          "field": "title",
+          "start": 0,
+          "end": 72
+        }
+      ],
+      "attribution": "NU.nl citing BIJ12",
+      "occurrence_ref": "C10-wolf-sighting-report",
+      "story_ref": "C10-wolf-location-correction",
+      "materiality": "material",
+      "uncertainty": null
+    }
+  ],
+  "relations": [
+    {
+      "from": "C10-nu-correction",
+      "to": "C10-uncorrected-claim",
+      "type": "corrects",
+      "status": "required",
+      "reason": "Same publisher now explicitly reverses earlier provincial-sighting claim.",
+      "source_spans": [
+        {
+          "observation_id": "O040",
+          "field": "description",
+          "start": 0,
+          "end": 113
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C10-nu-correction"
+      ],
+      "status": "required",
+      "reason": "Publisher-level explicit correction is material provenance even though underlying location correction already known."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Publication-order simulation: authentic availability unknown. No additional wolf event; source correction does not license inferring seeded application repair."
+  ],
+  "adjudication_status": "unadjudicated"
+}

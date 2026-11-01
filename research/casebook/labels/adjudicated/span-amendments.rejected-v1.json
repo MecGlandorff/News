@@ -1,0 +1,339 @@
+{
+  "amendment_version": "source-span-locators-v1",
+  "saved_at_utc": "2026-10-23T22:03:28.364160+00:00",
+  "author": "independent-adjudicator-gpt-6.1-sol-high",
+  "scope": "Append evidence locators only. Original frozen gold bytes and semantic claims/statuses remain unchanged. No candidate outputs exist or were inspected.",
+  "exposure": "Created after all37 gold-v1 prefixes frozen and all later sources/labels seen; not a new temporally blind adjudication. Every appended span is restricted to its affected prefix packet. C08 is excluded from these amendments.",
+  "application": "For each affected_prefix, verify original_record_sha256, locate record_collection item by record_id, append listed source_spans only if absent. Score only with explicitly frozen amendment version; never silently replace raw gold.",
+  "original_record_sha256": {
+    "C01-p01": "4d4110e37c6ec4aea731dc24c19f69443cd71a213fc16f795461996cafd63456",
+    "C01-p02": "154fbb7bacafe49a1afb31ba28b3d579eaf12cadc7b3b05a36e0e16a9bdbae70",
+    "C01-p03": "73ee5f7f6b4a0d41b1e34f940e4e6ecd3a9f08f11cd08230c298b3a0edafb394",
+    "C03-p03": "2773b286580fdd89915efc55b7c32f9b07bfc8bebc02c9137174155a058b8d6c",
+    "C04-p01": "b26a72abed8c483871870b8316a24feb978bc2d67abe08de26006a258d555ddf",
+    "C04-p02": "01740480ef87bb83bc3040055923fc318a8b33a6c0750f819885a3524b6d08fb",
+    "C04-p03": "0ef2f539cda887962db68483f40df0c45c933f7d7d85e024d5ffd081563eabd5",
+    "C04-p04": "8e4044a9da035ab6cf42708c6350a972403fe258677b19fa9ca783ee1877a259",
+    "C05-p01": "0e98d02c3ca1e6828481c1c566d8b6079928faefc388627afb8551d43242789b",
+    "C05-p02": "282c470cab7001b5e455f977bb4145aae80df9c1cd785842e4200a42c4b4091b",
+    "C06-p01": "e7db442ab22883e705ed30f2a11c876f3e93a5de1848d812b78f2343bb8cbbbf",
+    "C07-p04": "02f22f95a875ecbca1804e15287da1b7d77f04bf2a87b516c902af6b3e74c77d",
+    "C11-p03": "652485cc79be7e498b9a6e1973ee3399c4e12cad65d3f5bb268178fd379d6128",
+    "C12-p04": "947cfab0f713039ac6bf61422625b4b607e49797447c0dea509958dc18b0f2be"
+  },
+  "amendments": [
+    {
+      "amendment_id": "span-01",
+      "affected_prefixes": [
+        "C01-p01",
+        "C01-p02",
+        "C01-p03"
+      ],
+      "record_collection": "contributions",
+      "record_id": "C01-c1",
+      "append_source_spans": [
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 982,
+          "end": 1330
+        }
+      ],
+      "reason": "Include attack and passenger/crew subdual clauses omitted from inherited compressed spans."
+    },
+    {
+      "amendment_id": "span-02",
+      "affected_prefixes": [
+        "C01-p01",
+        "C01-p02",
+        "C01-p03"
+      ],
+      "record_collection": "contributions",
+      "record_id": "C01-c4",
+      "append_source_spans": [
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 1800,
+          "end": 1891
+        }
+      ],
+      "reason": "Include 2015–2017 study period supporting inquiry context."
+    },
+    {
+      "amendment_id": "span-03",
+      "affected_prefixes": [
+        "C03-p03"
+      ],
+      "record_collection": "contributions",
+      "record_id": "C03-c4",
+      "append_source_spans": [
+        {
+          "observation_id": "O011",
+          "field": "text",
+          "start": 231,
+          "end": 328
+        }
+      ],
+      "reason": "Include late-last-month timing in attributed threat account."
+    },
+    {
+      "amendment_id": "span-04",
+      "affected_prefixes": [
+        "C04-p01",
+        "C04-p02",
+        "C04-p03",
+        "C04-p04"
+      ],
+      "record_collection": "contributions",
+      "record_id": "C04-c2",
+      "append_source_spans": [
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 1597,
+          "end": 1734
+        }
+      ],
+      "reason": "Include Houthi-linked-media subject for attributed denial."
+    },
+    {
+      "amendment_id": "span-05",
+      "affected_prefixes": [
+        "C04-p03",
+        "C04-p04"
+      ],
+      "record_collection": "contributions",
+      "record_id": "C04-riyadh-toll",
+      "append_source_spans": [
+        {
+          "observation_id": "O015",
+          "field": "text",
+          "start": 528,
+          "end": 619
+        }
+      ],
+      "reason": "Include anonymity qualification for regional official."
+    },
+    {
+      "amendment_id": "span-06",
+      "affected_prefixes": [
+        "C04-p04"
+      ],
+      "record_collection": "contributions",
+      "record_id": "C04-flight-suspension",
+      "append_source_spans": [
+        {
+          "observation_id": "O016",
+          "field": "text",
+          "start": 330,
+          "end": 540
+        }
+      ],
+      "reason": "Include attack consequence and earlier airline cancellations, beyond suspension-only span."
+    },
+    {
+      "amendment_id": "span-07",
+      "affected_prefixes": [
+        "C04-p02",
+        "C04-p03",
+        "C04-p04"
+      ],
+      "record_collection": "questions",
+      "record_id": "C04-airport-identity",
+      "append_source_spans": [
+        {
+          "observation_id": "O016",
+          "field": "text",
+          "start": 753,
+          "end": 835
+        }
+      ],
+      "reason": "Include casualty/account context surrounding Saturday discriminator."
+    },
+    {
+      "amendment_id": "span-08",
+      "affected_prefixes": [
+        "C05-p01",
+        "C05-p02"
+      ],
+      "record_collection": "contributions",
+      "record_id": "C05-c2",
+      "append_source_spans": [
+        {
+          "observation_id": "O017",
+          "field": "text",
+          "start": 175,
+          "end": 363
+        }
+      ],
+      "reason": "Include named Zelenskyy attribution and announcement context around surprise quote."
+    },
+    {
+      "amendment_id": "span-09",
+      "affected_prefixes": [
+        "C05-p01",
+        "C05-p02"
+      ],
+      "record_collection": "contributions",
+      "record_id": "C05-c3",
+      "append_source_spans": [
+        {
+          "observation_id": "O018",
+          "field": "text",
+          "start": 0,
+          "end": 143
+        },
+        {
+          "observation_id": "O018",
+          "field": "text",
+          "start": 272,
+          "end": 652
+        }
+      ],
+      "reason": "Include conditional support and EU Commission president support, not just headline and awaited details."
+    },
+    {
+      "amendment_id": "span-10",
+      "affected_prefixes": [
+        "C06-p01"
+      ],
+      "record_collection": "contributions",
+      "record_id": "C06-c1",
+      "append_source_spans": [
+        {
+          "observation_id": "O021",
+          "field": "text",
+          "start": 229,
+          "end": 337
+        },
+        {
+          "observation_id": "O023",
+          "field": "text",
+          "start": 324,
+          "end": 543
+        }
+      ],
+      "reason": "Include hundreds-of-stores scope and prosecutor attribution for damage/fires."
+    },
+    {
+      "amendment_id": "span-11",
+      "affected_prefixes": [
+        "C06-p01"
+      ],
+      "record_collection": "contributions",
+      "record_id": "C06-c3",
+      "append_source_spans": [
+        {
+          "observation_id": "O022",
+          "field": "text",
+          "start": 1597,
+          "end": 2087
+        }
+      ],
+      "reason": "Include discount and labels consequences beyond distribution/delivery spans."
+    },
+    {
+      "amendment_id": "span-12",
+      "affected_prefixes": [
+        "C06-p01"
+      ],
+      "record_collection": "contributions",
+      "record_id": "C06-c4",
+      "append_source_spans": [
+        {
+          "observation_id": "O025",
+          "field": "text",
+          "start": 3083,
+          "end": 3186
+        }
+      ],
+      "reason": "Include precautionary closure explanation following vulnerability hypothesis."
+    },
+    {
+      "amendment_id": "span-13",
+      "affected_prefixes": [
+        "C07-p04"
+      ],
+      "record_collection": "contributions",
+      "record_id": "C07-c4",
+      "append_source_spans": [
+        {
+          "observation_id": "O029",
+          "field": "text",
+          "start": 136,
+          "end": 266
+        }
+      ],
+      "reason": "Include CJP subject for detention allegation."
+    },
+    {
+      "amendment_id": "span-14",
+      "affected_prefixes": [
+        "C07-p04"
+      ],
+      "record_collection": "contributions",
+      "record_id": "C07-c5",
+      "append_source_spans": [
+        {
+          "observation_id": "O029",
+          "field": "text",
+          "start": 379,
+          "end": 569
+        }
+      ],
+      "reason": "Include continuing demonstrations rather than only resignation demand."
+    },
+    {
+      "amendment_id": "span-15",
+      "affected_prefixes": [
+        "C11-p03"
+      ],
+      "record_collection": "contributions",
+      "record_id": "C11-c4",
+      "append_source_spans": [
+        {
+          "observation_id": "O044",
+          "field": "description",
+          "start": 264,
+          "end": 380
+        }
+      ],
+      "reason": "Include Friday-evening and approximate worker-count qualifiers."
+    },
+    {
+      "amendment_id": "span-16",
+      "affected_prefixes": [
+        "C12-p04"
+      ],
+      "record_collection": "contributions",
+      "record_id": "C12-c5",
+      "append_source_spans": [
+        {
+          "observation_id": "O049",
+          "field": "description",
+          "start": 3,
+          "end": 122
+        }
+      ],
+      "reason": "Include former-police-chief attribution for Ronald dela Rosa."
+    },
+    {
+      "amendment_id": "span-17",
+      "affected_prefixes": [
+        "C12-p04"
+      ],
+      "record_collection": "contributions",
+      "record_id": "C12-c6",
+      "append_source_spans": [
+        {
+          "observation_id": "O049",
+          "field": "description",
+          "start": 468,
+          "end": 547
+        }
+      ],
+      "reason": "Include speaker/livestream attribution after quoted transfer fear."
+    }
+  ]
+}

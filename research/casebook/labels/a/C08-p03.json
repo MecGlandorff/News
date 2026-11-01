@@ -1,0 +1,21 @@
+{
+  "case_id": "C08",
+  "prefix_id": "C08-p03",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [],
+      "status": "prohibited",
+      "reason": "Repeated capture alone does not justify a new update."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": "No new source version or substantive claim relative to prior labels.",
+  "missing_evidence_reason": "Pilot headline still lacks substantive body text.",
+  "ambiguity_notes": [],
+  "adjudication_status": "unadjudicated"
+}

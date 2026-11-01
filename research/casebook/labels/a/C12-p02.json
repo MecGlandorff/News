@@ -1,0 +1,60 @@
+{
+  "case_id": "C12",
+  "prefix_id": "C12-p02",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C12-confirmation-corroboration",
+      "kind": "context_only",
+      "claim": "NYT restates that ICC found enough evidence to try Duterte for killings in the drugs crackdown.",
+      "source_spans": [
+        {
+          "observation_id": "O046",
+          "field": "description",
+          "start": 0,
+          "end": 177
+        }
+      ],
+      "attribution": "NYT reporting ICC",
+      "occurrence_ref": "C12-charge-confirmation",
+      "story_ref": "C12-duterte-icc-case",
+      "materiality": "corroboration",
+      "uncertainty": null
+    }
+  ],
+  "relations": [
+    {
+      "from": "C12-confirmation-corroboration",
+      "to": "C12-confirmation",
+      "type": "same_occurrence",
+      "status": "required",
+      "reason": "Same defendant, court and charge-confirmation decision; no fresh procedural act supplied.",
+      "source_spans": [
+        {
+          "observation_id": "O046",
+          "field": "title",
+          "start": 0,
+          "end": 73
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C12-confirmation-corroboration"
+      ],
+      "status": "prohibited",
+      "reason": "Second publisher rephrases existing decision without new material fact; optional citation enrichment is allowed."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": "NYT adds corroborating coverage of already-established trial decision, no new event or material factual unit.",
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Publication-order simulation: authentic availability unknown; later timestamp and new publisher do not imply second court decision."
+  ],
+  "adjudication_status": "unadjudicated"
+}

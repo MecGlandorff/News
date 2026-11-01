@@ -1,0 +1,94 @@
+{
+  "case_id": "C09",
+  "prefix_id": "C09-p04",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C09-positive-crew",
+      "kind": "same_occurrence_material_fact",
+      "claim": "WHO reports a Hondius crew member turns out to be infected with hantavirus after the ship arrived in Rotterdam.",
+      "source_spans": [
+        {
+          "observation_id": "O037",
+          "field": "description",
+          "start": 0,
+          "end": 147
+        }
+      ],
+      "attribution": "WHO via NU.nl",
+      "occurrence_ref": "C09-hondius-arrival-tests",
+      "story_ref": "C09-hondius-health",
+      "uncertainty": "No symptom onset, infection timing or earlier test circumstances supplied.",
+      "materiality": "material"
+    },
+    {
+      "id": "C09-negative-positive-tension",
+      "kind": "conflict",
+      "claim": "New crew-member infection report qualifies the prior all-remaining-aboard negative account; text does not explain whether a test changed, was erroneous, or referred to a different population.",
+      "source_spans": [
+        {
+          "observation_id": "O037",
+          "field": "description",
+          "start": 58,
+          "end": 95
+        }
+      ],
+      "attribution": "NU.nl reporting WHO",
+      "occurrence_ref": "C09-hondius-arrival-tests",
+      "story_ref": "C09-hondius-health",
+      "uncertainty": "Cannot infer author-acknowledged correction or exact reason for changed state.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [
+    {
+      "from": "C09-positive-crew",
+      "to": "C09-hondius-tests",
+      "type": "qualifies_prior_result",
+      "status": "required",
+      "reason": "Same named ship and Rotterdam arrival, with explicit 'turns out nevertheless' framing.",
+      "source_spans": [
+        {
+          "observation_id": "O037",
+          "field": "description",
+          "start": 148,
+          "end": 199
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C09-positive-crew",
+        "C09-negative-positive-tension"
+      ],
+      "status": "required",
+      "reason": "Positive crew member is material new evidence, and earlier negative statement must retain temporal scope rather than be silently rewritten."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C09-test-reconciliation",
+      "status": "open",
+      "claim": "How the positive crew report relates to the prior universal negative tests is unexplained.",
+      "source_spans": [
+        {
+          "observation_id": "O037",
+          "field": "description",
+          "start": 58,
+          "end": 95
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Publication-order simulation: authentic availability unknown. Not necessarily a fresh infection occurrence on May 22; it is a newly reported case."
+  ],
+  "adjudication_status": "unadjudicated"
+}

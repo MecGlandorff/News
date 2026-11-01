@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "freeze_id": "acquisition-only-sideprobe-v1",
+  "search_results_seen": false,
+  "candidate_news_outputs_seen": false,
+  "application_calls_authorized": 0,
+  "files": [
+    {
+      "path": "research/live-feasibility/acquisition-sideprobe-v1/README.md",
+      "sha256": "7e343e56705afc35c73d085b7e349bec117ee5e217312dc490a09ea773bd34be"
+    },
+    {
+      "path": "research/live-feasibility/acquisition-sideprobe-v1/fetch-seed.json",
+      "sha256": "3d691679f68b4a1a6c0a408b3fa78c17e98e879da3f22117c87cdcb8b82ddde7"
+    },
+    {
+      "path": "research/live-feasibility/acquisition-sideprobe-v1/query-01.json",
+      "sha256": "382b44f22934b5abea4e0fb1d40649d7150428745ae7e0403fe0fd1f03a06efd"
+    },
+    {
+      "path": "research/live-feasibility/acquisition-sideprobe-v1/query-02.json",
+      "sha256": "a03eeb5e608432e7f4adcb8642804d7465d2cce6353f76294fc5ef107f88f0d4"
+    },
+    {
+      "path": "research/live-feasibility/acquisition-sideprobe-v1/recorder-plan.json",
+      "sha256": "2ca2a15795d53241e558367ea9790e55b77c953afc65df77452d3c6393687776"
+    },
+    {
+      "path": "research/live-feasibility/acquisition-sideprobe-v1/sideprobe-plan.json",
+      "sha256": "7a7ca8ac4840b25b4c00d6d3fd956711c3f54e72c020d4977c1ee40a05c072dd"
+    }
+  ]
+}

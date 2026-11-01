@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "purpose": "synthetic_diagnostic",
+  "isolation": {
+    "status": "limited",
+    "evidence": "Reviewed exception restricted to invented synthetic fixture sources. Frozen CLI config disables hosted search and tool surfaces, but preventive tool/context assurance remains unverified. Observed forbidden/unknown events invalidate and stop all work. This plan cannot authorize natural/captured/search source-bearing candidates; those require verified preventive isolation. Zero controller/process retries; internal HTTP/SSE/auth retries unknown."
+  },
+  "schedule": [
+    {
+      "call_id": "fixed-D-P01",
+      "stage": "D",
+      "input_tokens": 24000,
+      "output_tokens": 4000,
+      "timeout_seconds": 120
+    },
+    {
+      "call_id": "fixed-D-delta-P01",
+      "stage": "delta",
+      "input_tokens": 24000,
+      "output_tokens": 4000,
+      "timeout_seconds": 60
+    },
+    {
+      "call_id": "fixed-D-P02",
+      "stage": "D",
+      "input_tokens": 24000,
+      "output_tokens": 4000,
+      "timeout_seconds": 120
+    },
+    {
+      "call_id": "fixed-D-delta-P02",
+      "stage": "delta",
+      "input_tokens": 24000,
+      "output_tokens": 4000,
+      "timeout_seconds": 60
+    }
+  ],
+  "budget": {
+    "input_tokens": 96000,
+    "output_tokens": 16000,
+    "model_active_seconds": 360,
+    "wall_seconds": 1200,
+    "max_failures": 1
+  }
+}

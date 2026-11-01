@@ -1,0 +1,21 @@
+{
+  "case_id": "C07",
+  "prefix_id": "C07-p02",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [],
+      "status": "prohibited",
+      "reason": "No new source content relative to saved first prefix; recapture alone is not a news delta."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": "Cumulative packet adds no unseen source text, title or description; existing protest headline remains the same claim.",
+  "missing_evidence_reason": "Full article remains unavailable; repeated capture supplies no further detail.",
+  "ambiguity_notes": [],
+  "adjudication_status": "unadjudicated"
+}

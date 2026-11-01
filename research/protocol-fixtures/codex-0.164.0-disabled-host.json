@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "kind": "captured_protocol_events",
+  "cli_version": "codex-cli 0.164.0",
+  "platform": "macOS arm64 Mach-O",
+  "executable_sha256": "d8990e3ee7acfbc26f91265b12a1a83f0fee40d0e0f8f1f40a37d4ec21f499cf",
+  "stdout_sha256": "073d68c5cd1a1f1b17d176eaabbfa405b5629d7b4d5c08d6809b72f454601659",
+  "captured_at": "2026-11-01T12:32:02.684666+00:00",
+  "original_run": "20261101-first/preflight-ledger/transport-initial-v1/stdout.jsonl",
+  "source": "Exact three emitted JSONL lines from the unsuccessful source-free preflight; no source/news/model output fixture.",
+  "original_result": "Controller terminated the subprocess upon the item.error event; no turn.completed, final response or token usage was observed. Original run is stopped and not resumable.",
+  "interpretation": "The message describes unavailable fail-closed capability initialization. The subsequent turn.started is observed; successful final-response transport is unknown.",
+  "test_limit": "Fake continuation can test the parser and accounting only. It is not evidence that the live CLI would have returned a valid acknowledgement."
+}

@@ -1,0 +1,278 @@
+{
+  "schema_version": 1,
+  "expectations_id": "live-synthetic-p01-p02-source-expectations-v1",
+  "visibility": "SCORER_ONLY; excluded from all application inputs, retrieval and prompts",
+  "author": {
+    "model": "gpt-6-astra",
+    "reasoning_effort": "xhigh",
+    "role": "source-only run-plan author"
+  },
+  "status": "Pre-output synthetic development expectations; inherited source-authored controls, not independently human-validated semantic gold.",
+  "input_pin": {
+    "path": "research/live-feasibility/inputs/synthetic-p01-p02-v1.json",
+    "sha256": "78a830df8cd88a1a8b49fd9e279d695d7683c72021d750e9be300201ece6c01d"
+  },
+  "inherited_definitions": [
+    {
+      "path": "research/replay-fixtures/synthetic-mixed-v1.json",
+      "sha256": "4fc2b60ebc59fdfcc3d7831422fc9ad5744aeea5b81fe838682854f6d36afa4b"
+    },
+    {
+      "path": "research/replay-fixtures/scorer/synthetic-expectations-v1.json",
+      "sha256": "1224492f8495d8faf00aab9f5468b5f66840431446ba46b46b803ebfcfd01e0f"
+    }
+  ],
+  "exposure": {
+    "all_original_synthetic_sources_and_expectations_seen": true,
+    "candidate_outputs_seen": false,
+    "earlier_prefix_future_source_blind": false,
+    "qualification": "Existing authored synthetic controls, explicitly familiar; this is not a fresh prefix-blind label set or holdout."
+  },
+  "scope": "Two-prefix mechanics and small source-grounded failure description; no five-arm winner, semantic reliability percentage, automatic repair, natural coverage, importance or usefulness claim.",
+  "units": [
+    {
+      "unit_id": "S-F01",
+      "status": "required",
+      "category": "supported_fact",
+      "claim": "Attribute the January 1 Vale footbridge closure and initial 12 loose bolts to the Alder Works Board.",
+      "source_spans": [
+        {
+          "observation_id": "R001",
+          "source_version_id": "V001",
+          "field": "text",
+          "start": 0,
+          "end": 96,
+          "quote": "The Alder Works Board closed Vale footbridge on January 1 after inspectors found 12 loose bolts."
+        }
+      ]
+    },
+    {
+      "unit_id": "S-F02",
+      "status": "required",
+      "category": "supported_fact",
+      "claim": "Preserve the museum opening as a separate supported matter.",
+      "source_spans": [
+        {
+          "observation_id": "R003",
+          "source_version_id": "V003",
+          "field": "text",
+          "start": 0,
+          "end": 48,
+          "quote": "Alder Museum opened a pottery wing on January 1."
+        }
+      ]
+    },
+    {
+      "unit_id": "S-F03",
+      "status": "required",
+      "category": "supported_fact",
+      "claim": "Preserve the transit extension to 23:00 as a separate supported matter.",
+      "source_spans": [
+        {
+          "observation_id": "R003",
+          "source_version_id": "V003",
+          "field": "text",
+          "start": 49,
+          "end": 121,
+          "quote": "Separately, Birch Transit extended tram service to 23:00 from January 1."
+        }
+      ]
+    },
+    {
+      "unit_id": "S-Q01",
+      "status": "required",
+      "category": "uncertainty",
+      "claim": "Cause remains unresolved.",
+      "source_spans": [
+        {
+          "observation_id": "R001",
+          "source_version_id": "V001",
+          "field": "text",
+          "start": 97,
+          "end": 125,
+          "quote": "The cause was not yet known."
+        }
+      ]
+    },
+    {
+      "unit_id": "S-Q02",
+      "status": "required",
+      "category": "uncertainty",
+      "claim": "Reopening date remains unresolved.",
+      "source_spans": [
+        {
+          "observation_id": "R001",
+          "source_version_id": "V001",
+          "field": "text",
+          "start": 126,
+          "end": 154,
+          "quote": "No reopening date was given."
+        }
+      ]
+    },
+    {
+      "unit_id": "S-R01",
+      "status": "required",
+      "category": "relationship",
+      "claim": "Museum, transit and bridge remain distinct; no merger on shared Alder wording.",
+      "source_spans": [
+        {
+          "observation_id": "R003",
+          "source_version_id": "V003",
+          "field": "text",
+          "start": 122,
+          "end": 187,
+          "quote": "The museum and tram projects have separate operators and funding."
+        }
+      ]
+    },
+    {
+      "unit_id": "S-A01",
+      "status": "required",
+      "category": "source_accounting",
+      "claim": "R002 has zero invented factual contributions and explicit insufficiency via unassigned or pending status.",
+      "source_spans": [
+        {
+          "observation_id": "R002",
+          "source_version_id": "V002",
+          "field": "title",
+          "start": 0,
+          "end": 18,
+          "quote": "Updates from Alder"
+        }
+      ]
+    },
+    {
+      "unit_id": "S-A02",
+      "status": "required",
+      "category": "source_accounting",
+      "claim": "At P02, R004 remains a separate observation of V001 and is linked to its repeated content; V001 extraction is reused without another extraction invocation.",
+      "source_spans": [
+        {
+          "observation_id": "R004",
+          "source_version_id": "V001",
+          "field": "text",
+          "start": 0,
+          "end": 154,
+          "quote": "The Alder Works Board closed Vale footbridge on January 1 after inspectors found 12 loose bolts. The cause was not yet known. No reopening date was given."
+        }
+      ]
+    },
+    {
+      "unit_id": "S-D01",
+      "status": "required",
+      "category": "delta",
+      "claim": "At P01 the three separately supported matters are new within the supplied window; atomization may combine closure/count and keep uncertainty separate.",
+      "source_spans": [
+        {
+          "observation_id": "R001",
+          "source_version_id": "V001",
+          "field": "text",
+          "start": 0,
+          "end": 154,
+          "quote": "The Alder Works Board closed Vale footbridge on January 1 after inspectors found 12 loose bolts. The cause was not yet known. No reopening date was given."
+        },
+        {
+          "observation_id": "R003",
+          "source_version_id": "V003",
+          "field": "text",
+          "start": 0,
+          "end": 187,
+          "quote": "Alder Museum opened a pottery wing on January 1. Separately, Birch Transit extended tram service to 23:00 from January 1. The museum and tram projects have separate operators and funding."
+        }
+      ]
+    },
+    {
+      "unit_id": "S-D02",
+      "status": "required",
+      "category": "no_delta",
+      "claim": "At P02 no fresh-news delta arises from the exact repeat, observation time, publication metadata, rewritten summary or changed model identity.",
+      "source_spans": [
+        {
+          "observation_id": "R004",
+          "source_version_id": "V001",
+          "field": "text",
+          "start": 0,
+          "end": 154,
+          "quote": "The Alder Works Board closed Vale footbridge on January 1 after inspectors found 12 loose bolts. The cause was not yet known. No reopening date was given."
+        }
+      ]
+    }
+  ],
+  "prefixes": [
+    {
+      "prefix_id": "P01",
+      "observation_ids": [
+        "R001",
+        "R002",
+        "R003"
+      ],
+      "required_unit_ids": [
+        "S-F01",
+        "S-F02",
+        "S-F03",
+        "S-Q01",
+        "S-Q02",
+        "S-R01",
+        "S-A01",
+        "S-D01"
+      ],
+      "source_sufficiency": "sufficient_for_authored_assertions_partial_for_real_world_truth",
+      "ambiguity": [
+        "Contribution atomization and neutral occurrence/story identifiers may differ.",
+        "Cause and reopening remain unresolved; neither silence nor title-only stub adds facts."
+      ],
+      "prohibited": [
+        "Use later corrosion, Quarry, correction, library or reopening fixture sources.",
+        "Accept a bridge/museum/transit merger on wording alone.",
+        "Invent a fact, date or relationship from R002."
+      ]
+    },
+    {
+      "prefix_id": "P02",
+      "observation_ids": [
+        "R001",
+        "R002",
+        "R003",
+        "R004"
+      ],
+      "required_unit_ids": [
+        "S-F01",
+        "S-F02",
+        "S-F03",
+        "S-Q01",
+        "S-Q02",
+        "S-R01",
+        "S-A01",
+        "S-A02",
+        "S-D02"
+      ],
+      "source_sufficiency": "sufficient_for_authored_assertions_partial_for_real_world_truth",
+      "ambiguity": [
+        "Equivalent fact representation across reconstructions is acceptable; comparator must suppress factual repetition."
+      ],
+      "prohibited": [
+        "Invent a new occurrence or material new fact solely because R004 was observed/published on January 2.",
+        "Expire unresolved questions or replace earlier source bytes."
+      ]
+    }
+  ],
+  "assessment": {
+    "required_fact_units_per_prefix": 3,
+    "relationship_units_per_prefix": 1,
+    "uncertainty_units_per_prefix": 2,
+    "other_units_reported_separately": true,
+    "uncertain_units_excluded_from_correctness_rates": true,
+    "semantic_rates_or_quality_thresholds": "not_estimated_in_this_screen",
+    "mechanical_checks": [
+      "source/version hashes",
+      "prefix visibility",
+      "exact spans",
+      "all observation accounting",
+      "source-local extraction reuse",
+      "separate delta stage",
+      "append-only attempt records"
+    ],
+    "semantic_review": "Separate source-grounded reviewer after outputs; preserve disagreements and unscorable units. No standalone application judge calls are allocated."
+  }
+}

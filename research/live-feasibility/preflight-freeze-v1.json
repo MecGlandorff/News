@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "freeze_id": "source-free-preflight-definitions-v1",
+  "status": "source_free_definitions_frozen_runner_execution_capsule_and_independent_review_still_required",
+  "files": [
+    {
+      "path": "research/live-feasibility/PREFLIGHT.md",
+      "sha256": "ac048d528beba67f089efec0f924487551a92e7d207eb6f16dfceec207fac7a4"
+    },
+    {
+      "path": "research/live-feasibility/preflight-manifest-v1.json",
+      "sha256": "2679108e4b53b9737a831eda0570c7d67f7091795e46888fea3cff30ba7c6fdb"
+    },
+    {
+      "path": "research/live-feasibility/preflight-backend-plan-v1.json",
+      "sha256": "563fca5b40038c1078b81b9b0f23b37911197c6e73c3d5344915bd08d4c6ada7"
+    },
+    {
+      "path": "research/live-feasibility/inputs/preflight-initial-v1.json",
+      "sha256": "b486e2c346b1644faaa09610edbaf3eeadc362041fad3963bb0eb10e2c26df0a"
+    },
+    {
+      "path": "research/live-feasibility/inputs/preflight-diagnostic-v1.json",
+      "sha256": "d06e1ed2c118329c1c6c0f5cca02fd1ff9dd97c7f7b18c84fdf855b58094098e"
+    }
+  ]
+}

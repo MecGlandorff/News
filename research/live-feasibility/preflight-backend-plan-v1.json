@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "purpose": "transport_probe",
+  "isolation": {
+    "status": "limited",
+    "evidence": "Source-free preflight only. Preventive isolation has not been attested. Frozen CLI settings must disable hosted search, tools, plugins, child agents and retries; a no-tool response alone is not proof of their preventive absence."
+  },
+  "schedule": [
+    {
+      "call_id": "transport-initial-v1",
+      "stage": "probe",
+      "input_tokens": 24000,
+      "output_tokens": 4000,
+      "timeout_seconds": 120
+    },
+    {
+      "call_id": "transport-diagnostic-v1",
+      "stage": "probe",
+      "input_tokens": 24000,
+      "output_tokens": 4000,
+      "timeout_seconds": 120
+    }
+  ],
+  "budget": {
+    "input_tokens": 48000,
+    "output_tokens": 8000,
+    "model_active_seconds": 240,
+    "wall_seconds": 600,
+    "max_failures": 2
+  }
+}

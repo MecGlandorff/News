@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "freeze_id": "synthetic-definition-freeze-v1",
+  "frozen_at": "2026-11-01T11:36:36.230525+00:00",
+  "method": "Definitions authored from invented sources before candidate scripts/results were inspected; no candidate/application outputs used.",
+  "hash_domain": "SHA-256 of exact UTF-8 file bytes",
+  "files": [
+    {
+      "path": "synthetic-mixed-v1.json",
+      "sha256": "4fc2b60ebc59fdfcc3d7831422fc9ad5744aeea5b81fe838682854f6d36afa4b"
+    },
+    {
+      "path": "scorer/synthetic-expectations-v1.json",
+      "sha256": "1224492f8495d8faf00aab9f5468b5f66840431446ba46b46b803ebfcfd01e0f"
+    }
+  ],
+  "limitations": [
+    "Synthetic expectations are authored contract controls, not independent natural-source truth.",
+    "No semantic repair detector or candidate output was implemented by this author."
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "case_id": "C07",
+  "prefix_id": "C07-p03",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C07-protest-details",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Now-visible article text describes thousands gathering in Mumbai amid nationwide youth-led protests, concern over voter disenfranchisement and demand for election commissioner Gyanesh Kumar's resignation.",
+      "source_spans": [
+        {
+          "observation_id": "O028",
+          "field": "text",
+          "start": 115,
+          "end": 332
+        },
+        {
+          "observation_id": "O028",
+          "field": "text",
+          "start": 450,
+          "end": 550
+        }
+      ],
+      "attribution": "Guardian; movement grievance is attributed concern",
+      "occurrence_ref": "C07-voter-roll-protests",
+      "story_ref": "C07-cockroach-movement",
+      "uncertainty": "Body became visible at this capture despite unchanged publication time; do not date these details as newly occurring October 10.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [
+    {
+      "from": "C07-protest-details",
+      "to": "C07-protests",
+      "type": "same_occurrence",
+      "status": "required",
+      "reason": "Same title, URL and publication time; body enriches existing reported protests.",
+      "source_spans": [
+        {
+          "observation_id": "O028",
+          "field": "title",
+          "start": 0,
+          "end": 75
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C07-protest-details"
+      ],
+      "status": "required",
+      "reason": "First supplied substantive body adds material factual details to known occurrence."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Capture novelty supports newly available information, not a fresh protest occurrence; disenfranchisement remains a concern described by source."
+  ],
+  "adjudication_status": "unadjudicated"
+}

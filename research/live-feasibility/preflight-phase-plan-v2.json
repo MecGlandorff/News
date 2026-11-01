@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "phase": "preflight",
+  "backend_plans": {
+    "preflight": "research/live-feasibility/preflight-backend-plan-v2.json"
+  },
+  "inputs": [
+    "research/live-feasibility/inputs/preflight-initial-v1.json",
+    "research/live-feasibility/inputs/preflight-diagnostic-v1.json"
+  ]
+}

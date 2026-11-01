@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "freeze_id": "replay-fixture-pack-v1",
+  "frozen_at": "2026-11-01T11:44:12.665404+00:00",
+  "author": "gpt-6-astra / xhigh",
+  "hash_domain": "SHA-256 of exact UTF-8 file bytes",
+  "source_definition_freeze": "definition-freeze-v1.json",
+  "active_recovery_manifest": "scorer/recovery-manifest-v2.json",
+  "search_definition_freeze": "scorer/search-expectations-v1.json",
+  "failure_preservation": "V1 state artifacts retained; recovery manifest v2 records the pre-output repeat-accounting correction.",
+  "files": [
+    {
+      "path": "definition-freeze-v1.json",
+      "sha256": "d71794f4e545c275a53142a59e274c74ab37578848a8a9a623eb010fe771de95"
+    },
+    {
+      "path": "materialize_observed.py",
+      "sha256": "0d7deff1883f3a05f335e1432274bdcff0f398bb06710bb469e35ff83ae0eb61"
+    },
+    {
+      "path": "scorer/clean-state-p04-v1.json",
+      "sha256": "747e38bbf04a37c48d5ca231c5c21b6ed4b701e2d0aec623bcddf7560a1ea9bc"
+    },
+    {
+      "path": "scorer/clean-state-p04-v2.json",
+      "sha256": "bfede0562598be7d4c04d0a02ac7eea84ae870d898049666b47f9fbad6f65d25"
+    },
+    {
+      "path": "scorer/contaminated-state-p04-v1.json",
+      "sha256": "4ca0f6e7deadf149e53f93c98519df2ddba80ff2ea0b87e6f7a77d46e8d5ddce"
+    },
+    {
+      "path": "scorer/contaminated-state-p04-v2.json",
+      "sha256": "1780b1a1089e94a0f5d86f0dc85786dd82b54547cf23c0eeaa4edc304c8dc0b6"
+    },
+    {
+      "path": "scorer/invalid-accounting-state-p04-v1.json",
+      "sha256": "76bd67c4873b7f55edf0c48044c143814742712a4a188fec98b0581cf3dc419d"
+    },
+    {
+      "path": "scorer/invalid-accounting-state-p04-v2.json",
+      "sha256": "ac4c054ad1c71499112ebb8b743be6f18bec0c9fbabd1cf758a3a60897951ddd"
+    },
+    {
+      "path": "scorer/observed-capture-locators-v1.json",
+      "sha256": "04db59b171b16bd2e56978bc6f4b0e371c5f949f17ab897c8f715ba2f03eeb15"
+    },
+    {
+      "path": "scorer/recovery-manifest-v1.json",
+      "sha256": "d747fd855be61da533f5ef59aa1f8da79ee62ef2ae9cbe110002d0916c355375"
+    },
+    {
+      "path": "scorer/recovery-manifest-v2.json",
+      "sha256": "cf61d0b1ccb44ecbdb5e32b4d8e9a09043d7e1938e589a2fa72e88ff9244db6b"
+    },
+    {
+      "path": "scorer/repaired-state-p04-v2.json",
+      "sha256": "7ec14a036c0da2ec8a9ac1005c56a335eddbfde9ac32e883563bd80dc997dbe7"
+    },
+    {
+      "path": "scorer/search-expectations-v1.json",
+      "sha256": "e64efc579c6af7018d3f48bb8132966f812b242e8cb04792873d85428d69802d"
+    },
+    {
+      "path": "scorer/synthetic-expectations-v1.json",
+      "sha256": "1224492f8495d8faf00aab9f5468b5f66840431446ba46b46b803ebfcfd01e0f"
+    },
+    {
+      "path": "synthetic-mixed-v1.json",
+      "sha256": "4fc2b60ebc59fdfcc3d7831422fc9ad5744aeea5b81fe838682854f6d36afa4b"
+    },
+    {
+      "path": "synthetic-recovery-prefix-v1.json",
+      "sha256": "c5186ed67eab778aa6cc18bb40fddf324051d69951dc69a9ad9337ad77bb9975"
+    },
+    {
+      "path": "synthetic-search-clock-v1.json",
+      "sha256": "9373de0ee9d757660e6f7b3cda6ff03aafd35991ff73ba5117a104b3c2fdd72e"
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "case_id": "C04",
+  "prefix_id": "C04-p01",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C04-offensive",
+      "kind": "new_occurrence",
+      "claim": "Yemeni government army announces Dawn of Yemen operation, aimed initially at Bab al-Mandab and Mocha, with an offensive also reported in Sanaa.",
+      "source_spans": [
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 249,
+          "end": 345
+        },
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 1002,
+          "end": 1157
+        }
+      ],
+      "attribution": "Yemeni army and officials via NOS",
+      "occurrence_ref": "C04-dawn-offensive",
+      "story_ref": "C04-yemen-control",
+      "materiality": "material",
+      "uncertainty": null
+    },
+    {
+      "id": "C04-strait-control",
+      "kind": "conflict",
+      "claim": "Government minister claims restored Bab al-Mandab control; Houthi-linked media deny army territorial gains, and NOS notes contradictory sources.",
+      "source_spans": [
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 0,
+          "end": 157
+        },
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 1505,
+          "end": 1683
+        }
+      ],
+      "attribution": "Al-Eryani/Reuters versus Houthi-linked media via NOS",
+      "occurrence_ref": "C04-dawn-offensive",
+      "story_ref": "C04-yemen-control",
+      "uncertainty": "Control claim contested; no source-only definitive control finding.",
+      "materiality": "material"
+    },
+    {
+      "id": "C04-prior-control",
+      "kind": "context_only",
+      "claim": "Houthis' earlier seizure of Mocha, Dhubab and Perim forms the background to the new offensive.",
+      "source_spans": [
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 2143,
+          "end": 2237
+        }
+      ],
+      "story_ref": "C04-yemen-control",
+      "materiality": "context",
+      "attribution": null,
+      "occurrence_ref": null,
+      "uncertainty": null
+    }
+  ],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C04-offensive",
+        "C04-strait-control"
+      ],
+      "status": "required",
+      "reason": "Initial packet establishes new offensive and a disputed material control claim."
+    },
+    {
+      "contribution_ids": [
+        "C04-prior-control"
+      ],
+      "status": "allowed",
+      "reason": "Useful background does not create a newly observed military occurrence."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C04-control-question",
+      "status": "open",
+      "claim": "Actual extent of government territorial gains and strait control remains unclear in contradictory reports.",
+      "source_spans": [
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 1505,
+          "end": 1596
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [],
+  "adjudication_status": "unadjudicated"
+}

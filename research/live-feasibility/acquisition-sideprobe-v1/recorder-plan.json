@@ -1,0 +1,11 @@
+{
+  "collection_id": "news2-acquisition-sideprobe-v1",
+  "story_id": "prospective-search-seed-v1",
+  "cutoff": "2026-11-01T12:40:39Z",
+  "scope": "Separately declared acquisition-only sideprobe after source-free Codex preflight stopped with unknown usage. Frozen research-authored queries, no application planner/candidate calls or paired model test. Current observed search only; title-only M001 seed.",
+  "provider": "runtime_web_tool",
+  "mode": "runtime-default",
+  "transport_id": "runtime-web-run-single-operation",
+  "max_searches": 2,
+  "max_fetches": 3
+}

@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "sideprobe_id": "news2-acquisition-only-v1",
+  "status": "source_only_requests_and_limits_frozen_before_search_results",
+  "original_model_run_status": "stopped_unknown_usage; no further application calls or retry authorized",
+  "methodological_basis": {
+    "prior_plan": "research/live-feasibility/run-plan-v2.json",
+    "prior_plan_sha256": "38e5a309205e732fc21e5e027732c0baa432de915449d92953125733ed38e43d",
+    "explicit_stop": "critical_stops[0] and budgets.token_overshoot stop further application invocations. The ledger contract governs global application-invocation accounting; no separate global external-acquisition tool stop was declared.",
+    "new_scope": "This separately declared acquisition-only sideprobe is not the planned model-search phase, an application-planner substitute or continuation of the stopped processor trial. It preserves original stop/failure records and consumes only the original external acquisition allowance.",
+    "authorization": "Existing targeted-search/first-trial request plus explicit root coordination; no new application model budget."
+  },
+  "prepared_at": "2026-11-01T12:40:39Z",
+  "source_seed": {
+    "path": ".news/research/live-feasibility/search-seed-v1.json",
+    "sha256": "80f7075a70c55cd87fec2f032fc04f68358ca55c888203c8c1426b4aa89d9114",
+    "observation_id": "M001",
+    "body_sufficiency": "headline and photo credit only; no substantive protest details established"
+  },
+  "source_only_expectations": {
+    "path": "research/live-feasibility/scorer/search-seed-expectations-v1.json",
+    "sha256": "8a664bd8cc1e6fa55edec0b71f2a6a182e2df3b96dbd5f9f12f7532bbf0b0ba9",
+    "preserved": true
+  },
+  "query_author": {
+    "role": "research source-only author",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "xhigh",
+    "application_planner_measured": false,
+    "research_budget": "Charged to existing six aggregate active agent-hours / one working day; tokens and cost unknown."
+  },
+  "model_application_invocations": 0,
+  "tool_caps": {
+    "search_query_attempts": 2,
+    "single_url_fetch_attempts": 3,
+    "original_allowance_shared_not_reset": true,
+    "controller_retries": 0,
+    "provider_internal_requests_retries_tokens_cost": "unknown; caps cover controller-visible requested operations only"
+  },
+  "clock": {
+    "original_first_dispatch": "2026-11-01T12:32:02.684666+00:00",
+    "original_elapsed_deadline": "2026-11-01T13:17:02.684666+00:00",
+    "maximum_sideprobe_recording_seconds": 300,
+    "per_tool_cancel_target_seconds": 60,
+    "timeout_enforcement": "Runtime cancellation unavailable/unknown; target is not a hard limit. Check remaining original/stage time before each call; if response returns after either deadline retain it and stop. No new clock/reset."
+  },
+  "execution": {
+    "tool": "web__run",
+    "provider_mode": "runtime-default; internal cache/live policy unknown",
+    "order": [
+      "query-01",
+      "query-02",
+      "fetch-seed",
+      "up_to_two_additional_distinct_result_URLs"
+    ],
+    "query_request_files": [
+      "research/live-feasibility/acquisition-sideprobe-v1/query-01.json",
+      "research/live-feasibility/acquisition-sideprobe-v1/query-02.json"
+    ],
+    "first_fetch_request_file": "research/live-feasibility/acquisition-sideprobe-v1/fetch-seed.json",
+    "response_length": "long",
+    "single_operation_only": "Each tool call contains exactly one search_query item or one open URL. No grouped operations, follow-links, find, screenshots, inferred URL requests or retry.",
+    "fetch_rule": "First fetch the exact frozen seed URL. Then scan explicit top-level search-result URLs in query order and returned rank, removing fragments only. Select the first at most two unique valid HTTP(S) URLs excluding the seed and already selected normalized URLs; no model/manual reranking, URL guessing or substitution after failure. Log malformed/non-HTTP(S)/duplicate skips. Never treat links inside snippets as separate ranked results.",
+    "selected_fetch_receipts": "Before each additional fetch, save an immutable {url,reason} request and selection receipt pointing to query event, returned rank and raw payload pin. This applies the frozen rule; it does not add an adaptive query."
+  },
+  "recording": {
+    "recorder_plan": "research/live-feasibility/acquisition-sideprobe-v1/recorder-plan.json",
+    "recorder_file": "research/search_recorder.py",
+    "recorder_sha256": "fe524eb0f1e9b9b58d39f9d8dde5293196fda11828424fcc521e6688091096c3",
+    "integration_revision": "4d8877e",
+    "start_before_dispatch": true,
+    "exact_raw_response_snapshot": true,
+    "text": "Real returned source text stays ignored under .news. Admit only successful fetched text preserved unchanged from the raw return; retain full/excerpt/truncated/unknown status. Search hits/snippets remain leads, never source observations.",
+    "time": "Record actual request/result observed times; source publication and original capture remain separate. Current search is not historical search.",
+    "failures": "Empty/failed/blocked/unattempted are not negative evidence; each dispatched failed attempt consumes its slot. Unfinished receipt or failed capture stops collection.",
+    "provider_cost_and_tokens": null
+  },
+  "prior_receipt_pins": [
+    {
+      "integration_relative_path": ".news/live-feasibility/20261101-first/phase-summary.json",
+      "sha256": "3677dfceaa0c5cccd4d4f08c7ed80427c621889d899291561b157e5fdc5469d1"
+    },
+    {
+      "integration_relative_path": ".news/live-feasibility/20261101-first/preflight-execution-v1.json",
+      "sha256": "2da6aca28acca7e4ed74aa145a52d165a4a72a776924662a3028e7f5f7271466"
+    },
+    {
+      "integration_relative_path": ".news/live-feasibility/20261101-first/trial-start.json",
+      "sha256": "15b518a62feded0705d701141bec83520674a83990dd900e6f9deb18815089b5"
+    }
+  ],
+  "original_preflight_capsule_sha256": "2da6aca28acca7e4ed74aa145a52d165a4a72a776924662a3028e7f5f7271466",
+  "pre_dispatch_checks": [
+    "Verify all frozen plan/request/source/recorder/prior receipt hashes.",
+    "Record root execution receipt under a new acquisition-only name with original clock and prior tool counts; no original run file is overwritten.",
+    "Confirm prior external search/fetch attempts are zero or deduct them from the same2/3allowance. Any inconsistent tool ledger blocks dispatch.",
+    "Unknown original application usage remains unknown and all application invocations remain blocked.",
+    "Stop if original deadline or sideprobe deadline elapsed; no unspent slots transfer elsewhere."
+  ],
+  "expected_limits": [
+    "This can establish exact controller-visible acquisition/recording behavior and failures only.",
+    "No application planner, D/E reconstruction, paired model comparison, source quality/importance, complete coverage or useful-news claim is measured.",
+    "No source fact, correction, counterevidence or subsequent development is required to exist or to be returned.",
+    "If fetched sources are admitted, later source-only labeling must precede any future candidate output under a separately bounded authorized plan; no candidate output is authorized here."
+  ],
+  "exposure": {
+    "search_results_seen_before_freeze": false,
+    "candidate_news_outputs_seen": false,
+    "source_free_transport_failure_metadata_known": true
+  }
+}

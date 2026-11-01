@@ -1,0 +1,65 @@
+{
+  "case_id": "C10",
+  "prefix_id": "C10-p01",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C10-wolf-correction",
+      "kind": "source_correction",
+      "claim": "Province's claimed first South Holland wolf sighting was erroneous: Barendrecht resident entered wrong location and actually saw the animal in Limburg.",
+      "source_spans": [
+        {
+          "observation_id": "O042",
+          "field": "description",
+          "start": 0,
+          "end": 128
+        },
+        {
+          "observation_id": "O042",
+          "field": "description",
+          "start": 169,
+          "end": 287
+        }
+      ],
+      "attribution": "Telegraaf reporting provincial error",
+      "occurrence_ref": "C10-wolf-sighting-report",
+      "story_ref": "C10-wolf-location-correction",
+      "uncertainty": "Earlier false source text is not supplied; correction is established by explicit source acknowledgment, not inferred missing history.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C10-wolf-correction"
+      ],
+      "status": "required",
+      "reason": "Initial visible evidence is explicitly a correction of location and first-sighting claim."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C10-sighting-location",
+      "status": "answered",
+      "claim": "Reported animal was seen in Limburg, not South Holland.",
+      "source_spans": [
+        {
+          "observation_id": "O042",
+          "field": "title",
+          "start": 0,
+          "end": 63
+        }
+      ],
+      "closure_reason": "Source explicitly explains location-reporting error."
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Publication-order simulation: authentic availability unknown. No seeded application state exists to label a state-repair operation."
+  ],
+  "adjudication_status": "unadjudicated"
+}

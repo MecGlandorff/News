@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "expectations_id": "prospective-search-seed-source-expectations-v1",
+  "visibility": "SCORER_ONLY; never pass to query planner or candidate",
+  "author": {
+    "model": "gpt-6-astra",
+    "reasoning_effort": "xhigh"
+  },
+  "prepared_at": "2026-11-01T12:14:57Z",
+  "seed_file": {
+    "path": ".news/research/live-feasibility/search-seed-v1.json",
+    "sha256": "80f7075a70c55cd87fec2f032fc04f68358ca55c888203c8c1426b4aa89d9114"
+  },
+  "source_pin": {
+    "observation_id": "M001",
+    "source_version_id": "SV-08a6af2eae930576",
+    "source_sha256": "08a6af2eae930576b35d2625c08312b436ec619a5fd50e702027d3f783f14017",
+    "observed_at": "2026-10-05T19:34:32.871175+00:00",
+    "published_at_utc": "2026-10-02T14:42:16+00:00",
+    "available_at": "2026-10-05T19:34:32.871175+00:00"
+  },
+  "selection_rule": "First observation in the neutral chronological export; source inspection was limited to M001 after choosing this deterministic rule.",
+  "selection_input": {
+    "path": ".news/research/replay-observed-v1.json",
+    "sha256": "c9d02e0d0650ed142a2e8adcff7c474fffa46bd6c0db27e9db603900546c27cb"
+  },
+  "exposure": {
+    "existing_development_source": true,
+    "source_author_read_title_photo_credit_and_metadata": true,
+    "candidate_outputs_seen": false,
+    "old_source_labels_read": false,
+    "other_materialized_natural_source_text_read": false,
+    "holdout": false,
+    "related_case_exposure_of_prior_reference": "Known repository history has cross-case exposure; no clean new gold claim."
+  },
+  "source_sufficiency": "insufficient_for_substantive_protest_details; sufficient_as_attributed_title_lead_and_search_trigger",
+  "required": [],
+  "allowed": [
+    {
+      "unit_id": "N-A01",
+      "claim": "A Guardian headline reports that India’s Cockroach movement launched new protests over voter-roll changes; retain attribution and missing-body uncertainty.",
+      "source_spans": [
+        {
+          "observation_id": "M001",
+          "source_version_id": "SV-08a6af2eae930576",
+          "field": "title",
+          "start": 0,
+          "end": 75,
+          "quote": "India’s Cockroach movement launches new protests over changes to voter roll"
+        }
+      ]
+    },
+    {
+      "unit_id": "N-A02",
+      "claim": "Leave the source unassigned or pending with an explicit insufficient-body reason; title-only evidence need not yield a full occurrence."
+    }
+  ],
+  "prohibited": [
+    "Infer a precise protest date from the publication or capture timestamp.",
+    "Infer protest size, participants, organisers, violence, voter-roll details, outcome, government response or causal connection from URL wording or the photo credit.",
+    "Treat the photographer credit as evidence of a protest development.",
+    "Treat missing later sources or empty/failed search as evidence that no subsequent development or correction occurred."
+  ],
+  "questions": [
+    {
+      "id": "SQ01",
+      "status": "open",
+      "question": "Can the substantive original report be fetched, and what claims can it support?"
+    },
+    {
+      "id": "SQ02",
+      "status": "open",
+      "question": "Do attributable sources provide corrections, counterevidence or subsequent developments about this specific reported movement/protest and voter-roll dispute?"
+    }
+  ],
+  "prospective_clock": {
+    "trigger_observed_at": "2026-11-01T12:14:57Z",
+    "original_source_observed_at": "2026-10-05T19:34:32.871175+00:00",
+    "search_available_at_rule": "Actual result/fetch observation timestamp, never original publication time.",
+    "paired_cutoff_rule": "After recording is complete, freeze the greatest admitted event/source observation timestamp as the same cutoff in both conditions before either reconstruction."
+  },
+  "paired_assessment": {
+    "baseline_evidence_conditional_required_denominator": 0,
+    "baseline_allowed_title_units": 1,
+    "expanded_reference_denominator": "Freeze independently supported required units from seed plus admitted fetched sources before either candidate output; exclude uncertain/allowed units.",
+    "baseline_evidence_unavailable_units": "Report expanded-only units as unavailable in off; do not classify as off inference failures.",
+    "enrichment_on_required_denominator": "Only required units supported by on-visible admitted source versions at common cutoff.",
+    "gain_report": "Count newly supported units emitted, contradictory claims preserved, unresolved gaps, false links and omissions; search-derived union is incomplete and no complete-news recall/importance claim follows."
+  },
+  "postsearch_freeze_gate": [
+    "Source-only reviewer must inspect exact admitted fetched versions and classify sufficiency, attribution, conflicts and required/allowed/prohibited/uncertain units before seeing either off/on output.",
+    "Preserve source-review disagreements and source spans; no candidate-driven relabeling.",
+    "If independent review cannot finish within remaining active-agent and elapsed-live budgets, retain search artifacts and mark paired outputs pending; do not spend their slots."
+  ]
+}

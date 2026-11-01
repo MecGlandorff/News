@@ -1,0 +1,66 @@
+{
+  "case_id": "C09",
+  "prefix_id": "C09-p03",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C09-hondius-tests",
+      "kind": "new_occurrence",
+      "claim": "NU.nl reports all people still aboard Hondius at Rotterdam arrival tested negative for hantavirus and had no symptoms.",
+      "source_spans": [
+        {
+          "observation_id": "O036",
+          "field": "title",
+          "start": 0,
+          "end": 70
+        },
+        {
+          "observation_id": "O036",
+          "field": "description",
+          "start": 0,
+          "end": 186
+        }
+      ],
+      "attribution": "NU.nl",
+      "occurrence_ref": "C09-hondius-arrival-tests",
+      "story_ref": "C09-hondius-health",
+      "uncertainty": "Limited to those remaining on ship at Rotterdam, not all previous passengers or all prior cases.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [
+    {
+      "from": "C09-hondius-health",
+      "to": "C09-hantavirus-cruise",
+      "type": "same_story",
+      "status": "uncertain",
+      "reason": "Earlier cruise ship is unnamed in visible excerpts; common hantavirus/cruise topic suggests linkage but does not prove identity.",
+      "source_spans": [
+        {
+          "observation_id": "O036",
+          "field": "description",
+          "start": 41,
+          "end": 72
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C09-hondius-tests"
+      ],
+      "status": "required",
+      "reason": "New named-ship testing result materially informs that ship's health status; cannot erase prior deaths or close all outbreak questions."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Publication-order simulation: authentic availability unknown. Negative remaining-passenger tests do not imply no earlier infections."
+  ],
+  "adjudication_status": "unadjudicated"
+}
