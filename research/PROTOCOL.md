@@ -42,6 +42,13 @@ later versions, or future-derived index statistics may influence earlier views.
 Retrieval omission does not expire a story. Missing mixed-stream/full-slice corpus
 coverage blocks a live retrieval comparison, not offline interface development.
 
+The accepted per-story web-search direction, including counterevidence and missed
+developments, is a separate bounded source-enrichment experiment in
+[SEARCH.md](SEARCH.md). Compare the same candidate without/with recorded evidence;
+do not give one architecture extra information or treat current web results as
+historically available. This offline batch records fixtures only; live search needs
+its own complete frozen manifest and budget, separate from the five-arm screen.
+
 All arms receive identical immutable source versions, visible prefixes and order.
 Match actual text, truncation and cutoffs, including baseline adapter inputs.
 Use `gpt-6-astra`, medium reasoning, for every architecture application call,

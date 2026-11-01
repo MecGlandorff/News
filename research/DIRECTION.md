@@ -15,6 +15,11 @@ historical reviews remain unchanged.
   counts/model rankings do not establish world importance. Disclose coverage gaps.
 - Merge when evidence supports a relationship; show uncertain connections as
   possible relationships without counting them as established membership.
+- Search the web per story for evidence, counterevidence and missed developments.
+  The first bounded experiment compares the same candidate without/with recorded
+  search evidence; broad story discovery is outside it. Keep this source-enrichment
+  intervention separate from matched-input architecture comparisons. The scope,
+  provenance and offline recording contract are in [SEARCH.md](SEARCH.md).
 - Offer extended analysis under a separate heading. It may explain implications
   and open questions, with uncertainty visible, but cannot mutate factual state,
   accepted links or delta membership. A separate heading does not require another
