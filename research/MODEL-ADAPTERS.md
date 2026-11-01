@@ -47,6 +47,9 @@ usage is retained, never converted to zero; unknown usage stops subsequent calls
 Failures, token-threshold overshoots and unfamiliar/tool events remain visible.
 No monetary cost is inferred. Cached-input telemetry stays in raw completed events;
 input_tokens is not reduced by cached tokens for the token budget.
+Even a complete reported total covers observed turn telemetry only, not proven
+total backend spend. A scheduled call is one CLI invocation; the underlying
+provider-request count and server usage after cancellation are not fully observable.
 
 Each child starts in a new empty temporary directory and a separate process group.
 The remaining wall/model-active budget limits its timeout (at most120 seconds).
