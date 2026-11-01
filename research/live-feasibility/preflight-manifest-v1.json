@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "manifest_id": "news2-source-free-preflight-v1",
+  "status": "definitions_frozen_execution_requires_runner_pin_and_independent_review",
+  "base_revision": "242d151c389def7d98e2afb795b890c3bc018157",
+  "prepared_at": "2026-11-01T12:14:57Z",
+  "application_model": {
+    "model": "gpt-6-astra",
+    "reasoning_effort": "medium",
+    "seed": null,
+    "seed_support": "unknown",
+    "temperature": null,
+    "temperature_control": "backend_default_not_exposed"
+  },
+  "scope": "Source-free transport feasibility only; not evidence isolation attestation, architecture comparison or source quality.",
+  "application_invocations": {
+    "initial": 1,
+    "reserved_diagnostic": 1,
+    "max_total": 2,
+    "automatic_retries": 0,
+    "conditional_diagnostic": "Only after the initial attempt returned a known-usage failure that the predeclared same transport can diagnose without changing frozen code, settings, prompt or schema. Never after success, unknown usage, timeout without usage, forbidden tool activity, token/time stop or contamination. Any necessary code change requires a separately versioned plan within the remaining overall budget; this plan grants no implicit replacement attempt."
+  },
+  "files": [
+    {
+      "path": "research/live-feasibility/preflight-backend-plan-v1.json",
+      "sha256": "563fca5b40038c1078b81b9b0f23b37911197c6e73c3d5344915bd08d4c6ada7"
+    },
+    {
+      "path": "research/live-feasibility/inputs/preflight-initial-v1.json",
+      "sha256": "b486e2c346b1644faaa09610edbaf3eeadc362041fad3963bb0eb10e2c26df0a"
+    },
+    {
+      "path": "research/live-feasibility/inputs/preflight-diagnostic-v1.json",
+      "sha256": "d06e1ed2c118329c1c6c0f5cca02fd1ff9dd97c7f7b18c84fdf855b58094098e"
+    }
+  ],
+  "expected_mechanical_outcomes": [
+    "Persist started request, exact prompt/schema, effective arguments and raw stdout/stderr before retaining terminal result.",
+    "One completed structured response equals the exact expected ack, with known nonnegative input/output token usage and actual elapsed time.",
+    "No tool or unknown event; any forbidden or unfamiliar event fails and invalidates the isolation claim.",
+    "An unsuccessful attempt is retained; no automatic retry and no substitution of output.",
+    "Unknown usage stops every further application call in this small trial until a new bounded plan resolves accounting.",
+    "Exactly one turn.completed reports both integer nonnegative input_tokens and output_tokens; exit status is zero."
+  ],
+  "budgets": {
+    "stage_application_calls": 2,
+    "stage_input_token_stop_threshold": 48000,
+    "stage_output_token_stop_threshold": 8000,
+    "per_call_input_token_stop_threshold": 24000,
+    "per_call_output_token_stop_threshold": 4000,
+    "per_call_timeout_seconds": 120,
+    "stage_model_active_seconds": 240,
+    "stage_elapsed_seconds": 600,
+    "overall_application_calls": 18,
+    "overall_input_token_stop_threshold": 480000,
+    "overall_output_token_stop_threshold": 72000,
+    "overall_model_active_seconds": 1800,
+    "overall_elapsed_live_seconds": 2700,
+    "enforceable_token_hard_caps": false,
+    "overshoot_policy": "One-call token overshoot is possible because no backend per-call output cap/input-token admission proof is available. Record actual overshoot and stop. Process cancellation can leave usage unknown. Cleanup grace is separately recorded."
+  },
+  "runner_freeze_required": {
+    "executable_path": null,
+    "executable_version": null,
+    "executable_sha256": null,
+    "backend_revision": null,
+    "backend_file_sha256": null,
+    "review_record": null,
+    "meaning": "Root freezes these in a separate execution capsule before dispatch; null is a blocking unknown, not a wildcard."
+  },
+  "research_accounting": {
+    "model": "gpt-6-astra",
+    "reasoning_effort": "xhigh",
+    "aggregate_active_agent_hours_cap": 6,
+    "elapsed_working_days_cap": 1,
+    "includes": [
+      "preparation",
+      "implementation",
+      "source expectations",
+      "one independent review",
+      "one correction/recheck cycle",
+      "post-search source-only assessment",
+      "result review"
+    ],
+    "tokens": null,
+    "cost": null,
+    "global_financial_cap_claim": false
+  },
+  "exposure": {
+    "candidate_outputs_seen_by_source_author": false,
+    "prior_pipeline_briefings_seen_by_source_author": false,
+    "existing_synthetic_all_source_and_expectation_exposure": true,
+    "new_natural_source_text_seen": [
+      "M001"
+    ],
+    "natural_labels_seen": []
+  },
+  "stop_rules": [
+    "Do not dispatch if any required runner freeze value remains null.",
+    "Stop on unknown application usage, stage/run budget exhaustion, forbidden tool activity or changed frozen artifacts.",
+    "Record failed/unused/pending slots explicitly; unused diagnostic is not a transferable spare call.",
+    "Do not launch source-bearing candidate calls until preventive isolation is independently reviewed and attested."
+  ]
+}

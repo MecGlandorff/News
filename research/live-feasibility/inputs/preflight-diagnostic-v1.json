@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "call_id": "transport-diagnostic-v1",
+  "stage": "probe",
+  "prompt": "Return exactly the JSON object required by the response schema. Set ack to \"news2-transport-diagnostic-v1\". This is a source-free transport check. Do not use tools, access files, browse, or perform any news task.",
+  "response_schema": {
+    "type": "object",
+    "properties": {
+      "ack": {
+        "type": "string",
+        "enum": [
+          "news2-transport-diagnostic-v1"
+        ]
+      }
+    },
+    "required": [
+      "ack"
+    ],
+    "additionalProperties": false
+  },
+  "expected_output": {
+    "ack": "news2-transport-diagnostic-v1"
+  }
+}
