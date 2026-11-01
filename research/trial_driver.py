@@ -179,22 +179,23 @@ class Shared:
             raise RuntimeError(self.stopped)
         if self.origin is None:
             self.origin = datetime.now(timezone.utc).isoformat()
-        before = backend.active_seconds
-        response = backend.invoke(call_id, stage, prompt, schema, validate=validate, remaining_seconds=remaining)
-        elapsed = backend.active_seconds - before
-        for counter in (self.total, self.report["actual"]):
-            counter["calls"] += 1
-            counter["model_active_seconds"] += elapsed
-            counter["failures"] += response["status"] != "ok"
-            for key in ("input_tokens", "output_tokens"):
-                if response["usage"][key] is not None:
-                    counter[key] += response["usage"][key]
-        if None in response["usage"].values():
-            self.stopped = "unknown_usage"
-        elif backend.stopped in {"isolation_event_failure", "token_threshold_overshoot"}:
-            self.stopped = backend.stopped
-        if any(self.total[key] > GLOBAL[key] for key in ("input_tokens", "output_tokens")):
-            self.stopped = "global_token_overshoot"
+        before = dict(calls=backend.calls, model_active_seconds=backend.active_seconds, failures=backend.failures,
+                      **backend.known_usage)
+        unknown_before = backend.unknown_usage_calls
+        try:
+            response = backend.invoke(call_id, stage, prompt, schema, validate=validate, remaining_seconds=remaining)
+        finally:
+            after = dict(calls=backend.calls, model_active_seconds=backend.active_seconds, failures=backend.failures,
+                         **backend.known_usage)
+            for counter in (self.total, self.report["actual"]):
+                for key in before:
+                    counter[key] += after[key] - before[key]
+            if backend.unknown_usage_calls > unknown_before:
+                self.stopped = "unknown_usage"
+            elif backend.stopped in {"isolation_event_failure", "token_threshold_overshoot"}:
+                self.stopped = backend.stopped
+            if any(self.total[key] > GLOBAL[key] for key in ("input_tokens", "output_tokens")):
+                self.stopped = "global_token_overshoot"
         return response
 
 
@@ -291,6 +292,12 @@ def run(capsule_path, root, output_dir):
         report["status"] = "completed" if all(s["status"] in {"ok", "unused"} for s in report["slots"]) else "incomplete"
     except BaseException as error:
         report.update(status="interrupted" if isinstance(error, (KeyboardInterrupt, SystemExit)) else "invalid", error=str(error))
+        scheduled = plan.get("order", []) if phase == "synthetic" else [
+            slot for backend in backends.values() for slot in backend.plan["schedule"]]
+        recorded = {slot["call_id"] for slot in report["slots"]}
+        for slot in scheduled:
+            if slot["call_id"] not in recorded:
+                report["slots"].append(dict(call_id=slot["call_id"], status="pending", reason=report["status"]))
         raise
     finally:
         report.update(clock_origin=shared.origin, global_stop=shared.stopped, combined=shared.total)

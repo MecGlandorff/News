@@ -165,6 +165,29 @@ print(json.dumps({'type':'turn.completed','usage':{'input_tokens':5,'output_toke
         with self.assertRaisesRegex(ValueError, "Successful preflight"):
             td.run(capsule, self.root, self.folder / "blocked")
 
+    def test_interrupt_retains_dispatched_usage_and_pending_slots(self):
+        _, previous = self.preflight()
+        self.fake.write_text(self.fake.read_text().replace("stage=request['stage']", """stage=request['stage']
+if stage=='D':
+ import os,signal,time
+ os.kill(os.getppid(),signal.SIGINT)
+ time.sleep(2)
+"""))
+        capsule = self.synthetic(previous)
+        folder = self.folder / "interrupted"
+        with self.assertRaises(KeyboardInterrupt):
+            td.run(capsule, self.root, folder)
+        result = json.loads((folder / "report.json").read_text())
+        self.assertEqual(result["status"], "interrupted")
+        self.assertEqual(result["actual"]["calls"], 1)
+        self.assertEqual(result["actual"]["failures"], 1)
+        self.assertEqual(result["combined"]["calls"], 2)
+        self.assertEqual(result["global_stop"], "unknown_usage")
+        self.assertEqual(len(result["slots"]), 5)
+        terminal = json.loads((folder / "backends/D/D1/terminal.json").read_text())
+        self.assertEqual(terminal["response"]["error"], "KeyboardInterrupt")
+        self.assertEqual(terminal["response"]["usage"], {"input_tokens": None, "output_tokens": None})
+
 
 if __name__ == "__main__":
     unittest.main()
