@@ -5,6 +5,9 @@ is authorized by this file. Freeze a separately reviewed finite run plan first.
 I, R and B remain contracts only; this is not a five-arm comparison or semantic
 quality evidence. The application model request is fixed to `gpt-6-astra` with
 `medium` reasoning; research and review agents remain Astra/xhigh.
+The [November 1 results](live-feasibility/RESULTS-2026-11-01.md) record the failed
+source-free preflight, offline correction and separately recorded acquisition.
+No D/E application result has been measured.
 
 `codex_backend.Backend(output_dir, plan, executable="codex")` creates a new
 immutable ledger. `invoke(call_id, stage, prompt, schema, validate=None)` consumes

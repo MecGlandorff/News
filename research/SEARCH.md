@@ -1,7 +1,9 @@
 # Bounded story search — 2026-11-01
 
-Status: **accepted product direction; offline recorder implemented; bounded trial
-requires its separately frozen run manifest**.
+Status: **recorder implemented; one bounded controller-only acquisition sideprobe
+recorded; application planner and paired comparison untested**.
+The [November 1 results](live-feasibility/RESULTS-2026-11-01.md) distinguish these
+recording mechanics from search quality and the stopped application trial.
 The user requests targeted web search per story, including counterevidence and
 missed developments. This means source retrieval/fetch, not tool-catalog discovery.
 Broad discovery of new stories is outside the first experiment. No live news,

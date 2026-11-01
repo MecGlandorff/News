@@ -1,7 +1,8 @@
 # News2.0
 
 A fresh research project for coherent, source-grounded news stories and useful
-daily changes. This branch starts without an application implementation.
+daily changes. Research replay, candidate adapters and recording tools are
+implemented; a production news pipeline is not yet built.
 
 `News2.0` is the temporary integration branch. Create small feature or experiment
 branches from it and open PRs with an explicit `--base News2.0`. The previous
@@ -69,8 +70,11 @@ not objective world importance inferred from source counts; disclose missing cov
    newly observed sources. Claims about 30/60/90-day evolution require suitable
    source-supported trajectories and declared coverage gaps, not shifted dates.
 
-This research change provides a proposed protocol and frozen source casebook;
-it adds no news pipeline. Calibrate cost on a small development slice before
+The research now includes a protocol, frozen source casebook, offline replay,
+bounded D/E model adapters and acquisition recording. The
+[November 1 feasibility results](research/live-feasibility/RESULTS-2026-11-01.md)
+record one failed source-free preflight and a separate acquisition sideprobe;
+no candidate-quality result has been measured. Calibrate cost before
 budgeting larger replays. Record finite call, token and runtime ceilings
 for every live experiment, including preparation, rejected calls and recovery.
 
@@ -133,7 +137,7 @@ have been checked. Offline research checks use only the Python standard library:
 python3 -m unittest discover -s research/tests -v
 ```
 
-These checks validate research source-packet tooling, not application behavior or
-model quality. No application tests or CI workflow exist yet.
+These checks validate research tooling, fake-process transport behavior and
+accounting, not live model quality. No CI workflow exists yet.
 The [offline replay contract](research/REPLAY.md) documents the model-free
 representation, accounting and recovery probes and their limits.
