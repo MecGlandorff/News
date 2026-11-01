@@ -60,10 +60,15 @@ one-call overshoot. The full request/schema/hidden CLI context can add input tok
 The argv uses `--ignore-user-config`, `--ephemeral`, `--sandbox read-only`, disabled
 hosted web search, explicit disabled shell/app/plugin/browser/multi-agent features,
 and no `--ignore-rules` or sandbox/approval bypass. Managed security remains in force.
-`request_max_retries=0` and `stream_max_retries=0` are requested for the OpenAI
-provider and unbounded_connection_retries is disabled; no claim is made that every
-internal authentication/socket recovery path is independently counted. The runner
-never retries a process. See the exact feature list in `codex_backend.py`.
+The installed0.164.0 parser rejects retry overrides for reserved built-in provider
+ID `openai`; documented retry fields apply to custom providers. The invalid flags
+were detected with read-only `features list`, without launching a model, and
+removed. No custom provider or alternate authentication route is introduced.
+unbounded_connection_retries is disabled and the runner kills the process on the
+first emitted error/turn.failed event. Built-in HTTP/SSE/auth/socket retries before
+an observable event remain unverified and may occur; their attempt count is
+unknown. The runner never retries a process. See the exact feature list in
+`codex_backend.py`. A frozen live plan must disclose this limit.
 The JSONL allowlist rejects unknown events and every tool item immediately, but
 post-dispatch event rejection is detection, not preventive tool isolation. Do not
 promote a successful no-tool probe into proof that unseen tools were unavailable.

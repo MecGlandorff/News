@@ -64,8 +64,6 @@ def command(executable, schema_path, response_path):
     args = [str(executable), "exec", "--ignore-user-config", "--json", "--ephemeral",
             "--skip-git-repo-check", "--sandbox", "read-only", "--model", MODEL,
             "-c", 'model_reasoning_effort="medium"', "-c", 'web_search="disabled"',
-            "-c", "model_providers.openai.request_max_retries=0",
-            "-c", "model_providers.openai.stream_max_retries=0",
             "--output-schema", str(schema_path), "--output-last-message", str(response_path)]
     for feature in DISABLED:
         args.extend(("--disable", feature))
@@ -223,6 +221,9 @@ class Backend:
                                 if not safe_event(event):
                                     error = "forbidden_or_unknown_event"
                                     break
+                                if event.get("type") in {"turn.failed", "error"}:
+                                    error = "backend_error_event"
+                                    break
                     if error:
                         break
                 if not error:
@@ -231,6 +232,8 @@ class Backend:
                         events.append(event)
                         if not safe_event(event):
                             error = "forbidden_or_unknown_event"
+                        elif event.get("type") in {"turn.failed", "error"}:
+                            error = "backend_error_event"
                     process.wait(timeout=max(.001, remaining - (time.monotonic() - started)))
                     if process.returncode:
                         error = "process_exit:" + str(process.returncode)

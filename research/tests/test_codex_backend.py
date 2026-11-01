@@ -96,6 +96,15 @@ class BackendTests(unittest.TestCase):
         self.assertEqual(result["error"], "forbidden_or_unknown_event")
         self.assertEqual(backend.stopped, "isolation_event_failure")
 
+    def test_emitted_transport_error_stops_without_waiting_for_retry(self):
+        code = "print(json.dumps({'type':'error','message':'Reconnecting 1/5'}),flush=True)\ntime.sleep(20)\n"
+        started = time.monotonic()
+        backend = self.backend(code)
+        result = backend.invoke("p1", "probe", "test", SCHEMA)
+        self.assertLess(time.monotonic() - started, 1.5)
+        self.assertEqual(result["error"], "backend_error_event")
+        self.assertEqual(backend.stopped, "unknown_usage")
+
     def test_timeout_terminates_descendant_process_group(self):
         marker = self.root / "descendant-finished"
         self.plan["schedule"][0]["timeout_seconds"] = .2
