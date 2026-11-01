@@ -135,3 +135,5 @@ python3 -m unittest discover -s research/tests -v
 
 These checks validate research source-packet tooling, not application behavior or
 model quality. No application tests or CI workflow exist yet.
+The [offline replay contract](research/REPLAY.md) documents the model-free
+representation, accounting and recovery probes and their limits.
