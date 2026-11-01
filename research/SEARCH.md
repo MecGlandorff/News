@@ -122,6 +122,12 @@ were not resolved. No credentials were read and no configuration was changed.
 Official docs describe cached search by default, `web_search = "disabled"`/`"live"`
 and hosted search separate from shell-network restrictions; disabling shell network
 alone is insufficient for offline isolation. See [OpenAI web search documentation](https://learn.chatgpt.com/docs/web-search).
+For live fixed-evidence architecture runs and enrichment-off, require and verify
+effective `web_search = "disabled"` for every stage, including child agents;
+cached search is also external evidence. A prompt to use only provided sources
+is not enforcement. Before enrichment-on qualifies as controlled, verify complete
+recording and enforceable tool caps in the actual backend. The offline envelope
+and its budget checks do not control Codex's internal tool execution.
 The docs describe `web_search` items and JSONL turn usage; they do not promise that
 the stream alone preserves every fetched page body. See [OpenAI non-interactive output](https://learn.chatgpt.com/docs/non-interactive-mode#make-output-machine-readable).
 Account/runtime availability, `exec` integration, enforceable per-tool/per-model

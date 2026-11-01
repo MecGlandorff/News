@@ -51,6 +51,9 @@ its own complete frozen manifest and budget, separate from the five-arm screen.
 
 All arms receive identical immutable source versions, visible prefixes and order.
 Match actual text, truncation and cutoffs, including baseline adapter inputs.
+Before live fixed-evidence calls, verify hosted web search is effectively disabled
+for every stage/child agent; shell-network restrictions or prompt instructions
+alone do not enforce the evidence boundary. See [SEARCH.md](SEARCH.md).
 Use `gpt-6-astra`, medium reasoning, for every architecture application call,
 including shared extraction, optional analysis and internal validation stages
 (including the frozen baseline's). External semantic judges are evaluation agents:
