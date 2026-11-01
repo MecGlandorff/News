@@ -77,6 +77,28 @@ The JSONL allowlist rejects unknown events and every tool item immediately, but
 post-dispatch event rejection is detection, not preventive tool isolation. Do not
 promote a successful no-tool probe into proof that unseen tools were unavailable.
 
+The first recorded source-free invocation was stopped after0.834 seconds when
+codex-cli0.164.0 emitted an `item.completed` error saying its disabled Code Mode
+host was unavailable. No completed turn/usage was observed. Its exact three raw
+JSONL events and binary hash are preserved under `protocol-fixtures/`; the original
+run remains failed with unknown usage and cannot resume. `turn.started` after the
+diagnostic was observed; whether a final no-tool response could complete is unknown.
+
+By default this event still aborts, now as `disabled_code_mode_startup` rather than
+an unspecified tool event. A future independently reviewed source-free backend plan
+may explicitly add `startup_diagnostic_policy:
+"codex-0.164.0-disabled-host-preflight-v1"`. This optional policy requires the exact
+recorded macOS arm64 CLI binary SHA-256, `purpose="transport_probe"`, the exact
+event/item/message shape and position immediately after the first `thread.started`.
+It permits only that one capability diagnostic to be recorded and continued.
+`diagnostics.json` preserves its classification and continuation decision. Every
+changed, repeated, late or different error item, top-level error, tool event and
+unknown event still aborts. Source-bearing synthetic/candidate purposes reject the
+policy. No feature, host or tool is enabled by it. The fake executable tests use an
+explicit test-only binary-pin substitution; they establish parser/accounting
+behavior, not successful live transport. This option grants no retry or new trial;
+the failed unknown-usage run remains stopped under every policy.
+
 `model_adapters.py` holds strict JSON output schemas and a narrow validator; prompt
 versions are text files under `prompts/`. D receives only current visible sources.
 E invokes one extraction per immutable source version, without other sources or

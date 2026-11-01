@@ -54,6 +54,7 @@ def bridge_preflight(summary_path, output_path):
     stopped = "unknown_usage" if None in usage.values() else summary["global_stop"]
     report = dict(schema_version=1, phase="preflight", status="completed" if success else "incomplete", actual=actual,
                   clock_origin=summary["started_at"], global_stop=stopped, backend_roots=[str(ledger.relative_to(path.parent))],
+                  reported_usage=usage, total_reported_tokens=replay.validate_usage(usage),
                   slots=[dict(call_id=request["call_id"], status=summary["status"]),
                          dict(call_id="transport-diagnostic-v1", status="unused", reason="Not dispatched by original wrapper")],
                   bridge_source=str(path), record_pins=[])

@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import re
 import selectors
+import shutil
 import signal
 import subprocess
 import tempfile
@@ -19,6 +20,11 @@ DISABLED = ("shell_tool", "unified_exec", "apps", "plugins", "remote_plugin",
             "hooks", "skill_search", "tool_suggest", "memories", "code_mode_host",
             "code_mode", "view_image", "sleep_tool", "goals", "unbounded_connection_retries")
 MAX_STREAM_BYTES = 4 * 1024 * 1024
+STARTUP_POLICY = "codex-0.164.0-disabled-host-preflight-v1"
+STARTUP_EXECUTABLE_SHA256 = "d8990e3ee7acfbc26f91265b12a1a83f0fee40d0e0f8f1f40a37d4ec21f499cf"
+DISABLED_HOST_EVENT = {"type": "item.completed", "item": {"id": "item_0", "type": "error", "message":
+    "Code Mode is unavailable because code-mode host is disabled. Code mode will fail closed; "
+    "enable `features.code_mode_host` and install `codex-code-mode-host`."}}
 ENVIRONMENT_KEYS = {"HOME", "PATH", "USER", "LOGNAME", "TMPDIR", "LANG", "LC_ALL", "LC_CTYPE",
                     "CODEX_HOME", "SSL_CERT_FILE", "SSL_CERT_DIR", "HTTPS_PROXY", "HTTP_PROXY", "ALL_PROXY", "NO_PROXY",
                     "https_proxy", "http_proxy", "all_proxy", "no_proxy"}
@@ -80,6 +86,31 @@ def safe_event(event):
         isinstance(event.get("item"), dict) and event["item"].get("type") in {"agent_message", "reasoning"}
 
 
+class EventGate:
+    """One exact startup diagnostic may be recorded under an explicit probe policy."""
+    def __init__(self, allow_disabled_host=False):
+        self.allow_disabled_host = allow_disabled_host
+        self.previous = []
+        self.diagnostics = []
+
+    def inspect(self, event):
+        startup_position = len(self.previous) == 1 and self.previous[0].get("type") == "thread.started"
+        self.previous.append(event)
+        if event == DISABLED_HOST_EVENT:
+            continued = self.allow_disabled_host and startup_position
+            self.diagnostics.append(dict(classification="disabled_code_mode_startup", continued=continued, event=event))
+            if continued:
+                return None
+            return "disabled_code_mode_startup" if startup_position else "unexpected_disabled_code_mode_startup"
+        if not safe_event(event):
+            if isinstance(event, dict) and isinstance(event.get("item"), dict) and event["item"].get("type") == "error":
+                return "backend_error_item"
+            return "forbidden_or_unknown_event"
+        if event.get("type") in {"turn.failed", "error"}:
+            return "backend_error_event"
+        return None
+
+
 def stop_group(process):
     """Bounded TERM/KILL cleanup also covers descendants of an exited parent."""
     for sig, grace in ((signal.SIGTERM, .2), (signal.SIGKILL, .2)):
@@ -107,7 +138,8 @@ class Backend:
 
     def __init__(self, output_dir, plan, executable="codex"):
         self.plan = copy.deepcopy(plan)
-        if set(plan) != {"schema_version", "purpose", "isolation", "schedule", "budget"} or type(plan["schema_version"]) is not int or plan["schema_version"] != 1:
+        required = {"schema_version", "purpose", "isolation", "schedule", "budget"}
+        if not required <= set(plan) <= required | {"startup_diagnostic_policy"} or type(plan["schema_version"]) is not int or plan["schema_version"] != 1:
             raise ValueError("Invalid backend plan")
         if plan["purpose"] not in {"transport_probe", "synthetic_diagnostic", "candidate"}:
             raise ValueError("Invalid purpose")
@@ -116,6 +148,13 @@ class Backend:
             raise ValueError("Missing isolation evidence")
         if plan["purpose"] == "candidate" and isolation["status"] != "verified":
             raise ValueError("Candidate calls require reviewed preventive isolation evidence")
+        self.startup_policy = plan.get("startup_diagnostic_policy")
+        if self.startup_policy is not None:
+            if self.startup_policy != STARTUP_POLICY or plan["purpose"] != "transport_probe":
+                raise ValueError("Startup diagnostic policy is restricted to the pinned source-free probe")
+            executable = Path(shutil.which(str(executable)) or str(executable)).resolve()
+            if hashlib.sha256(executable.read_bytes()).hexdigest() != STARTUP_EXECUTABLE_SHA256:
+                raise ValueError("Startup diagnostic policy requires the exact recorded CLI binary")
         schedule, budget = plan["schedule"], plan["budget"]
         if not isinstance(schedule, list) or not schedule:
             raise ValueError("Empty call schedule")
@@ -176,14 +215,18 @@ class Backend:
             handle.flush()
             os.fsync(handle.fileno())
         args = command(self.executable, directory / "schema.json", directory / "last-message.txt")
+        if self.startup_policy and hashlib.sha256(Path(self.executable).read_bytes()).hexdigest() != STARTUP_EXECUTABLE_SHA256:
+            raise ValueError("Pinned startup-policy executable changed")
         request = dict(call_id=call_id, stage=stage, model=MODEL, reasoning_effort=EFFORT,
                        prompt=prompt, schema=schema, argv=args, thresholds=slot,
                        enforced_timeout_seconds=remaining, token_bounds_enforced=False,
-                       started_at=datetime.now(timezone.utc).isoformat(), status="started")
+                       started_at=datetime.now(timezone.utc).isoformat(), status="started",
+                       startup_diagnostic_policy=self.startup_policy)
         save(directory / "request.json", request)  # Durable before Popen, including launch failures.
         self.calls += 1
         started, process, interrupted = time.monotonic(), None, None
         events, error, output = [], None, None
+        gate = EventGate(allow_disabled_host=bool(self.startup_policy))
         buffer, stream_bytes = b"", 0
         try:
             with tempfile.TemporaryDirectory(prefix="news2-empty-") as scratch, \
@@ -224,11 +267,8 @@ class Backend:
                                     error = "malformed_jsonl"
                                     break
                                 events.append(event)
-                                if not safe_event(event):
-                                    error = "forbidden_or_unknown_event"
-                                    break
-                                if event.get("type") in {"turn.failed", "error"}:
-                                    error = "backend_error_event"
+                                error = gate.inspect(event)
+                                if error:
                                     break
                     if error:
                         break
@@ -236,10 +276,7 @@ class Backend:
                     if buffer.strip():
                         event = json.loads(buffer)
                         events.append(event)
-                        if not safe_event(event):
-                            error = "forbidden_or_unknown_event"
-                        elif event.get("type") in {"turn.failed", "error"}:
-                            error = "backend_error_event"
+                        error = gate.inspect(event)
                     process.wait(timeout=max(.001, remaining - (time.monotonic() - started)))
                     if process.returncode:
                         error = "process_exit:" + str(process.returncode)
@@ -300,6 +337,7 @@ class Backend:
         if error == "forbidden_or_unknown_event":
             self.stopped = "isolation_event_failure"
         response = dict(status="failed" if error else "ok", output=output, usage=usage, error=error)
+        save(directory / "diagnostics.json", dict(policy=self.startup_policy, diagnostics=gate.diagnostics))
         save(directory / "response.json", response)
         save(directory / "usage.json", dict(usage=usage, raw_completed_events=completed, cost=None,
              elapsed_seconds=elapsed, process_returncode=process.returncode if process else None,

@@ -7,6 +7,7 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import codex_backend as cb
@@ -140,6 +141,73 @@ class BackendTests(unittest.TestCase):
         self.plan["purpose"] = "candidate"
         with self.assertRaisesRegex(ValueError, "isolation"):
             cb.Backend(self.root / "candidate", self.plan)
+
+    def protocol_events(self):
+        path = Path(__file__).resolve().parents[1] / "protocol-fixtures/codex-0.164.0-disabled-host.jsonl"
+        metadata = json.loads(path.with_suffix(".json").read_text())
+        self.assertEqual(cb.hashlib.sha256(path.read_bytes()).hexdigest(), metadata["stdout_sha256"])
+        return [json.loads(line) for line in path.read_text().splitlines()]
+
+    def test_real_protocol_fixture_is_classified_and_rejected_by_default(self):
+        events = self.protocol_events()
+        self.assertEqual(events[1], cb.DISABLED_HOST_EVENT)
+        backend = self.backend(self.success_code(events=events + [COMPLETE]))
+        result = backend.invoke("p1", "probe", "test", SCHEMA)
+        self.assertEqual(result["error"], "disabled_code_mode_startup")
+        self.assertEqual(backend.stopped, "unknown_usage")
+        diagnostic = json.loads((self.root / "run/p1/diagnostics.json").read_text())
+        self.assertFalse(diagnostic["diagnostics"][0]["continued"])
+
+    def test_opt_in_pinned_fake_continuation_records_diagnostic_and_usage(self):
+        self.plan["startup_diagnostic_policy"] = cb.STARTUP_POLICY
+        executable = self.fake(self.success_code(events=self.protocol_events() + [COMPLETE]))
+        # Substitute only the executable pin for this explicitly offline protocol test.
+        # The fake continuation is not evidence of live CLI acknowledgement success.
+        with patch.object(cb, "STARTUP_EXECUTABLE_SHA256", cb.hashlib.sha256(executable.read_bytes()).hexdigest()):
+            backend = cb.Backend(self.root / "run", self.plan, executable)
+            result = backend.invoke("p1", "probe", "test", SCHEMA)
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["usage"], dict(input_tokens=12, output_tokens=7))
+        diagnostic = json.loads((self.root / "run/p1/diagnostics.json").read_text())
+        self.assertEqual(diagnostic["policy"], cb.STARTUP_POLICY)
+        self.assertTrue(diagnostic["diagnostics"][0]["continued"])
+        self.assertEqual(backend.calls, 1)
+
+    def test_startup_policy_rejects_unpinned_binary_and_source_bearing_purpose(self):
+        self.plan["startup_diagnostic_policy"] = cb.STARTUP_POLICY
+        executable = self.fake(self.success_code())
+        with self.assertRaisesRegex(ValueError, "exact recorded CLI"):
+            cb.Backend(self.root / "run", self.plan, executable)
+        self.plan["purpose"] = "synthetic_diagnostic"
+        with self.assertRaisesRegex(ValueError, "source-free"):
+            cb.Backend(self.root / "source-bearing", self.plan, executable)
+
+    def test_startup_exception_rejects_late_duplicate_changed_and_tool_events(self):
+        thread, diagnostic, turn = self.protocol_events()
+        changed = copy.deepcopy(diagnostic)
+        changed["item"]["message"] += " "
+        extra = copy.deepcopy(diagnostic)
+        extra["item"]["command"] = "unexpected"
+        for sequence, expected in [
+                ([thread, turn, diagnostic], "unexpected_disabled_code_mode_startup"),
+                ([thread, diagnostic, diagnostic], "unexpected_disabled_code_mode_startup"),
+                ([thread, changed], "backend_error_item"), ([thread, extra], "backend_error_item"),
+                ([thread, {"type": "error", "message": diagnostic["item"]["message"]}], "backend_error_event"),
+                ([thread, {"type": "item.started", "item": {"type": "command_execution"}}], "forbidden_or_unknown_event")]:
+            with self.subTest(sequence=sequence):
+                gate = cb.EventGate(allow_disabled_host=True)
+                results = [gate.inspect(event) for event in sequence]
+                self.assertEqual(results[-1], expected)
+
+    def test_allowlisted_diagnostic_does_not_make_unknown_usage_free(self):
+        self.plan["startup_diagnostic_policy"] = cb.STARTUP_POLICY
+        executable = self.fake(self.success_code(events=self.protocol_events()))
+        with patch.object(cb, "STARTUP_EXECUTABLE_SHA256", cb.hashlib.sha256(executable.read_bytes()).hexdigest()):
+            backend = cb.Backend(self.root / "run", self.plan, executable)
+            result = backend.invoke("p1", "probe", "test", SCHEMA)
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(result["usage"], dict(input_tokens=None, output_tokens=None))
+        self.assertEqual(backend.stopped, "unknown_usage")
 
 
 class AdapterTests(unittest.TestCase):
