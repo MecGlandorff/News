@@ -111,10 +111,11 @@ Complete one shared batch before application candidate calls:
 Budget: **zero application model calls; six aggregate active agent-hours and one
 elapsed working day**, stopping at either limit. Allocate at most three hours to
 harness/interfaces, two to corpus/fixtures and one to review/corrections, including
-preparation. Permit one initial independent review and at most one correction/
-recheck cycle inside these caps. Log actual effort and available usage; unknown
-agent tokens/cost remain unknown. Preserve unresolved work when a cap is reached;
-do not restart the budget or repeat reviews until they pass.
+preparation. Plan one initial independent review and one correction/recheck cycle
+within these caps. Make necessary fixes and targeted rechecks while budget remains;
+do not repeat reviews merely to obtain approval. Log actual effort and available
+usage; unknown agent tokens/cost remain unknown. Preserve unresolved work when a
+cap is reached; do not restart the budget.
 
 1. **Harness and contract owner:** implement a model-free replay interface with
    immutable inputs, prefix/day boundaries, visible source accounting, explicit
