@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "seed_id": "prospective-search-seed-v1",
+  "selection": "first_neutral_observation_M001",
+  "trigger_observed_at": "2026-11-01T12:14:57Z",
+  "seed_path": ".news/research/live-feasibility/search-seed-v1.json",
+  "seed_sha256": "80f7075a70c55cd87fec2f032fc04f68358ca55c888203c8c1426b4aa89d9114",
+  "source_pin": {
+    "observation_id": "M001",
+    "source_version_id": "SV-08a6af2eae930576",
+    "source_sha256": "08a6af2eae930576b35d2625c08312b436ec619a5fd50e702027d3f783f14017",
+    "observed_at": "2026-10-05T19:34:32.871175+00:00",
+    "published_at_utc": "2026-10-02T14:42:16+00:00",
+    "available_at": "2026-10-05T19:34:32.871175+00:00"
+  },
+  "materialized_source_manifest_pin": {
+    "path": ".news/research/replay-observed-v1.json",
+    "sha256": "c9d02e0d0650ed142a2e8adcff7c474fffa46bd6c0db27e9db603900546c27cb"
+  },
+  "locator_manifest_pin": {
+    "path": "research/replay-fixtures/scorer/observed-capture-locators-v1.json",
+    "sha256": "04db59b171b16bd2e56978bc6f4b0e371c5f949f17ab897c8f715ba2f03eeb15"
+  },
+  "reproduction": "Materialize only the frozen packet pins using materialize_observed.py, select observations[0], retain its exact fields/clocks, and apply the frozen one-boundary coverage envelope in the ignored seed file. Verify seed bytes against this hash; do not glob live archives."
+}

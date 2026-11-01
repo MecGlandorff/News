@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "freeze_id": "source-free-preflight-definitions-v2",
+  "supersedes": "source-free-preflight-definitions-v1",
+  "reason": "Offline retry-capability correction before live execution; v1 retained.",
+  "status": "source_free_definitions_frozen_runner_execution_capsule_and_independent_review_still_required",
+  "files": [
+    {
+      "path": "research/live-feasibility/PREFLIGHT-v2.md",
+      "sha256": "d92bc38d5893e3e75a6d48398607857f241f35c8d5a19ce9b1e5997236e8dd33"
+    },
+    {
+      "path": "research/live-feasibility/preflight-manifest-v2.json",
+      "sha256": "606999732fe0e53088a88ce3dacfcb80d50f0089c4dcd8042d14a8f943573ba3"
+    },
+    {
+      "path": "research/live-feasibility/preflight-backend-plan-v2.json",
+      "sha256": "0c53ef1e56fb3efd1da1748b98d4f2114f13ed88c72e8316c4a8a4a419b88cd5"
+    },
+    {
+      "path": "research/live-feasibility/inputs/preflight-initial-v1.json",
+      "sha256": "b486e2c346b1644faaa09610edbaf3eeadc362041fad3963bb0eb10e2c26df0a"
+    },
+    {
+      "path": "research/live-feasibility/inputs/preflight-diagnostic-v1.json",
+      "sha256": "d06e1ed2c118329c1c6c0f5cca02fd1ff9dd97c7f7b18c84fdf855b58094098e"
+    }
+  ]
+}

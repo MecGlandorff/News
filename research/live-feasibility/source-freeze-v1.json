@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "freeze_id": "tiny-live-source-definitions-v1",
+  "status": "source_only_definitions_frozen_execution_capsules_required",
+  "application_calls_made_by_author": 0,
+  "network_news_calls_made_by_author": 0,
+  "files": [
+    {
+      "path": "research/live-feasibility/RUN-PLAN.md",
+      "sha256": "fd40c150c74f03214eb1ca58b442e1d864ef9ae14b318e4895770aacdc4aabc2"
+    },
+    {
+      "path": "research/live-feasibility/run-plan-v1.json",
+      "sha256": "6f9b4b3bfeb5a8b432a4fb3d24d88b91d5100a160c44f054c68a8a930018a98f"
+    },
+    {
+      "path": "research/live-feasibility/inputs/synthetic-p01-p02-v1.json",
+      "sha256": "78a830df8cd88a1a8b49fd9e279d695d7683c72021d750e9be300201ece6c01d"
+    },
+    {
+      "path": "research/live-feasibility/search-seed-selection-v1.json",
+      "sha256": "543ce849480d6a946c7c4645e48edeceb4b6cafb914337621642ec5f36b03370"
+    },
+    {
+      "path": "research/live-feasibility/scorer/synthetic-expectations-v1.json",
+      "sha256": "610906cc805a3418572f9eeb06b80c4984382d805625d84f8c7181107856b893"
+    },
+    {
+      "path": "research/live-feasibility/scorer/search-seed-expectations-v1.json",
+      "sha256": "8a664bd8cc1e6fa55edec0b71f2a6a182e2df3b96dbd5f9f12f7532bbf0b0ba9"
+    }
+  ]
+}
