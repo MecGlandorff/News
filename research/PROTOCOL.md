@@ -1,34 +1,66 @@
-# News2.0 pre-candidate research protocol v0.1
+# News2.0 pre-candidate research protocol v0.2
 
-Status: **PROPOSED; no measured quality claim and no authorization to run models.**
-This document defines a modest development screen before an application exists.
-This branch depends on bootstrap commit `2033740`; bootstrap PR #58 is open into
-`News2.0`, not merged. Recheck dependency and target state before integration.
-This PR makes zero application model calls and changes no operational system.
+Status: **PROPOSED; no measured quality claim or authorization for application calls.**
+Revision: **2026-11-01**. This direction revision supersedes v0.1's two-candidate
+restriction, future research-agent model requirement and three-arm calibration
+proposal. The [direction record](DIRECTION.md) captures the accepted product
+decisions and finite next offline step. Frozen source inventories, labels, exposure
+records and historical review/model attribution remain unchanged. The inherited
+screening floors below remain proposals, not validated reliability thresholds.
+Bootstrap `2033740` is in local ancestry; that does not establish integration of
+PR #58 into `News2.0`. Verify this dependency and the exact target before merging.
+This revision makes zero application model calls and changes no operational
+system or schedule.
 
 ## 1. Question and scope
 
-Can a small system maintain a coherent, useful daily account of an ongoing matter
-from source evidence, including material changes within an existing occurrence?
-Compare these arms before adding retrieval, incremental repair or orchestration:
+Can a small system provide useful daily developments in the most important new
+and ongoing stories while preserving evidence, uncertainty and continuity?
+Develop these distinct architecture variants in parallel under one contract;
+their selection is a research plan, not an architecture verdict:
 
 | Arm | Required behavior |
 | --- | --- |
 | D: direct | Reconstruct the current story view directly from the visible sources. |
 | E: extract | Extract source-local contributions, then reconstruct from those contributions and their evidence. |
+| I: incremental | Use the same source-local extraction as E; update prior interpretations and automatically detect/repair affected state. |
+| R: retrieve | Use the same source-local extraction as E; retrieve bounded evidence from a source-only index and reconstruct the affected views. |
 | B: baseline | Frozen old rebuild at `bc7b0fb93d3ca34fdb9400d91deb4a627cf96fe9`. |
+
+E is the comparison hub: D/E tests extraction, E/I tests dependence on prior
+interpretations, and E/R tests retrieval limits. Do not combine I and R in this
+batch. Each arm must prevent, detect and repair interpretation errors; rebuilding
+from evidence is itself a possible repair mechanism. No multi-agent application
+architecture or extra analysis/judge call is required by the contract.
+D/E/R reconstruction cannot consume prior story interpretations. A common declared
+delta-comparison interface may read the previous published view after reconstruction;
+keep that access separate so the contrast with I's state dependence is meaningful.
+R indexes the same complete visible corpus, using a frozen source-only query/index
+design; it cannot query previous story summaries or curated case IDs. Cached
+extraction and indexes must preserve each prefix boundary: no future documents,
+later versions, or future-derived index statistics may influence earlier views.
+Retrieval omission does not expire a story. Missing mixed-stream/full-slice corpus
+coverage blocks a live retrieval comparison, not offline interface development.
 
 All arms receive identical immutable source versions, visible prefixes and order.
 Match actual text, truncation and cutoffs, including baseline adapter inputs.
-Use `gpt-6-astra`, medium reasoning, for every application call, including E's
-extraction calls. Freeze prompts, decoding settings and any seeds the API supports.
+Use `gpt-6-astra`, medium reasoning, for every architecture application call,
+including shared extraction, optional analysis and internal validation stages
+(including the frozen baseline's). External semantic judges are evaluation agents:
+use `gpt-6-astra` / xhigh and account for them separately. Freeze prompts, decoding
+settings and any seeds the API supports for both roles.
 Match available evidence and per-arm resource ceilings; count every stage's cost.
 Different call counts are an architectural cost, not a reason to hide extraction.
+Report each arm's standalone cost, charging extraction to every arm that needs it,
+and the actual experiment cost if an identical frozen extraction is shared.
+Count all stages, including optional analysis, judges, failed calls and repair;
+research-agent review remains separately attributed and accounted.
 If B cannot consume the selected evidence without changes, freeze and disclose a
 minimal input adapter separately; unsupported capabilities count as failures.
 Do not quietly improve B, import its code into candidates or treat B as truth.
-All delegated research, implementation, evaluation and review uses
-`gpt-6.1-sol` with high reasoning. Research-agent work is separate from app calls.
+All future research, implementation, labeling, evaluation and review agents use
+`gpt-6-astra` with xhigh reasoning. Preserve historical Sol attribution.
+Research-agent work is separate from application model choice and calls.
 
 ## 2. Reader and representation contract
 
@@ -37,6 +69,15 @@ supported, today's material additions, exact supporting evidence and uncertainty
 A daily delta distinguishes a new occurrence from a material new fact about the
 same occurrence. A new publication, rewritten summary or processing repair alone
 does not constitute fresh news. Quiet days may correctly have no delta.
+Prioritize meaningful developments in important new and ongoing stories. Extended
+analysis appears under a separate heading and is read-only with respect to factual
+state, accepted relationships and delta membership; analysis alone creates no news.
+Assess importance/relevance as a reader preference within the frozen observed
+source window. Source counts or model rankings do not establish objective world
+importance; disclose missing coverage. Evaluate both canonical facts/deltas and
+the rendered briefing, including whether analysis implies unsupported facts.
+Assess the first 30–90 days once suitable observed coverage exists. This is no
+fixed expiry for stories, evidence, unresolved questions or late relationships.
 
 Before model experiments, demonstrate expressibility with hand-authored fixtures:
 
@@ -44,6 +85,8 @@ Before model experiments, demonstrate expressibility with hand-authored fixtures
   Context, an unresolved relation or a question need not invent an occurrence.
 - Occurrences and ongoing stories have separate identities. Shared entities or a
   topic alone do not justify merging matters; one source can concern several.
+  Merge when evidence supports it; display uncertain links as possible
+  relationships, keeping them distinct from accepted story membership.
 - Contributions retain attribution, source version and exact evidence spans.
   Publication, occurrence, observed capture and processing times remain distinct.
 - Material new facts can update an existing occurrence without fabricating another.
@@ -92,8 +135,11 @@ observed and editorial reconstruction respectively; preserve the mode in exports
 Existing archives have already been exposed and are development material, never
 holdout. Their 34 daily files do not prove 34 actual available-at days because of
 backfill; the frozen development subset uses the original six capture dates.
-New October 23 polls 7/8 are excluded and unassessed/reserved for a future exposure
-and provenance audit, not holdout. Inventory must substantiate chronology claims.
+At the original inventory audit, October 23 polls 7/8 were excluded and reserved
+for a future exposure/provenance audit, not holdout. All later polls also remain
+outside the frozen casebook unless explicitly selected in a new version. A larger
+archive count alone establishes neither coverage nor evaluation sufficiency.
+Inventory must substantiate chronology claims.
 Do not relabel publication dates as capture dates.
 Do not pool modes to claim online performance or 30/60/90-day reliability. Historical
 long-gap cases establish only behavior under their documented evidence and gaps.
@@ -120,7 +166,7 @@ Within each appropriate clock stratum, label in global chronological order; cura
 diagnostics may instead use fresh isolated case contexts, with cross-case links
 adjudicated separately before mixed-stream scoring. Retained labels exposed to
 related future evidence are ineligible; replacement requires fresh labelers and
-separate adjudication. Current v0.1 does not establish global clock blindness.
+separate adjudication. The current reference does not establish global clock blindness.
 
 Keep shared provenance, chronology, exposure, source sufficiency and source lists
 in the versioned inventory/prefix manifest rather than copying them into every label.
@@ -183,6 +229,8 @@ membership, stale correction and omitted contribution. Use the same visible sour
 prefix, log the contamination, and require automatic repair without manual IDs or
 patched outputs. Verify all affected views, links, deltas and source accounting,
 not merely removal of the planted item. Reference is fresh prefix reconstruction.
+Freeze detection/repair policy before the run; the tested policy receives no seeded
+defect IDs, locations or expected repairs. Those belong only to the fixture/scorer.
 Affected contaminated views stay visibly pending until repaired before the next
 affected daily view activates and within 24 hours of declared replay time; record
 repair latency in replay and processing wall time. Passing a cutoff unrepaired fails.
@@ -196,7 +244,7 @@ Twelve case bundles are not twelve independent trajectories (nor eleven after
 subtracting one overlap): a bundle may contain multiple matters, and one matter
 may span bundles. A reviewed semantic/statistical dependency-cluster map is required
 before minimum-trajectory gates or clustered intervals; use its independent units,
-not packet counts. Unknown background dependence stays explicit. Current v0.1 has
+not packet counts. Unknown background dependence stays explicit. Current research has
 no claimed complete cluster map; the corresponding gates remain unestablished.
 Do not inflate sample size by counting repeated prefixes or n-squared negative
 pairs as independent observations. Cluster uncertainty by trajectory; report a
@@ -225,6 +273,22 @@ Every emitted false merge enters accepted-link error and affected-story/trajecto
 counts and the gate, even outside predeclared relations. A useful daily result must
 identify the matter, previous support, material addition, evidence and uncertainty;
 independent output reviewers record which required reader element is missing.
+Model-authored labels and semantic reviews are fallible, potentially correlated
+interpretations. Keep deterministic integrity checks separate from source-grounded
+semantic judgments and human source/product review. Review emitted claims and
+sample un-emitted sources for missed developments; retain disagreement and
+unscorable results, and report how disputed interpretations could change a
+comparison. Another model or model
+majority does not replace human review or establish truth. Optional later human
+sampling does not gate ordinary offline harness, fixture or audit work.
+Calibrate semantic judges with independently checked wrong-entity, number,
+attribution, future-evidence, uncertainty, novelty, omission and causal-inference
+probes plus valid paraphrases. Check sensitivity to arm labels, order and verbosity
+under the scoring procedure. LLM-authored probes alone are not independently
+verified truth; disclose how expected judgments were checked. Audit unanimous
+passes too: disagreement rate alone cannot reveal shared mistakes. Human samples
+can assess source-only importance/sufficiency before output exposure, then blinded
+output usefulness across arms and omissions; their size remains to be frozen.
 Report end-to-end prefixes completed, failed/rejected/pending counts, oldest pending
 age in observed time and processing time, schema failures and recovery attempts.
 Record per call/stage/arm and aggregate: input/output/cached/reasoning tokens where
@@ -271,26 +335,60 @@ never select favorable complete pairs or impute perfect precision to empty outpu
 Undefined precision/link rates cannot pass a paired gate. If B's rate is undefined,
 superiority on that metric is unestablished, even if a candidate passes absolute floors.
 Report paired differences and clustered intervals, including intervals spanning zero;
-do not call an uncertain improvement established superiority. Compare D versus E
-on the same metrics and cost; if neither meets every gate, retain neither. Ties or
+do not call an uncertain improvement established superiority. Compare D/E, E/I and
+E/R on the same metrics and standalone cost; select no winner from this plan alone.
+If no candidate meets every applicable gate, promote none. Ties or
 uncertain tradeoffs favor no promotion, not selective metric weighting after results.
 
-## 8. Bounded calibration, stop rules and later gates
+## 8. Offline prerequisites, bounded calibration and later gates
 
-First record a separate bounded calibration plan on two development trajectories,
-three prefixes each, at most one newly visible source version per prefix. Freeze
-selection before outputs. Run D, E and B once; no retries until acceptance. The
-following limits include failed calls and recovery, not extra hidden allowances:
+The next batch is the finite offline harness, fixture and audit work in
+[DIRECTION.md](DIRECTION.md), with zero application model calls. The v0.1 budget
+for D/E/B is superseded; do not silently multiply it for the expanded roster.
+After offline prerequisites and candidate adapters exist, freeze one small
+feasibility screen for D/E/I/R/B before proposing larger parallel comparisons.
+Its actual selected inputs, prompts, versions and numeric budget must be known
+before any application calls. An unfilled plan is not a runnable experiment.
 
-- Per arm: hard limit 12 application calls; stop thresholds 240,000 input tokens,
-  24,000 output tokens and 30 model-active minutes; cancel calls at 120 seconds.
-- Across all three arms: hard limit 36 application calls; stop thresholds 720,000
-  input tokens, 72,000 output tokens and 90 model-active minutes. Reserve within limits
-  up to two calls per arm for failure diagnosis/recovery; unused reserve stays unused.
-- Total work: at most six active agent-hours including preparation (two), execution
-  (two), and review/recovery (two), and one elapsed working day. Log actual time;
-  stop if any stage or total cap is reached. Existing protocol/casebook authoring
-  is reported separately from the later calibration, not charged as zero usage.
+Proposed ceiling for that first screen: two mixed development streams with two
+cutoffs each, all five arms once, yielding 20 scheduled views. Select and freeze
+the streams/cutoffs after the corpus audit. This tests feasibility, not complete-day
+usefulness, long-run quality or the Section 7 denominator gates. The ceilings below
+include failed attempts and any explicitly reserved recovery; they are not grants
+to consume unused calls or substitutes for an actual stage-by-stage schedule.
+
+| Budget | Calls | Input / output tokens | Model-active time |
+| --- | --- | --- | --- |
+| Each application arm | ≤18, including ≤2 reserved recovery calls | ≤360,000 / 36,000 | ≤45 minutes |
+| All five arms, standalone attributed ceiling | ≤90 | ≤1,800,000 / 180,000 | ≤225 minutes |
+| External evaluation judges, including calibration/probes and recovery review | ≤40 | ≤800,000 / 80,000 | ≤120 minutes |
+| Combined actual calls, including external judges | ≤130 | ≤2,600,000 / 260,000 | ≤345 minutes |
+
+The proposed judge allocation is 15 calibration/perturbation calls (eight failure
+types, one valid-paraphrase control and three paired arm-label/order/verbosity
+checks), 20 view assessments and five recovery assessments. Exact probe inputs,
+independently checked expectations, scoring procedure and scheduled recovery
+fixtures still require a freeze. If their actual task cannot fit, report the
+limitation rather than granting extra calls or weakening calibration silently.
+
+Cancel each call at 120 seconds; actual remaining stage and total limits still
+apply. Charge shared extraction to each relevant arm for standalone feasibility
+and count its actual execution once in the combined actual ledger. Default to no
+automatic retries; a failed call uses budget, and at most the predeclared reserved
+recovery calls may follow. A design that cannot fit must report that result; do not
+silently drop stages, evidence or arms. Numeric wall-time and research-agent work
+caps, exact judge tasks and enforceable per-call token limits must be filled in
+the reviewed manifest before this proposal is runnable.
+
+The live manifest must enumerate scheduled calls and per-stage/per-arm/total
+ceilings for input/output tokens, model-active time, wall time and failures,
+including preparation, optional analysis, judging, review and repair. Declare
+per-call output/time bounds, any permitted recovery calls within those ceilings,
+the number of trials, and a finite research-agent time budget. Default to one
+trial and zero retries; any additional attempt must already be in the manifest.
+Show both standalone per-arm costs and the actual cost of shared extraction.
+Freeze execution order, stops, accounting and paired reporting before outputs;
+independent review checks the plan's completeness without making the judge truth.
 
 Check remaining tokens/time before each call. Token thresholds are hard ceilings
 only when input counting and backend per-call output bounds are enforceable; otherwise

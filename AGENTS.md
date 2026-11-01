@@ -7,8 +7,10 @@ from an older checkout or a tool's remembered default.
 
 ## Research and implementation
 
-- Use `gpt-6.1-sol` with high reasoning for all delegated research,
-  implementation, evaluation and review.
+- Use `gpt-6-astra` with xhigh reasoning for all future research,
+  implementation, labeling, evaluation and review agents. Preserve historical model
+  attribution. Application comparisons separately retain `gpt-6-astra` / medium
+  unless a frozen run plan explicitly varies model choice.
   Delegate independent source labeling, architecture experiments and critical
   review. A candidate's author must not be its only reviewer.
 - Use separate worktrees. Treat the previous implementation and its production
@@ -19,8 +21,14 @@ from an older checkout or a tool's remembered default.
 - Fix inputs, model settings, ordering and resource accounting for comparisons.
   Keep source-quality and model-choice experiments distinct from architecture
   comparisons. Do not promote a change on selected positive matches alone.
-- Follow the proposed pre-candidate [research protocol](research/PROTOCOL.md).
-  It authorizes no model runs; freeze a separately bounded run plan first.
+  Shared extraction caches and retrieval indexes must be prefix-safe, including
+  source versions and index statistics; future information cannot enter an earlier
+  view. External semantic judging uses Astra/xhigh and has separate accounting.
+- Follow the [research direction](research/DIRECTION.md) and proposed
+  pre-candidate [research protocol](research/PROTOCOL.md). Develop distinct
+  architecture variants in parallel; neither a favored design nor model-reviewer
+  agreement establishes a winner. These documents authorize no application model
+  runs; freeze a separately bounded run plan first.
 - Establish finite live-run budgets before launching calls. Count preparation,
   review, failed attempts and recovery; unknown usage is unknown, never zero.
   Never keep retrying until a reviewer happens to accept a proposal.
@@ -36,11 +44,18 @@ from an older checkout or a tool's remembered default.
   evidence is insufficient. Do not force every article into an occurrence.
 - Preserve original source versions, observations and prior interpretations.
   Automatic repairs must produce auditable revisions or replacement views.
+- Merge when source evidence supports the relationship. Represent uncertain
+  connections visibly as possible relationships, without treating them as accepted
+  membership or suppressing supported developments.
 - Never manually patch story/event assignments, databases, generated briefings
   or replay decisions. Do not hardcode article, name or story-ID exceptions.
 - Demonstrate prevention on the original frozen failure and automatic recovery
   from contaminated history. A renamed story, a skipped item or an emptied queue
   is not evidence of semantic repair.
+- Prevent, detect and repair interpretation errors automatically. A model judge
+  is fallible; retain disagreements and source evidence, and check omissions as
+  well as accepted output. Human source/product review cannot be replaced by
+  another model or a majority of models.
 - Test late evidence and long gaps without leaking future information into an
   earlier decision. Later source corrections and earlier avoidable mistakes are
   distinct evaluation cases.

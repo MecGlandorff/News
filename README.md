@@ -9,19 +9,26 @@ rebuild at [`bc7b0fb`](https://github.com/MecGlandorff/News/tree/bc7b0fb93d3ca34
 is a frozen comparison baseline. Its code, databases and outputs are not a new
 implementation or evaluation truth. The empty starting commit retains common
 Git ancestry so a later transition to the permanent main branch remains possible.
-This research change depends on bootstrap PR #58 into `News2.0`; that PR was
-still open when the protocol was prepared. Integrate the bootstrap first.
+Bootstrap commit `2033740` is in this branch's ancestry. Integration still depends
+on bootstrap PR #58 reaching `News2.0`; verify that dependency and the exact target
+before merging subsequent research changes.
 
 ## What the system must explain
 
-For an ongoing matter, show what was previously supported, what new evidence
-adds, the supporting sources, and what remains uncertain. A new article alone
-does not establish a meaningful change.
+The daily briefing chiefly presents meaningful developments in the most important
+new and ongoing stories. For each matter, show what was previously supported,
+what new evidence adds, the supporting sources, and what remains uncertain.
+A new article alone does not establish a meaningful change. Extended analysis
+belongs under a separate heading, with evidence and interpretation distinguishable.
+Importance is a reader preference assessed within the observed source window,
+not objective world importance inferred from source counts; disclose missing coverage.
 
 - One document may support zero or several distinct observations. A digest must
   not force unrelated matters into one event or story.
 - Separate a real-world occurrence from the broader story it belongs to.
   Shared people, places or topics alone do not establish that relationship.
+- Merge when the evidence supports it; display uncertain connections as possible
+  relationships. Useful coverage must not depend on resolving every relationship.
 - Represent new occurrences, material new facts about an existing occurrence,
   explicit corrections, unresolved disagreement and answered questions.
 - Preserve attribution, exact evidence and uncertainty. Publication, capture,
@@ -32,6 +39,9 @@ does not establish a meaningful change.
   interpretation. Regenerated wording is not fresh news.
 - Keep acquisition independent of processing failures. Uncertain work must stay
   visible without indefinitely blocking unrelated useful work or hiding omissions.
+- Assess initial behavior across the first 30–90 days of suitable observed evidence.
+  This is an assessment horizon, not a story expiry: old stories, evidence and
+  unresolved questions remain available, and late developments can reconnect them.
 
 ## Research sequence
 
@@ -45,15 +55,16 @@ does not establish a meaningful change.
    Build replay and accounting around immutable inputs and explicit observation
    order. Synthetic stress and historical data with uncertain capture dates must
    be reported separately from authentic online evidence.
-3. **Two minimal candidates.** Compare direct reconstruction of a story view from
-   source evidence with source-local observation extraction followed by story
-   reconstruction. Retain the frozen rebuild as a control. Use matched source
-   inputs and model settings; do not improve evidence for only one arm.
+3. **Parallel architecture variants.** Develop more than two distinct approaches
+   to representation, linking and recovery under the common reader contract.
+   The [direction record](research/DIRECTION.md) defines the bounded next batch.
+   Retain direct reconstruction as a reference and the frozen rebuild as a control;
+   match source evidence, model settings and declared resource ceilings.
 4. **Evaluation and recovery.** Replay complete trajectories, including quiet
    gaps, competing matters, corrections and multi-matter sources. Preserve failed
-   trials and repeat trials for variability. Fresh-generation reconstruction is
-   the recovery reference; incremental updates and selective repair must earn
-   their added complexity through measured benefits.
+   trials and predeclared repeats for variability. Measure automatic prevention,
+   detection and repair; compare recovery against fresh prefix reconstruction.
+   Every additional component must earn its complexity through measured benefit.
 5. **Prospective use.** Validate unattended capture, processing and recovery on
    newly observed sources. Claims about 30/60/90-day evolution require suitable
    source-supported trajectories and declared coverage gaps, not shifted dates.
@@ -63,10 +74,11 @@ it adds no news pipeline. Calibrate cost on a small development slice before
 budgeting larger replays. Record finite call, token and runtime ceilings
 for every live experiment, including preparation, rejected calls and recovery.
 
-The [pre-candidate protocol v0.1](research/PROTOCOL.md) proposes source-only labels,
-prefix replay, finite screening floors and a bounded calibration design. It is a
-development proposal, not measured quality or authorization for live model calls;
-holdout and prospective promotion gates remain pending. The
+The [pre-candidate protocol v0.2](research/PROTOCOL.md) records the November 1
+direction revision and retains source-only labels, prefix replay and proposed
+finite screening floors. It is a development proposal, not measured quality or
+authorization for live model calls; holdout and prospective promotion gates remain
+pending. The
 [development casebook](research/CASEBOOK.md) documents source provenance,
 chronology limits, local rehydration and the independent-labeling boundary.
 The [labeling reference](research/LABELING.md) records completed adjudication and
@@ -91,11 +103,19 @@ Better than the old baseline is insufficient on its own. Advance a candidate onl
 when it meets the predeclared absolute floors, passes the relevant regressions,
 and has independent review of correctness, narrative usefulness and simplicity.
 Agent agreement and small perfect matching samples are not reliability estimates.
+Model judges can share errors with candidates and source labelers. Deterministic
+integrity checks, source-grounded semantic review, disagreement records and later
+human source/product sampling answer different questions; none substitutes for
+the others. Optional human sampling is not an approval gate for ordinary offline
+work, and another model or model majority is not human validation.
 
-All delegated research, implementation, evaluation and review uses `gpt-6.1-sol`
-with high reasoning. Production model choice is a
-separate experiment: comparisons initially retain the baseline's `gpt-6-astra` /
-medium configuration unless the protocol explicitly declares a model comparison.
+All future research, implementation, labeling, evaluation and review agents use
+`gpt-6-astra` with xhigh reasoning. Historical Sol work remains attributed as
+performed. Production model choice is a separate experiment: comparisons initially
+retain the baseline's `gpt-6-astra` / medium configuration unless the protocol
+explicitly declares a model comparison.
+External semantic judges are evaluation agents and use Astra/xhigh, with their
+calls and costs recorded separately from each application arm.
 The number of research agents does not prescribe the number of production calls.
 
 ## Contributing
