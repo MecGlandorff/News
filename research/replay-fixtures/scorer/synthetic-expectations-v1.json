@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "fixture_id": "synthetic-mixed-v1",
+  "visibility": "SCORER_ONLY; never pass this document or its fields to candidates",
+  "author": "gpt-6-astra / xhigh, independent fixture author",
+  "status": "Pre-output synthetic contract controls; not source truth, human-verified gold, or model quality evidence.",
+  "source_cardinality": {
+    "R001": {
+      "min": 1
+    },
+    "R002": {
+      "max": 0,
+      "disposition": "unassigned_or_pending_with_insufficiency_reason"
+    },
+    "R003": {
+      "min": 2,
+      "matters_must_remain_distinct": true
+    }
+  },
+  "prefix_expectations": [
+    {
+      "prefix_id": "P01",
+      "required": [
+        "Attribute Vale closure and initial 12-bolt count to the Board.",
+        "Keep the cause and reopening date unresolved.",
+        "Preserve museum and transit contributions separately despite the shared Alder name."
+      ],
+      "prohibited": [
+        "Invent a contribution from R002 beyond evidence insufficiency.",
+        "Merge museum or transit with the bridge closure on shared words alone."
+      ]
+    },
+    {
+      "prefix_id": "P02",
+      "required": [
+        "Retain R004 as a separate observation of V001.",
+        "Account for the repeat without a new-news delta."
+      ],
+      "prohibited": [
+        "Treat repetition alone as a material new development."
+      ]
+    },
+    {
+      "prefix_id": "P03",
+      "required": [
+        "Represent corrosion as a material fact about the existing Vale closure.",
+        "Represent Quarry as a distinct closure occurrence.",
+        "Preserve an explicitly possible shared-supplier relationship without accepted joint membership."
+      ],
+      "prohibited": [
+        "Treat possible supplier connection as established.",
+        "Close the corrosion-cause or reopening questions without evidence."
+      ]
+    },
+    {
+      "prefix_id": "P04",
+      "required": [
+        "Preserve the original count and its source history while marking the later correction to 2.",
+        "Attribute the correction to R007; distinguish source correction from system repair.",
+        "Retain the corrosion finding and separate Quarry occurrence."
+      ],
+      "prohibited": [
+        "Silently replace archived R001/R004 source text.",
+        "Present the correction as a new closure occurrence."
+      ]
+    },
+    {
+      "prefix_id": "P05",
+      "required": [
+        "Add the unrelated library development without expiring the bridge evidence or open questions after 30 elapsed days."
+      ],
+      "prohibited": [
+        "Treat missing coverage as proof of no developments."
+      ]
+    },
+    {
+      "prefix_id": "P06",
+      "required": [
+        "Retain bridge evidence and unresolved questions after 60 elapsed days.",
+        "Produce no fresh-news delta solely from elapsed time."
+      ],
+      "prohibited": [
+        "Close questions due to silence or elapsed time."
+      ]
+    },
+    {
+      "prefix_id": "P07",
+      "required": [
+        "Reconnect the Vale reopening to its preserved history after 90 elapsed days.",
+        "Accept the shared-batch relationship only after R009 becomes visible.",
+        "Keep Quarry reopening unknown."
+      ],
+      "prohibited": [
+        "Retroactively claim the shared-batch relationship was established at P03.",
+        "Infer that Quarry reopened because Vale did."
+      ]
+    }
+  ],
+  "repair_contract": {
+    "injection_prefix": "P04",
+    "seeded_defects": [
+      "Unsupported accepted membership joining the museum and Vale closure.",
+      "Lost transit contribution from the multi-matter R003.",
+      "Stale 12-bolt count treated as current after R007.",
+      "R002 marked processed without contribution or insufficiency reason.",
+      "Open bridge questions silently marked closed due to elapsed time."
+    ],
+    "expected_repairs": [
+      "Remove unsupported membership while retaining legitimate museum and Vale contributions.",
+      "Restore supported transit contribution and R003 accounting.",
+      "Expose the corrected current count with source-correction provenance and retain old view.",
+      "Restore honest unassigned or pending status for R002.",
+      "Restore unresolved questions unless evidence supports their closure."
+    ],
+    "invariants": [
+      "Original sources and pre-repair state remain immutable.",
+      "Replacement state is versioned and linked to the superseded state.",
+      "Processing repair alone creates no fresh-news delta."
+    ],
+    "evidence_limit": "A scripted response satisfying this contract demonstrates harness mechanics only; it does not demonstrate automatic semantic detection or recovery."
+  },
+  "analysis_contract": {
+    "allowed": "Expanded separate analysis with explicit uncertainty and links to visible evidence.",
+    "prohibited": "Changing contributions, accepted membership, delta membership or question status through analysis text."
+  }
+}

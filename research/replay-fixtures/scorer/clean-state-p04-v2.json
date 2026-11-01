@@ -1,0 +1,275 @@
+{
+  "schema_version": 1,
+  "contributions": [
+    {
+      "id": "K01",
+      "kind": "new_occurrence",
+      "claim": "The Board closed Vale bridge on January 1 and initially reported 12 loose bolts.",
+      "attribution": "Invented civic wire",
+      "source_spans": [
+        {
+          "observation_id": "R001",
+          "source_version_id": "V001",
+          "field": "text",
+          "start": 0,
+          "end": 96,
+          "quote": "The Alder Works Board closed Vale footbridge on January 1 after inspectors found 12 loose bolts."
+        },
+        {
+          "observation_id": "R004",
+          "source_version_id": "V001",
+          "field": "text",
+          "start": 0,
+          "end": 96,
+          "quote": "The Alder Works Board closed Vale footbridge on January 1 after inspectors found 12 loose bolts."
+        }
+      ],
+      "occurrence_id": "E01",
+      "story_id": "T01",
+      "uncertainty": []
+    },
+    {
+      "id": "K02",
+      "kind": "new_occurrence",
+      "claim": "Alder Museum opened a pottery wing.",
+      "attribution": "Invented civic wire",
+      "source_spans": [
+        {
+          "observation_id": "R003",
+          "source_version_id": "V003",
+          "field": "text",
+          "start": 0,
+          "end": 48,
+          "quote": "Alder Museum opened a pottery wing on January 1."
+        }
+      ],
+      "occurrence_id": "E02",
+      "story_id": "T02",
+      "uncertainty": []
+    },
+    {
+      "id": "K03",
+      "kind": "new_occurrence",
+      "claim": "Birch Transit extended tram service to 23:00.",
+      "attribution": "Invented civic wire",
+      "source_spans": [
+        {
+          "observation_id": "R003",
+          "source_version_id": "V003",
+          "field": "text",
+          "start": 49,
+          "end": 121,
+          "quote": "Separately, Birch Transit extended tram service to 23:00 from January 1."
+        }
+      ],
+      "occurrence_id": "E03",
+      "story_id": "T03",
+      "uncertainty": []
+    },
+    {
+      "id": "K04",
+      "kind": "same_occurrence_material_fact",
+      "claim": "The Board reported corrosion around Vale bridge bolts; the original closure continued.",
+      "attribution": "Invented civic wire",
+      "source_spans": [
+        {
+          "observation_id": "R005",
+          "source_version_id": "V005",
+          "field": "text",
+          "start": 0,
+          "end": 148,
+          "quote": "The Alder Works Board said on January 3 that corrosion was found around the loose bolts at Vale footbridge. The January 1 closure remained in force."
+        }
+      ],
+      "occurrence_id": "E01",
+      "story_id": "T01",
+      "uncertainty": [
+        "The origin of the corrosion and reopening date remain unknown."
+      ]
+    },
+    {
+      "id": "K05",
+      "kind": "new_occurrence",
+      "claim": "Westvale Council closed Quarry bridge after corrosion was found.",
+      "attribution": "Invented civic wire",
+      "source_spans": [
+        {
+          "observation_id": "R006",
+          "source_version_id": "V006",
+          "field": "text",
+          "start": 0,
+          "end": 94,
+          "quote": "Westvale Council closed Quarry footbridge on January 3 after corrosion was found on its bolts."
+        }
+      ],
+      "occurrence_id": "E04",
+      "story_id": "T04",
+      "uncertainty": []
+    },
+    {
+      "id": "K06",
+      "kind": "source_correction",
+      "claim": "The Board corrected the January 1 Vale count from 12 loose bolts to 2.",
+      "attribution": "Invented civic wire",
+      "source_spans": [
+        {
+          "observation_id": "R007",
+          "source_version_id": "V007",
+          "field": "text",
+          "start": 0,
+          "end": 159,
+          "quote": "Correction from the Alder Works Board on January 4: its January 1 closure notice should have said 2 loose bolts, not 12. The correction changes the count only."
+        }
+      ],
+      "occurrence_id": "E01",
+      "story_id": "T01",
+      "uncertainty": []
+    }
+  ],
+  "relations": [
+    {
+      "from": "T01",
+      "to": "T04",
+      "type": "shared_supplier",
+      "status": "possible",
+      "source_spans": [
+        {
+          "observation_id": "R006",
+          "source_version_id": "V006",
+          "field": "text",
+          "start": 95,
+          "end": 242,
+          "quote": "Engineers were checking whether the bolts shared a supplier with those at Vale footbridge. No shared supplier or common cause had been established."
+        }
+      ]
+    },
+    {
+      "from": "K06",
+      "to": "K01",
+      "type": "corrects_count",
+      "status": "accepted",
+      "source_spans": [
+        {
+          "observation_id": "R007",
+          "source_version_id": "V007",
+          "field": "text",
+          "start": 0,
+          "end": 159,
+          "quote": "Correction from the Alder Works Board on January 4: its January 1 closure notice should have said 2 loose bolts, not 12. The correction changes the count only."
+        }
+      ]
+    }
+  ],
+  "source_accounting": [
+    {
+      "observation_id": "R001",
+      "status": "processed",
+      "contribution_ids": [
+        "K01"
+      ],
+      "reason": null
+    },
+    {
+      "observation_id": "R002",
+      "status": "unassigned",
+      "contribution_ids": [],
+      "reason": "Only a generic title is present; no supported development."
+    },
+    {
+      "observation_id": "R003",
+      "status": "processed",
+      "contribution_ids": [
+        "K02",
+        "K03"
+      ],
+      "reason": null
+    },
+    {
+      "observation_id": "R004",
+      "status": "processed",
+      "contribution_ids": [
+        "K01"
+      ],
+      "reason": null
+    },
+    {
+      "observation_id": "R005",
+      "status": "processed",
+      "contribution_ids": [
+        "K04"
+      ],
+      "reason": null
+    },
+    {
+      "observation_id": "R006",
+      "status": "processed",
+      "contribution_ids": [
+        "K05"
+      ],
+      "reason": null
+    },
+    {
+      "observation_id": "R007",
+      "status": "processed",
+      "contribution_ids": [
+        "K06"
+      ],
+      "reason": null
+    }
+  ],
+  "deltas": [
+    {
+      "kind": "source_correction",
+      "contribution_ids": [
+        "K06"
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "id": "Q01",
+      "status": "open",
+      "claim": "What caused the corrosion at Vale bridge?",
+      "source_spans": [
+        {
+          "observation_id": "R005",
+          "source_version_id": "V005",
+          "field": "text",
+          "start": 149,
+          "end": 215,
+          "quote": "The source of the corrosion and a reopening date remained unknown."
+        }
+      ],
+      "closure_reason": null
+    },
+    {
+      "id": "Q02",
+      "status": "open",
+      "claim": "When will Vale bridge reopen?",
+      "source_spans": [
+        {
+          "observation_id": "R005",
+          "source_version_id": "V005",
+          "field": "text",
+          "start": 149,
+          "end": 215,
+          "quote": "The source of the corrosion and a reopening date remained unknown."
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "analysis": [
+    {
+      "text": "The supplier inquiry could connect the closures, but a shared supplier or common cause is not established.",
+      "evidence_contribution_ids": [
+        "K04",
+        "K05"
+      ]
+    }
+  ],
+  "repair": {
+    "reason": null,
+    "supersedes": null
+  }
+}
