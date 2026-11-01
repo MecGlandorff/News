@@ -1,0 +1,11 @@
+{
+  "cases": 12,
+  "cases_digest": "74f7bc8951410571eaf35fc7f84f543d2945772cff5002d242baa80de98fd65b",
+  "frozen_on": "2026-10-23",
+  "observations": 49,
+  "observations_digest": "2462400f17c7fa6f8aa32393ac8308835b36b9f6722a7c61e39f066d41336087",
+  "packet_digest": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "prefixes": 37,
+  "schema_version": 1,
+  "source_versions": 46
+}

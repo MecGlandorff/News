@@ -1,0 +1,82 @@
+{
+  "case_id": "C10",
+  "prefix_id": "C10-p01",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C10-c1",
+      "kind": "source_correction",
+      "claim": "Province South Holland wrongly announced its first wolf sighting; reporter supplied wrong location and actually saw the animal in Limburg.",
+      "source_spans": [
+        {
+          "observation_id": "O042",
+          "field": "description",
+          "start": 0,
+          "end": 287
+        }
+      ],
+      "attribution": "Telegraaf reporting provincial mistake",
+      "occurrence_ref": "C10-mislocated-wolf-report",
+      "story_ref": "C10-south-holland-wolf-report",
+      "materiality": "high",
+      "uncertainty": "Source explicitly describes corrected earlier report; original announcement not independently visible in prefix."
+    }
+  ],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C10-c1"
+      ],
+      "status": "required",
+      "reason": "Explicit source correction is initial available fact; no first South Holland sighting should be asserted."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "No seeded application state: this is source-described correction, not inferred repair of system interpretation. Publication-order simulation may contain revised/backfilled versions with unknown authentic availability.",
+    "Original erroneous provincial announcement is absent; source report describes its correction. No application-state repair is evidenced."
+  ],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:C10-wolf-correction",
+        "B:C10-c1"
+      ],
+      "decision": "Require explicit source-described correction, not a first South Holland wolf sighting.",
+      "reason": "O042 directly calls earlier provincial announcement erroneous and explains location error."
+    },
+    {
+      "label_refs": [
+        "A:C10-sighting-location",
+        "B:questions(empty)"
+      ],
+      "decision": "Do not add a separate question-answer denominator; corrected location is already required.",
+      "reason": "No earlier open question in visible prefix; source explicitly supplies correction, not an observed question lifecycle."
+    }
+  ],
+  "chronology_mode": "publication_order_simulation",
+  "checkpoint_at": "2026-05-08T15:09:39+00:00",
+  "source_packet_sha256": "1f935075f8e1ac9d0828541127c72cba494ac1575d88acc08e08f846d97e7482",
+  "visible_observation_ids": [
+    "O042"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "aa49d4b5010d272726d6c2e9b308e90b94459abf104ffc68b3037e0824b26a6d",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "55636b72bc9489a038f5bef001ffec7913c2e193e06ed35c5fc363d1f62486c6",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:57:30.557900+00:00"
+}

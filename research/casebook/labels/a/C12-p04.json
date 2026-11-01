@@ -1,0 +1,102 @@
+{
+  "case_id": "C12",
+  "prefix_id": "C12-p04",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C12-dela-rosa-refuge",
+      "kind": "new_occurrence",
+      "claim": "Former police chief Ronald dela Rosa, described as Rodrigo Duterte ally wanted by ICC, fled government agents and sheltered in Senate offices; he says agents seek to take him to The Hague.",
+      "source_spans": [
+        {
+          "observation_id": "O049",
+          "field": "title",
+          "start": 0,
+          "end": 89
+        },
+        {
+          "observation_id": "O049",
+          "field": "description",
+          "start": 208,
+          "end": 393
+        },
+        {
+          "observation_id": "O049",
+          "field": "description",
+          "start": 401,
+          "end": 468
+        }
+      ],
+      "attribution": "Guardian and dela Rosa livestream",
+      "occurrence_ref": "C12-dela-rosa-flight",
+      "story_ref": "C12-dela-rosa-icc",
+      "uncertainty": "No warrant grounds, formal arrest outcome or exact relationship to Rodrigo's charges supplied.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [
+    {
+      "from": "C12-dela-rosa-icc",
+      "to": "C12-duterte-icc-case",
+      "type": "same_story",
+      "status": "allowed",
+      "reason": "Source directly identifies Rodrigo alliance and ICC pursuit, supporting broader related coverage; same proceeding/charges not established.",
+      "source_spans": [
+        {
+          "observation_id": "O049",
+          "field": "title",
+          "start": 24,
+          "end": 50
+        }
+      ]
+    },
+    {
+      "from": "C12-dela-rosa-flight",
+      "to": "C12-charge-confirmation",
+      "type": "same_occurrence",
+      "status": "prohibited",
+      "reason": "Different person and procedural action; refuge/flight is not Rodrigo's charge-confirmation hearing.",
+      "source_spans": [
+        {
+          "observation_id": "O049",
+          "field": "description",
+          "start": 23,
+          "end": 39
+        }
+      ]
+    },
+    {
+      "from": "C12-dela-rosa-icc",
+      "to": "C12-sara-impeachment",
+      "type": "same_story",
+      "status": "uncertain",
+      "reason": "Shared Senate setting and Duterte associations do not explicitly connect this ICC pursuit to Sara's impeachment.",
+      "source_spans": [
+        {
+          "observation_id": "O049",
+          "field": "description",
+          "start": 178,
+          "end": 206
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C12-dela-rosa-refuge"
+      ],
+      "status": "required",
+      "reason": "A distinct ICC-related pursuit/refuge occurrence is materially new; avoid treating all Duterte stories as a single identity."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Publication-order simulation: authentic availability unknown. Excerpt does not establish dela Rosa's guilt, formal arrest, or shared indictment with Rodrigo."
+  ],
+  "adjudication_status": "unadjudicated"
+}

@@ -1,0 +1,108 @@
+{
+  "case_id": "C08",
+  "prefix_id": "C08-p02",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C08-c1",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Indian pilot gives an account of surviving a Flydubai cockpit attack, saying he fought for his life.",
+      "source_spans": [
+        {
+          "observation_id": "O031",
+          "field": "title",
+          "start": 0,
+          "end": 89
+        }
+      ],
+      "attribution": "Pilot quoted in Guardian headline",
+      "occurrence_ref": "C08-flydubai-cockpit-attack",
+      "story_ref": "C08-flydubai-attack",
+      "materiality": "medium",
+      "uncertainty": "Only headline and photo credit; no date or detailed account of attack."
+    },
+    {
+      "id": "C08-c2",
+      "kind": "context_only",
+      "claim": "BBC News app promotional item supplies no occurrence-specific news.",
+      "source_spans": [
+        {
+          "observation_id": "O030",
+          "field": "title",
+          "start": 0,
+          "end": 12
+        },
+        {
+          "observation_id": "O030",
+          "field": "text",
+          "start": 0,
+          "end": 92
+        }
+      ],
+      "attribution": "BBC app promotion",
+      "occurrence_ref": null,
+      "story_ref": null,
+      "materiality": "none",
+      "uncertainty": "Cannot connect promotional text to Flydubai story."
+    }
+  ],
+  "relations": [
+    {
+      "from": "C08-c2",
+      "to": "C08-flydubai-attack",
+      "type": "same_story",
+      "status": "prohibited",
+      "reason": "Generic app promotion does not support story membership.",
+      "source_spans": [
+        {
+          "observation_id": "O030",
+          "field": "text",
+          "start": 0,
+          "end": 92
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [],
+  "questions": [],
+  "no_delta_reason": "All source hashes already observed; app promotion and pilot-account headline are unchanged.",
+  "missing_evidence_reason": "Pilot account body remains a photo credit.",
+  "ambiguity_notes": [],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "current_view_policy": "Prior contributions and unresolved questions retained as attributed evidence; current delta expectations apply only at this prefix, not to repeated context.",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:contributions(empty)",
+        "B:C08-c3",
+        "A:no_delta_reason",
+        "B:no_delta_reason"
+      ],
+      "decision": "No new semantic contribution or delta from repeated promotion.",
+      "reason": "O032 repeats S029; retain previous view without adding provenance-only duplicates."
+    }
+  ],
+  "chronology_mode": "captured_observation",
+  "checkpoint_at": "2026-10-06T20:39:33.778026+00:00",
+  "source_packet_sha256": "91c76d80845d983c0ce882aeecf2d9491b0d693020c060084c352b7279571a69",
+  "visible_observation_ids": [
+    "O030",
+    "O031",
+    "O032"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "174bc9e10f873c367efffc793b182f87d766e142df6e1f65d82cab37f42bc444",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "8a3b92a36d8067380bde33e4445b75e1b624af1b92a0c000109b2327d2117203",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:56:11.095414+00:00"
+}

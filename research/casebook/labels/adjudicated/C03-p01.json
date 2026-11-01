@@ -1,0 +1,118 @@
+{
+  "case_id": "C03",
+  "prefix_id": "C03-p01",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C03-c1",
+      "kind": "new_occurrence",
+      "claim": "American bombers departed RAF Fairford/the UK en masse.",
+      "source_spans": [
+        {
+          "observation_id": "O008",
+          "field": "title",
+          "start": 0,
+          "end": 51
+        },
+        {
+          "observation_id": "O008",
+          "field": "text",
+          "start": 0,
+          "end": 121
+        }
+      ],
+      "attribution": "BBC News security correspondent",
+      "occurrence_ref": "C03-bomber-departure",
+      "story_ref": "C03-fairford-bombers",
+      "materiality": "high",
+      "uncertainty": "Sparse summary supplies no precise date, count or cause."
+    },
+    {
+      "id": "C03-c2",
+      "kind": "question_opened",
+      "claim": "What prompted the bombers' departure?",
+      "source_spans": [
+        {
+          "observation_id": "O008",
+          "field": "title",
+          "start": 0,
+          "end": 51
+        }
+      ],
+      "attribution": "BBC headline",
+      "occurrence_ref": "C03-bomber-departure",
+      "story_ref": "C03-fairford-bombers",
+      "materiality": "medium",
+      "uncertainty": "Correspondent infers Pentagon concern, but provided text does not establish reason."
+    }
+  ],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C03-c1"
+      ],
+      "status": "required",
+      "reason": "Initial source establishes departure."
+    },
+    {
+      "contribution_ids": [
+        "C03-c2"
+      ],
+      "status": "allowed",
+      "reason": "Headline explicitly raises cause question."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C03-q1",
+      "status": "open",
+      "claim": "What prompted US bombers to leave RAF Fairford?",
+      "source_spans": [
+        {
+          "observation_id": "O008",
+          "field": "title",
+          "start": 0,
+          "end": 51
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": "No article body or underlying evidence for cause is supplied.",
+  "ambiguity_notes": [],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:C03-bombers",
+        "B:C03-c1",
+        "B:C03-c2"
+      ],
+      "decision": "Require departure, allow explicit cause question, retain reason as unresolved.",
+      "reason": "O008 supports departure and asks why; correspondent concern is interpretation, not established operational cause."
+    }
+  ],
+  "chronology_mode": "captured_observation",
+  "checkpoint_at": "2026-10-05T19:34:32.871175+00:00",
+  "source_packet_sha256": "45dd2f262ceee5c96db07a9a188dc712c5b0b26a680a3fcfba87fa3e72cb1e07",
+  "visible_observation_ids": [
+    "O008"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "f7f388ab23a9c2a58b656f70c9ec44ea17a0d750f8819b3d26b501470f36429e",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "a8b0c284ea7f1588447cc3c5a5c558afbfa84fdc3288c24ce19cdaf76c09a84b",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:53:00.404227+00:00"
+}

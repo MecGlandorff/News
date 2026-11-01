@@ -1,0 +1,147 @@
+{
+  "case_id": "C12",
+  "prefix_id": "C12-p02",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C12-c1",
+      "kind": "new_occurrence",
+      "claim": "ICC pre-trial judges unanimously confirmed crimes-against-humanity charges against Duterte on substantial grounds, sending the anti-drug-crackdown case to trial; this is not conviction.",
+      "source_spans": [
+        {
+          "observation_id": "O047",
+          "field": "description",
+          "start": 245,
+          "end": 397
+        },
+        {
+          "observation_id": "O047",
+          "field": "description",
+          "start": 404,
+          "end": 661
+        }
+      ],
+      "attribution": "ICC judges via Guardian",
+      "occurrence_ref": "C12-charges-confirmed",
+      "story_ref": "C12-duterte-icc-case",
+      "materiality": "high",
+      "uncertainty": "Confirmation threshold substantial grounds, not conviction."
+    },
+    {
+      "id": "C12-c2",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Judges find substantial grounds to believe Duterte responsible for murder and attempted murder in crackdowns killing thousands.",
+      "source_spans": [
+        {
+          "observation_id": "O047",
+          "field": "description",
+          "start": 404,
+          "end": 661
+        }
+      ],
+      "attribution": "ICC pre-trial judges via Guardian",
+      "occurrence_ref": "C12-charges-confirmed",
+      "story_ref": "C12-duterte-icc-case",
+      "materiality": "high",
+      "uncertainty": "Alleged responsibility assessed for proceeding to trial, guilt unresolved."
+    },
+    {
+      "id": "C12-c3",
+      "kind": "context_only",
+      "claim": "NYT reports same ICC decision that enough evidence exists to try Duterte over drug-crackdown killings.",
+      "source_spans": [
+        {
+          "observation_id": "O046",
+          "field": "title",
+          "start": 0,
+          "end": 73
+        },
+        {
+          "observation_id": "O046",
+          "field": "description",
+          "start": 0,
+          "end": 177
+        }
+      ],
+      "attribution": "NYT attributing ICC",
+      "occurrence_ref": "C12-charges-confirmed",
+      "story_ref": "C12-duterte-icc-case",
+      "materiality": "none",
+      "uncertainty": "Independent publication restates prior procedural step without new material detail."
+    }
+  ],
+  "relations": [
+    {
+      "from": "C12-c3",
+      "to": "C12-c1",
+      "type": "same_occurrence",
+      "status": "required",
+      "reason": "Same defendant, court, decision and date.",
+      "source_spans": [
+        {
+          "observation_id": "O046",
+          "field": "title",
+          "start": 0,
+          "end": 73
+        },
+        {
+          "observation_id": "O047",
+          "field": "title",
+          "start": 0,
+          "end": 83
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C12-c3"
+      ],
+      "status": "prohibited",
+      "reason": "Reworded same decision is not a second confirmation or new trial outcome."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": "Only new source corroborates already represented charge-confirmation decision.",
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "No trial start, verdict or conviction supported; simulated publication ordering only."
+  ],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "current_view_policy": "Prior contributions and unresolved questions retained as attributed evidence; current delta expectations apply only at this prefix, not to repeated context.",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:C12-confirmation-corroboration",
+        "B:C12-c3",
+        "A:no_delta_reason",
+        "B:no_delta_reason"
+      ],
+      "decision": "Require quiet result for repeated decision; allow citation enrichment but no fresh procedural delta.",
+      "reason": "O046 restates same defendant/court/charges decision with no trial start or verdict."
+    }
+  ],
+  "chronology_mode": "publication_order_simulation",
+  "checkpoint_at": "2026-04-23T18:08:12+00:00",
+  "source_packet_sha256": "5b98fb6a9262501d0fd14848b9c00031f6e9ba08a34e46ba0116add5df12ff47",
+  "visible_observation_ids": [
+    "O047",
+    "O046"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "97ac31d31d8a7e6771587cb4f7e2c5aee421e5b79d828ce2897c8530929f81f6",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "d29767fb9fdafaeff82303d89ecef3decf6942ba3b3ca534a8589e975dbc1ef4",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:59:31.179705+00:00"
+}

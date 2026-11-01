@@ -1,0 +1,75 @@
+{
+  "case_id": "C01",
+  "prefix_id": "C01-p03",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C01-prosecutor-target",
+      "kind": "same_occurrence_material_fact",
+      "claim": "UAE prosecutors say the co-pilot planned a suicide attack on the Ben Gurion passenger terminal.",
+      "source_spans": [
+        {
+          "observation_id": "O004",
+          "field": "text",
+          "start": 112,
+          "end": 374
+        }
+      ],
+      "attribution": "UAE prosecutors via Guardian",
+      "occurrence_ref": "C01-flight-attack",
+      "story_ref": "C01-flight-investigation",
+      "uncertainty": "Officially attributed allegation; not independently established truth.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [
+    {
+      "from": "C01-prosecutor-target",
+      "to": "C01-plan",
+      "type": "same_occurrence",
+      "status": "required",
+      "reason": "Both identify the same co-pilot attack; later official allegation specifies the target.",
+      "source_spans": [
+        {
+          "observation_id": "O004",
+          "field": "text",
+          "start": 375,
+          "end": 448
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C01-prosecutor-target"
+      ],
+      "status": "required",
+      "reason": "Official prosecutorial attribution and terminal target materially advance the earlier anonymous preliminary report."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C01-motive",
+      "status": "partially_answered",
+      "claim": "Prosecutors supply an official allegation of suicide intent and passenger-terminal target.",
+      "source_spans": [
+        {
+          "observation_id": "O004",
+          "field": "title",
+          "start": 0,
+          "end": 80
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Earlier uncertainty remains valid at its earlier capture; later official statement is a new attributed fact, not retroactive repair."
+  ],
+  "adjudication_status": "unadjudicated"
+}

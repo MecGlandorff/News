@@ -1,0 +1,161 @@
+{
+  "case_id": "C06",
+  "prefix_id": "C06-p01",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C06-fridge-hack",
+      "kind": "new_occurrence",
+      "claim": "Overnight cyberattack on hundreds of French supermarkets raised connected fridge temperatures to 50C, causing food loss and reported fires; obsolete supplier software is cited as access route.",
+      "source_spans": [
+        {
+          "observation_id": "O021",
+          "field": "text",
+          "start": 70,
+          "end": 229
+        },
+        {
+          "observation_id": "O021",
+          "field": "text",
+          "start": 487,
+          "end": 551
+        },
+        {
+          "observation_id": "O023",
+          "field": "text",
+          "start": 484,
+          "end": 543
+        }
+      ],
+      "attribution": "NOS; Paris prosecutor via Guardian; BBC",
+      "occurrence_ref": "C06-france-fridge-attack",
+      "story_ref": "C06-france-fridge-attack-story",
+      "materiality": "material",
+      "uncertainty": null
+    },
+    {
+      "id": "C06-ah-incident",
+      "kind": "new_occurrence",
+      "claim": "Ahold security incident beginning yesterday led to preventive system shutdowns, stopped distribution-centre operations and online deliveries, and disrupted offers and fresh-food supply.",
+      "source_spans": [
+        {
+          "observation_id": "O022",
+          "field": "text",
+          "start": 0,
+          "end": 135
+        },
+        {
+          "observation_id": "O022",
+          "field": "text",
+          "start": 1347,
+          "end": 1379
+        },
+        {
+          "observation_id": "O022",
+          "field": "text",
+          "start": 380,
+          "end": 436
+        },
+        {
+          "observation_id": "O025",
+          "field": "text",
+          "start": 806,
+          "end": 861
+        }
+      ],
+      "attribution": "Albert Heijn CEO and NOS",
+      "occurrence_ref": "C06-ah-security-incident",
+      "story_ref": "C06-ah-incident-story",
+      "uncertainty": "Company has not established publicly that intruders accessed systems.",
+      "materiality": "material"
+    },
+    {
+      "id": "C06-ah-cause",
+      "kind": "question_opened",
+      "claim": "Experts suspect intrusion or criminal extortion, but another expert allows precautionary shutdown after discovering a vulnerability; cause remains undisclosed.",
+      "source_spans": [
+        {
+          "observation_id": "O025",
+          "field": "text",
+          "start": 254,
+          "end": 320
+        },
+        {
+          "observation_id": "O025",
+          "field": "text",
+          "start": 1419,
+          "end": 1498
+        },
+        {
+          "observation_id": "O025",
+          "field": "text",
+          "start": 2991,
+          "end": 3081
+        }
+      ],
+      "attribution": "Experts Takkenberg, Fennis and Driehuis via NOS",
+      "occurrence_ref": "C06-ah-security-incident",
+      "story_ref": "C06-ah-incident-story",
+      "uncertainty": "Competing hypotheses, not confirmation of hack, attacker identity or data theft.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [
+    {
+      "from": "C06-france-fridge-attack",
+      "to": "C06-ah-security-incident",
+      "type": "same_story_or_cause",
+      "status": "prohibited",
+      "reason": "Company spokesperson explicitly says no reason to see a link; simultaneous supermarket disruption and Guardian fears are insufficient.",
+      "source_spans": [
+        {
+          "observation_id": "O021",
+          "field": "text",
+          "start": 1844,
+          "end": 1985
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C06-fridge-hack",
+        "C06-ah-incident",
+        "C06-ah-cause"
+      ],
+      "status": "required",
+      "reason": "Two separate incidents and uncertainty about the Dutch incident's nature must remain distinct."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C06-ah-intrusion",
+      "status": "open",
+      "claim": "Was Albert Heijn hacked, were data accessed, and how long will disruption last?",
+      "source_spans": [
+        {
+          "observation_id": "O025",
+          "field": "text",
+          "start": 321,
+          "end": 390
+        },
+        {
+          "observation_id": "O025",
+          "field": "text",
+          "start": 3704,
+          "end": 3773
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "No evidence of a common actor; expert conjecture about criminals or Russia is not actor attribution."
+  ],
+  "adjudication_status": "unadjudicated"
+}

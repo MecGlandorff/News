@@ -1,0 +1,50 @@
+{
+  "case_id": "C12",
+  "prefix_id": "C12-p01",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C12-confirmation",
+      "kind": "new_occurrence",
+      "claim": "ICC pre-trial judges unanimously confirm crimes-against-humanity charges against Rodrigo Duterte, finding substantial grounds concerning murder and attempted murder in anti-drugs crackdowns; he will face trial.",
+      "source_spans": [
+        {
+          "observation_id": "O047",
+          "field": "description",
+          "start": 245,
+          "end": 397
+        },
+        {
+          "observation_id": "O047",
+          "field": "description",
+          "start": 448,
+          "end": 576
+        }
+      ],
+      "attribution": "ICC pre-trial judges via Guardian",
+      "occurrence_ref": "C12-charge-confirmation",
+      "story_ref": "C12-duterte-icc-case",
+      "uncertainty": "Charge confirmation and substantial-grounds finding are not conviction or final guilt determination.",
+      "materiality": "material"
+    }
+  ],
+  "relations": [],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C12-confirmation"
+      ],
+      "status": "required",
+      "reason": "Initial legal procedural decision materially establishes case progression."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Publication-order simulation: authentic availability unknown; no independent legal verification requested or used for source-only labels."
+  ],
+  "adjudication_status": "unadjudicated"
+}

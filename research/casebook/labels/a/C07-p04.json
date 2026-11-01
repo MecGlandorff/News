@@ -1,0 +1,91 @@
+{
+  "case_id": "C07",
+  "prefix_id": "C07-p04",
+  "labeler_id": "A",
+  "label_version": "A-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C07-detentions",
+      "kind": "new_occurrence",
+      "claim": "CJP accuses authorities of mass detentions of members ahead of a planned Saturday Delhi protest.",
+      "source_spans": [
+        {
+          "observation_id": "O029",
+          "field": "text",
+          "start": 266,
+          "end": 378
+        }
+      ],
+      "attribution": "Cockroach Janta Party via Guardian",
+      "occurrence_ref": "C07-alleged-detentions",
+      "story_ref": "C07-cockroach-movement",
+      "uncertainty": "Party allegation, not independently confirmed; planned protest not evidence it occurred.",
+      "materiality": "material"
+    },
+    {
+      "id": "C07-delhi-plan",
+      "kind": "context_only",
+      "claim": "Thousands expected at planned Delhi march amid near-daily demonstrations over voter-roll revision and election commissioner's resignation.",
+      "source_spans": [
+        {
+          "observation_id": "O029",
+          "field": "text",
+          "start": 0,
+          "end": 48
+        },
+        {
+          "observation_id": "O029",
+          "field": "text",
+          "start": 455,
+          "end": 569
+        }
+      ],
+      "attribution": "Guardian",
+      "story_ref": "C07-cockroach-movement",
+      "materiality": "context",
+      "occurrence_ref": null,
+      "uncertainty": null
+    }
+  ],
+  "relations": [
+    {
+      "from": "C07-alleged-detentions",
+      "to": "C07-voter-roll-protests",
+      "type": "distinct_occurrence_same_story",
+      "status": "required",
+      "reason": "Same movement and specific election grievance link detention allegation to continuing protests, without conflating Mumbai gathering and detentions.",
+      "source_spans": [
+        {
+          "observation_id": "O029",
+          "field": "text",
+          "start": 570,
+          "end": 615
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C07-detentions"
+      ],
+      "status": "required",
+      "reason": "New allegation of coercive action is material."
+    },
+    {
+      "contribution_ids": [
+        "C07-delhi-plan"
+      ],
+      "status": "allowed",
+      "reason": "Future demonstration plan may be included as context, not as a completed occurrence."
+    }
+  ],
+  "questions": [],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "October 12 capture contains October 9 reporting; relative Saturday is tied to reporting context, not capture date."
+  ],
+  "adjudication_status": "unadjudicated"
+}

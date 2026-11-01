@@ -1,0 +1,250 @@
+{
+  "case_id": "C01",
+  "prefix_id": "C01-p03",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C01-c1",
+      "kind": "new_occurrence",
+      "claim": "Flydubai FZ1073 copilot attacked the captain; passengers and crew subdued him and replacement pilots landed in Saudi Arabia.",
+      "source_spans": [
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 957,
+          "end": 982
+        },
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 1391,
+          "end": 1506
+        }
+      ],
+      "attribution": "NOS reporting",
+      "occurrence_ref": "C01-flight-attack",
+      "story_ref": "C01-flydubai-investigation",
+      "materiality": "high",
+      "uncertainty": "Initial source account, event date relative Wednesday."
+    },
+    {
+      "id": "C01-c2",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Israeli sources briefed on the investigation say the copilot probably planned a Tel Aviv airport crash; BBC also reports airport or building as possible target.",
+      "source_spans": [
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 0,
+          "end": 263
+        },
+        {
+          "observation_id": "O001",
+          "field": "title",
+          "start": 0,
+          "end": 87
+        }
+      ],
+      "attribution": "Anonymous Israeli sources via NOS; reports via BBC",
+      "occurrence_ref": "C01-flight-attack",
+      "story_ref": "C01-flydubai-investigation",
+      "materiality": "high",
+      "uncertainty": "No official response; investigation early; target account unconfirmed."
+    },
+    {
+      "id": "C01-c3",
+      "kind": "context_only",
+      "claim": "Sources allege he contemplated hijacking an earlier Tel Aviv flight this year but abandoned it.",
+      "source_spans": [
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 264,
+          "end": 393
+        }
+      ],
+      "attribution": "Anonymous Israeli sources via NOS",
+      "occurrence_ref": "C01-earlier-plan",
+      "story_ref": "C01-flydubai-investigation",
+      "materiality": "medium",
+      "uncertainty": "Unconfirmed attributed earlier abandoned plan; source does not establish an executed hijacking."
+    },
+    {
+      "id": "C01-c4",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Australian and New Zealand authorities investigate his past activities; Australia examines possible radicalisation during 2015–17 study.",
+      "source_spans": [
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 1891,
+          "end": 2122
+        }
+      ],
+      "attribution": "NOS attributing authorities",
+      "occurrence_ref": "C01-background-inquiries",
+      "story_ref": "C01-flydubai-investigation",
+      "materiality": "medium",
+      "uncertainty": "Past residence timing in New Zealand unknown."
+    },
+    {
+      "id": "C01-c5",
+      "kind": "context_only",
+      "claim": "Guardian headline specifically identifies New Zealand training as under scrutiny in the Flydubai attack investigation.",
+      "source_spans": [
+        {
+          "observation_id": "O003",
+          "field": "title",
+          "start": 0,
+          "end": 94
+        }
+      ],
+      "attribution": "The Guardian headline",
+      "occurrence_ref": "C01-background-inquiries",
+      "story_ref": "C01-flydubai-investigation",
+      "materiality": "context",
+      "uncertainty": "Only headline plus photo credit; no details establish a new investigative action beyond previously reported NZ inquiries."
+    },
+    {
+      "id": "C01-c6",
+      "kind": "same_occurrence_material_fact",
+      "claim": "UAE prosecutors say the copilot planned a suicide attack targeting the passenger terminal at Israel's international airport.",
+      "source_spans": [
+        {
+          "observation_id": "O004",
+          "field": "text",
+          "start": 112,
+          "end": 374
+        }
+      ],
+      "attribution": "UAE prosecutors via Guardian",
+      "occurrence_ref": "C01-flight-attack",
+      "story_ref": "C01-flydubai-investigation",
+      "materiality": "high",
+      "uncertainty": "Official attributed account, not independent adjudication of motive."
+    }
+  ],
+  "relations": [
+    {
+      "from": "C01-earlier-plan",
+      "to": "C01-flight-attack",
+      "type": "distinct_occurrence",
+      "status": "required",
+      "reason": "Reported abandoned earlier plan differs from attack on Wednesday.",
+      "source_spans": [
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 316,
+          "end": 393
+        }
+      ]
+    },
+    {
+      "from": "C01-c6",
+      "to": "C01-c2",
+      "type": "same_occurrence",
+      "status": "required",
+      "reason": "Same copilot attack; official prosecutor attribution and specified terminal advance prior target report.",
+      "source_spans": [
+        {
+          "observation_id": "O004",
+          "field": "text",
+          "start": 112,
+          "end": 374
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C01-c6"
+      ],
+      "status": "required",
+      "reason": "Official attribution and specific terminal target materially advance prior anonymous reports."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C01-q1-target",
+      "status": "answered",
+      "claim": "Prosecutors identify passenger terminal as planned target.",
+      "source_spans": [
+        {
+          "observation_id": "O004",
+          "field": "text",
+          "start": 251,
+          "end": 317
+        }
+      ],
+      "closure_reason": "Official attributed answer, not proof of broader lone-actor claim."
+    },
+    {
+      "id": "C01-q1",
+      "status": "open",
+      "claim": "Lone-actor account remains attributed and preliminary; this source supplies no independent resolution.",
+      "source_spans": [
+        {
+          "observation_id": "O002",
+          "field": "text",
+          "start": 497,
+          "end": 749
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "No explicit correction of prior airport-or-building alternatives; later report narrows attribution and target.",
+    "Later official allegation does not retroactively turn prior attributed report into error or source correction."
+  ],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "current_view_policy": "Prior contributions and unresolved questions retained as attributed evidence; current delta expectations apply only at this prefix, not to repeated context.",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:C01-prosecutor-target",
+        "B:C01-c6",
+        "B:C01-c7"
+      ],
+      "decision": "Require one material prosecutor/terminal update, not two recall units for repeated target fact.",
+      "reason": "O004 text112:374 supports official attribution and target specificity; B c7 repeats part of c6."
+    },
+    {
+      "label_refs": [
+        "A:C01-motive",
+        "B:C01-q1-target",
+        "B:C01-q1@p01"
+      ],
+      "decision": "Answer target within prosecutor account; retain lone-actor uncertainty as open.",
+      "reason": "No evidence establishes lone-actor resolution. A partially_answered status is outside protocol enum; split support explicitly."
+    }
+  ],
+  "chronology_mode": "captured_observation",
+  "checkpoint_at": "2026-10-10T19:54:57.969523+00:00",
+  "source_packet_sha256": "58f146fafa90e9d8f9ca70dbf52dba3013279f4e3de64bc07dee1edf047a610f",
+  "visible_observation_ids": [
+    "O001",
+    "O002",
+    "O003",
+    "O004"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "a71458f2a941009c1a8dbc89dc885852e483a8b02656fc33498c1ad26322a453",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "0d1cf7a7d516b4c1f67fdfc33a9a3b077748633a1c1edf93456dce9dfe17cbe1",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:52:33.967324+00:00"
+}

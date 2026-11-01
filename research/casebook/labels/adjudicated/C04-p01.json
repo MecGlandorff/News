@@ -1,0 +1,193 @@
+{
+  "case_id": "C04",
+  "prefix_id": "C04-p01",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C04-c1",
+      "kind": "new_occurrence",
+      "claim": "Yemeni army announced Operation Dawn of Yemen, with an initial aim of regaining Bab al-Mandab and Mocha.",
+      "source_spans": [
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 249,
+          "end": 345
+        },
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 464,
+          "end": 673
+        }
+      ],
+      "attribution": "Yemeni military/government via NOS",
+      "occurrence_ref": "C04-yemen-offensive",
+      "story_ref": "C04-yemen-control",
+      "materiality": "high",
+      "uncertainty": "War-party claims; announced aims are not verified territorial outcomes."
+    },
+    {
+      "id": "C04-c2",
+      "kind": "conflict",
+      "claim": "Information minister claims government army regained Bab al-Mandab; Houthi-linked media denied army territorial gains.",
+      "source_spans": [
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 0,
+          "end": 157
+        },
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 1649,
+          "end": 1734
+        }
+      ],
+      "attribution": "Government minister versus Houthi-linked media via NOS/Reuters",
+      "occurrence_ref": "C04-yemen-offensive",
+      "story_ref": "C04-yemen-control",
+      "materiality": "high",
+      "uncertainty": "Source reports explicitly conflict; cannot assert recapture as settled."
+    },
+    {
+      "id": "C04-sanaa",
+      "kind": "new_occurrence",
+      "claim": "A military spokesperson reports a strategic offensive in Houthi-held Sanaa; the Houthis acknowledge a Saudi attack there.",
+      "source_spans": [
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 1002,
+          "end": 1157
+        },
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 1158,
+          "end": 1250
+        }
+      ],
+      "attribution": "Yemeni armed-forces spokesperson on X and Houthis on Telegram, reported by NOS.",
+      "occurrence_ref": "C04-sanaa-attack",
+      "story_ref": "C04-yemen-control",
+      "materiality": "material",
+      "uncertainty": "Distinct location and reports; exact operational relationship and scale are not established."
+    }
+  ],
+  "relations": [
+    {
+      "from": "C04-sanaa-attack",
+      "to": "C04-yemen-offensive",
+      "type": "same_story",
+      "status": "allowed",
+      "reason": "Article presents concurrent anti-Houthi operations together; precise operational relationship not established.",
+      "source_spans": [
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 1002,
+          "end": 1157
+        },
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 1158,
+          "end": 1250
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C04-c1",
+        "C04-c2",
+        "C04-sanaa"
+      ],
+      "status": "required",
+      "reason": "Operation announcement, disputed control and separately reported Sanaa attack are material initial contributions."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C04-q1",
+      "status": "open",
+      "claim": "Who controls Bab al-Mandab and how much territory did the army regain?",
+      "source_spans": [
+        {
+          "observation_id": "O012",
+          "field": "text",
+          "start": 1505,
+          "end": 1596
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Historical Houthi advances and civil-war chronology are context, not new occurrences at this capture.",
+    "C replacement consulted independently; no majority-vote truth rule. All p01 records eligible subject to known development exposure."
+  ],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:C04-offensive",
+        "B:C04-c1",
+        "C:C04-C01",
+        "C:C04-C04"
+      ],
+      "decision": "Separate Sanaa attack contribution from strait/Mocha operation aims.",
+      "reason": "O012 text1002:1250 distinguishes location and reporting; shared campaign grouping allowed, single occurrence not forced."
+    },
+    {
+      "label_refs": [
+        "A:C04-strait-control",
+        "B:C04-c2",
+        "B:C04-c3",
+        "C:C04-C02",
+        "C:C04-C03",
+        "C:C04-C05"
+      ],
+      "decision": "Require one disputed control contribution; do not duplicate conflict wording as another recall unit.",
+      "reason": "Minister claim and earlier Houthi-media denial both supported, present control not settled. Dhubab detail may support account without separate mandatory unit."
+    },
+    {
+      "label_refs": [
+        "A:C04-prior-control",
+        "C:C04-C06"
+      ],
+      "decision": "Historical seizure stays context, no fresh capture delta required.",
+      "reason": "Source explicitly presents prior background."
+    }
+  ],
+  "chronology_mode": "captured_observation",
+  "checkpoint_at": "2026-10-05T19:34:32.871175+00:00",
+  "source_packet_sha256": "cf278ac79ae22f9c7d130f3ebf6e8a5747b78f20e9410a83e568734a70935db4",
+  "visible_observation_ids": [
+    "O012"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "14472d41ca0b62bb3684ff0f163dd0fa94cf5f2b0a87727b8b0d68e48c988ae4",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "781ca83855d8202eeed28e34c074b65caa228ebcbde0ee8b5ad2518eaa8bc6ae",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "c04": {
+      "sha256": "7ad59ff96bdfefce5516f6579dfd6764c09333c912acd52a8ea26abf96f9dd1a",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:53:43.103463+00:00"
+}

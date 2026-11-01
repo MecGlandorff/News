@@ -1,0 +1,355 @@
+{
+  "case_id": "C03",
+  "prefix_id": "C03-p03",
+  "labeler_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "label_version": "adjudicated-v1",
+  "inventory_version": "8a15c20ece6f91898f05a814df53c85ac3e2b0851fdd24cfa2cb97ba8854e3f9",
+  "contributions": [
+    {
+      "id": "C03-c1",
+      "kind": "new_occurrence",
+      "claim": "American bombers departed RAF Fairford/the UK en masse.",
+      "source_spans": [
+        {
+          "observation_id": "O008",
+          "field": "title",
+          "start": 0,
+          "end": 51
+        },
+        {
+          "observation_id": "O008",
+          "field": "text",
+          "start": 0,
+          "end": 121
+        }
+      ],
+      "attribution": "BBC News security correspondent",
+      "occurrence_ref": "C03-bomber-departure",
+      "story_ref": "C03-fairford-bombers",
+      "materiality": "high",
+      "uncertainty": "Sparse summary supplies no precise date, count or cause."
+    },
+    {
+      "id": "C03-c2",
+      "kind": "question_opened",
+      "claim": "What prompted the bombers' departure?",
+      "source_spans": [
+        {
+          "observation_id": "O008",
+          "field": "title",
+          "start": 0,
+          "end": 51
+        }
+      ],
+      "attribution": "BBC headline",
+      "occurrence_ref": "C03-bomber-departure",
+      "story_ref": "C03-fairford-bombers",
+      "materiality": "medium",
+      "uncertainty": "Correspondent infers Pentagon concern, but provided text does not establish reason."
+    },
+    {
+      "id": "C03-c3",
+      "kind": "new_occurrence",
+      "claim": "A British national was arrested, the seventh arrest linked to an incident near RAF Fairford last month.",
+      "source_spans": [
+        {
+          "observation_id": "O009",
+          "field": "title",
+          "start": 0,
+          "end": 66
+        },
+        {
+          "observation_id": "O009",
+          "field": "text",
+          "start": 0,
+          "end": 84
+        }
+      ],
+      "attribution": "BBC News",
+      "occurrence_ref": "C03-fairford-arrest",
+      "story_ref": "C03-fairford-incident-investigation",
+      "materiality": "high",
+      "uncertainty": "The incident itself is unspecified; no proven link to bomber departure."
+    },
+    {
+      "id": "C03-c4",
+      "kind": "conflict",
+      "claim": "Burnham attributes the late-month Fairford threats almost certainly to Iran's IRGC; Iran denies involvement.",
+      "source_spans": [
+        {
+          "observation_id": "O011",
+          "field": "text",
+          "start": 116,
+          "end": 229
+        },
+        {
+          "observation_id": "O010",
+          "field": "text",
+          "start": 1888,
+          "end": 1915
+        }
+      ],
+      "attribution": "UK prime minister; Iranian denial via NOS",
+      "occurrence_ref": "C03-fairford-threats",
+      "story_ref": "C03-fairford-incident-investigation",
+      "materiality": "high",
+      "uncertainty": "Government assessment disputed by Iran; no charges reported."
+    },
+    {
+      "id": "C03-c5",
+      "kind": "same_occurrence_material_fact",
+      "claim": "Report identifies vans containing petrol cans rather than explosives, seven total arrests, and conditional release of all suspects. Guardian reports nobody charged.",
+      "source_spans": [
+        {
+          "observation_id": "O010",
+          "field": "text",
+          "start": 833,
+          "end": 1129
+        },
+        {
+          "observation_id": "O011",
+          "field": "text",
+          "start": 520,
+          "end": 560
+        }
+      ],
+      "attribution": "NOS",
+      "occurrence_ref": "C03-fairford-threats",
+      "story_ref": "C03-fairford-incident-investigation",
+      "materiality": "high",
+      "uncertainty": "Does not prove no threat; no basis to call explosives discovery a source correction."
+    },
+    {
+      "id": "C03-c6",
+      "kind": "new_occurrence",
+      "claim": "UK summoned Iran's ambassador and imposed sanctions on two Iranians; further sanctions announced.",
+      "source_spans": [
+        {
+          "observation_id": "O010",
+          "field": "text",
+          "start": 1396,
+          "end": 1486
+        },
+        {
+          "observation_id": "O010",
+          "field": "text",
+          "start": 1702,
+          "end": 1887
+        },
+        {
+          "observation_id": "O011",
+          "field": "text",
+          "start": 358,
+          "end": 422
+        }
+      ],
+      "attribution": "UK ministers via NOS and Guardian",
+      "occurrence_ref": "C03-diplomatic-response",
+      "story_ref": "C03-fairford-incident-investigation",
+      "materiality": "high",
+      "uncertainty": "Further sanctions planned, not necessarily imposed yet."
+    }
+  ],
+  "relations": [
+    {
+      "from": "C03-fairford-incident-investigation",
+      "to": "C03-fairford-bombers",
+      "type": "same_story",
+      "status": "uncertain",
+      "reason": "Shared RAF Fairford location does not establish causal or narrative identity.",
+      "source_spans": [
+        {
+          "observation_id": "O009",
+          "field": "text",
+          "start": 0,
+          "end": 84
+        },
+        {
+          "observation_id": "O008",
+          "field": "title",
+          "start": 0,
+          "end": 51
+        }
+      ]
+    },
+    {
+      "from": "C03-c3",
+      "to": "C03-q1",
+      "type": "answers_question",
+      "status": "prohibited",
+      "reason": "No source connects arrest to bomber departure cause.",
+      "source_spans": [
+        {
+          "observation_id": "O009",
+          "field": "title",
+          "start": 0,
+          "end": 66
+        },
+        {
+          "observation_id": "O009",
+          "field": "text",
+          "start": 0,
+          "end": 84
+        }
+      ]
+    },
+    {
+      "from": "C03-fairford-arrest",
+      "to": "C03-fairford-threats",
+      "type": "same_story",
+      "status": "allowed",
+      "reason": "Seven arrests, location and timing support same investigation; this update does not individually identify the British national.",
+      "source_spans": [
+        {
+          "observation_id": "O010",
+          "field": "text",
+          "start": 1024,
+          "end": 1072
+        }
+      ]
+    },
+    {
+      "from": "C03-fairford-threats",
+      "to": "C03-bomber-departure",
+      "type": "distinct_occurrence",
+      "status": "required",
+      "reason": "Threat incident and bomber departure are distinct actions; no cause is established.",
+      "source_spans": [
+        {
+          "observation_id": "O010",
+          "field": "text",
+          "start": 1195,
+          "end": 1270
+        }
+      ]
+    },
+    {
+      "from": "C03-fairford-threats",
+      "to": "C03-bomber-departure",
+      "type": "causal_link",
+      "status": "uncertain",
+      "reason": "Shared base and Iran context do not establish departure cause.",
+      "source_spans": [
+        {
+          "observation_id": "O010",
+          "field": "text",
+          "start": 1195,
+          "end": 1270
+        }
+      ]
+    }
+  ],
+  "delta_expectations": [
+    {
+      "contribution_ids": [
+        "C03-c4",
+        "C03-c5",
+        "C03-c6"
+      ],
+      "status": "required",
+      "reason": "Attribution, disputed response, case status and sanctions materially advance incident investigation."
+    }
+  ],
+  "questions": [
+    {
+      "id": "C03-q1",
+      "status": "open",
+      "claim": "What prompted US bombers to leave RAF Fairford?",
+      "source_spans": [
+        {
+          "observation_id": "O008",
+          "field": "title",
+          "start": 0,
+          "end": 51
+        }
+      ],
+      "closure_reason": null
+    },
+    {
+      "id": "C03-q2",
+      "status": "open",
+      "claim": "Was Iran responsible for the Fairford threats?",
+      "source_spans": [
+        {
+          "observation_id": "O010",
+          "field": "text",
+          "start": 1888,
+          "end": 1915
+        },
+        {
+          "observation_id": "O011",
+          "field": "title",
+          "start": 0,
+          "end": 88
+        }
+      ],
+      "closure_reason": null
+    }
+  ],
+  "no_delta_reason": null,
+  "missing_evidence_reason": null,
+  "ambiguity_notes": [
+    "Earlier bomber-departure question remains unanswered. Conditional releases are not exoneration."
+  ],
+  "adjudication_status": "adjudicated_development_reference",
+  "adjudicator_id": "independent-adjudicator-gpt-6.1-sol-high",
+  "current_view_policy": "Prior contributions and unresolved questions retained as attributed evidence; current delta expectations apply only at this prefix, not to repeated context.",
+  "decisions": [
+    {
+      "label_refs": [
+        "A:C03-attribution",
+        "B:C03-c4",
+        "B:C03-c7"
+      ],
+      "decision": "Require one disputed-attribution contribution, not separate duplicate conflict recall unit.",
+      "reason": "UK assessment and Iranian denial are both source-supported; neither adjudicates responsibility."
+    },
+    {
+      "label_refs": [
+        "A:relations[0]",
+        "B:relations[0]"
+      ],
+      "decision": "Same investigation link allowed rather than mandatory.",
+      "reason": "Strong circumstantial match, but current account does not individually identify prior arrested British national."
+    },
+    {
+      "label_refs": [
+        "A:relations[1]",
+        "B:relations[1]"
+      ],
+      "decision": "Require distinct occurrences; causal link remains uncertain.",
+      "reason": "A asks causal question; B conflates same-occurrence identity with causation. Threat and departure are different acts even if related."
+    },
+    {
+      "label_refs": [
+        "A:C03-incident-details",
+        "B:C03-c5",
+        "A:C03-diplomacy",
+        "B:C03-c6"
+      ],
+      "decision": "Require status and diplomatic updates, preserve conditional release/no charges and planned/imposed distinctions.",
+      "reason": "O010/O011 support facts without exoneration or proof all proposed sanctions took effect."
+    }
+  ],
+  "chronology_mode": "captured_observation",
+  "checkpoint_at": "2026-10-12T21:32:09.233346+00:00",
+  "source_packet_sha256": "625aa5fcdeec0bb4a5f5d3e9961c2432b43c75ff6ad79bfbd8f2b0c87a511514",
+  "visible_observation_ids": [
+    "O008",
+    "O009",
+    "O010",
+    "O011"
+  ],
+  "label_inputs": {
+    "a": {
+      "sha256": "2d8e6e838813a5ebef6c8a8fd87f4a3a2e9372b84711162c01591b3ee3b9cda6",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    },
+    "b": {
+      "sha256": "0640335764c3d8d591b996447dc684f47a9d03511bac3471fca0b7003f8082fd",
+      "temporal_eligibility": "eligible_with_disclosed_exposure_limits"
+    }
+  },
+  "reference_scope": "frozen source-only DEVELOPMENT reference; not truth, holdout or reliability evidence",
+  "saved_at_utc": "2026-10-23T21:53:26.876517+00:00"
+}
